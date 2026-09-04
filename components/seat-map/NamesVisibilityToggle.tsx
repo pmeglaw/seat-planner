@@ -1,40 +1,21 @@
 "use client";
 
-// The ONE "Show occupant names" control both legend footers share (admin
-// SeatMap and the viewer). A real switch — track + thumb — because the state
-// must be visible to sighted users in BOTH positions: the retired checkmark
-// appeared only when on, and the flipping-label pattern before it exposed no
-// state at all (accessibility-source pins the stable label + aria-pressed
-// contract, relationally with the surfaces' other names controls).
+// The ONE "Names" control both surfaces share — the Carbon small toggle
+// (32×16 track, 12 knob) in the control row (PHASE1IA B4: the toggle moved
+// up from the band; PHASE3DS §1.14 `.sp-toggle`). The state is visible to
+// sighted users in BOTH positions (track + the On/Off word) and to assistive
+// tech through aria-pressed; the accessible name stays "Show occupant
+// names" — accessibility-source pins the stable label + aria-pressed
+// contract relationally with the surfaces' other names controls.
 export function NamesVisibilityToggle({ pressed, onToggle }: {
   pressed: boolean;
   onToggle: () => void;
 }) {
   return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onToggle}
-      className="relative flex w-full items-center gap-2 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[13px] after:inset-x-0 hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
-    >
-      <span className="min-w-0 truncate">Show occupant names</span>
-      <span
-        aria-hidden="true"
-        data-state={pressed ? "on" : "off"}
-        className={[
-          "relative ml-auto h-4 w-7 shrink-0 rounded-full border transition-colors motion-reduce:transition-none",
-          pressed
-            ? "border-[var(--sp-status-success-mark)] bg-[var(--sp-status-success-mark)]"
-            : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)]"
-        ].join(" ")}
-      >
-        <span
-          className={[
-            "absolute left-[2px] top-1/2 h-[10px] w-[10px] -translate-y-1/2 rounded-full transition-transform motion-reduce:transition-none",
-            pressed ? "translate-x-[12px] bg-white" : "translate-x-0 bg-[var(--sp-text-secondary)]"
-          ].join(" ")}
-        />
-      </span>
+    <button type="button" className="sp-toggle" aria-pressed={pressed} aria-label="Show occupant names" onClick={onToggle}>
+      <span aria-hidden="true">Names</span>
+      <span aria-hidden="true" className="sp-toggle-track" data-state={pressed ? "on" : "off"} />
+      <span aria-hidden="true" className="sp-toggle-state">{pressed ? "On" : "Off"}</span>
     </button>
   );
 }
