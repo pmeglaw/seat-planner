@@ -378,7 +378,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       </section>
 
       {resetReviewOpen && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={resetReviewDialogFocusRef}
             tabIndex={-1}
@@ -431,7 +431,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       )}
 
       {csvReview && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={csvReviewDialogFocusRef}
             tabIndex={-1}
@@ -518,7 +518,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
       )}
 
       {jsonReview && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-chrome-scrim)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
           <section
             ref={jsonReviewDialogFocusRef}
             tabIndex={-1}

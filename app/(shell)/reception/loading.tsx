@@ -7,7 +7,7 @@ export default function ReceptionLoading() {
     <div
       role="status"
       aria-busy="true"
-      className="reception-theme min-h-[calc(100svh-var(--sp-chrome-height))] bg-[var(--sp-background)] pl-12"
+      className="flex min-h-0 flex-1 flex-col bg-[var(--sp-background)]"
     >
       <span className="sr-only">Loading reception…</span>
       <div aria-hidden="true" className="mx-auto w-full max-w-[720px] animate-pulse px-6 pt-10 motion-reduce:animate-none">

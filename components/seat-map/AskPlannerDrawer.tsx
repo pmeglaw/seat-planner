@@ -54,7 +54,7 @@ function statusLabel(status: AskPlannerResponse["status"]) {
 function statusClassName(status: AskPlannerResponse["status"]) {
   // Dark-panel state pills (contrast on #161616: #42be65 ≈ 7.3:1, #08bdba ≈ 7.2:1, #78a9ff ≈ 6.6:1).
   if (status === "refused") return "bg-[color-mix(in_srgb,var(--sp-status-draft-mark)_15%,transparent)] text-[var(--sp-status-draft-text)] ring-[color-mix(in_srgb,var(--sp-status-draft-mark)_40%,transparent)]";
-  if (status === "needs_clarification") return "bg-[color-mix(in_srgb,var(--sp-chrome-info)_15%,transparent)] text-[var(--sp-chrome-info-text)] ring-[color-mix(in_srgb,var(--sp-chrome-info)_40%,transparent)]";
+  if (status === "needs_clarification") return "bg-[color-mix(in_srgb,var(--sp-layer-02)_15%,transparent)] text-[var(--sp-text-primary)] ring-[color-mix(in_srgb,var(--sp-layer-02)_40%,transparent)]";
   // Success wash/ring derive from the chrome success token (this panel is dark
   // chrome in BOTH themes) — the retired --admin-status-ok-rgb twin held the
   // stale #24A148 here, and the light status hex #1D6E41 is tuned for light
@@ -265,7 +265,7 @@ export function AskPlannerDrawer({
         aria-labelledby="ask-planner-title"
         aria-describedby="ask-planner-description"
         data-chrome="dark"
-        className="sp-zone-chrome fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--sp-ai-panel-border)] bg-[var(--sp-background)] bg-[image:var(--sp-ai-glow)] bg-no-repeat text-[var(--sp-text-primary)] shadow-sp focus-visible:outline-none motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(var(--sp-chrome-height)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_var(--sp-chrome-height)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
+        className="sp-zone-chrome fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--sp-ai-panel-border)] bg-[var(--sp-background)] bg-[image:var(--sp-ai-glow)] bg-no-repeat text-[var(--sp-text-primary)] shadow-sp focus-visible:outline-none motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(2*var(--sp-shell-header-h)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_2*var(--sp-shell-header-h)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
       >
         <div className="shrink-0 border-b border-[var(--sp-border-subtle)] px-4 py-3">
           <div className="flex items-start justify-between gap-3">

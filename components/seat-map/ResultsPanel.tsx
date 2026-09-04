@@ -96,7 +96,7 @@ export function ResultsPanel({
   return (
     <aside
       aria-labelledby="admin-results-title"
-      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[calc(var(--sp-chrome-height)_+_12px)] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+      className="fixed inset-x-3 bottom-3 z-[80] flex max-h-[50vh] flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp panel:inset-x-auto panel:bottom-3 panel:right-3 panel:top-[calc(2*var(--sp-shell-header-h)_+_12px)] panel:z-40 panel:max-h-none panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
     >
       <div className="flex items-center justify-between gap-2 border-b border-[var(--sp-border-subtle)] px-4 py-3">
         <h2 id="admin-results-title" className="text-sm font-semibold text-[var(--sp-text-primary)]">Results</h2>

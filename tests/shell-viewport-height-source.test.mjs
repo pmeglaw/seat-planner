@@ -4,15 +4,16 @@ import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-// Every route in app/(shell) renders BELOW the persistent 40px AdminShellBar
-// (--sp-chrome-height), which sits in normal flow above the page root. A page
-// root sized min-h-screen (100vh) therefore overflows the document by exactly
-// the bar height, showing a permanent scrollbar even when the content fits —
-// the /admin map page shipped that way once already. Shell page roots that
-// want a full-height pane must use min-h-[calc(100svh-var(--sp-chrome-height))]
-// (or a height derived from it), never min-h-screen. Root-level app/error.tsx,
-// app/loading.tsx and app/not-found.tsx render outside the shell layout and
-// are deliberately NOT scanned here.
+// Every route in app/(shell) renders inside the persistent shell's content
+// pane (redesign-v2 PR 2): the 48px header is position:fixed and the pane —
+// a flex column padded by the header height, viewport-height at lg — is what
+// sizes the page. A page root sized min-h-screen (100vh) therefore overflows
+// the document by exactly the chrome height, showing a permanent scrollbar
+// even when the content fits — the /admin map page shipped that way once
+// already. Shell page roots that want a full-height pane fill the flex pane
+// (`flex min-h-0 flex-1`), never size themselves from the viewport.
+// Root-level app/error.tsx, app/loading.tsx and app/not-found.tsx render
+// outside the shell layout and are deliberately NOT scanned here.
 
 const shellDir = fileURLToPath(new URL("../app/(shell)", import.meta.url));
 
@@ -42,13 +43,14 @@ test("no shell-group file sizes a pane with min-h-screen (overflows past the 40p
   assert.deepEqual(
     offenders,
     [],
-    `these shell files use min-h-screen under the in-flow chrome bar (use min-h-[calc(100svh-var(--sp-chrome-height))]): ${offenders.join(", ")}`
+    `these shell files use min-h-screen under the fixed shell header (fill the pane with flex min-h-0 flex-1): ${offenders.join(", ")}`
   );
 });
 
-test("the /admin map wrapper subtracts the chrome bar height", async () => {
+test("the /admin map wrapper fills the shell pane instead of sizing from the viewport", async () => {
   const source = await readFile(path.join(shellDir, "admin", "page.tsx"), "utf8");
-  assert.match(source, /min-h-\[calc\(100svh-var\(--sp-chrome-height\)\)\]/);
+  assert.match(source, /className="flex min-h-0 flex-1 flex-col bg-\[var\(--sp-background\)\]/);
+  assert.doesNotMatch(source, /100svh|100vh|--sp-chrome-height/);
 });
 
 // The document itself must never scroll on desktop shell routes — the viewer
@@ -65,7 +67,8 @@ const SCROLL_PAGES = [
 for (const [label, file] of SCROLL_PAGES) {
   test(`${label} pins its pane to the viewport at lg and scrolls internally`, async () => {
     const source = await readFile(file, "utf8");
-    assert.match(source, /lg:h-\[calc\(100svh-var\(--sp-chrome-height\)\)\]/, "root pane must be viewport-height at lg");
+    assert.match(source, /className="flex min-h-0 flex-1 flex-col [^"]*lg:overflow-hidden"/, "root pane must fill the shell's viewport-height flex pane at lg");
+    assert.doesNotMatch(source, /--sp-chrome-height/, "retired group-2 token");
     assert.match(source, /lg:overflow-hidden/, "root pane must clip — the document never scrolls at lg");
     assert.match(source, /lg:overflow-y-auto/, "content must scroll in an internal region at lg");
     const scroller = source.match(/<div[^>]*lg:overflow-y-auto[^>]*>/s) ?? source.match(/<div[^>]*tabIndex=\{0\}[^>]*>/s);
