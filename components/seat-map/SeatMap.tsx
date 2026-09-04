@@ -2553,9 +2553,10 @@ export function SeatMap({
       // The band variant budgets 40px more below lg (84 = 44px search row +
       // 40px band) so the viewport + band still sum to the screen and the
       // viewport stays the one vertical scroll owner (#197).
-      // PHASE 4 BRIDGE: the chrome above this surface is the shell header
-      // PLUS the provisional tenant row of the same height (PR 2 seam); PR 3
-      // removes the row and this budget drops back to one header height.
+      // The chrome above this surface is the shell header plus the control
+      // row (PR 3a; the PR 2 tenant row is gone). Both are token heights; the
+      // row wraps below ~800px (globals.css O6 rule) and the page then scrolls
+      // by the extra line — accepted below the laptop widths.
       ? [
         statusBandVisible
           ? "min-h-[300px] h-[calc(100svh-var(--sp-shell-header-h)-var(--sp-control-row-h)-40px)]"
@@ -2563,9 +2564,8 @@ export function SeatMap({
         "overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
       ].join(" ")
       // The sm cap budgets the stacked chrome above the map: the shell header
-      // plus the provisional tenant row (--sp-shell-header-h twice — token-
-      // derived so a chrome resize can't strand a hardcoded sum again; the
-      // 36→40px bump caught exactly that) plus the 44px canvas search row. The row once read as ~52 (an estimate), which
+      // plus the control row (token-derived so a chrome resize can't strand a
+      // hardcoded sum again; the 36→40px bump caught exactly that). The row once read as ~52 (an estimate), which
       // left an 8px sliver of page below the map — the small version of the
       // band the overview branch above exists to close. Below lg the pan
       // viewport is the one vertical scroll owner (#197), so the page itself
@@ -3213,7 +3213,10 @@ export function SeatMap({
                   .filter(item => !item.draftOnly || legendCounts[item.key] > 0)
                   .map(item => ({ key: item.key, label: item.label, mark: item.mark, count: legendCounts[item.key] }))}
                 namesVisible={showNames}
-                count={filtersActive ? `${floorMatchingSeats.length} of ${floorSeats.length} seats match` : `${stats.total} ${stats.total === 1 ? "seat" : "seats"}`}
+                // Below lg the band also carries the read-only note (D2) and the
+                // plain total already reads in the title, so that count yields its
+                // width; the filtered "N of M match" count is never dropped.
+                count={filtersActive ? `${floorMatchingSeats.length} of ${floorSeats.length} seats match` : editTier ? `${stats.total} ${stats.total === 1 ? "seat" : "seats"}` : undefined}
                 actions={filtersActive ? (
                   <>
                     <button

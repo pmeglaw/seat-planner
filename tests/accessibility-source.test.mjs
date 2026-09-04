@@ -1221,7 +1221,7 @@ test("axe findings stay fixed: allowed roles, single main landmark, marker name 
   // role="group" is not an allowed role on <nav> (axe aria-allowed-role); the
   // command row is a grouped toolbar cluster, not a nav landmark.
   assert.doesNotMatch(seatMapSource, /<nav role="group"/);
-  assert.match(await readSource("../components/seat-map/MapControlRow.tsx"), /<div className="sp-control-row" role="toolbar" aria-label="Map controls">/);
+  assert.match(await readSource("../components/seat-map/MapControlRow.tsx"), /<div className="sp-control-row shrink-0" role="toolbar" aria-label="Map controls">/);
 
   // SeatMap carries its own <main>, so the admin page wrapper must not add a
   // second, nested one (axe landmark-no-duplicate-main / main-is-top-level).

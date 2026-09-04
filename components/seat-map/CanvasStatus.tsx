@@ -31,7 +31,9 @@ const GLYPH: Record<CanvasNoticeKind, ReactNode> = {
 export function CanvasStatus({ notices }: { notices: CanvasNotice[] }) {
   if (notices.length === 0) return null;
   return (
-    <div className="sp-canvas-status" role="status" aria-live="polite">
+    // z-20: above the roster's sticky header (z-10) so a notice never reads
+    // behind the region it belongs to; the notices are dismissible.
+    <div className="sp-canvas-status z-20" role="status" aria-live="polite">
       {notices.map(notice => (
         <div key={notice.id} className={`cds-notification cds-notification--${notice.kind}`} role={notice.alert ? "alert" : undefined}>
           <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">{GLYPH[notice.kind]}</svg>

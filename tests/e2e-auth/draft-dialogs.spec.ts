@@ -124,7 +124,7 @@ test("publish review, enabled chrome menu, and discard-draft confirm dialogs", a
   // guaranteed. Its absence here would mean the setup delta silently vanished.
   const dialog = page.getByRole("dialog");
   await retryUntilVisible(
-    () => page.getByRole("button", { name: /unpublished change/ }).click({ timeout: 2_000 }),
+    () => page.getByRole("button", { name: /^Publish \d+ change/ }).click({ timeout: 2_000 }),
     page.getByRole("heading", { name: "Review draft before publishing" })
   );
   // The publish CTA is also disabled when there is nothing to publish, so the

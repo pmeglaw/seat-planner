@@ -708,6 +708,12 @@
   "kind": "text"
  },
  {
+  "name": "light · kbd shortcut hint text-secondary gray-70 on field-01 #f4f4f4 (PR 3a: was text-helper gray-60, 4.36)",
+  "fg": "#525252",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
   "name": "light · text-on-color white on primary blue-60",
   "fg": "#ffffff",
   "bg": "#0f62fe",
@@ -1018,6 +1024,12 @@
   "fg": "#4589ff",
   "bg": "#262626",
   "kind": "graphic"
+ },
+ {
+  "name": "dark · kbd shortcut hint text-secondary gray-30 on field-01 #262626",
+  "fg": "#c6c6c6",
+  "bg": "#262626",
+  "kind": "text"
  },
  {
   "name": "dark · text-on-color white on primary blue-60",

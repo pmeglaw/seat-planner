@@ -64,8 +64,9 @@ test("an admin publishes a draft change and it reaches the published layer", asy
   await signIn(page, SEEDED_ADMIN_EMAIL);
   await page.goto("/admin");
 
-  // The pill flips to a review entry point once the draft diverges.
-  const reviewEntry = page.getByRole("button", { name: /unpublished change/ });
+  // The control row's Publish primary enables with its count once the draft
+  // diverges (PR 3a; it was the "N unpublished changes" pill before).
+  const reviewEntry = page.getByRole("button", { name: /^Publish \d+ change/ });
   await expect(reviewEntry).toBeVisible();
   await reviewEntry.click();
 

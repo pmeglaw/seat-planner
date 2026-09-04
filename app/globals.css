@@ -134,17 +134,26 @@ input[type="search"]::-webkit-search-cancel-button {
    frame, so it wraps — the search takes the whole second line — instead of
    scrolling the page sideways. That frame is read-only on /admin anyway
    (D2, deviation 4). Not ruling-bearing; recorded in PHASE4BUILD §1. */
-@media (max-width: 1055px) {
-  .sp-control-row {
-    flex-wrap: wrap;
-    height: auto;
-    min-height: var(--sp-control-row-h);
-    padding-top: var(--sp-space-02);
-    padding-bottom: var(--sp-space-02);
-    white-space: normal;
-  }
-  .sp-control-row .sp-search {
-    flex: 1 1 100%;
-    width: auto;
-  }
+/* O6 (owner, 2026-09-04): the control row WRAPS when its content does not fit —
+   at 1024, and at 1920 with the left panel open (1664px pane). Content-driven,
+   so no viewport query: a single line stays exactly 48px (4px padding + 40px
+   controls + 4px), a wrapped row is 96px, and the stage above lg is flex-1 so it
+   absorbs the extra line. Specificity on purpose: sp-components.css loads AFTER
+   this file and sets the row's height at (0,1,0); the [role] hook lets this rule
+   win without touching the vendored-by-contract sheet. white-space stays nowrap:
+   the ROW wraps between controls; the floor label and the ⌘K key must not wrap
+   inside their 40px boxes. */
+.sp-control-row[role="toolbar"] {
+  flex-wrap: wrap;
+  row-gap: var(--sp-control-gap);
+  height: auto;
+  min-height: var(--sp-control-row-h);
+  padding-top: var(--sp-space-02);
+  padding-bottom: var(--sp-space-02);
+}
+/* The search keeps its token width on a comfortable row, shrinks to 240px
+   before the row wraps, and never grows to eat the slack. */
+.sp-control-row[role="toolbar"] .sp-search {
+  flex: 0 1 var(--sp-search-w);
+  min-width: 240px;
 }

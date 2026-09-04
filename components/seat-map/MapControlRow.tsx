@@ -51,7 +51,7 @@ export type MapControlRowProps = {
 export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters, count, onFindMe, draft, askPlannerAnchor, names, children }: MapControlRowProps) {
   const reasonId = useId();
   return (
-    <div className="sp-control-row" role="toolbar" aria-label="Map controls">
+    <div className="sp-control-row shrink-0" role="toolbar" aria-label="Map controls">
       <FloorMenuButton floor={floor} onChange={onFloorChange} meta={floorMeta} />
       <MapSearch {...search} />
       {filters && filters.appliedCount > 0 ? (

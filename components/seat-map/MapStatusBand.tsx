@@ -67,9 +67,13 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, namesVisible = t
         )}
         {count ? <span className="sp-band-count">{count}</span> : null}
         {actions ?? null}
-        {note ? <span className="sp-band-note">{note}</span> : null}
-        {noteAction ?? null}
       </div>
+      {/* The note sits OUTSIDE the scroll region: it is the one line that must
+          never scroll out of view (below lg on /admin it is the only thing that
+          says why the editor cluster is gone). The legend + count tail is what
+          scrolls when the band is tight; the DOM/reading order is unchanged. */}
+      {note ? <span className="sp-band-note">{note}</span> : null}
+      {noteAction ?? null}
       {controls ? <span className="sp-band-zoom">{controls}</span> : null}
     </div>
   );
