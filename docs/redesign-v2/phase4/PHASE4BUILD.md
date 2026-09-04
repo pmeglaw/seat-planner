@@ -209,6 +209,12 @@ with the owner (60 % is the floor at which `text-primary` clears 4.5:1 on both t
 - **Unsaved-edits guard**: the History switch keeps `?floor=` / `?seat=`, so `isGuardedNavigationHref` now matches the pathname of a href carrying a query (the closed set spelled out only bare hrefs). Caught by the real-browser tier.
 - **`adminChrome.ts`** stays until PR 3: SeatMap's bar tenants still consume its divider rule; it leaves with the tenant row.
 
+### 1.15 PR 2 — two rulings from the preview review (owner, 2026-09-04)
+
+**Header at laptop widths.** The indicator centred on x = width/2 (PHASE2UX §1.2, measured only at 1920) met the admin's four links below ~1580px and at 1280 sat over Settings and swallowed the click (caught by `nav-shell.spec.ts`). Options put to the owner: fold the links below ~1600 / centre the indicator in the free run / left-align it. **Ruling: centre in the free run** between the last section link and the first utility — one fluid rule correct at every width for both roles, no second breakpoint, the nav fold stays at the asset's 1055. `.sp-header-center` becomes a `flex: 1` centred cell (an `sp-components.css` override recorded in PHASE3DS §2; the Phase 3 copy edited in step so the deliverable and the specimens stay one). PHASE2UX §1.2 row 4 and PHASE1IA ruling 23 amended. Measured at 1920 (`header-geometry.spec.ts`, e2e-auth): admin indicator centre x = 1227 (links end at 679), viewer x = 1127 (links end at 479); at 1056 — the last width before the nav fold — 795 and 695. Pinned by `tests/e2e-auth/header-geometry.spec.ts`: at 1920 / 1580 / 1366 / 1280 / 1056 the indicator's box never intersects a section link or a utility, for the admin and the viewer link sets (the backend-free `viewport-matrix` tier cannot sign in, so the geometry lives with the authenticated tier).
+
+**Current bar on a hovered current link.** Measured 2.77:1 (`#B85C2E` on the asset's gray-90-hover) against 3.97:1 at rest. **Ruling: the current link takes no hover fill** — it is not a destination, so a hover affordance promises nothing and no new colour is introduced; other links keep the asset's hover. An `sp-components.css` override (PHASE3DS §2), the fifth hover-surface instance (§3), and the bar's rest + hovered pairs added to `contrast/generate-pairs.mjs` (193/193).
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -299,11 +305,12 @@ worst text span per state, light / dark:
 30 measurements, 2 under 4.5:1, 0 outside the ledger
 ```
 
-PR 2 (2026-09-04, no token change — the group-2 bridge aliases removed, `product-pairs.json` unchanged):
+PR 2 (2026-09-04, no token change — the group-2 bridge aliases removed; the current bar's rest + hovered-current-link
+pairs added for §1.15, replacing the pre-brand blue-50 entry):
 
 ```
-product-pairs.json: 192 pairs · surface-pairs-not-gated.json: 13 pairs
-192/192 pass
+product-pairs.json: 193 pairs · surface-pairs-not-gated.json: 13 pairs
+193/193 pass
 ```
 
 Shell states (`audit/shell-states.mjs`, local Docker stack, seed data): see `screenshots/pr2/README.md` for the

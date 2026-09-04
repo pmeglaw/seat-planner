@@ -144,8 +144,14 @@
   "kind": "graphic"
  },
  {
-  "name": "shell · current bar blue-50 on shell g100",
-  "fg": "#4589ff",
+  "name": "shell · current bar terracotta on shell g100 (rest)",
+  "fg": "#b85c2e",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "shell · current bar terracotta on shell g100 (hovered current link — no hover fill)",
+  "fg": "#b85c2e",
   "bg": "#161616",
   "kind": "graphic"
  },

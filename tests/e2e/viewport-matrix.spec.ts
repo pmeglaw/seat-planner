@@ -11,7 +11,10 @@ import { test, expect } from "@playwright/test";
 //   3. the first Tab lands on the page's first focusable — /login ships no
 //      skip link (its form IS the content), so that is the email field.
 // The signed-in shell (header + skip link first) is covered by the e2e-auth
-// tier and tests/app-shell.test.mjs.
+// tier and tests/app-shell.test.mjs; the header's width ladder — the mode
+// indicator never meeting a section link or a utility at 1920 / 1580 / 1366
+// / 1280 / 1056 for both link sets (owner ruling 2026-09-04) — is pinned in
+// tests/e2e-auth/header-geometry.spec.ts, because this tier cannot sign in.
 
 const VIEWPORTS: Array<[number, number]> = [
   [1920, 1080],

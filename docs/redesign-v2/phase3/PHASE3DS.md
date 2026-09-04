@@ -521,7 +521,8 @@ changes on purpose. Zone-scoped dark variants are overrides too (they live under
 | Mode indicator | hand-built | `.sp-mode`, `.sp-mode--published / --draft / --unpublished / --error / --loading`, `.sp-mode-mark`, `.sp-mode-skeleton` | `05-status-and-marks.html#mode` | 1 | |
 | Status marks (seat legend) | hand-built | `.sp-seat-mark`, `.sp-seat-mark--assigned / --available / --reserved / --unavailable`, `.sp-seat-legend`, `.sp-seat-footprint` | `05-status-and-marks.html#seat` | 1 | |
 | Skip link | asset | `.cds-skip-link` (asset) | `01-shell.html` (first focusable) | 2 | |
-| Header, name, nav, utils | asset-overridden | `.cds-header.sp-header`, `.cds-header-name`, `.cds-header-nav`, `.cds-header-utils`, `.sp-header-center` | `01-shell.html#header` | 2 | |
+| Header, name, nav, utils | asset-overridden | `.cds-header.sp-header`, `.cds-header-name`, `.cds-header-nav`, `.cds-header-utils`, `.sp-header-center` | `01-shell.html#header` | 2 | `.sp-header-center` centres the indicator in the header's free run (flex: 1), not at x=960 — owner ruling 2026-09-04 (Phase 4 PR 2): the page-midpoint rule met the admin's links between 1056 and ~1580px |
+| Current section link — no hover fill | asset-overridden | `.sp-header .cds-header-nav a[aria-current="page"]:hover` | `01-shell.html#header` | 2 | owner ruling 2026-09-04 (Phase 4 PR 2): the current link is not a destination, so it keeps the shell background on hover and the terracotta bar stays 3.97:1 on gray 100 (2.77:1 on the asset's gray-90-hover) — the fifth hover-surface instance (§3) |
 | Hamburger / reserved slot | hand-built | `.sp-header-slot`, `.sp-header-slot--reserved`, `.sp-glyph-menu` / `.sp-glyph-close` | `01-shell.html#hamburger` | 2 | |
 | Utility icon button, outlined when open | asset-overridden | `.sp-header .cds-header-utils button[aria-expanded="true"]` | `01-shell.html#utilities` | 2 | |
 | Tooltip on icon buttons | hand-built | `.sp-has-tooltip` > `.sp-tooltip[role=tooltip]` | `01-shell.html#utilities` | 2 | |
@@ -649,6 +650,7 @@ lighten to `layer-hover-01` (#e8e8e8) on hover, and every grade-60 colour that p
 | 2 | Ask Planner AI label (PR 3, §1.18) | `link-primary` blue 60 | 4.08 | hover text steps to `link-primary-hover` blue 70 (`--sp-ai-label-text-hover`) |
 | 3 | Seat link on the Management table row (PR 4, §1.23) | `link-primary` blue 60 | 4.08 | `tr:hover .sp-seat-link` → `--sp-table-link-on-hover-row` blue 70 — the asset's own ghost button does the same |
 | 4 | Danger ghost on dark layers (PR 4, §1.24) — an asset gap, not a hover case | `button-danger-primary` red 60 on `#393939` | 2.31 | `--sp-button-danger-ghost-text` = `text-error` (red 60 light / red 40 g100), a global override of the asset class |
+| 5 | Terracotta current bar on the hovered current link (Phase 4 PR 2, brand layer) | `--sp-shell-current-bar` #B85C2E on g100 = 3.97 | 2.77 on the asset's gray-90-hover | the current link takes no hover fill (`sp-components.css` §3 override, owner ruling 2026-09-04) — the surface stays g100; pairs added to `generate-pairs.mjs` |
 
 Rule for Phase 4: **any blue-60 or gray-60 text that sits on something that hovers steps one grade on the
 row's hover**, and any red text on a dark layer is `text-error`, never `button-danger-primary`.

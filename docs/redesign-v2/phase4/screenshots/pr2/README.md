@@ -49,21 +49,21 @@ Computed from `shell-states.mjs` (`measurements.json`) and checked with the skil
 | Utility icon | pressed | `#f4f4f4` on `#393939` (gray 80) | 10.50 | 3:1 |
 | Utility / indicator | open | `#f4f4f4` on `#161616`, outline `#393939` ×3 inset + `0 1px 0 #161616` (four shadows) | 16.45 (icon) | 3:1 |
 | Current-section bar | rest | `#B85C2E` on `#161616` | 3.97 | 3:1 |
-| Current-section bar | **hovered current link** | `#B85C2E` on `#333333` | **2.77** | 3:1 |
+| Current-section bar | hovered current link | `#B85C2E` on `#161616` — no hover fill on the current link since the 2026-09-04 ruling (was `#333333` → 2.77 before it) | 3.97 | 3:1 |
 | Panel link (`--sp-panel-dark-link`) | rest | `#E8A07A` on `#161616` | 8.39 | 4.5:1 |
 | Panel link | hover | `#E8A07A` on `#333333` | 5.86 | 4.5:1 |
 | Panel link | pressed | `#E8A07A` on `#393939` | 5.36 | 4.5:1 |
 
-**One finding, raised to the owner (not changed in PR 2):** the terracotta current bar clears 3:1 on the resting
-header but not while the *current* link is hovered (the asset's `.cds-header-nav a:hover` lightens the surface to
-gray-90-hover and the bar stays #B85C2E → 2.77:1). This is a brand-layer / hover-surface pair (CLAUDE.md brand
-checklist measured the bar on #161616 only); the fix is a token ruling — a lighter bar on hover, or no hover fill on
-the current link — not a shell change.
+**Finding 1 — ruled (owner, 2026-09-04): the current link takes no hover fill.** The bar measured 2.77:1 on the
+asset's gray-90-hover while the *current* link was hovered; it is not a destination, so it keeps the shell background
+on hover and the bar stays 3.97:1 in every state (`sp-components.css` §3 override; PHASE3DS §2 / §3 instance 5;
+`generate-pairs.mjs` rest + hover pairs, 193/193).
 
-## Second finding, raised to the owner — the header at laptop widths
+## Finding 2 — ruled (owner, 2026-09-04): the indicator centres in the header's free run
 
-The mode indicator is centred on x = width / 2 by design (PHASE2UX §1.2 "centred on 960; never collides: links end
-≈ 688, utilities start at 1776" — measured at 1920). Below ~1580px on an admin (four links) the indicator meets the
-Settings link; at Playwright's 1280 default it sits over it and intercepts the click (caught by `nav-shell.spec.ts`
-2026-09-04, now pinned to the 1920 ruling frame). The header-nav fold happens at 1055 (the asset's breakpoint), so
-1056–1580 is undesigned. Options in the PR body; owner ruling wanted before PR 3 lands more in the row.
+The page-midpoint rule (PHASE2UX §1.2 "centred on 960", measured at 1920) met the admin's four links below ~1580px and
+at 1280 sat over Settings and intercepted the click. Ruling: `.sp-header-center` centres the indicator between the last
+section link and the first utility — one fluid rule, both roles, every width; the nav fold stays at the asset's 1055.
+`tests/e2e-auth/header-geometry.spec.ts` pins "never intersects a link or a utility" at 1920 / 1580 / 1366 / 1280 /
+1056 for both link sets and logs the measured centres (PHASE4BUILD §1.15). The header captures above were regenerated
+after the ruling.

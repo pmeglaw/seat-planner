@@ -176,7 +176,7 @@ Second pass, same day, after the conformance review (section E) and the "Seat Pl
 | 20 | Theme utility | **Go with IBM**: Theme leaves the utility group, becomes a row in the Account panel; utilities are Help · History · Account |
 | 21 | E2.5 filter placement (mockups: always-on rail, strip in control row, collapsed strip, hidden rail + hamburger) | **Option A2**: 256px left panel hidden by default, header hamburger toggles it; "Filters N ×" in the control row. People filter occasionally. **Amended 2026-09-04 (owner, Phase 4 PR 2):** the panel carries FOUR groups — Department · Zone · Status · **Position** (supervisors filter by role); `?position=` joins B3. Same pattern, one more category — not a deviation |
 | 22 | Reset draft on Settings | **Retire it** — too destructive. Snapshot restore stays with a confirmation |
-| 23 | E2.1 + E2.2 mockups (indicator, History panel admin + viewer) | **Approved** as mocked |
+| 23 | E2.1 + E2.2 mockups (indicator, History panel admin + viewer) | **Approved** as mocked. **Amended 2026-09-04 (owner, Phase 4 PR 2):** "centred" means centred in the header's free run between the last section link and the first utility, not at the page midpoint — one fluid rule for both roles at every width |
 | 24 | "320+ adaptive" standing ruling | Reworded, not dropped — see F1 |
 
 Raised after the second pass, ruled the same day:
