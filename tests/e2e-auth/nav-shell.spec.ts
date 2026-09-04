@@ -38,15 +38,17 @@ import { retryUntilVisible, SEEDED_ADMIN_EMAIL, signIn } from "./auth-helpers";
 // being navigated AWAY from. Their <h1> is route-unique.
 //
 // The admin's "Seat map" link lands on /admin (role-fitted), so the viewer
-// map is reached through the History panel's mode switch ("Published") —
-// the shell's one cross-mode exit — and left again through the switch
-// ("Draft"). Both go through the same client-router path as a link click.
-type Section = { title: string; path: string; probe: string; heading: string | null; via: "link" | "switch" };
+// map is reached through the header NAME link (it always goes to `/`) and
+// left again through the History panel's mode switch ("Draft") — the
+// shell's cross-mode exit. (From Reception the switch's "Published" segment
+// is already current and inert — the mode is a fact of the route.) Both go
+// through the same client-router path as a section-link click.
+type Section = { title: string; path: string; probe: string; heading: string | null; via: "link" | "name" | "switch" };
 const SECTIONS: Section[] = [
   { title: "Management", path: "/admin/management", probe: "#admin-subpage-main", heading: "Management", via: "link" },
   { title: "Settings", path: "/admin/settings", probe: "#admin-subpage-main", heading: "Settings", via: "link" },
   { title: "Reception", path: "/reception", probe: "#reception-main", heading: null, via: "link" },
-  { title: "Published", path: "/", probe: "#viewer-seat-map", heading: null, via: "switch" },
+  { title: "Seat Planner", path: "/", probe: "#viewer-seat-map", heading: null, via: "name" },
   { title: "Draft", path: "/admin", probe: "#planning-canvas", heading: null, via: "switch" }
 ];
 
@@ -55,6 +57,8 @@ const hamburger = (page: Page) => page.locator('#shell-header button[aria-contro
 async function navigateToSection(page: Page, section: Section) {
   if (section.via === "link") {
     await page.locator(`#shell-header nav a[title="${section.title}"]`).click();
+  } else if (section.via === "name") {
+    await page.locator("#shell-header a.cds-header-name").click();
   } else {
     await page.locator('#shell-header button[aria-label="History"]').click();
     await page.locator('#shell-panel-history [role="group"][aria-label="Mode"] button', { hasText: section.title }).click();
@@ -117,9 +121,9 @@ test("shell navigation is client-side: zero document loads, one persistent heade
   const warmLapDocumentRequests = [...documentRequests];
   documentRequests.length = 0;
 
-  // The lap ends on /admin; open the left panel? Not there — /admin registers
-  // no filters until PR 3 (D0-h reserved slot), so stage invariant 3 from the
-  // viewer instead: switch to Published, open the panel, then measure.
+  // The lap ends on /admin, which registers no filters until PR 3 (D0-h
+  // reserved slot), so stage invariant 3 from the viewer instead: go to `/`
+  // through the name link, open the panel, then measure.
   await navigateToSection(page, SECTIONS[3]);
   await retryUntilVisible(() => hamburger(page).click(), page.locator('#shell-left-panel[data-open="true"]'));
   documentRequests.length = 0;
