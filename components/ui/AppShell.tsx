@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { AppRail, type AppRailActive } from "@/components/ui/AppRail";
 import { AppTopBar, type AppTopBarSlot } from "@/components/ui/AppTopBar";
 import type { SkewDetector } from "@/lib/deploySkew";
+import type { ShellServerState } from "@/lib/shellState";
 
 // Persistent app shell for the (shell) route group (/admin, /admin/management,
 // /admin/settings, /reception). Mounted ONCE by app/(shell)/layout.tsx and
@@ -123,7 +124,11 @@ const SKIP_LINKS: Record<AppRailActive, { href: string; label: string }> = {
 
 export type AppShellProps = {
   email: string;
+  /** Keys per-user shell preferences (left panel open state) — PR 2 shell. */
+  userId?: string;
   isAdmin: boolean;
+  /** Server facts for the mode indicator + Account panel — PR 2 shell. */
+  initialShell?: ShellServerState;
   /** Test seam only — forwarded to AppRail (defaults to its module singleton). */
   skewDetector?: SkewDetector;
   children: ReactNode;
