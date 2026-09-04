@@ -83,8 +83,8 @@ with the admin to Management and back — D2). The History switch from a sub-pag
 | Geometry | 256px wide, below the header, full remaining height, white (`layer-01` in Phase 3), 1px right rule. **Slide-in: pushes the canvas** — the map region becomes 1664px at 1920 and re-fits. No overlay, **no focus trap** (it is part of the page) |
 | Open / close | Hamburger toggles; **Esc** closes when focus is inside the panel or on the hamburger; open/closed **remembered per user** (localStorage — a display preference, not URL state; the *applied filters* are URL state per B3). Motion 110ms on the productive exit curve (ui-shell). Reduced motion: no slide, instant |
 | Header row | "Filters" `heading-compact-01` + ghost **Clear all** (right), 48px row, pinned while the body scrolls. Clear all is Hidden while nothing is applied — a Clear that clears nothing reads as broken |
-| Groups | **Department**, **Zone**, **Status** — each a checkbox group (`fieldset`/`legend`), group title `heading-compact-01`, ghost **Clear** per group (Hidden while the group is empty), items 32px, a count per option in helper style ("Case Management · 38"). Start all-unselected (users typically want one, per patterns). **Instant** updates — one selection at a time is the expected gesture and the set is small |
-| Roster floor (Floor 2 today) | Zone and Status are **Hidden** with one note under Department: "Zone and status are seat facts — Floor 2 has no seats yet." Department counts count *people* (D1′ Q5) |
+| Groups | **Department**, **Zone**, **Status**, **Position** (*amended 2026-09-04, owner ruling in Phase 4 PR 2: Position stays as the fourth group — supervisors use it to see seating by role; `?position=` joins B3*) — each a checkbox group (`fieldset`/`legend`), group title `heading-compact-01`, ghost **Clear** per group (Hidden while the group is empty), items 32px, a count per option in helper style ("Case Management · 38"). Start all-unselected (users typically want one, per patterns). **Instant** updates — one selection at a time is the expected gesture and the set is small |
+| Roster floor (Floor 2 today) | Zone and Status are **Hidden** with one note under Department: "Zone and status are seat facts — Floor 2 has no seats yet." Department counts count *people* (D1′ Q5). Position stays (people have positions) and is Hidden only when nobody listed carries one (2026-09-04) |
 | Below `lg` | Section links sit **above** the filters as 32px nav items (Seat map · Reception · Management · Settings — role-filtered, current marked), then a 1px divider, then the filter groups. The header links are absent at that width. On non-map routes the panel holds the links only |
 | Collapsed-container rule | While closed, the map control row shows **"Filters N ×"** (count of applied filters; × clears without reopening). That button is designed in the map slice; it is drawn here as context only |
 | Landmarks | `navigation` labelled "Sections" for the links; `complementary` labelled "Filters" for the rest. Keyboard: Tab through; checkboxes are native |
@@ -180,7 +180,7 @@ editing is read-only — those are the other slices' concern; the shell itself h
 
 ### 1.7 Keyboard path (shell)
 
-1. Skip link ("Skip to main content") is the first focusable element.
+1. Skip link is the first focusable element. *Amended 2026-09-04 (owner, Phase 4 PR 2): the shipped per-route labels stay — "Skip to seat map" on the maps, "Skip to content" elsewhere — the guardrail is first-focusable + a real target, and the copy is more informative than the generic.*
 2. Header: hamburger → header name → links → mode indicator → Help → History → Account. All 48px targets.
 3. Left panel open: focus stays on the hamburger; Tab enters the panel in DOM order (links, then filters).
    Esc anywhere inside closes and returns focus to the hamburger.

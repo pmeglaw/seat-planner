@@ -324,7 +324,7 @@
   </div>
 
   <h2 id="left">Left filter panel — <code>.sp-left-panel</code> (256, layer-01, slide-in, pushes)</h2>
-  <p class="spec-anatomy">Header row 48 pinned: “Filters” heading-compact-01 + ghost Clear all (Hidden while nothing is applied). Groups = <code>fieldset</code>/<code>legend</code> 32px with a ghost Clear (Hidden while the group is empty); items 32px: <code>.cds-checkbox</code> + name (truncates with <code>title</code>) + count in helper style, text-secondary because the row hovers. Instant updates. Esc closes; no focus trap; motion fast-02 on one axis.</p>
+  <p class="spec-anatomy">Header row 48 pinned: “Filters” heading-compact-01 + ghost Clear all (Hidden while nothing is applied). Groups = <code>fieldset</code>/<code>legend</code> 32px with a ghost Clear (Hidden while the group is empty); items 32px: <code>.cds-checkbox</code> + name (truncates with <code>title</code>) + count in helper style, text-secondary because the row hovers. Instant updates. Esc closes; no focus trap; motion fast-02 on one axis. <strong>Four groups since 2026-09-04 (owner ruling, Phase 4 PR 2): Department · Zone · Status · Position</strong> — same pattern, one more category.</p>
   <div class="lp-grid">
     <div><span class="spec-note">applied · Department ×2, Status ×1 · first item hovered</span>
     <div class="sp-left-panel" id="lp" role="complementary" aria-label="Filters">
@@ -347,6 +347,12 @@
           <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox" checked><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Assigned</span><span class="sp-filter-count">56</span></label>
           <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Open</span><span class="sp-filter-count">12</span></label>
         </fieldset>
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Position</span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Attorney</span><span class="sp-filter-count">18</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Case Manager</span><span class="sp-filter-count">24</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Paralegal</span><span class="sp-filter-count">12</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Intake Specialist</span><span class="sp-filter-count">0</span></label>
+        </fieldset>
       </div>
     </div></div>
 
@@ -368,6 +374,8 @@
         <div class="sp-skeleton-row"><span class="sp-skeleton"></span></div><div class="sp-skeleton-row"><span class="sp-skeleton sp-skeleton--w2"></span></div><div class="sp-skeleton-row"><span class="sp-skeleton sp-skeleton--w3"></span></div>
         <div class="sp-filter-group-row">Status</div>
         <div class="sp-skeleton-row"><span class="sp-skeleton"></span></div><div class="sp-skeleton-row"><span class="sp-skeleton sp-skeleton--w2"></span></div>
+        <div class="sp-filter-group-row">Position</div>
+        <div class="sp-skeleton-row"><span class="sp-skeleton sp-skeleton--w3"></span></div><div class="sp-skeleton-row"><span class="sp-skeleton"></span></div>
       </div>
     </div></div>
 
@@ -419,6 +427,12 @@
         <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Status</span></legend>
           <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Assigned</span><span class="sp-filter-count">56</span></label>
           <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Open</span><span class="sp-filter-count">12</span></label>
+        </fieldset>
+        <fieldset class="sp-filter-group"><legend><span class="sp-filter-group-row">Position</span></legend>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Attorney</span><span class="sp-filter-count">18</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Case Manager</span><span class="sp-filter-count">24</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Paralegal</span><span class="sp-filter-count">12</span></label>
+          <label class="sp-filter-item"><span class="cds-checkbox"><input type="checkbox"><span><svg><use href="#i-check"/></svg></span></span><span class="sp-filter-name">Intake Specialist</span><span class="sp-filter-count">0</span></label>
         </fieldset>
       </div>
     </div></div>

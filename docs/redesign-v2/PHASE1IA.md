@@ -174,7 +174,7 @@ Second pass, same day, after the conformance review (section E) and the "Seat Pl
 | 18 | E2.3 `/my-seat` chrome | Unchanged — deviation 12 stands |
 | 19 | E2.6 Ask Planner placement | Unchanged — deviation 14 stands |
 | 20 | Theme utility | **Go with IBM**: Theme leaves the utility group, becomes a row in the Account panel; utilities are Help · History · Account |
-| 21 | E2.5 filter placement (mockups: always-on rail, strip in control row, collapsed strip, hidden rail + hamburger) | **Option A2**: 256px left panel hidden by default, header hamburger toggles it; "Filters N ×" in the control row. People filter occasionally |
+| 21 | E2.5 filter placement (mockups: always-on rail, strip in control row, collapsed strip, hidden rail + hamburger) | **Option A2**: 256px left panel hidden by default, header hamburger toggles it; "Filters N ×" in the control row. People filter occasionally. **Amended 2026-09-04 (owner, Phase 4 PR 2):** the panel carries FOUR groups — Department · Zone · Status · **Position** (supervisors filter by role); `?position=` joins B3. Same pattern, one more category — not a deviation |
 | 22 | Reset draft on Settings | **Retire it** — too destructive. Snapshot restore stays with a confirmation |
 | 23 | E2.1 + E2.2 mockups (indicator, History panel admin + viewer) | **Approved** as mocked |
 | 24 | "320+ adaptive" standing ruling | Reworded, not dropped — see F1 |

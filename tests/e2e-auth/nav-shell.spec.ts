@@ -68,6 +68,13 @@ async function navigateToSection(page: Page, section: Section) {
 
 test("shell navigation is client-side: zero document loads, one persistent header", async ({ page }) => {
   test.setTimeout(120_000);
+  // The owner's ruling frame (dual 27" FHD, Chrome maximized). Playwright's
+  // 1280×720 default is NOT a designed width for the admin header: the
+  // centred mode indicator (x = width / 2) meets the four section links
+  // below ~1580px and intercepts the Settings click (found 2026-09-04, raised
+  // to the owner in the PR 2 review — a width-ladder ruling, not a shell
+  // regression). This spec pins navigation, not the ladder.
+  await page.setViewportSize({ width: 1920, height: 1080 });
 
   // signIn lands on "/" (the login form's default next path) — under the
   // shell now. Open the left panel through the hamburger: the button only
