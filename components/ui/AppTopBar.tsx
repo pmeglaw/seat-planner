@@ -21,10 +21,6 @@ import { modeIndicatorText, type ShellModeStatus } from "@/lib/shellMode";
 // behaviour is opening the History panel. The section link says where you
 // are; only the History panel's switch changes mode.
 
-export type ShellSlot = "left" | "center" | "right";
-/** @deprecated name kept for SeatMap's seam — same three slots. */
-export type AppTopBarSlot = ShellSlot;
-
 export type AppTopBarProps = {
   isAdmin: boolean;
   pathname: string;

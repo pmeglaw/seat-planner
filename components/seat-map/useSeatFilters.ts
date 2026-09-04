@@ -11,11 +11,7 @@
 // map's copy was removed as dead code once #432 took the zone chips away).
 
 import { useCallback, useMemo, useState } from "react";
-import type { ActiveFilterChip, ResultStatusBreakdown } from "@/components/seat-map/FilterPanel";
-import type { AdminResultCard } from "@/components/seat-map/ResultsPanel";
-import { floorOf, type FloorId } from "@/lib/floorIds";
-import { FLOORS, rosterFloorForUnseated } from "@/lib/floors";
-import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
+import type { FloorId } from "@/lib/floorIds";
 import {
   hasActiveConstraints,
   seatMatchesFilters,
@@ -29,6 +25,12 @@ import { searchHandsPanelToResults } from "@/lib/viewerSeatSearch";
 export function getSeatZone(seat: SeatWithEmployee) {
   return seat.zone ?? seat.department ?? "";
 }
+
+// The applied constraints as chips — kept for the standalone jsdom harness's
+// assertions; the shipped surfaces show the count in the control row and the
+// groups in the shell's left panel (PR 3a).
+export type ActiveFilterChip = { id: string; label: string; value: string; removeLabel: string };
+export type ResultStatusBreakdown = Record<SeatStatus, number>;
 
 export function useSeatFilters({
   localSeats,
@@ -84,62 +86,6 @@ export function useSeatFilters({
     reserved: matchingSeats.filter(seat => seat.status === "reserved").length,
     unavailable: matchingSeats.filter(seat => seat.status === "unavailable").length
   }), [matchingSeats]);
-  // Merged result cards: one card per entity (F1) — an assigned seat and its occupant
-  // are one card, never two rows. Unassigned people matching a text search appear as
-  // disabled cards so the person is findable without fabricating a seat.
-  const panelResults = useMemo<AdminResultCard[]>(() => {
-    const statusRank: Record<SeatStatus, number> = { assigned: 0, available: 1, reserved: 2, unavailable: 3 };
-    const floorTagFor = (seatFloor: FloorId) => (seatFloor === floor ? null : FLOORS[seatFloor].tag);
-    const seatCards = [...matchingSeats]
-      .sort((a, b) => statusRank[a.status] - statusRank[b.status] || a.label.localeCompare(b.label))
-      .map(seat => {
-        const zoneLabel = getSeatZone(seat) || "No zone";
-        if (seat.employee) {
-          return {
-            key: `seat-${seat.id}`,
-            seatId: seat.id,
-            title: `${formatDisplayName(seat.employee.full_name)} — ${formatSeatCode(seat.label)}`,
-            // Person rows already imply "assigned" (they're built from an
-            // employee-bearing seat) — the trailing status token is redundant
-            // here and was truncating to "Assi…" in the narrow panel.
-            subtitle: [seat.employee.department, zoneLabel].filter(Boolean).join(" · "),
-            status: seat.status,
-            floorTag: floorTagFor(floorOf(seat))
-          };
-        }
-        return {
-          key: `seat-${seat.id}`,
-          seatId: seat.id,
-          title: formatSeatCode(seat.label),
-          subtitle: [seat.status === "available" ? "Open seat" : STATUS_LABELS[seat.status], zoneLabel].join(" · "),
-          status: seat.status,
-          floorTag: floorTagFor(floorOf(seat))
-        };
-      });
-    if (!searchQuery) return seatCards.slice(0, 60);
-    const needle = searchQuery.toLowerCase();
-    const assignedEmployeeIds = new Set(localSeats.map(seat => seat.employee_id).filter(Boolean));
-    // Where an unseated person works (lib/floors interim rule, from the DRAFT
-    // rows this editor holds). While one floor is not live the card is
-    // openable — it leads to that floor's roster row; once the rule retires
-    // (every floor live) there is nowhere to go and the card stays inert.
-    const unseatedFloor = rosterFloorForUnseated(localSeats);
-    const unassignedPeople = localEmployees
-      .filter(employee => !assignedEmployeeIds.has(employee.id))
-      .filter(employee => [employee.full_name, employee.position, employee.department, employee.phone_extension].filter(Boolean).join(" ").toLowerCase().includes(needle))
-      .map(employee => ({
-        key: `person-${employee.id}`,
-        seatId: null,
-        employeeId: employee.id,
-        title: formatDisplayName(employee.full_name),
-        subtitle: [employee.position, employee.department, "Unassigned"].filter(Boolean).join(" · "),
-        status: null,
-        floorTag: unseatedFloor ? floorTagFor(unseatedFloor) : null,
-        disabled: unseatedFloor === null
-      }));
-    return [...seatCards, ...unassignedPeople].slice(0, 60);
-  }, [floor, localEmployees, localSeats, matchingSeats, searchQuery]);
-
   // Memoized: this sits in SeatMap's Esc-effect dependency array, and an
   // unstable identity there would tear down and re-add the window keydown
   // listener on every render. The empty dep array is safe because useState
@@ -217,7 +163,6 @@ export function useSeatFilters({
     activeFilterCount,
     matchingSeats,
     resultStatusBreakdown,
-    panelResults,
     matchesFilters,
     clearStructuredFilters,
     clearAllConstraints,

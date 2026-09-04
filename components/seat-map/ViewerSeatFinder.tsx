@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
-import { findSeatIdByParam, readFilterParams, readFloorParam, readSeatParam, withFilterParams, withFloorParam, withSeatParam } from "@/lib/deepLink";
+import { findSeatIdByParam, readFilterParams, readFloorParam, readNamesParam, readQueryParam, readSeatParam } from "@/lib/deepLink";
+import { nextMapHref } from "@/lib/mapUrlState";
+import { scopeResults, type SearchScope } from "@/lib/mapSearchScope";
+import { shortcutHint } from "@/lib/platformShortcut";
+import { findEmployeeByEmail, findSeatForEmployee } from "@/lib/mySeat";
 import { departmentKey } from "@/lib/departments";
 import { DEFAULT_FLOOR, floorOf, type FloorId } from "@/lib/floorIds";
 import {
@@ -13,15 +17,16 @@ import {
   floorSurface,
   landingFloor,
   peopleOnFloor,
+  rosterFloorForUnseated,
   personPassesFilters,
   urlFloorFor
 } from "@/lib/floors";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
-import { createPortal } from "react-dom";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { normalizeSeat } from "@/lib/seatNormalize";
+import { formatDisplayName } from "@/lib/formatName";
 import { cx } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 
@@ -41,13 +46,11 @@ import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } 
 import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { buildViewerPaletteBrowse, getSeatZone, zoneKey } from "@/lib/viewerFindPalette";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
-import { useAppShellFilters, useAppShellSlots, type ShellFilterSpec } from "@/components/ui/AppShell";
+import { useAppShellFilters, useAppShellLeftPanel, useAppShellState, type ShellFilterSpec } from "@/components/ui/AppShell";
 import { buildViewerFilterGroups } from "@/lib/viewerFilterGroups";
-import { ActiveFilterChips, FilterPanel, type ActiveFilterChip } from "@/components/seat-map/FilterPanel";
 import { FloorRoster, focusFloorRoster } from "@/components/seat-map/FloorRoster";
-import { FloorSelector } from "@/components/seat-map/FloorSelector";
-import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
-import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
+import { MapControlRow } from "@/components/seat-map/MapControlRow";
+import { CanvasStatus, type CanvasNotice } from "@/components/seat-map/CanvasStatus";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker } from "@/components/seat-map/SeatMarker";
@@ -55,8 +58,6 @@ import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
 import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, markerHitFloorMet, textTierActive } from "@/lib/seatCrowding";
-import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
-import { buildZoneWash } from "@/lib/zoneWash";
 
 type ViewerSeatFinderProps = {
   seats: SeatWithEmployee[];
@@ -166,11 +167,15 @@ export function ViewerSeatFinder({
   employees,
   departmentOptions = [],
   zoneOptions = [],
-  lastPublishedLabel = null,
   landing
 }: ViewerSeatFinderProps) {
   const [search, setSearch] = useState("");
-  const [searchShortcutHint, setSearchShortcutHint] = useState("");
+  const [searchShortcutHint, setSearchShortcutHint] = useState<string | null>(null);
+  // Focused search scope (D1-d): "This floor" lists this floor's rows, the
+  // header always carries both counts.
+  const [searchScope, setSearchScope] = useState<SearchScope>("floor");
+  // Inline notices over the canvas (Find me: not in the published directory).
+  const [canvasNotices, setCanvasNotices] = useState<CanvasNotice[]>([]);
   // The ONE Find surface (v12 contract #2). It replaced four flags that used
   // to fight over the right column — directoryOpen / directoryCollapsed /
   // mobileDirectoryOpen / resultsPanelOpen — because it replaced the four
@@ -256,11 +261,7 @@ export function ViewerSeatFinder({
   const [department, setDepartment] = useState("all");
   const [position, setPosition] = useState("all");
   const [zone, setZone] = useState("all");
-  // Zone chip preview (v12 contract #8) — parity with the admin map. Purely a
-  // display cue: it decides what the map washes, never what is filtered.
-  const [hoverZone, setHoverZone] = useState<string | null>(null);
   const [status, setStatus] = useState("all");
-  const [filterOpen, setFilterOpen] = useState(false);
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
 
@@ -280,16 +281,17 @@ export function ViewerSeatFinder({
     resolveSeatVisualX: seatId => visualSeatById.get(seatId)?.x ?? null
   });
   const panStateRef = useRef<ViewerPanState>(null);
-  const filterRootRef = useRef<HTMLDivElement | null>(null);
-  const filterTriggerRef = useRef<HTMLButtonElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   // The field WRAPPER, not the input: the palette aligns its left edge to the
   // field's box (contract #2), and outside-click dismissal has to treat the
   // whole field — magnifier, clear button, kbd hint — as "inside".
   const searchFieldRef = useRef<HTMLDivElement | null>(null);
   const paletteRef = useRef<HTMLDivElement | null>(null);
-  // The persistent shell's tenant-row slots (null in standalone harnesses).
-  const shellSlots = useAppShellSlots();
+  // The persistent shell (null in standalone harnesses): the left panel the
+  // control row's "Filters · N" opens, and the person's published seat for
+  // "Find me" (D1-f).
+  const shellLeftPanel = useAppShellLeftPanel();
+  const shellState = useAppShellState();
   // One-shot: set when Escape hands focus back to the field from inside the
   // palette, consumed by the field's onFocus. Without it the hand-back is
   // indistinguishable from a user focusing the field, so onFocus re-opened the
@@ -342,21 +344,6 @@ export function ViewerSeatFinder({
     () => (surface === "roster" ? peopleOnFloor(floor, publishedSeats, employees) : []),
     [employees, floor, publishedSeats, surface]
   );
-  // The top-left chip cluster floats over the stage (see the render comment
-  // below). On the roster floor that corner is the roster's sticky header, so
-  // the header clears the cluster by its MEASURED height — the chips wrap on
-  // narrow frames and with active filters, so no static inset is right.
-  const chipClusterRef = useRef<HTMLDivElement | null>(null);
-  const [chipClusterHeight, setChipClusterHeight] = useState(0);
-  useEffect(() => {
-    const cluster = chipClusterRef.current;
-    if (!cluster) return;
-    const update = () => setChipClusterHeight(cluster.offsetHeight);
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(cluster);
-    return () => observer.disconnect();
-  }, []);
   // Pill crowding at the live rendered scale (render-layer only, parity with
   // the admin map): code pills render at one uniform size, and the crowded
   // set feeds alternating vertical token nudges that keep tight pods from
@@ -512,28 +499,6 @@ export function ViewerSeatFinder({
     if (selectedSeatId) set.delete(selectedSeatId);
     return set;
   }, [filtersActive, highlightedSeatIdSet, selectedSeatId, showNames, visualSeats]);
-  // Office room wash, published layer (parity with the admin map — the
-  // 2026-07-24 publish check caught the viewer missing it entirely). Dim and
-  // search-highlight sets mirror the marker loop's own predicates below; the
-  // viewer has no swap/drag modes, so those wash rules never engage here.
-  const officeRoomWashes = useMemo(() => {
-    const dimmedSeatIds = filtersActive
-      ? new Set(visualSeats.filter(seat => !highlightedSeatIdSet.has(seat.id) && seat.id !== selectedSeatId).map(seat => seat.id))
-      : undefined;
-    return buildOfficeRoomWashes({
-      floor,
-      seats: visualSeats.map(seat => ({ id: seat.id, x: seat.x, y: seat.y, status: seat.status })),
-      dimmedSeatIds,
-      searchActiveSeatIds: filtersActive ? highlightedSeatIdSet : undefined
-    });
-  }, [filtersActive, floor, highlightedSeatIdSet, selectedSeatId, visualSeats]);
-  // Zone hover-wash: the hovered chip wins over the pinned zone filter, so
-  // running along the chip row previews each zone without changing what is
-  // filtered. Visual seats — the box must frame the markers as rendered.
-  const zoneWash = useMemo(
-    () => buildZoneWash(hoverZone ?? (zone !== "all" ? zone : null), visualSeats),
-    [hoverZone, visualSeats, zone]
-  );
   // Name-label collision nudges (render-layer only): prominent tokens plus,
   // with the legend's Show-names toggle on, every visible occupant name —
   // nudged at the same live zoom-aware clearance as the code graph (parity
@@ -608,18 +573,6 @@ export function ViewerSeatFinder({
     if (!seatById.has(selectedSeatId)) setSelectedSeatId(null);
   }, [seatById, selectedSeatId]);
 
-  useEffect(() => {
-    if (!filterOpen) return;
-
-    function handleOutsidePointer(event: globalThis.PointerEvent) {
-      if (filterRootRef.current?.contains(event.target as Node)) return;
-      setFilterOpen(false);
-    }
-
-    document.addEventListener("pointerdown", handleOutsidePointer);
-    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
-  }, [filterOpen]);
-
   // Outside click closes the palette (contract #2). The FIELD counts as
   // inside: a press there is how you open it, so treating it as outside would
   // make the pointerdown close what the click is about to reopen.
@@ -642,7 +595,7 @@ export function ViewerSeatFinder({
   // frame after mount so the server markup never guesses the platform.
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      setSearchShortcutHint(/mac/i.test(window.navigator.platform) ? "⌘K" : "Ctrl K");
+      setSearchShortcutHint(shortcutHint(window.navigator.platform, "K"));
     });
     const handleSearchShortcut = (event: globalThis.KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "k") {
@@ -670,10 +623,6 @@ export function ViewerSeatFinder({
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
-      if (filterOpen) {
-        setFilterOpen(false);
-        return;
-      }
       const target = event.target;
       if (paletteOpen) {
         // Focus is about to be unmounted along with the palette if it was
@@ -716,7 +665,7 @@ export function ViewerSeatFinder({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [filterOpen, paletteOpen, search, selectedSeatId, structuredFiltersActive]);
+  }, [paletteOpen, search, selectedSeatId, structuredFiltersActive]);
 
   // Contain-fit for the fit view, three tiers by viewport width:
   //  - >=1024 (lg): both-dimension contain-fit (same pattern as SeatMap's
@@ -856,14 +805,7 @@ export function ViewerSeatFinder({
   const departmentSummaryAction = summarySwitchTo
     ? {
         label: `Show ${FLOORS[summarySwitchTo].tag}`,
-        onClick: () => {
-          switchFloor(summarySwitchTo);
-          // The action unmounts with the switch (the roster summary has no
-          // cross-floor variant), so the popover closes and focus goes back
-          // to its trigger — the same hand-back Escape performs.
-          setFilterOpen(false);
-          returnFocusAfterClose(filterTriggerRef);
-        }
+        onClick: () => switchFloor(summarySwitchTo)
       }
     : undefined;
 
@@ -974,7 +916,6 @@ export function ViewerSeatFinder({
   // the pointer.
   function pinZoneFromPalette(nextZone: string) {
     setZone(nextZone);
-    setHoverZone(null);
     setPaletteOpen(false);
     // The chip unmounts with the palette, so a keyboard pin ("Enter to
     // filter", the eyebrow's own invitation) would drop focus to <body> —
@@ -1037,7 +978,19 @@ export function ViewerSeatFinder({
   // Deep-link (#196): same `?seat=<label>` contract as the admin map — read
   // once on mount, then mirror selection changes with a shallow replaceState.
   const seatParamAppliedRef = useRef(false);
+  // ?q= (D1-d landing): the field pre-fills and the palette opens; a unique
+  // match auto-selects (the effect below, once the results exist). ?names=off
+  // overrides the stored preference for this load only.
+  const landingQueryRef = useRef<string | null>(null);
   useEffect(() => {
+    const query = readQueryParam(window.location.search);
+    if (query) {
+      landingQueryRef.current = query;
+      setSearch(query);
+      setPaletteOpen(true);
+    }
+    const names = readNamesParam(window.location.search);
+    if (names !== null) setShowNames(names);
     const seatId = findSeatIdByParam(publishedSeats, readSeatParam(window.location.search));
     seatParamAppliedRef.current = true;
     if (!seatId) return;
@@ -1049,18 +1002,28 @@ export function ViewerSeatFinder({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ONE writer for the B3 set (lib/mapUrlState): ?floor= ?seat= ?q= ?names=
+  // and the four filters compose into a single replaceState once every
+  // hydration read has happened — no more racing effects over
+  // window.location.search. The query is written debounced so a typist does
+  // not churn history state per keystroke.
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
   useEffect(() => {
-    if (!seatParamAppliedRef.current || !floorPreferenceHydrated) return;
-    const label = selectedSeatId ? (publishedSeats.find(seat => seat.id === selectedSeatId)?.label ?? null) : null;
-    // ?floor= only off the default floor, so the bare URL stays canonical;
-    // a remembered Floor 2 session therefore shares as ?floor=2.
-    const search = withFloorParam(withSeatParam(window.location.search, label), floor === DEFAULT_FLOOR ? null : floor);
-    const next = `${window.location.pathname}${search}${window.location.hash}`;
-    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (next !== current) window.history.replaceState(window.history.state, "", next);
+    if (!seatParamAppliedRef.current || !floorPreferenceHydrated || !filtersHydrated || !namesPreferenceHydrated) return;
+    const write = () => {
+      const label = selectedSeatId ? (publishedSeats.find(seat => seat.id === selectedSeatId)?.label ?? null) : null;
+      const next = nextMapHref(window.location, { floor, seatLabel: label, query: search, namesVisible: showNames, filters: { department, position, zone, status } });
+      if (next) window.history.replaceState(window.history.state, "", next);
+    };
+    if (!search) {
+      write();
+      return;
+    }
+    const timer = window.setTimeout(write, 150);
+    return () => window.clearTimeout(timer);
     // publishedSeats omitted: a seat's label is stable for the life of its id.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [floor, floorPreferenceHydrated, selectedSeatId]);
+  }, [department, filtersHydrated, floor, floorPreferenceHydrated, namesPreferenceHydrated, position, search, selectedSeatId, showNames, status, zone]);
 
   // Delegated marker-layer keyboarding — same pattern as the admin map:
   // arrows rove between seats (preventDefault keeps the scroll viewport from
@@ -1168,9 +1131,8 @@ export function ViewerSeatFinder({
 
   // --- Shell registration (redesign-v2 PR 2) --------------------------------
   // The four structured filters are URL state (PHASE1IA B3: ?dept= ?zone=
-  // ?status= ?position=): read once after hydration (like ?floor=), then
-  // mirrored with a shallow replaceState — the same pattern as ?seat= below.
-  const [filtersHydrated, setFiltersHydrated] = useState(false);
+  // ?status= ?position=): read once after hydration (like ?floor=); the one
+  // writer above mirrors them back.
   useEffect(() => {
     const fromUrl = readFilterParams(window.location.search);
     setDepartment(fromUrl.department);
@@ -1179,13 +1141,6 @@ export function ViewerSeatFinder({
     setStatus(fromUrl.status);
     setFiltersHydrated(true);
   }, []);
-  useEffect(() => {
-    if (!filtersHydrated) return;
-    const current = window.location.search;
-    const next = withFilterParams(current, { department, position, zone, status });
-    if (next !== current) window.history.replaceState(window.history.state, "", `${window.location.pathname}${next}${window.location.hash}`);
-  }, [filtersHydrated, department, position, zone, status]);
-
   // The left panel's four groups (Department · Zone · Status · Position, owner
   // ruling 2026-09-04) with per-floor counts; single-select semantics kept —
   // re-checking the checked item clears the group. The roster floor hides the
@@ -1223,40 +1178,56 @@ export function ViewerSeatFinder({
       onClearGroup: groupId => setters[groupId]?.("all"),
       onClearAll: clearStructuredFilters
     };
-    // clearStructuredFilters is a stable function declaration of this render scope.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [department, departmentSummary.text, departmentSummaryAction, filterGroups, floorMeta.tag, position, status, structuredFilterCount, structuredFiltersActive, surface, zone]);
-  useAppShellFilters(shellSlots ? shellFilterSpec : null);
-
-  const activeFilterChips: ActiveFilterChip[] = [
-    searchActive ? { id: "search", label: "Search", value: searchResults.query, removeLabel: `Remove search filter ${searchResults.query}` } : null,
-    department !== "all" ? { id: "department", label: "Department", value: department, removeLabel: `Remove department filter ${department}` } : null,
-    position !== "all" ? { id: "position", label: "Position", value: position, removeLabel: `Remove position filter ${position}` } : null,
-    zone !== "all" ? { id: "zone", label: "Zone", value: zone, removeLabel: `Remove zone filter ${zone}` } : null,
-    status !== "all" ? { id: "status", label: "Status", value: STATUS_LABELS[status as SeatStatus] ?? status, removeLabel: `Remove status filter ${STATUS_LABELS[status as SeatStatus] ?? status}` } : null
-  ].filter(Boolean) as ActiveFilterChip[];
-
-  function removeActiveFilterChip(chipId: string) {
-    if (chipId === "search") {
-      clearSearch();
-      return;
-    }
-    if (chipId === "department") {
-      setDepartment("all");
-      return;
-    }
-    if (chipId === "position") {
-      setPosition("all");
-      return;
-    }
-    if (chipId === "zone") {
-      setZone("all");
-      return;
-    }
-    if (chipId === "status") setStatus("all");
-  }
+  useAppShellFilters(shellFilterSpec);
 
   const resultCountLabel = searchResults.results.length === 1 ? "1 result" : `${searchResults.results.length} results`;
+  // D1-d scope: the palette lists this floor's rows or the whole building's;
+  // both counts always travel with the header (lib/mapSearchScope).
+  const scopedResults = useMemo(() => scopeResults(searchResults.results, floor, searchScope), [floor, searchResults.results, searchScope]);
+  // ?q= landing, second half: a unique match opens itself once the results
+  // exist (seat → inspector; unseated person → roster row); several stay a
+  // list; zero shows the zero state with the query kept.
+  useEffect(() => {
+    const query = landingQueryRef.current;
+    if (!query || search !== query || !floorPreferenceHydrated) return;
+    landingQueryRef.current = null;
+    if (searchResults.results.length === 1) openResult(searchResults.results[0]);
+    // openResult is a render-scope function; the landing runs once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [floorPreferenceHydrated, search, searchResults.results]);
+  // The row's result count — "22 of 68 seats match" while search or filters
+  // narrow the map, "68 seats" otherwise; people on the roster floor
+  // (PHASE2UX §1M.3). aria-live: filter-feedback-source's guardrail.
+  const controlCountText = surface === "roster"
+    ? `${rosterRows.length} ${rosterRows.length === 1 ? "person" : "people"}`
+    : filtersActive
+      ? `${floorHighlightedCount} of ${floorSeats.length} seats match`
+      : `${floorSeats.length} ${floorSeats.length === 1 ? "seat" : "seats"}`;
+  // Find me (D1-f): seated → own seat selected, inspector open; unseated →
+  // the roster floor with the row highlighted; not in the published
+  // directory → an inline notice in the map region.
+  function findMe() {
+    const email = shellState?.email ?? null;
+    const me = email ? findEmployeeByEmail(employees, email) : null;
+    if (!me) {
+      setCanvasNotices([{ id: "find-me", kind: "info", text: "Your account isn't in the published directory. Ask an admin.", onDismiss: () => setCanvasNotices([]) }]);
+      return;
+    }
+    setCanvasNotices([]);
+    const mySeat = findSeatForEmployee(publishedSeats, me.id);
+    if (mySeat) {
+      selectSeat(mySeat.id);
+      return;
+    }
+    const rosterFloor = rosterFloorForUnseated(publishedSeats);
+    if (!rosterFloor) return;
+    if (rosterFloor !== floor) switchFloor(rosterFloor, { announce: false });
+    setSelectedSeatId(null);
+    setRosterHighlight({ employeeId: me.id, title: formatDisplayName(me.full_name) });
+    setInspectorCollapsed(false);
+    focusFloorRoster(VIEWER_ROSTER_REGION_ID);
+  }
   // The roster row a find landed on (an unseated person opened from the
   // palette, in either mode) — only while that person is actually listed.
   const rosterHighlightedPersonId =
@@ -1276,9 +1247,6 @@ export function ViewerSeatFinder({
           : surface === "roster"
             ? `${rosterRows.length} ${rosterRows.length === 1 ? "person" : "people"} listed on ${floorMeta.tag}.`
             : `${floorSeats.length} seats loaded on ${floorMeta.tag}.`;
-  const mapCrumbLabel = surface === "roster"
-    ? `Directory · ${rosterRows.length} ${rosterRows.length === 1 ? "person" : "people"}`
-    : `Office map · ${floorSeats.length} ${floorSeats.length === 1 ? "seat" : "seats"}`;
   const mapZoomLabel = zoomFactor === null ? "Fit" : `${Math.round(zoomFactor * 100)}%`;
   // NOTHING reserves stage width any more (contract #1/#2): the results panel,
   // the People directory, its collapse rail and the mobile PEOPLE pill are all
@@ -1383,232 +1351,51 @@ export function ViewerSeatFinder({
   // screen column exactly as the lone viewport used to.
   const mapStageClassName = "relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1";
 
-  const filterControl = (
-        <div ref={filterRootRef} className="relative mr-1.5 flex h-7 shrink-0 items-stretch border border-[var(--sp-border-subtle)] bg-[var(--sp-field)] lg:mr-2">
-          <button
-            ref={filterTriggerRef}
-            type="button"
-            onClick={() => setFilterOpen(current => !current)}
-            aria-expanded={filterOpen}
-            aria-controls="viewer-filter-panel"
-            aria-haspopup="true"
-            aria-label={structuredFilterCount ? `Filter seating, ${structuredFilterCount} active` : "Filter seating"}
-            className={[
-              "relative flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-[12px] font-medium leading-none transition-colors duration-150 after:absolute after:-inset-y-2 after:inset-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]",
-              structuredFilterCount > 0 || filterOpen
-                ? "border-b-[var(--sp-interactive)] bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)]"
-                : "border-b-transparent text-[var(--sp-text-helper)] hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)]"
-            ].join(" ")}
-          >
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-              <path d="M3 4.5h14l-5.4 6.2v4.8l-3.2-1.7v-3.1L3 4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-            </svg>
-            Filter
-            {structuredFilterCount > 0 && (
-              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--sp-button-primary)] px-1 text-[11px] font-semibold text-white">{structuredFilterCount}</span>
-            )}
-            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 text-[var(--sp-text-helper)]">
-              <path d="m5.5 8 4.5 4.5L14.5 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          {/* DOM order mirrors the visual order: the menu drops directly under
-              the trigger, so it must precede the search field in tab order. */}
-          {filterOpen && (
-            <div className="absolute -left-px top-full z-50 w-[288px] max-w-[calc(100vw-16px)]">
-              <FilterPanel
-                department={department}
-                position={position}
-                status={status}
-                departments={departments}
-                positions={positions}
-                zone={zone}
-                zones={zones}
-                activeChips={activeFilterChips}
-                panelId="viewer-filter-panel"
-                returnFocusRef={filterTriggerRef}
-                onClose={() => setFilterOpen(false)}
-                onDepartmentChange={setDepartment}
-                onPositionChange={setPosition}
-                onZoneChange={setZone}
-                onZoneHoverChange={setHoverZone}
-                onStatusChange={setStatus}
-                matchSummary={departmentSummary.text}
-                matchSummaryAction={departmentSummaryAction}
-                seatFacetsApply={surface === "plan"}
-                onRemoveActiveChip={removeActiveFilterChip}
-                onClearFilters={clearStructuredFilters}
-              />
-            </div>
-          )}
-        </div>
-  );
-  const searchField = (
-        <div
-          ref={searchFieldRef}
-          role="search"
-          aria-label="Viewer search"
-          className={cx(
-            "h-7 min-w-0 flex-1 border bg-[var(--sp-field)] lg:max-w-[420px]",
-            // Open field: the 2px inset accent (both chrome themes) is what
-            // ties the palette below to the field it belongs to.
-            paletteOpen
-              ? "border-transparent shadow-[inset_0_0_0_2px_var(--sp-interactive)]"
-              : "border-[var(--sp-border-subtle)]"
-          )}
-        >
-          <label htmlFor="viewer-seat-search" className="relative flex h-full w-full min-w-0 items-center after:absolute after:-inset-y-2 after:inset-x-0">
-            <span className="sr-only">Search office seating</span>
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--sp-text-helper)]">
-              <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
-              <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-            </svg>
-            <input
-              id="viewer-seat-search"
-              value={search}
-              onChange={event => updateSearch(event.target.value)}
-              onFocus={() => {
-                // Escape's hand-back from a palette row lands here one frame
-                // after the palette closed; it is the app returning focus, not
-                // the user reaching for the field, so it must not re-open.
-                if (suppressPaletteReopenRef.current) {
-                  suppressPaletteReopenRef.current = false;
-                  return;
-                }
-                setPaletteOpen(true);
-              }}
-              // Click as well as focus: pressing Esc leaves focus in the field,
-              // so without this a second click on an already-focused field
-              // could never reopen the palette (contract #2). Deliberately NOT
-              // suppressed — a click is always the user asking.
-              onClick={() => setPaletteOpen(true)}
-              onKeyDown={event => {
-                if (event.key === "Escape") {
-                  // Layered dismissal (contract #7), handled here so the
-                  // keystroke never reaches the global handler twice: the
-                  // palette is the layer above the query, so the first Esc
-                  // closes it and the second clears what was typed. Anything
-                  // deeper (selection, pinned zone) bubbles. The × button
-                  // keeps the full clearSearch reset.
-                  //
-                  // preventDefault is load-bearing on BOTH branches, not
-                  // defensive: `type="search"` inputs clear themselves on
-                  // Escape natively, and that clear fires an input event. Left
-                  // to run it collapsed two layers into one keystroke — the
-                  // first Esc closed the palette AND wiped the query, then
-                  // updateSearch re-opened the palette on the way out
-                  // (measured in Chromium, 2026-08-12).
-                  event.preventDefault();
-                  if (paletteOpen) {
-                    event.stopPropagation();
-                    setPaletteOpen(false);
-                    return;
-                  }
-                  if (search.trim()) {
-                    event.stopPropagation();
-                    setSearch("");
-                    setActiveResultId(null);
-                    setInspectorCollapsed(false);
-                  }
-                  return;
-                }
-                // The palette is visually adjacent but far away in DOM order —
-                // ArrowDown hops focus straight into whichever list it is
-                // showing.
-                if (event.key === "ArrowDown" && paletteOpen) {
-                  event.preventDefault();
-                  document.querySelector<HTMLButtonElement>(
-                    '[aria-label="Viewer search results"] button:not([disabled]), [aria-label="People directory"] button:not([disabled])'
-                  )?.focus();
-                  return;
-                }
-                // The palette's own legend promises "Enter opens" in QUERY
-                // mode while focus is still here, so honour it against the top
-                // result rather than making the user arrow into the list
-                // first. Browse mode's legend drops the promise (P5), so the
-                // searchActive gate below is the copy staying honest, not a
-                // gap. With no results the keystroke stays unclaimed.
-                if (event.key === "Enter" && paletteOpen && searchActive) {
-                  const [firstSearchResult] = searchResults.results;
-                  if (!firstSearchResult) return;
-                  event.preventDefault();
-                  openResult(firstSearchResult);
-                }
-              }}
-              ref={searchInputRef}
-              // aria-controls only, deliberately no aria-expanded: ARIA 1.2
-              // dropped aria-expanded from textbox/searchbox, and the valid
-              // way to carry it here would be role="combobox" — which commits
-              // to a listbox popup of role="option" children. The palette is a
-              // list of real buttons that focus moves into, so claiming
-              // combobox would describe a widget this is not.
-              //
-              // Gated on paletteOpen because the palette is UNMOUNTED when
-              // closed: an id reference that resolves to nothing is an invalid
-              // attribute value, not a harmless one (axe aria-valid-attr-value,
-              // critical — caught by the e2e-auth viewer scan, which is the
-              // only tier that scans this surface signed in).
-              aria-controls={paletteOpen ? "viewer-find-palette" : undefined}
-              type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
-              // relative z-[1]: the wrapping label's hit-expansion ::after
-              // paints above in-flow children, so without this the pseudo
-              // would swallow direct clicks on the field (caret placement,
-              // drag-select, the onClick reopen contract). The control rides
-              // above its label's pseudo; the pseudo keeps the strips outside
-              // the control's box.
-              className="relative z-[1] h-full w-full border-0 bg-transparent pl-8 pr-8 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-white/[0.06] focus:bg-white/[0.04] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-interactive)]"
-            />
-            {search.trim() ? (
-              <button
-                type="button"
-                aria-label="Clear viewer search"
-                title="Clear search"
-                className="absolute right-1.5 top-1/2 z-[1] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-interactive)]"
-                onClick={clearSearch}
-              >
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-            ) : paletteOpen || searchShortcutHint ? (
-              // Open, the field advertises the way OUT rather than the way in —
-              // the shortcut that got you here is spent.
-              //
-              // hidden below lg: the keycap is absolutely positioned inside the
-              // field, and the field is the bar's only flexible child. When the
-              // bar ran out of room the field collapsed toward zero while the
-              // ~53px keycap kept its size, so it spilled LEFT out of its own
-              // field and printed over the Filter button — measured at 672, 640,
-              // 480 and 320 (2026-09-01, overlap 37 × 26px). With the cluster
-              // changes above the field keeps 96–223px between 640 and 1023,
-              // which holds the keycap but not the keycap AND the ~140px
-              // placeholder — the two overprinted at 640 and 768 — so the hint
-              // waits for lg, where the field measures 331px+. A physical-
-              // keyboard hint is desktop equipment anyway. Decorative either
-              // way (aria-hidden).
-              <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 border border-[var(--sp-border-subtle)] px-1 py-0.5 text-xs font-semibold text-[var(--sp-text-helper)] lg:block">{paletteOpen ? "Esc" : searchShortcutHint}</kbd>
-            ) : null}
-          </label>
-        </div>
-  );
-
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
        which captures the sticky header so it never pins to the viewport. */
     <div className="flex min-h-0 flex-1 flex-col overflow-x-clip bg-[var(--sp-background)] text-[var(--sp-text-primary)] lg:overflow-hidden">
-      {/* In the shell (app/(shell)/layout.tsx) this surface has NO header of
-          its own: the search field portals into the provisional tenant row
-          (PHASE 4 BRIDGE, removed by PR 3's control row) and the four filter
-          groups register with the left panel (useAppShellFilters above).
-          The standalone fallback row below keeps harnesses that mount this
-          component without AppShell (the jsdom tier) fully controllable —
-          the old Filter popover lives on there only, until PR 3 retires
-          FilterPanel. */}
-      {shellSlots?.left ? (
-        createPortal(searchField, shellSlots.left)
-      ) : (
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2">
-          {filterControl}
-          {searchField}
-        </div>
-      )}
+      {/* The control row (PHASE2UX §1M.3, PR 3a): floor · search · Filters ·
+          count · Find me · Names — in the page, 48px under the shell header.
+          The four filter groups register with the shell's left panel
+          (useAppShellFilters above); "Filters · N" is that panel's second
+          door. This surface renders no header of its own. */}
+      <MapControlRow
+        floor={floor}
+        onFloorChange={next => switchFloor(next)}
+        search={{
+          value: search,
+          onChange: updateSearch,
+          onClear: clearSearch,
+          scope: searchScope,
+          onScopeChange: setSearchScope,
+          hint: searchShortcutHint,
+          placeholder: SEAT_SEARCH_PLACEHOLDER,
+          inputId: "viewer-seat-search",
+          inputRef: searchInputRef,
+          rootRef: searchFieldRef,
+          paletteOpen,
+          paletteId: paletteOpen ? "viewer-find-palette" : undefined,
+          onOpenPalette: () => {
+            if (suppressPaletteReopenRef.current) return;
+            setPaletteOpen(true);
+          },
+          onClosePalette: () => setPaletteOpen(false),
+          onArrowDown: () => {
+            window.requestAnimationFrame(() => {
+              document.querySelector<HTMLButtonElement>('[aria-label="Viewer search results"] button:not([disabled]), [aria-label="People directory"] button:not([disabled])')?.focus();
+            });
+          },
+          onEnter: () => {
+            if (scopedResults.shown.length > 0) openResult(scopedResults.shown[0]);
+          },
+          ariaLabel: "Viewer search"
+        }}
+        filters={{ appliedCount: structuredFilterCount, onOpen: () => shellLeftPanel?.open(), onClear: clearStructuredFilters, panelOpen: shellLeftPanel?.isOpen ?? false }}
+        count={{ text: controlCountText, live: true }}
+        onFindMe={findMe}
+        names={{ pressed: showNames, hidden: surface === "roster", onToggle: () => setShowNames(current => !current) }}
+      />
 
       {/* No matting, and no reserved gutter either (v12 Find palette): the
           stage column runs to the window edges at every width now that nothing
@@ -1620,31 +1407,9 @@ export function ViewerSeatFinder({
           <h1 className="sr-only">Seat Planner — office map</h1>
 
           <div className={mapStageClassName}>
-            {/* Top-left cluster (v12 slice 3): floor, crumb, last-publish date,
-                and active filter chips float over the full-bleed plan as
-                layer-01 cards. Nothing above the map is in flow any more, so a
-                chip arriving mid-session can no longer resize the map column
-                and re-run the fit. pointer-events-none on the rail with each
-                card opting itself back in keeps the gaps between cards
-                draggable map. Ungated by floor on purpose — the floor pill IS
-                how you leave the roster floor. */}
-            <div ref={chipClusterRef} className="pointer-events-none absolute left-3 top-3 z-40 flex flex-wrap items-center gap-2">
-              <div className="pointer-events-auto">
-                <FloorSelector floor={floor} onChange={next => switchFloor(next)} />
-              </div>
-              <span className="pointer-events-auto border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2.5 py-1.5 text-[12px] text-[var(--sp-text-secondary)] shadow-sp">{mapCrumbLabel}</span>
-              {/* Viewers don't need the layer model ("Published" / "Read-only"
-                  badges) — a last-publish date answers the question they have. */}
-              {lastPublishedLabel && (
-                <span
-                  title={`The map everyone sees — last updated ${lastPublishedLabel}`}
-                  className="pointer-events-auto rounded-full bg-[var(--sp-layer-01)] px-2.5 py-1 text-xs font-semibold text-[var(--sp-text-secondary)] shadow-sp ring-1 ring-[var(--sp-border-subtle)]"
-                >
-                  Updated {lastPublishedLabel}
-                </span>
-              )}
-              <ActiveFilterChips chips={activeFilterChips} onRemove={removeActiveFilterChip} onClearAll={clearAllConstraints} className="pointer-events-auto" />
-            </div>
+            {/* Inline notices over the canvas (PHASE3DS §1.21): Find me's
+                not-in-directory line lands here, in the region being read. */}
+            <CanvasStatus notices={canvasNotices} />
             <div
               ref={mapViewportRef}
               id="viewer-seat-map"
@@ -1674,8 +1439,6 @@ export function ViewerSeatFinder({
                   totalCount={rosterPeople.length}
                   filtersActive={structuredFiltersActive}
                   onClearFilters={clearStructuredFilters}
-                  // 12px cluster offset + its height + 8px breathing room.
-                  headerInsetPx={chipClusterHeight + 20}
                 />
               )}
               {surface === "plan" && plan && (
@@ -1694,11 +1457,6 @@ export function ViewerSeatFinder({
                     draggable={false}
                   />
 
-                  {/* Zone + room washes, between the floor-plan image and the
-                      marker layer. One implementation shared with the admin
-                      surface (MapWashLayer) — it documents the decorative /
-                      pointer-inert contract both surfaces rely on. */}
-                  <MapWashLayer zoneWash={zoneWash} officeRoomWashes={officeRoomWashes} />
 
                   {/* AUDIT-2 §8.2 first-run moved to the roster (multi-floor
                       PR-2): a floor renders its plan only once a seat is
@@ -1716,7 +1474,6 @@ export function ViewerSeatFinder({
                     {visualSeats.map(seat => {
                       const inMatches = highlightedSeatIdSet.has(seat.id);
                       const dimmed = filtersActive && !inMatches && selectedSeatId !== seat.id;
-                      const officePlateLayout = getOfficePlateLayout(seat, mapRenderedWidth ?? 0);
                       // Two independent causes light a seat up, and neither may
                       // borrow the other's announcement: resting the pointer on a
                       // people-list row is not a search result. Only the
@@ -1741,9 +1498,6 @@ export function ViewerSeatFinder({
                           hitFloor={hitFloor}
                           swapMode={false}
                           moveEmployeeMode={false}
-                          officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
-                          officePlateOffsetYPx={officePlateLayout?.offsetYPx ?? 0}
-                          officePlateWidthPx={officePlateLayout?.widthPx}
                           swapSource={false}
                           swapTarget={false}
                           moveEmployeeSource={false}
@@ -1773,40 +1527,8 @@ export function ViewerSeatFinder({
                 that matters — the safe area is still an obstruction (#198). */}
             {surface === "plan" && !bandTier && (
               <div className="absolute right-3 z-30 flex flex-col items-end gap-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] panel:bottom-3">
-                {/* Below 640 the status band — and with it the shared
-                    NamesVisibilityToggle — does not render (owner call
-                    2026-08-17: band >=640 only), which left the feature D1
-                    rests on silently unreachable on a phone (DECISIONS.md
-                    §3.2.1, driven 2026-09-01). Same flipper, icon-only, in the
-                    one floating cluster phones already have. Inline
-                    aria-pressed carries the state (accessibility-source counts
-                    flippers against exposures relationally); the visible cue
-                    is the brand wash the surface already uses for a pressed
-                    control. gap-3 between this and the zoom stack is exactly
-                    the two 6px hit expansions (44px reach each, no overlap —
-                    touch-target no-overlap rule). Exactly one names control
-                    is mounted at any width: bandTier is JS matchMedia state,
-                    so this and the band's switch never coexist in the tree. */}
-                <button
-                  type="button"
-                  aria-pressed={showNames}
-                  aria-label="Show occupant names"
-                  title="Show occupant names"
-                  onClick={() => setShowNames(current => !current)}
-                  className={[
-                    "pointer-events-auto relative flex h-8 w-8 items-center justify-center border shadow-sp transition after:absolute after:-inset-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]",
-                    showNames
-                      ? "border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link-hover)]"
-                      : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] hover:bg-[var(--sp-background)]"
-                  ].join(" ")}
-                >
-                  {/* Name tag: a badge with a name line and a detail line. */}
-                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2.5" y="5" width="15" height="10.5" rx="1.5" />
-                    <path d="M5.5 9h6M5.5 12h4" />
-                    <circle cx="14" cy="10.5" r="1.4" />
-                  </svg>
-                </button>
+                {/* The Names toggle lives in the control row at every width
+                    (PR 3a) — exactly one names control is mounted. */}
                 <MapZoomControl
                   label={mapZoomLabel}
                   onZoomIn={() => applyMapZoom(zoomFactor === null ? 1 : zoomFactor + MAP_ZOOM_STEP)}
@@ -1831,21 +1553,23 @@ export function ViewerSeatFinder({
                 ariaLabel="Seat status summary"
                 totalLabel={`${floorMeta.tag} · ${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}
                 entries={[
-                  { key: "assigned", label: STATUS_LABELS.assigned, dotClassName: "bg-[var(--sp-status-success-mark)]", count: assignedCount },
-                  { key: "available", label: STATUS_LABELS.available, dotClassName: "bg-[var(--sp-status-neutral-mark)]", count: openCount },
-                  { key: "reserved", label: STATUS_LABELS.reserved, dotClassName: "bg-[var(--sp-status-draft-mark)]", count: reservedCount }
+                  { key: "assigned", label: STATUS_LABELS.assigned, mark: "assigned", count: assignedCount },
+                  { key: "available", label: STATUS_LABELS.available, mark: "open", count: openCount },
+                  { key: "reserved", label: STATUS_LABELS.reserved, mark: "reserved", count: reservedCount }
                 ]}
-                summary={searchActive
-                  ? `${resultCountLabel} · ${searchResults.resultSeatIds.length} mapped`
-                  : structuredFiltersActive
-                    // Filters got no match count while search did (2026-07-16
-                    // critique, minor 8) — same status-line home for both.
-                    ? `${floorHighlightedCount} of ${floorSeats.length} seats on ${floorMeta.tag} ${floorHighlightedCount === 1 ? "matches" : "match"} filters`
-                    : "Seating across people, seats, departments, and zones."}
+                namesVisible={showNames}
+                count={controlCountText}
+                actions={filtersActive ? (
+                  <button type="button" className="cds-btn cds-btn--ghost cds-btn--sm" onClick={clearAllConstraints}>
+                    {searchActive && structuredFiltersActive ? "Clear all" : searchActive ? "Clear search" : "Clear filters"}
+                  </button>
+                ) : null}
+                note={structuredFiltersActive && departmentSummary.switchTo ? departmentSummary.text : undefined}
+                noteAction={structuredFiltersActive && departmentSummaryAction ? (
+                  <button type="button" className="cds-btn cds-btn--ghost cds-btn--sm" onClick={departmentSummaryAction.onClick}>{departmentSummaryAction.label}</button>
+                ) : null}
                 controls={
                   <>
-                    <NamesVisibilityToggle pressed={showNames} onToggle={() => setShowNames(current => !current)} />
-                    <span aria-hidden="true" className="h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
                     <MapZoomControl
                       orientation="horizontal"
                       label={mapZoomLabel}
@@ -1890,18 +1614,20 @@ export function ViewerSeatFinder({
           // want the casing that was typed.
           query={search.trim()}
           browse={paletteBrowse}
-          results={searchResults.results}
+          results={scopedResults.shown}
           resultCountLabel={resultCountLabel}
           mappedSeatCount={searchResults.resultSeatIds.length}
           activeResultId={activeResultId}
           selectedSeatId={selectedSeatId}
           pinnedZone={zone}
-          onZoneHoverChange={setHoverZone}
           onZonePin={pinZoneFromPalette}
           onRowHoverChange={setHoverSeatId}
           onOpenRow={openResult}
           onClearSearch={clearSearch}
           currentFloor={floor}
+          scope={searchScope}
+          scopeCounts={{ onFloor: scopedResults.onFloor, inBuilding: scopedResults.inBuilding }}
+          onWiden={() => setSearchScope("building")}
         />
       )}
 

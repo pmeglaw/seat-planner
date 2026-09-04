@@ -22,10 +22,10 @@ import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityTogg
 import { CloseIcon, MoreIcon, PlusIcon, RedoIcon, UndoIcon } from "@/components/seat-map/mapIcons";
 
 export type MapControlRowDraft = {
-  undo: { label: string; disabled: boolean; onClick: () => void };
-  redo: { label: string; disabled: boolean; onClick: () => void };
+  undo: { label: string; disabled: boolean; busy?: boolean; onClick: () => void };
+  redo: { label: string; disabled: boolean; busy?: boolean; onClick: () => void };
   addSeat: { active: boolean; hidden: boolean; onToggle: () => void };
-  askPlanner: { count: number; open: boolean; onOpen: () => void; buttonRef?: React.RefObject<HTMLButtonElement | null>; controlsId?: string };
+  askPlanner: { count: number; open: boolean; onOpen: () => void; controlsId?: string };
   publish: { count: number; onOpen: () => void };
   discard: { disabled: boolean; onOpen: () => void };
 };
@@ -40,12 +40,15 @@ export type MapControlRowProps = {
   count: { text: string; live: boolean };
   onFindMe: () => void;
   draft?: MapControlRowDraft;
+  /** The Ask Planner trigger's ref (focus returns here when the drawer closes). Top-level on purpose:
+   *  a ref nested inside the draft config makes the compiler lint treat the whole object as a ref. */
+  askPlannerAnchor?: React.RefObject<HTMLButtonElement | null>;
   names: { pressed: boolean; hidden: boolean; onToggle: () => void } | null;
   /** Rare extra content after Names (the surface's sr-only live regions ride along). */
   children?: ReactNode;
 };
 
-export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters, count, onFindMe, draft, names, children }: MapControlRowProps) {
+export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters, count, onFindMe, draft, askPlannerAnchor, names, children }: MapControlRowProps) {
   const reasonId = useId();
   return (
     <div className="sp-control-row" role="toolbar" aria-label="Map controls">
@@ -74,8 +77,8 @@ export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters
       {draft ? (
         <>
           <span className="sp-control-divider" role="separator" aria-orientation="vertical" />
-          <IconWithTooltip label={draft.undo.label} disabled={draft.undo.disabled} onClick={draft.undo.onClick}><UndoIcon /></IconWithTooltip>
-          <IconWithTooltip label={draft.redo.label} disabled={draft.redo.disabled} onClick={draft.redo.onClick}><RedoIcon /></IconWithTooltip>
+          <IconWithTooltip label={draft.undo.label} disabled={draft.undo.disabled} busy={draft.undo.busy} onClick={draft.undo.onClick}><UndoIcon /></IconWithTooltip>
+          <IconWithTooltip label={draft.redo.label} disabled={draft.redo.disabled} busy={draft.redo.busy} onClick={draft.redo.onClick}><RedoIcon /></IconWithTooltip>
           {!draft.addSeat.hidden && (
             <button
               type="button"
@@ -89,10 +92,11 @@ export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters
             </button>
           )}
           <button
-            ref={draft.askPlanner.buttonRef}
+            ref={askPlannerAnchor}
             type="button"
             className="cds-btn cds-btn--tertiary cds-btn--md"
             data-count={draft.askPlanner.count > 0 ? draft.askPlanner.count : undefined}
+            aria-haspopup="dialog"
             aria-expanded={draft.askPlanner.open}
             aria-controls={draft.askPlanner.controlsId}
             aria-label={draft.askPlanner.count > 0 ? `Open Ask Planner AI, ${draft.askPlanner.count} seats highlighted` : "Open Ask Planner AI"}
@@ -123,11 +127,18 @@ export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters
 // Undo / Redo: icon buttons whose tooltip carries the shortcut the label
 // promises ("Undo move Sarah Reyes · Ctrl Z") — the tier-C tooltip on hover
 // and focus, aria-label = the same text.
-function IconWithTooltip({ label, disabled, onClick, children }: { label: string; disabled: boolean; onClick: () => void; children: ReactNode }) {
+// While the draft history round-trips, the glyph gives way to a spinner and
+// the button says aria-busy (PR-5 §8.1: every mutating flow shows its
+// present-participle state on the confirming control); the name stays.
+function IconWithTooltip({ label, disabled, busy = false, onClick, children }: { label: string; disabled: boolean; busy?: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <span className="sp-has-tooltip">
-      <button type="button" className="cds-btn cds-btn--icon cds-btn--md" aria-label={label} disabled={disabled} onClick={onClick}>
-        {children}
+      <button type="button" className="cds-btn cds-btn--icon cds-btn--md" aria-label={label} aria-busy={busy ? "true" : undefined} disabled={disabled} onClick={onClick}>
+        {busy ? (
+          <span aria-hidden="true" className="block h-4 w-4 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />
+        ) : (
+          children
+        )}
       </button>
       <span className="sp-tooltip" role="tooltip">{label}</span>
     </span>

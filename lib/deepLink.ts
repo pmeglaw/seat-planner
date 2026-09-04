@@ -69,23 +69,24 @@ export function withQueryParam(search: string, query: string): string {
   return serialize(params);
 }
 
-// ?names=off (B3): the names-on-markers toggle is shareable in its OFF
-// state only — on is the default and the stored preference, so the bare URL
-// stays canonical and a shared link never forces names on for someone who
-// turned them off. readNamesParam returns null when the URL says nothing.
+// ?names=on (B3): the names-on-markers toggle is shareable in its ON state
+// only — off is the default on both surfaces (a remembered preference), so
+// the bare URL stays canonical and a shared link never forces names OFF for
+// someone who turned them on. readNamesParam returns null when the URL says
+// nothing (the stored preference stands); "off" is still honoured on read.
 export const NAMES_PARAM = "names";
 
 export function readNamesParam(search: string): boolean | null {
   const value = new URLSearchParams(search).get(NAMES_PARAM)?.trim().toLowerCase();
-  if (value === "off") return false;
   if (value === "on") return true;
+  if (value === "off") return false;
   return null;
 }
 
 export function withNamesParam(search: string, namesVisible: boolean): string {
   const params = new URLSearchParams(search);
-  if (namesVisible) params.delete(NAMES_PARAM);
-  else params.set(NAMES_PARAM, "off");
+  if (namesVisible) params.set(NAMES_PARAM, "on");
+  else params.delete(NAMES_PARAM);
   return serialize(params);
 }
 

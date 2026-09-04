@@ -286,52 +286,34 @@ test("legend counts describe the whole map when no filter is active", async () =
 });
 
 test("legend counts follow an active department filter", async () => {
+  // PR 3a: the filters live in the shell's left panel; standalone, the URL
+  // (?dept=, PHASE1IA B3) is the door — the same state the panel writes.
+  setUrl("/?dept=Corporate");
   await renderViewer();
-  fireEvent.click(screen.getByRole("button", { name: "Filter seating" }));
-  const group = screen.getByRole("group", { name: "Filter options" });
-  const departmentSelect = within(group).getAllByRole("combobox")[0];
-  fireEvent.change(departmentSelect, { target: { value: "Corporate" } });
   await flushFrames();
 
   // Corporate owns B-02 (Grace, assigned) and D-04 (open); the Litigation
   // seats must drop out rather than the legend keep reporting the whole map.
   assert.deepEqual(legendCounts(), { assigned: 1, open: 1, reserved: 0 });
+  assert.match(screen.getByRole("toolbar", { name: "Map controls" }).textContent, /2 of 4 seats match/);
 });
 
-// Escape's last layer (contract #7) clears the structured filters, and it is
-// entered whenever structuredFiltersActive is true — which counts POSITION.
-// A branch that reset only department, zone and status therefore consumed the
-// press and left the map filtered, with nothing on screen having changed.
 test("Escape clears a position-only filter, not just department, zone and status", async () => {
+  setUrl("/?position=Paralegal");
   await renderViewer();
-  fireEvent.click(screen.getByRole("button", { name: "Filter seating" }));
-  const group = screen.getByRole("group", { name: "Filter options" });
-  // Department is the first combobox, Position the second (they sit together
-  // because both describe the person).
-  fireEvent.change(within(group).getAllByRole("combobox")[1], { target: { value: "Paralegal" } });
   await flushFrames();
   // Grace's B-02 is the only Paralegal seat, and an unoccupied seat never
   // matches a real position — so the open and reserved seats drop out.
   assert.deepEqual(legendCounts(), { assigned: 1, open: 0, reserved: 0 });
 
-  // Two presses, because the Filter popover is the FIRST layer Escape peels
-  // and the structured filters are the last. Dispatched at <body>: the handler
-  // ignores presses whose target is an input or select, which is what keeps
-  // Escape inside the field a query-clear rather than a filter reset.
-  fireEvent.keyDown(document.body, { key: "Escape" });
-  await flushFrames();
+  // Dispatched at <body>: the handler ignores presses whose target is an
+  // input or select, which is what keeps Escape inside the field a
+  // query-clear rather than a filter reset.
   fireEvent.keyDown(document.body, { key: "Escape" });
   await flushFrames();
 
-  // assert.ok on the identity, not assert.equal against null: when this one
-  // fails it fails holding a DOM node, and letting node's differ render that
-  // node costs ~100s and reports "Array buffer allocation failed" instead of
-  // the message below.
-  assert.ok(
-    screen.queryByRole("button", { name: /Remove position filter/ }) === null,
-    "the position chip must be gone, not merely the department/zone/status ones"
-  );
   assert.deepEqual(legendCounts(), { assigned: 2, open: 1, reserved: 1 });
+  assert.equal(window.location.search, "", "the cleared filter leaves the URL");
 });
 
 // --- Deep links -------------------------------------------------------------
@@ -370,6 +352,13 @@ test("selecting and clearing a seat writes the seat param back to the URL", asyn
 // typing) and the one a test can drive without a keyboard shortcut.
 function openPalette() {
   fireEvent.focus(screen.getByRole("searchbox"));
+}
+
+// D1-d scope (PR 3a): "This floor" lists this floor's rows; a find on the
+// other floor needs the building scope first (the zero state offers Widen).
+function widenScope() {
+  fireEvent.click(screen.getByRole("button", { name: "Search scope: This floor" }));
+  fireEvent.click(screen.getByRole("menuitemradio", { name: "Whole building" }));
 }
 
 test("nothing docks at rest — the palette opens from the search field", async () => {
@@ -530,8 +519,8 @@ test("the status band carries the legend list and the only zoom cluster at deskt
   const zoomIn = screen.getByRole("button", { name: "Zoom in" });
   assert.ok(band.contains(zoomIn), "zoom controls must live inside the band at this tier");
   assert.ok(
-    band.contains(screen.getByRole("button", { name: "Show occupant names" })),
-    "the names switch moves into the band with the legend"
+    screen.getByRole("toolbar", { name: "Map controls" }).contains(screen.getByRole("button", { name: "Show occupant names" })),
+    "the names switch lives in the control row (PHASE1IA B4, PR 3a)"
   );
 });
 
@@ -563,14 +552,16 @@ test("below the sm tier the band stays away and the floating zoom stack remains"
 // flipper moves into the phone's floating cluster — same accessible name, same
 // pressed contract, same storage key, and exactly ONE such control in the
 // tree (getByRole throws on a duplicate).
-test("below the sm tier the names toggle lives in the floating stack and still drives the markers", async () => {
+test("below the sm tier the names toggle lives in the control row and still drives the markers", async () => {
   window.localStorage.removeItem(VIEWER_NAMES_KEY);
   setViewportWidth(500);
   await renderViewer();
 
+  // Exactly ONE names control at any width (getByRole throws on a duplicate):
+  // the row's toggle, since PR 3a — the phone stack's flipper retired.
   const toggle = screen.getByRole("button", { name: "Show occupant names" });
   assert.equal(toggle.getAttribute("aria-pressed"), "false");
-  assert.ok(toggle.closest('[role="group"][aria-label="Map zoom"]') === null, "it is a sibling of the zoom stack, not a zoom control");
+  assert.ok(toggle.closest('[role="toolbar"][aria-label="Map controls"]'), "it is the control row's switch");
   assert.equal(seatMarker("A-01").getAttribute("data-token-mode"), "code");
 
   fireEvent.click(toggle);
@@ -757,6 +748,11 @@ test("opening an unseated person from search switches to their floor, marks thei
   await renderTwoFloors();
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Linus" } });
   await flushFrames();
+  // Linus is on Floor 2: the "This floor" scope publishes the zero with the
+  // building count and offers Widen (D1-d).
+  assert.match(screen.getByRole("status").textContent, /0 on this floor · 1 in building/);
+  widenScope();
+  await flushFrames();
   const results = screen.getByRole("list", { name: "Viewer search results" });
   const row = within(results).getByRole("button", { name: /Linus Torvalds/ });
   assert.equal(row.disabled, false, "unseated people are openable (contract #9, amended 2026-09-01)");
@@ -775,45 +771,35 @@ test("opening an unseated person from search switches to their floor, marks thei
 });
 
 test("a department with no seats on this floor says where its people are and offers the switch (Q5)", async () => {
+  setUrl("/?dept=Medical%20Records");
   await renderTwoFloors();
-  fireEvent.click(screen.getByRole("button", { name: "Filter seating" }));
-  const group = screen.getByRole("group", { name: "Filter options" });
-  const departmentSelect = within(group).getAllByRole("combobox")[0];
-  fireEvent.change(departmentSelect, { target: { value: "Medical Records" } });
   await flushFrames();
 
-  assert.match(group.textContent, /0 of 4 seats on Floor 3 · 1 person in Medical Records is on Floor 2/);
-  fireEvent.click(within(group).getByRole("button", { name: "Show Floor 2" }));
+  // The cross-floor line (lib/floors floorDepartmentSummary) rides the band's
+  // note with its "Show Floor 2" action (PR 3a); the row states the zero.
+  const band = statusBand();
+  assert.match(screen.getByRole("toolbar", { name: "Map controls" }).textContent, /0 of 4 seats match/);
+  assert.match(band.textContent, /1 person in Medical Records is on Floor 2/);
+  fireEvent.click(within(band).getByRole("button", { name: "Show Floor 2" }));
   await flushFrames();
-  // returnFocusAfterClose hands focus back one macrotask later.
-  await new Promise(resolve => setTimeout(resolve, 5));
 
   assert.ok(roster(), "the switch action lands on the roster floor");
   assert.match(roster().textContent, /Linus Torvalds/);
-  // The action unmounts with the switch (the roster summary has no
-  // cross-floor variant), so it closes the popover and hands focus back to
-  // the trigger — never to <body> (review, 2026-09-01).
-  assert.ok(screen.queryByRole("group", { name: "Filter options" }) === null, "the popover closes with the switch");
-  assert.equal(document.activeElement, screen.getByRole("button", { name: /^Filter seating/ }));
 });
 
-test("on the roster floor the filter popover counts people, and department still filters the rows", async () => {
+test("on the roster floor the row counts people, and Names is Hidden without markers", async () => {
   await renderTwoFloors();
   await switchFloorTo("Floor 2 · Litigation");
-  fireEvent.click(screen.getByRole("button", { name: "Filter seating" }));
-  const group = screen.getByRole("group", { name: "Filter options" });
-  assert.match(group.textContent, /1 of 1 people on Floor 2 match/);
+  const row = screen.getByRole("toolbar", { name: "Map controls" });
+  assert.match(row.textContent, /1 person/);
+  assert.ok(within(row).queryByRole("button", { name: "Show occupant names" }) === null, "Hidden, not disabled, without markers");
+});
 
-  // Zone and status describe seats; on the roster floor they are Hidden
-  // (not disabled) and the popover says why.
-  assert.equal(within(group).getAllByRole("combobox").length, 2, "department + position only");
-  assert.ok(within(group).queryByRole("group", { name: "Zone" }) === null, "no zone chips without a map");
-  assert.match(group.textContent, /Zone and status filters apply on mapped floors/);
-
-  const departmentSelect = within(group).getAllByRole("combobox")[0];
-  fireEvent.change(departmentSelect, { target: { value: "Corporate" } });
+test("on the roster floor a department filter (URL state) still filters the rows and names the way out", async () => {
+  setUrl("/?floor=2&dept=Corporate");
+  await renderTwoFloors();
   await flushFrames();
-  assert.match(group.textContent, /0 of 1 people on Floor 2 match/);
+  assert.ok(roster());
   assert.equal(roster().querySelectorAll("[data-roster-row]").length, 0);
   // A filter that hides everyone is not first-run: name the filter, keep
   // the floor's real count in the heading, offer the way out.
@@ -844,6 +830,8 @@ test("a manual floor switch after a find announces the floor and drops the stale
   await renderTwoFloors();
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Linus" } });
   await flushFrames();
+  widenScope();
+  await flushFrames();
   fireEvent.click(within(screen.getByRole("list", { name: "Viewer search results" })).getByRole("button", { name: /Linus Torvalds/ }));
   await flushFrames();
   assert.match(liveText(), /Linus Torvalds highlighted/);
@@ -866,14 +854,13 @@ test("a manual floor switch after a find announces the floor and drops the stale
 });
 
 test("a found person stays marked on the roster even when a structured filter would hide them", async () => {
+  setUrl("/?dept=Corporate");
   await renderTwoFloors();
-  fireEvent.click(screen.getByRole("button", { name: "Filter seating" }));
-  const group = screen.getByRole("group", { name: "Filter options" });
-  fireEvent.change(within(group).getAllByRole("combobox")[0], { target: { value: "Corporate" } });
-  fireEvent.keyDown(group, { key: "Escape" });
   await flushFrames();
 
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Linus" } });
+  await flushFrames();
+  widenScope();
   await flushFrames();
   fireEvent.click(within(screen.getByRole("list", { name: "Viewer search results" })).getByRole("button", { name: /Linus Torvalds/ }));
   await flushFrames();
@@ -884,3 +871,4 @@ test("a found person stays marked on the roster even when a structured filter wo
   assert.match(marked.textContent, /Linus Torvalds/);
   assert.match(liveText(), /Linus Torvalds highlighted/);
 });
+

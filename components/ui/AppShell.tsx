@@ -4,16 +4,16 @@ import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { getDraftStatusAction } from "@/app/actions";
-import { AppTopBar, type ShellSlot } from "@/components/ui/AppTopBar";
+import { AppTopBar } from "@/components/ui/AppTopBar";
 import { LeftPanel, type ShellFilterSpec } from "@/components/ui/LeftPanel";
 import { ShellPanels, type ShellPanelId } from "@/components/ui/ShellPanels";
 import { activeSectionFor, BELOW_NAV_QUERY, LEFT_PANEL_STORAGE_KEY, sectionLinksFor, skipLinkFor } from "@/components/ui/shellNavConfig";
 import { useShellNavigation } from "@/components/ui/useShellNavigation";
 import type { SkewDetector } from "@/lib/deploySkew";
+import { keepMapParams } from "@/lib/mapUrlState";
 import { modeStatusFor, type DraftStatus, type ShellRouteMode } from "@/lib/shellMode";
 import type { ShellServerState } from "@/lib/shellState";
 
-export type { ShellSlot, AppTopBarSlot } from "@/components/ui/AppTopBar";
 export type { ShellFilterGroup, ShellFilterItem, ShellFilterSpec } from "@/components/ui/LeftPanel";
 
 // Persistent app shell for the (shell) route group — /, /admin,
@@ -23,17 +23,21 @@ export type { ShellFilterGroup, ShellFilterItem, ShellFilterSpec } from "@/compo
 // instant instead of unmounting the whole chrome into a route-level loading
 // wash (the pre-shell behaviour, where every page mounted its own chrome).
 //
-// Phase 3 shell (redesign-v2 PR 2): AppTopBar (48px Gray 100 header), a
-// provisional tenant row (below), LeftPanel (256px filters, pushes), and
-// ShellPanels (Help · History · Account, 320px, float). Surface-owned
-// behaviour reaches the shell by REGISTRATION only:
+// Phase 3 shell (redesign-v2 PR 2): AppTopBar (48px Gray 100 header),
+// LeftPanel (256px filters, pushes), and ShellPanels (Help · History ·
+// Account, 320px, float). Surface-owned behaviour reaches the shell by
+// REGISTRATION only:
 // - handlers (SeatMap's unsaved-edits veto, its Ask Planner opener, and its
 //   live draft change count) through useAppShellNavigation below;
-// - the viewer's filter groups through useAppShellFilters (a live channel:
+// - a surface's filter groups through useAppShellFilters (a live channel:
 //   the panel re-renders as counts and checked state change);
-// - live bar content (undo/redo, floor, publish, the viewer search) through
-//   the slots context — portals into the tenant row's slot elements, because
-//   that content re-renders with rapidly changing surface state.
+// - the control row's "Filters · N" button opens the left panel through
+//   useAppShellLeftPanel, and "Find me" reads the signed-in person's
+//   published seat through useAppShellState.
+// The provisional tenant row PR 2 carried under the header (the PR 2 / PR 3
+// seam, PHASE4BUILD §1.8) is gone: the map's control row lives in the page
+// (PR 3a, PHASE2UX §1M.3), so the shell's content pane starts 48px under
+// the top of the viewport again.
 
 type NavigationGuard = (href: string, label: string) => boolean;
 
@@ -59,20 +63,31 @@ type AppShellContextValue = {
 
 const AppShellContext = createContext<AppShellContextValue | null>(null);
 
-export type AppShellSlots = Record<ShellSlot, HTMLElement | null>;
-
-// Separate context from the handler registration on purpose: slot elements
-// change on surface transitions, and a combined context value would re-fire
-// every consumer's registration effect on each of those.
-const AppShellSlotsContext = createContext<AppShellSlots | null>(null);
+// Separate contexts from the handler registration on purpose: `isOpen`
+// changes as the user toggles the panel, and a combined context value would
+// re-fire every consumer's registration effect on each of those.
+export type AppShellLeftPanel = { isOpen: boolean; open: () => void; close: () => void; toggle: () => void };
+const AppShellLeftPanelContext = createContext<AppShellLeftPanel | null>(null);
 
 /**
- * The tenant row's live slot elements (left/center/right), or null outside a
- * shell ancestor (standalone component harnesses). Surfaces portal their
- * tenants into these; a null return means "render your standalone fallback".
+ * The left filter panel's open state and controls — the control row's
+ * "Filters · N" button is the hamburger's second door (PHASE3DS §1.14).
+ * Null outside a shell ancestor (standalone component harnesses).
  */
-export function useAppShellSlots(): AppShellSlots | null {
-  return useContext(AppShellSlotsContext);
+export function useAppShellLeftPanel(): AppShellLeftPanel | null {
+  return useContext(AppShellLeftPanelContext);
+}
+
+export type AppShellState = { email: string; isAdmin: boolean; mySeat: ShellServerState["mySeat"] };
+const AppShellStateContext = createContext<AppShellState | null>(null);
+
+/**
+ * Facts the (shell) layout resolved on the server — the signed-in email and
+ * the person's PUBLISHED seat (DECISIONS D1-f: "Find me" reads the published
+ * layer on every surface, the admin's included). Null outside a shell.
+ */
+export function useAppShellState(): AppShellState | null {
+  return useContext(AppShellStateContext);
 }
 
 /**
@@ -149,7 +164,6 @@ const EMPTY_SHELL: ShellServerState = { publishedAt: null, mySeat: null };
 export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = EMPTY_SHELL, skewDetector, children }: AppShellProps) {
   const pathname = usePathname();
   const [handlers, setHandlers] = useState<ShellNavigationHandlers | null>(null);
-  const [slots, setSlots] = useState<AppShellSlots>({ left: null, center: null, right: null });
   const [askPlannerActive, setAskPlannerActive] = useState(false);
   void askPlannerActive;
   const [liveDraftStatus, setLiveDraftState] = useState<DraftStatus | null>(null);
@@ -188,16 +202,6 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
     () => ({ register, setAskPlannerActive, setLiveDraftStatus, setFilters }),
     [register, setLiveDraftStatus]
   );
-
-  // Callback-ref sink for the tenant row's slot elements. The identity guard
-  // matters: React re-runs callback refs with null-then-element around
-  // commits, and an unconditional set would loop the render.
-  const setSlotElement = useCallback((slot: ShellSlot, element: HTMLElement | null) => {
-    setSlots(current => (current[slot] === element ? current : { ...current, [slot]: element }));
-  }, []);
-  const setLeftSlot = useCallback((element: HTMLElement | null) => setSlotElement("left", element), [setSlotElement]);
-  const setCenterSlot = useCallback((element: HTMLElement | null) => setSlotElement("center", element), [setSlotElement]);
-  const setRightSlot = useCallback((element: HTMLElement | null) => setSlotElement("right", element), [setSlotElement]);
 
   // Header-nav breakpoint (the asset hides .cds-header-nav ≤ 1055px): the
   // section links move into the left panel and the indicator compacts.
@@ -289,29 +293,33 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
     focusTrigger('[aria-controls="shell-left-panel"]');
   }, [focusTrigger]);
 
-  // History switch: the other mode's map, keeping the view (?floor= / ?seat=)
-  // and running the same veto as a link click (PHASE2UX §1.4 row 1).
+  // History switch: the other mode's map, keeping the whole B3 URL set
+  // (?floor= ?seat= ?q= ?names= and the four filters — lib/mapUrlState) and
+  // running the same veto as a link click (PHASE2UX §1.4 row 1).
   const switchMode = useCallback(
     (target: ShellRouteMode) => {
-      const params = new URLSearchParams(window.location.search);
-      const kept = new URLSearchParams();
-      for (const key of ["floor", "seat"]) {
-        const value = params.get(key);
-        if (value) kept.set(key, value);
-      }
-      const query = kept.toString();
-      const href = `${target === "draft" ? "/admin" : "/"}${query ? `?${query}` : ""}`;
+      const href = `${target === "draft" ? "/admin" : "/"}${keepMapParams(window.location.search)}`;
       setOpenPanel(null);
       navigate(href, target === "draft" ? "the draft map" : "the published map");
     },
     [navigate]
   );
 
-  const allSlotsEmpty = useSlotsEmpty(slots);
+  const leftPanelApi = useMemo<AppShellLeftPanel>(
+    () => ({
+      isOpen: leftPanelOpen,
+      open: () => setLeftOpen(true),
+      close: closeLeft,
+      toggle: () => setLeftOpen(current => !current)
+    }),
+    [closeLeft, leftPanelOpen]
+  );
+  const shellState = useMemo<AppShellState>(() => ({ email, isAdmin, mySeat: initialShell.mySeat }), [email, isAdmin, initialShell.mySeat]);
 
   return (
     <AppShellContext.Provider value={contextValue}>
-      <AppShellSlotsContext.Provider value={slots}>
+      <AppShellLeftPanelContext.Provider value={leftPanelApi}>
+      <AppShellStateContext.Provider value={shellState}>
         <AppTopBar
           isAdmin={isAdmin}
           pathname={pathname}
@@ -361,45 +369,10 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
             "motion-safe:transition-[padding] motion-safe:duration-[var(--sp-duration-fast-02)]"
           ].join(" ")}
         >
-          {/* PHASE 4 BRIDGE — provisional tenant row, removed by PR 3 (the
-              map control row, PHASE2UX §1M.3; named in PHASE4BUILD §3 PR 3
-              row). SeatMap's bar tenants (undo/redo · floor · Ask Planner ·
-              Publish) and the viewer search portal in here until then. All
-              three slot elements stay MOUNTED for the shell's lifetime —
-              a route change that deleted a slot in the same commit that
-              unmounts the surface raced React's portal cleanup
-              (removeChild NotFoundError) — so `hidden` toggles visibility
-              while the containers live on. */}
-          <div
-            data-shell-tenants
-            hidden={allSlotsEmpty}
-            className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-2 text-[var(--sp-text-primary)]"
-          >
-            <div data-topbar-slot="left" ref={setLeftSlot} className="flex h-full min-w-0 flex-1 items-center gap-2" />
-            <div data-topbar-slot="center" ref={setCenterSlot} className="flex h-full min-w-0 items-center gap-2" />
-            <div data-topbar-slot="right" ref={setRightSlot} className="flex h-full shrink-0 items-center gap-2" />
-          </div>
           <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         </div>
-      </AppShellSlotsContext.Provider>
+      </AppShellStateContext.Provider>
+      </AppShellLeftPanelContext.Provider>
     </AppShellContext.Provider>
   );
-}
-
-// The tenant row hides itself while every slot is empty (sub-pages, and the
-// viewer until it portals its search in). A MutationObserver rather than
-// registered occupancy flags: the tenants arrive through portals the shell
-// never sees.
-function useSlotsEmpty(slots: AppShellSlots): boolean {
-  const [empty, setEmpty] = useState(true);
-  useEffect(() => {
-    const elements = [slots.left, slots.center, slots.right].filter((element): element is HTMLElement => Boolean(element));
-    if (elements.length === 0) return;
-    const check = () => setEmpty(elements.every(element => element.childNodes.length === 0));
-    check();
-    const observer = new window.MutationObserver(check);
-    for (const element of elements) observer.observe(element, { childList: true });
-    return () => observer.disconnect();
-  }, [slots]);
-  return empty;
 }

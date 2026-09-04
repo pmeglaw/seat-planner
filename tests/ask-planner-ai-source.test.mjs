@@ -76,14 +76,14 @@ test("the map's AI emphasis only engages while seats are actually highlighted", 
     "globals.css must define .map-raster-dim saturate rules for BOTH themes (light + dark restatement)");
 });
 
-test("the AI highlight chip offers a labelled way out of the AI state", async () => {
-  const chipSource = await readSource("../components/seat-map/AiHighlightChip.tsx");
-
-  // The AI state hides information — everything unhighlighted dims — so the
-  // escape hatch must be a real, named control, not an icon or a map click.
-  assert.match(chipSource, /<button/, "the chip must contain a real button");
-  assert.match(chipSource, /Clear/, "the clear control must be labelled in text");
-  assert.match(chipSource, /aria-label=|aria-live=/, "the chip must announce the AI state it represents");
+// The AI highlight chip retired with PR 3a: the control row's Ask Planner
+// button carries the highlight count (D1-c re-entry point) and the drawer's
+// "Clear highlights" is the labelled way out of the AI state.
+test("the control row's Ask Planner button is the labelled re-entry point while highlights exist", async () => {
+  const rowSource = await readSource("../components/seat-map/MapControlRow.tsx");
+  assert.match(rowSource, /`Open Ask Planner AI, \$\{draft\.askPlanner\.count\} seats highlighted`/);
+  const drawerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
+  assert.match(drawerSource, /Clear highlighted seats|Clear highlights/);
 });
 
 test("viewer isolation holds: no Ask Planner, no AI language on the viewer map", async () => {

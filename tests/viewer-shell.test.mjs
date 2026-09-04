@@ -3,12 +3,14 @@ import assert from "node:assert/strict";
 import { loadComponent, renderElement, React, configureContext, fireEvent, act, cleanup, screen, within, flushFrames, setUrl, setViewportWidth, waitFor } from "./helpers/renderComponent.mjs";
 
 // The viewer INSIDE the persistent shell (redesign-v2 PR 2, route-group move
-// of / — owner confirmation 2026-09-03): the search field lands in the
-// tenant row, the four filter groups (Department · Zone · Status · Position,
-// owner ruling 2026-09-04) register with the left panel, toggling an item
-// filters the map, and the applied filters are URL state (?dept= ?zone=
-// ?status= ?position=, PHASE1IA B3). tests/viewer-seat-finder.test.mjs covers
-// the surface standalone; this file covers the seam.
+// of / — owner confirmation 2026-09-03; PR 3a: the control row replaces the
+// tenant row): the search field lives in the map's own control row under the
+// header, the four filter groups (Department · Zone · Status · Position, owner
+// ruling 2026-09-04) register with the left panel, "Filters · N" opens that
+// panel, toggling an item filters the map, and the applied filters are URL
+// state (?dept= ?zone= ?status= ?position=, PHASE1IA B3).
+// tests/viewer-seat-finder.test.mjs covers the surface standalone; this file
+// covers the seam.
 
 let AppShell;
 let ViewerSeatFinder;
@@ -80,14 +82,35 @@ async function openLeftPanel() {
   return screen.getByRole("complementary", { name: "Filters" });
 }
 
-test("the search field portals into the tenant row and the viewer renders no chrome of its own", async () => {
+test("the search field lives in the control row under the header; no tenant row, no chrome of the viewer's own", async () => {
   await renderInShell();
-  const row = document.querySelector("[data-shell-tenants]");
+  assert.equal(document.querySelector("[data-shell-tenants]"), null, "the PR 2 tenant row is gone (PR 3a)");
+  const row = screen.getByRole("toolbar", { name: "Map controls" });
   const search = screen.getByRole("search", { name: "Viewer search" });
-  assert.ok(row.contains(search), "the search field lands in the tenant row's left slot");
+  assert.ok(row.contains(search), "the search field lands in the control row");
+  assert.ok(!screen.getByRole("banner").contains(row), "the row is in the page, below the header");
   assert.equal(screen.getAllByRole("banner").length, 1, "one header — the shell's");
-  assert.equal(screen.queryByRole("button", { name: /^Filter seating/ }), null, "the old Filter popover trigger is not rendered in-shell");
+  assert.equal(screen.queryByRole("button", { name: /^Filter seating/ }), null, "the old Filter popover is gone");
   assert.equal(screen.getByRole("link", { name: "Skip to seat map" }).getAttribute("href"), "#viewer-seat-map");
+  assert.ok(within(row).getByRole("button", { name: "Find me" }));
+  assert.ok(within(row).getByRole("button", { name: "Show occupant names" }));
+});
+
+test("'Filters · N' appears once a filter is applied and opens the shell's left panel; Clear clears", async () => {
+  await renderInShell();
+  const row = screen.getByRole("toolbar", { name: "Map controls" });
+  assert.equal(within(row).queryByRole("button", { name: /^Filters · / }), null, "Hidden at N = 0");
+  const panel = await openLeftPanel();
+  await act(async () => fireEvent.click(within(panel).getByRole("checkbox", { name: /^Corporate/ })));
+  await flushFrames();
+  const trigger = within(row).getByRole("button", { name: "Filters · 1" });
+  assert.equal(trigger.getAttribute("aria-controls"), "shell-left-panel");
+  assert.equal(trigger.getAttribute("aria-expanded"), "true", "the panel is open");
+  assert.match(within(row).getByText(/seats match/).textContent, /^2 of 4 seats match$/, "the count follows the filter");
+  await act(async () => fireEvent.click(within(row).getByRole("button", { name: "Clear filters" })));
+  await flushFrames();
+  assert.equal(within(row).queryByRole("button", { name: /^Filters · / }), null);
+  assert.equal(window.location.search, "");
 });
 
 test("the four filter groups register with the left panel, in order, with per-floor counts including zero", async () => {

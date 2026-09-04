@@ -13,7 +13,14 @@ import { clientActionErrorMessage } from "@/lib/clientActionError";
 import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { createSeatAction, deleteSeatAction, swapSeatAssignmentsAction, updateSeatAction } from "@/app/actions";
-import { findSeatIdByParam, readFloorParam, readSeatParam, withFloorParam, withSeatParam } from "@/lib/deepLink";
+import { findSeatIdByParam, readFilterParams, readFloorParam, readNamesParam, readQueryParam, readSeatParam } from "@/lib/deepLink";
+import { nextMapHref } from "@/lib/mapUrlState";
+import { scopeResults, type SearchScope } from "@/lib/mapSearchScope";
+import { historyShortcutFor, redoShortcutHint, shortcutHint, shortcutTargetIsEditable, undoShortcutHint } from "@/lib/platformShortcut";
+import { findEmployeeByEmail } from "@/lib/mySeat";
+import { buildPositionOptions } from "@/lib/positions";
+import { buildViewerFilterGroups } from "@/lib/viewerFilterGroups";
+import { buildViewerPaletteBrowse } from "@/lib/viewerFindPalette";
 import { DEFAULT_FLOOR, floorOf } from "@/lib/floorIds";
 import { FLOORS, floorIsMapped, floorOrdinal, peopleOnFloor, rosterFloorForUnseated, urlFloorFor } from "@/lib/floors";
 import {
@@ -44,16 +51,15 @@ import {
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
 import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, markerHitFloorMet, textTierActive } from "@/lib/seatCrowding";
-import { AiHighlightChip } from "@/components/seat-map/AiHighlightChip";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
 import { FloorRoster, focusFloorRoster } from "@/components/seat-map/FloorRoster";
-import { FloorSelector, type FloorId } from "@/components/seat-map/FloorSelector";
+import type { FloorId } from "@/lib/floorIds";
+import { MapControlRow } from "@/components/seat-map/MapControlRow";
+import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
 import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
-import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
-import { MapWashLayer } from "@/components/seat-map/MapWashLayer";
+import type { SeatMarkKind } from "@/components/seat-map/SeatMark";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
-import { ResultsPanel } from "@/components/seat-map/ResultsPanel";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { useDraftHistory } from "@/components/seat-map/useDraftHistory";
@@ -72,14 +78,10 @@ import {
   buildSwapSummary,
   seatPersonLabel
 } from "@/components/seat-map/SeatMapDialogs";
-import { buildOfficeRoomWashes, getOfficePlateLayout } from "@/lib/officeRoomWash";
-import { buildZoneWash } from "@/lib/zoneWash";
-import { createPortal } from "react-dom";
-import { useAppShellNavigation, useAppShellSlots } from "@/components/ui/AppShell";
-import { adminChromeDividerRule } from "@/components/ui/adminChrome";
+import { useAppShellFilters, useAppShellLeftPanel, useAppShellNavigation, useAppShellState, type ShellFilterSpec } from "@/components/ui/AppShell";
 import { focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
-import { SEAT_SEARCH_PLACEHOLDER } from "@/lib/viewerSeatSearch";
+import { SEAT_SEARCH_PLACEHOLDER, buildViewerSeatSearch, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { deploySkewMonitor } from "@/lib/deploySkew";
 import { assignLocation } from "@/lib/fullNavigation";
@@ -232,46 +234,32 @@ function replaceEmployee(employees: Employee[], seat: SeatWithEmployee) {
 type SeatStatusLegendItem = {
   key: string;
   label: string;
-  chipClass: string;
-  accentClass: string;
+  mark: SeatMarkKind;
   draftOnly?: boolean;
   badge?: boolean;
 };
 
 const SEAT_STATUS_LEGEND: SeatStatusLegendItem[] = [
-  {
-    key: "assigned",
-    label: STATUS_LABELS.assigned,
-    chipClass: "border-[var(--sp-legend-assigned-border)] bg-[var(--sp-legend-assigned-surface)]",
-    accentClass: "bg-[var(--sp-legend-assigned-accent)]"
-  },
-  {
-    key: "available",
-    label: STATUS_LABELS.available,
-    chipClass: "border-[var(--sp-legend-available-border)] bg-[var(--sp-legend-available-surface)]",
-    accentClass: "bg-[var(--sp-legend-available-accent)]"
-  },
-  {
-    key: "reserved",
-    label: STATUS_LABELS.reserved,
-    chipClass: "border-[var(--sp-legend-reserved-border)] bg-[var(--sp-legend-reserved-surface)]",
-    accentClass: "bg-[var(--sp-legend-reserved-accent)]"
-  },
-  {
-    key: "unavailable",
-    label: STATUS_LABELS.unavailable,
-    chipClass: "border-[var(--sp-legend-unavailable-border)] bg-[var(--sp-legend-unavailable-surface)]",
-    accentClass: "bg-[var(--sp-legend-unavailable-accent)]"
-  },
-  {
-    key: "draft-changed",
-    label: "Draft change",
-    chipClass: "border-[var(--sp-legend-draft-border)] bg-[var(--sp-legend-draft-surface)]",
-    accentClass: "bg-[var(--sp-legend-draft-accent)]",
-    draftOnly: true,
-    badge: true
-  }
+  { key: "assigned", label: STATUS_LABELS.assigned, mark: "assigned" },
+  { key: "available", label: STATUS_LABELS.available, mark: "open" },
+  { key: "reserved", label: STATUS_LABELS.reserved, mark: "reserved" },
+  { key: "unavailable", label: STATUS_LABELS.unavailable, mark: "unavailable" },
+  // The ◇ — PHASE3DS §1.16: "changed in draft", the Draft family's shape.
+  { key: "draft-changed", label: "Changed in draft", mark: "draft-badge", draftOnly: true, badge: true }
 ];
+
+// Option names for the left panel's groups: trimmed, de-duplicated
+// case-insensitively (first spelling wins), sorted — the viewer's rule.
+function uniqueOptionNames(values: Array<string | null | undefined>) {
+  const seen = new Map<string, string>();
+  values.forEach(value => {
+    const trimmed = value?.trim();
+    if (!trimmed) return;
+    const key = trimmed.toLowerCase();
+    if (!seen.has(key)) seen.set(key, trimmed);
+  });
+  return Array.from(seen.values()).sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+}
 
 // Multi-floor PR-3: the admin roster region's id — the focus target when a
 // find lands on an unseated person (the roster floor has no map to pan).
@@ -322,12 +310,29 @@ export function SeatMap({
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
-  const [chromeMenuOpen, setChromeMenuOpen] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
-  const [searchShortcutHint, setSearchShortcutHint] = useState("");
-  const chromeSearchInputRef = useRef<HTMLInputElement | null>(null);
-  const canvasSearchInputRef = useRef<HTMLInputElement | null>(null);
-  const chromeMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [searchShortcutHint, setSearchShortcutHint] = useState<string | null>(null);
+  // navigator.platform after hydration (P3-4): the Undo / Redo tooltips name
+  // the modifier from it; the server render says Ctrl.
+  const [platform, setPlatform] = useState<string | undefined>(undefined);
+  // The ONE Find surface, shared with the viewer (D1-d, PR 3a): the control
+  // row's field opens the 560px palette; results and browse share the slot.
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [searchScope, setSearchScope] = useState<SearchScope>("floor");
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const searchFieldRef = useRef<HTMLDivElement | null>(null);
+  const paletteRef = useRef<HTMLDivElement | null>(null);
+  const suppressPaletteReopenRef = useRef(false);
+  // Editing is lg-and-up (D2, deviation 4): below the hinge the draft map is
+  // read-only — the row's editor cluster is Hidden and the band says why.
+  const [editTier, setEditTier] = useState(true);
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1024px)");
+    const update = () => setEditTier(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   // Whether the docked inspector was expanded when Ask Planner took the right
   // edge — closed drawers hand the slot back (2026-07-16 critique, minor 6).
   const inspectorExpandedBeforePlannerRef = useRef(false);
@@ -481,14 +486,21 @@ export function SeatMap({
   const {
     search,
     setSearch,
+    department,
+    setDepartment,
+    position,
+    setPosition,
     zone,
+    setZone,
+    status,
+    setStatus,
+    structuredFilterCount,
     filtersActive,
     searchQuery,
     searchActive,
     structuredFiltersActive,
     matchingSeats,
     resultStatusBreakdown,
-    panelResults,
     matchesFilters,
     clearStructuredFilters,
     clearAllConstraints,
@@ -625,12 +637,11 @@ export function SeatMap({
     // publish review's own total, the last edit the newest draft updated_at.
     draftStatus: liveDraftStatus
   });
-  // Top-bar-first chrome: this surface's bar tenants (undo/redo/kebab, the
-  // floor identity, Ask Planner + publish) render into AppTopBar's slot
-  // elements via portals — live-updating content can't ride the
-  // register-once handler contract above. null outside a shell ancestor
-  // (standalone harnesses), where the fallback header below renders instead.
-  const shellSlots = useAppShellSlots();
+  // The persistent shell (null in standalone harnesses): the left panel the
+  // control row's "Filters · N" opens, and the person's published seat for
+  // "Find me" (D1-f — the published layer on every surface).
+  const shellLeftPanel = useAppShellLeftPanel();
+  const shellState = useAppShellState();
 
   // ?ask-planner=open contract (v12): a sub-page's AI rail item falls back to
   // <Link href="/admin?ask-planner=open"> when onOpenAskPlanner is absent
@@ -727,36 +738,63 @@ export function SeatMap({
     };
   }, [actionError, canEdit]);
 
-  // Dismissal rule for the chrome-bar "More" menu (the v12 kebab): a pointer
-  // press outside the menu or its trigger dismisses it.
+  // Ctrl/⌘ K focuses the search AND opens the palette (D1-d) — the same
+  // muscle memory as the viewer. The hint renders after mount so the server
+  // markup never guesses the platform (P3-4, lib/platformShortcut).
   useEffect(() => {
-    if (!chromeMenuOpen) return;
-
-    function handleOutsidePointer(event: globalThis.PointerEvent) {
-      if (event.target instanceof Element && event.target.closest("[data-chrome-menu]")) return;
-      setChromeMenuOpen(false);
-    }
-
-    document.addEventListener("pointerdown", handleOutsidePointer);
-    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
-  }, [chromeMenuOpen]);
-
-  // Global command (3b): ⌘K / Ctrl+K focuses the command search — the chrome
-  // input at lg+, the slim canvas row below that tier.
-  useEffect(() => {
-    setSearchShortcutHint(/mac/i.test(window.navigator.platform) ? "⌘K" : "Ctrl K");
+    const frame = window.requestAnimationFrame(() => {
+      setPlatform(window.navigator.platform);
+      setSearchShortcutHint(shortcutHint(window.navigator.platform, "K"));
+    });
     const handleSearchShortcut = (event: globalThis.KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        const chromeInput = chromeSearchInputRef.current;
-        const target = chromeInput && chromeInput.offsetParent !== null ? chromeInput : canvasSearchInputRef.current;
-        target?.focus();
-        target?.select();
+        setPaletteOpen(true);
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
       }
     };
     window.addEventListener("keydown", handleSearchShortcut);
-    return () => window.removeEventListener("keydown", handleSearchShortcut);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", handleSearchShortcut);
+    };
   }, []);
+
+  // Outside click closes the palette; the field counts as inside (a press
+  // there is how you open it).
+  useEffect(() => {
+    if (!paletteOpen) return;
+    function handleOutsidePointer(event: globalThis.PointerEvent) {
+      const target = event.target as Node;
+      if (paletteRef.current?.contains(target)) return;
+      if (searchFieldRef.current?.contains(target)) return;
+      setPaletteOpen(false);
+    }
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [paletteOpen]);
+
+  // Undo / Redo keyboard shortcuts (P2-1 — the tooltips promise them):
+  // Ctrl/⌘ Z, Ctrl/⌘ Shift Z (Ctrl Y on Windows). Never while typing, inside a
+  // dialog, while a mutation is in flight or the inspector holds unsaved edits
+  // — the same gate the row's buttons use.
+  useEffect(() => {
+    if (!canEdit) return;
+    const handleHistoryShortcut = (event: globalThis.KeyboardEvent) => {
+      const action = historyShortcutFor(event, window.navigator.platform);
+      if (!action) return;
+      if (shortcutTargetIsEditable(event.target)) return;
+      if (mutationInFlight || inspectorDirty || historyOpInFlight) return;
+      if (action === "undo" && !undoAvailable) return;
+      if (action === "redo" && !redoAvailable) return;
+      event.preventDefault();
+      if (action === "undo") undoDraftEdit();
+      else redoDraftEdit();
+    };
+    window.addEventListener("keydown", handleHistoryShortcut);
+    return () => window.removeEventListener("keydown", handleHistoryShortcut);
+  }, [canEdit, historyOpInFlight, inspectorDirty, mutationInFlight, redoAvailable, redoDraftEdit, undoAvailable, undoDraftEdit]);
 
   useEffect(() => {
     const viewport = mapViewportRef.current;
@@ -905,11 +943,6 @@ export function SeatMap({
         return;
       }
 
-      if (chromeMenuOpen) {
-        setChromeMenuOpen(false);
-        return;
-      }
-
       if (addSeatMode || swapSourceSeatId || moveEmployeeSourceSeatId) {
         const canceledMode = swapSourceSeatId ? "Swap" : moveEmployeeSourceSeatId ? "Move" : "Add seat";
         setAddSeatMode(false);
@@ -939,18 +972,22 @@ export function SeatMap({
         return;
       }
 
-      if (!isEditableTarget(event.target) && search.trim()) {
-        // The results panel teaches "Esc clears" — when the press came from a
-        // result card, the card unmounts with the panel, so focus returns to
-        // the search input the cleared query belongs to.
-        const fromResultsPanel = event.target instanceof Element && Boolean(event.target.closest('[aria-label="Admin search results"]'));
-        setSearch("");
-        if (fromResultsPanel) {
+      if (paletteOpen) {
+        // Focus is about to unmount with the palette if it was on a row —
+        // hand it back to the field rather than letting it fall to <body>.
+        if (event.target instanceof Node && paletteRef.current?.contains(event.target)) {
+          suppressPaletteReopenRef.current = true;
           window.requestAnimationFrame(() => {
-            const chromeInput = chromeSearchInputRef.current;
-            (chromeInput && chromeInput.offsetParent !== null ? chromeInput : canvasSearchInputRef.current)?.focus();
+            searchInputRef.current?.focus();
+            suppressPaletteReopenRef.current = false;
           });
         }
+        setPaletteOpen(false);
+        return;
+      }
+
+      if (!isEditableTarget(event.target) && search.trim()) {
+        setSearch("");
         return;
       }
 
@@ -966,7 +1003,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, chromeMenuOpen, clearStructuredFilters, closeAskPlannerDrawer, deleteSeatConfirm, discardDraftConfirmOpen, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, pending, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, structuredFiltersActive, swapConfirm, swapSourceSeatId, vacateConfirm]);
+  }, [addSeatMode, askPlannerOpen, paletteOpen, clearStructuredFilters, closeAskPlannerDrawer, deleteSeatConfirm, discardDraftConfirmOpen, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, pending, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, structuredFiltersActive, swapConfirm, swapSourceSeatId, vacateConfirm]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -986,7 +1023,25 @@ export function SeatMap({
   // change back with a shallow replaceState — no router navigation (so no
   // server refetch) and no history entry per click.
   const seatParamAppliedRef = useRef(false);
+  const landingQueryRef = useRef<string | null>(null);
   useEffect(() => {
+    // ?q= (D1-d landing, both routes): field pre-filled, palette open; a
+    // unique match opens itself once the results exist. ?names=off overrides
+    // the stored preference for this load; the four filters are URL state
+    // on this route too (PHASE1IA B3).
+    const query = readQueryParam(window.location.search);
+    if (query) {
+      landingQueryRef.current = query;
+      setSearch(query);
+      setPaletteOpen(true);
+    }
+    const names = readNamesParam(window.location.search);
+    if (names !== null) setShowNames(names);
+    const filtersFromUrl = readFilterParams(window.location.search);
+    setDepartment(filtersFromUrl.department);
+    setPosition(filtersFromUrl.position);
+    setZone(filtersFromUrl.zone);
+    setStatus(filtersFromUrl.status);
     const seatParam = readSeatParam(window.location.search);
     // Multi-floor PR-3: land on the floor the URL asks for — a matching
     // ?seat= wins (its floor), else a valid ?floor= (lib/floors urlFloorFor).
@@ -1022,18 +1077,26 @@ export function SeatMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ONE writer for the B3 set (lib/mapUrlState): ?floor= ?seat= ?q= ?names=
+  // and the four filters compose into a single replaceState once the reads
+  // above have happened; the query is debounced so typing never churns
+  // history state per keystroke.
   useEffect(() => {
-    if (!seatParamAppliedRef.current) return;
-    const label = selectedSeatId ? (localSeats.find(seat => seat.id === selectedSeatId)?.label ?? null) : null;
-    // ?floor= only off the default floor, so the bare URL stays canonical
-    // (same mirror the viewer keeps).
-    const search = withFloorParam(withSeatParam(window.location.search, label), floor === DEFAULT_FLOOR ? null : floor);
-    const next = `${window.location.pathname}${search}${window.location.hash}`;
-    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (next !== current) window.history.replaceState(window.history.state, "", next);
+    if (!seatParamAppliedRef.current || !namesPreferenceHydrated) return;
+    const write = () => {
+      const label = selectedSeatId ? (localSeats.find(seat => seat.id === selectedSeatId)?.label ?? null) : null;
+      const next = nextMapHref(window.location, { floor, seatLabel: label, query: search, namesVisible: showNames, filters: { department, position, zone, status } });
+      if (next) window.history.replaceState(window.history.state, "", next);
+    };
+    if (!search) {
+      write();
+      return;
+    }
+    const timer = window.setTimeout(write, 150);
+    return () => window.clearTimeout(timer);
     // localSeats omitted: a seat's label is stable for the life of its id.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [floor, selectedSeatId]);
+  }, [department, floor, namesPreferenceHydrated, position, search, selectedSeatId, showNames, status, zone]);
 
   const zones = useMemo(() => {
     const values = new Set<string>();
@@ -2411,13 +2474,12 @@ export function SeatMap({
   // One occupant expanded at a time: DETAIL (inspector) when a seat is selected and
   // expanded, RESULTS when search/filters are active while the inspector is closed or
   // auto-collapsed to its pill. Tiers: bottom sheet ≤899, floating panel ≥900.
-  const resultsPanelOpen = canEdit && filtersActive && (!selectedSeat || inspectorCollapsed);
   // 3b MODE CARD: while a mode runs without an expanded inspector, the mode
   // owns the panel slot (its microcopy lives in the occupant, INV-4).
   const modeCardOpen = canEdit && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
   // v12 slice 4: the inspector FLOATS (contract #1) — only the docking
   // occupants reserve stage width now (results panel / mode card, contract #2).
-  const rightSlotTier: "expanded" | "none" = resultsPanelOpen || modeCardOpen ? "expanded" : "none";
+  const rightSlotTier: "expanded" | "none" = modeCardOpen ? "expanded" : "none";
   const stageReservedClassName = rightSlotTier === "expanded" ? "panel:pr-[332px]" : "";
 
   // The collapse rail is retired (v12 slice 4): `inspectorCollapsed` is now
@@ -2426,9 +2488,9 @@ export function SeatMap({
   // no rail left for the user to click.
   useEffect(() => {
     if (!inspectorCollapsed || !selectedSeatId) return;
-    if (resultsPanelOpen || modeCardOpen || askPlannerOpen || swapSourceSeatId || moveEmployeeSourceSeatId) return;
+    if (searchActive || modeCardOpen || askPlannerOpen || swapSourceSeatId || moveEmployeeSourceSeatId) return;
     setInspectorCollapsed(false);
-  }, [inspectorCollapsed, selectedSeatId, resultsPanelOpen, modeCardOpen, askPlannerOpen, swapSourceSeatId, moveEmployeeSourceSeatId]);
+  }, [inspectorCollapsed, selectedSeatId, searchActive, modeCardOpen, askPlannerOpen, swapSourceSeatId, moveEmployeeSourceSeatId]);
   // No mode/zoom change on select or deselect: in the fit view the reserved
   // column resizes the viewport and the overview ResizeObserver re-fits the
   // frame width automatically; a zoomed (detail) view keeps its zoom.
@@ -2450,7 +2512,7 @@ export function SeatMap({
   // mobileMapInteractionSurfaceOpen on purpose: that one is canEdit-gated
   // (it guards edit affordances), while a sheet covers the legend whether or
   // not this session can edit, and the results panel is a sheet down there too.
-  const bottomSheetOwnsBottom = mobileMapInteractionSurfaceOpen || resultsPanelOpen || Boolean(selectedSeat);
+  const bottomSheetOwnsBottom = mobileMapInteractionSurfaceOpen || Boolean(selectedSeat);
   // Band visibility (Option A): floor-gated like the legend it replaced, sm+
   // only, and below the panel tier it yields to whichever sheet owns the
   // bottom — bottomSheetOwnsBottom is admin-wider than the viewer's flag on
@@ -2497,8 +2559,8 @@ export function SeatMap({
       // removes the row and this budget drops back to one header height.
       ? [
         statusBandVisible
-          ? "min-h-[300px] h-[calc(100svh-2*var(--sp-shell-header-h)-84px)]"
-          : "min-h-[300px] h-[calc(100svh-2*var(--sp-shell-header-h)-44px)]",
+          ? "min-h-[300px] h-[calc(100svh-var(--sp-shell-header-h)-var(--sp-control-row-h)-40px)]"
+          : "min-h-[300px] h-[calc(100svh-var(--sp-shell-header-h)-var(--sp-control-row-h))]",
         "overflow-auto sm:flex sm:items-center sm:justify-center sm:overflow-hidden"
       ].join(" ")
       // The sm cap budgets the stacked chrome above the map: the shell header
@@ -2514,8 +2576,8 @@ export function SeatMap({
       : [
         "min-h-[360px] max-h-[82svh] overflow-auto sm:min-h-[420px]",
         statusBandVisible
-          ? "sm:max-h-[calc(100svh-2*var(--sp-shell-header-h)-84px)]"
-          : "sm:max-h-[calc(100svh-2*var(--sp-shell-header-h)-44px)]",
+          ? "sm:max-h-[calc(100svh-var(--sp-shell-header-h)-var(--sp-control-row-h)-40px)]"
+          : "sm:max-h-[calc(100svh-var(--sp-shell-header-h)-var(--sp-control-row-h))]",
         "lg:min-h-0 lg:max-h-none lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden"
       ].join(" "),
     mapViewMode === "detail" && surface === "plan" && !addSeatMode ? (panning ? "cursor-grabbing" : "cursor-grab") : "",
@@ -2687,34 +2749,6 @@ export function SeatMap({
     () => computeCodePillNudges(visualLocalSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet, geometry: seatPillGeometry }),
     [nameLabelNudges, namedSeatIdSet, seatDensityClearance, seatPillGeometry, visualLocalSeats]
   );
-  // Office room wash (PR B, 2026-07-24): a private office glows faintly green
-  // while an assigned seat sits in it. buildOfficeRoomWashes owns the
-  // composition rules — the wash yields to dim, search highlight, and
-  // targeting modes (swap/move). draggingSeatId is a lib parameter this
-  // caller no longer exercises (geometry drag retired 2026-07-30), so this
-  // call site stays a straight data feed.
-  const officeRoomWashes = buildOfficeRoomWashes({
-    // The canvas floor selects the room set (multi-floor): a floor-2 canvas
-    // must never wash Floor 3's rooms at Floor 3 coordinates.
-    floor,
-    seats: visualLocalSeats.map(seat => ({ id: seat.id, x: seat.x, y: seat.y, status: seat.status })),
-    dimmedSeatIds: dimmedSeatIdSet,
-    searchActiveSeatIds: search.trim() ? new Set(floorSeats.filter(matchesFilters).map(seat => seat.id)) : undefined,
-    swapMode: Boolean(swapSourceSeatId || moveEmployeeSourceSeatId),
-    draggingSeatId: null
-  });
-  // Zone wash follows the pinned zone facet only. The chip-hover preview half
-  // of v12 contract #8 is viewer-only (ViewerSeatFinder): this surface lost
-  // its zone chips with the canvas filter UI (2026-08-20, owner / #432), so
-  // its hoverZone state was removed as dead code (F8, read-path assessment).
-  // `zone` itself is dormant here too (see the useSeatFilters note above) —
-  // the wash plumbing stays so the facet can return without rework. Seats
-  // come from the visual set — the wash box must land in the same space as
-  // the markers it frames.
-  const zoneWash = useMemo(
-    () => buildZoneWash(zone !== "all" ? zone : null, visualLocalSeats),
-    [visualLocalSeats, zone]
-  );
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
   const markerEdgeThreshold = mapViewMode === "detail"
@@ -2749,331 +2783,128 @@ export function SeatMap({
     return { edge: "none", offsetPx: 0 };
   }
 
-  // Icon-only tools (undo/redo) sit as small squares beside the Filter/search
-  // field pair (2026-07-23), not as full-height flat tools — they carry no
-  // active-underline state, so nothing ties them to the bar's bottom edge.
-  // The hit target is 44px (PR-2 / F-SP-4, 2026-08-26: the WCAG touch minimum
-  // is binding off the map canvas — the old -inset-1.5 reached only 40) while
-  // the visual stays 28px. The undo/redo pair is zero-gap, so the shared class
-  // carries the vertical expansion only and each call site adds its OUTWARD
-  // horizontal face (undo -left-4 = 44 wide; redo -right-3 = 40, capped at
-  // half the gap to the kebab — ledgered in tests/touch-target-source).
-  const chromeIconBtn = "relative flex h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-y-2 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--sp-text-helper)]";
-  // v12: the kebab is now the bar's ONLY overflow surface, visible at every
-  // width. The old below-lg/below-xl chromeToolbarBtnCollapsible* derivations
-  // (and the adminChromeTool/Active/Disabled imports that fed them) are
-  // retired along with the row controls they served — Show names, Management,
-  // and the flat-tool Ask Planner all moved to the rail or the kebab. See
-  // components/ui/adminChrome.ts's updated header comment. The kebab trigger
-  // gets its own fixed 32px-wide grid cell instead, since it is icon-only.
-  const chromeKebabBtn = "relative flex h-full w-8 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-x-1.5 after:-inset-y-0.5 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]";
-  const chromeKebabBtnActive = "relative flex h-full w-8 shrink-0 items-center justify-center bg-[var(--sp-background-hover)] text-[var(--sp-text-primary)] after:absolute after:-inset-x-1.5 after:-inset-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]";
-  const chromeMenuItem = "flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]";
-
-  // --- Top-bar tenants (top-bar-first chrome, 2026-08-14) -----------------
-  // Three clusters portal into AppTopBar's slots when a shell ancestor
-  // provides them (shellSlots); the standalone fallback header below the
-  // return renders the same consts inline, so harnesses that mount SeatMap
-  // without AppShell (the real-browser tier) keep every control.
-
-  // Left slot: divider + undo/redo + kebab — the bar acts (canvas finds).
-  const barCommandCluster = canEdit ? (
-    <>
-      {/* Always-visible divider (aesthetic pass 2026-08-14): the command
-          cluster must read as its own group, clearly apart from the brand
-          wordmark — reference-bar Save/Fork/Share separation. mx-4, not mx-3:
-          zone-level boundaries get 16px air, group boundaries inside a zone
-          get 12px (de-cram pass 2026-08-18). */}
-      <span aria-hidden="true" className={`mx-4 h-5 ${adminChromeDividerRule}`} />
-      {/* div, not <nav>: role="group" is not an allowed role on nav (axe
-          aria-allowed-role), and this is a grouped tool cluster, not a
-          navigation landmark. */}
-      <div role="group" aria-label="Admin command row" className="flex h-full shrink-0 items-center">
-        <button
-          type="button"
-          onClick={undoDraftEdit}
-          disabled={mutationInFlight || inspectorDirty || !undoAvailable}
-          aria-label="Undo last map change"
-          title={undoTitle}
-          className={`${chromeIconBtn} after:-left-4 after:right-0`}
-        >
-          {/* PR-5 (§8.1): the spinner replaces the glyph while THIS op is in
-              flight — accessible name and title stay unchanged (ruled). */}
-          {historyOpInFlight === "Undo" ? (
-            <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />
-          ) : (
-          /* SVG on the chrome icon grid (20-viewBox, stroke 1.5) — replaced
-              the literal ↺ glyph in the chrome-unification pass 2026-08-20:
-              font-rendered arrows couldn't track the 1.5-stroke icon system. */
-          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-            <path d="M2.5 2.5v4.17h4.17" />
-            <path d="M2.5 10a7.5 7.5 0 1 0 7.5-7.5 8.1 8.1 0 0 0-5.62 2.28L2.5 6.67" />
-          </svg>
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={redoDraftEdit}
-          disabled={mutationInFlight || inspectorDirty || !redoAvailable}
-          aria-label="Redo last undone change"
-          title={redoTitle}
-          className={`${chromeIconBtn} after:-right-3 after:left-0`}
-        >
-          {historyOpInFlight === "Redo" ? (
-            <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />
-          ) : (
-          /* Mirrored twin of the Undo SVG above. */
-          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-            <path d="M17.5 2.5v4.17h-4.17" />
-            <path d="M17.5 10a7.5 7.5 0 1 1-7.5-7.5 8.1 8.1 0 0 1 5.62 2.28L17.5 6.67" />
-          </svg>
-          )}
-        </button>
-        {/* Group hairline (follow-up to the 2026-08-18 de-cram pass): the
-            undo/redo history pair and the kebab overflow are separate groups
-            inside the command cluster, so they get the standard mx-3 group
-            divider — same rhythm as Ask Planner|publish, no third variant. */}
-        <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule}`} />
-        {/* Kebab — v12 Menu subsystem. Items: names toggle (checkmark),
-            reset view, divider, danger discard. Visible at EVERY width —
-            it is the bar's only overflow surface. */}
-        <div data-chrome-menu className="relative flex h-full shrink-0 items-center">
-          <button
-            ref={chromeMenuButtonRef}
-            type="button"
-            aria-haspopup="true"
-            aria-expanded={chromeMenuOpen}
-            aria-controls={chromeMenuOpen ? "chrome-kebab-menu" : undefined}
-            aria-label="More tools"
-            title="More tools"
-            onClick={() => setChromeMenuOpen(current => !current)}
-            className={chromeMenuOpen ? chromeKebabBtnActive : chromeKebabBtn}
-          >
-            {/* Filled-dot kebab on the 20-viewBox icon grid (dots, not
-                strokes, so no strokeWidth) — replaced the literal ⋮ glyph
-                with the other Unicode chrome glyphs (2026-08-20). */}
-            <svg aria-hidden="true" width="17" height="17" viewBox="0 0 20 20" fill="currentColor" className="shrink-0">
-              <circle cx="10" cy="4.5" r="1.4" />
-              <circle cx="10" cy="10" r="1.4" />
-              <circle cx="10" cy="15.5" r="1.4" />
-            </svg>
-          </button>
-          {chromeMenuOpen && (
-            <div
-              id="chrome-kebab-menu"
-              role="group"
-              aria-label="More tools"
-              onKeyDown={event => {
-                if (event.key === "Escape") {
-                  event.stopPropagation();
-                  setChromeMenuOpen(false);
-                  returnFocusAfterClose(chromeMenuButtonRef);
-                }
-              }}
-              className="absolute left-0 top-full z-50 w-[230px] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] py-1 shadow-sp"
-            >
-              {/* The label must NOT flip to the inverse verb when active: a
-                  flipping label with no pressed state is what left the
-                  current view invisible to assistive tech before, and
-                  accessibility-source pins that it never comes back.
-                  md:hidden since the canvas-chrome redesign: at md+ the
-                  toggle lives in the legend card's footer; below md the
-                  legend is hidden, so this kebab item stays mobile's
-                  only names control. */}
-              <button
-                type="button"
-                aria-pressed={showNames}
-                onClick={() => {
-                  setChromeMenuOpen(false);
-                  setShowNames(current => !current);
-                  // Activation unmounts the focused item — same stranded-
-                  // focus hazard as Escape.
-                  returnFocusAfterClose(chromeMenuButtonRef);
-                }}
-                className={[chromeMenuItem, "md:hidden"].join(" ")}
-              >
-                Show occupant names
-                {showNames && (
-                  // Chrome-success token (#42be65): 6.90:1 on this menu's
-                  // #1f1f1f, 6.33:1 on #262626 — clears the 3:1 graphics
-                  // floor (WCAG 1.4.11). --sp-status-success-mark itself (#1D6E41)
-                  // measures only 2.64:1 / 2.42:1 here — too dim on dark
-                  // chrome, fine only on the light-surface status dot/pill
-                  // it was tuned for. (The retired --admin-status-ok-rgb
-                  // twin previously supplied #24A148 here; this menu is
-                  // dark chrome in both themes, so the mark follows the
-                  // dark-chrome success family — twin-resolution 2026-08-21.)
-                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="ml-auto h-3.5 w-3.5 text-[var(--sp-status-success-text)]">
-                    <path d="m4.5 10.5 3.5 3.5 7.5-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setChromeMenuOpen(false);
-                  // Reuses the same reset the MapZoomControl fit button
-                  // calls — no new pan/zoom state this slice.
-                  fitMapToView();
-                  returnFocusAfterClose(chromeMenuButtonRef);
-                }}
-                className={chromeMenuItem}
-              >
-                Reset zoom &amp; position
-              </button>
-              {/* Zoom to 100% moved here verbatim when the floating map ⋯
-                  kebab retired (v12 slice 3). It is NOT the same action as
-                  the reset above: fit/overview scales the plan to the
-                  viewport, this one lands on exact 1:1 detail zoom. The
-                  kebab's other item (fit) already lives on the zoom
-                  stack's fit button, so nothing was dropped. */}
-              <button
-                type="button"
-                onClick={() => {
-                  setChromeMenuOpen(false);
-                  applyMapZoom(1);
-                  returnFocusAfterClose(chromeMenuButtonRef);
-                }}
-                className={chromeMenuItem}
-              >
-                Zoom to 100%
-              </button>
-              <div className="mx-0 my-1 h-px bg-white/10" />
-              {/* Danger text #ff8389 (Carbon red-30, --sp-status-error-text):
-                  6.95:1 measured on this menu's own #1f1f1f
-                  (--sp-layer-01) background, 6.38:1 on
-                  #262626 (--sp-background-hover, in case this class ever
-                  rides a hover surface) — both well past the 4.5:1
-                  floor (Step 3 contrast gate). Disabled when there is
-                  nothing to discard: a no-op destructive control reads
-                  as broken, not as safe. Relocated here from the
-                  publish review dialog (v12) — resetDraftToPublishedAction
-                  keeps its one call site inside confirmDiscardDraftChanges;
-                  only this trigger moved. No focus restore here: the
-                  confirm dialog takes focus itself (useDialogFocus's
-                  ref-callback focuses it synchronously on mount) — a
-                  deferred returnFocusAfterClose would land AFTER that
-                  and yank focus back outside the open aria-modal
-                  dialog, breaking its own Tab trap. useDialogFocus
-                  restores focus to this button on close instead. */}
-              <button
-                type="button"
-                disabled={!publishSummary.hasChanges}
-                title={publishSummary.hasChanges ? "Discard every draft change back to the published map" : "No draft changes to discard"}
-                onClick={() => {
-                  setChromeMenuOpen(false);
-                  setDiscardDraftConfirmOpen(true);
-                }}
-                className={[chromeMenuItem, "text-[var(--sp-status-error-text)] disabled:cursor-not-allowed disabled:text-[var(--sp-text-disabled)] disabled:hover:bg-transparent"].join(" ")}
-              >
-                Discard draft changes
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  ) : null;
-
-  // Center slot: the document identity — floor selector + crumb chip, the
-  // bar's equivalent of the reference layout's centered title. lg+ only, and
-  // MEASURED, not vibes (chrome-unification 2026-08-20 tried md+ and
-  // reverted): at 768 the centered cluster ends ~x444 and the right cluster
-  // starts ~x462 with a CLEAN draft — the Publish cluster (~127px) overlaps
-  // the absolutely-centered selector by ~109px, and the two only clear each
-  // other from ~985px up. Below lg the canvas keeps the floor pill (see the
-  // lg:hidden on the canvas wrapper below; the two breakpoints must stay in
-  // lockstep or the selector doubles/vanishes).
-  const barFloorIdentity = (
-    <div className="hidden h-full items-center lg:flex">
-      <FloorSelector floor={floor} onChange={switchFloor} variant="chrome" />
-    </div>
+  // --- Control row (PHASE2UX §1M.3, D2-b; PR 3a) ---------------------------
+  // The row replaces the PR 2 tenant-row portals (undo/redo/kebab · floor ·
+  // Ask Planner + publish) and the canvas's floating search card. Publish is
+  // the row's ONE primary — present and disabled at zero with its reason
+  // beside it; ⋯ holds Discard only; Names moved up from the band.
+  const departments = uniqueOptionNames([
+    ...localDepartmentOptions.filter(option => option.active).map(option => option.name),
+    ...localEmployees.filter(employee => employee.active).map(employee => employee.department)
+  ]);
+  const positions = buildPositionOptions(localEmployees);
+  // The four filter groups register with the shell's left panel (C5): the
+  // hamburger appears on /admin too now (D0-h), counting the draft layer.
+  const filterGroups = useMemo(
+    () =>
+      buildViewerFilterGroups({
+        surface,
+        floorSeats,
+        floorPeople: rosterPeople,
+        departments,
+        positions,
+        zones,
+        seatZone: getSeatZone,
+        seatDepartment: seat => seat.employee?.department ?? seat.department ?? "",
+        selected: { department, position, zone, status }
+      }),
+    // departments / positions are derived arrays rebuilt per render; their
+    // contents follow localEmployees and the option list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [department, floorSeats, localDepartmentOptions, localEmployees, position, rosterPeople, status, surface, zone, zones]
   );
+  const shellFilterSpec = useMemo<ShellFilterSpec>(() => {
+    const setters: Record<string, (value: string) => void> = { department: setDepartment, position: setPosition, zone: setZone, status: setStatus };
+    const values: Record<string, string> = { department, position, zone, status };
+    return {
+      groups: filterGroups,
+      appliedCount: structuredFilterCount,
+      note: surface === "roster" ? `Zone and status are seat facts — ${floorMeta.tag} has no seats yet.` : undefined,
+      onToggle: (groupId, itemId) => setters[groupId]?.(values[groupId] === itemId ? "all" : itemId),
+      onClearGroup: groupId => setters[groupId]?.("all"),
+      onClearAll: clearStructuredFilters
+    };
+  }, [clearStructuredFilters, department, filterGroups, floorMeta.tag, position, setDepartment, setPosition, setStatus, setZone, status, structuredFilterCount, surface, zone]);
+  useAppShellFilters(shellFilterSpec);
 
-  // Right slot: Ask Planner + the conditional publish cluster — Publish is
-  // the bar's single filled CTA (owner zone contract).
-  const barActionCluster = canEdit ? (
-    <>
-      {/* Ask Planner — the ONLY AI-blue control on this bar (AI tokens
-          never appear on a non-AI control). Active state is the bar's
-          usual bg-hover PLUS a 2px AI-blue bottom border, distinct from
-          the brand-orange underline every other active tool uses.
-          #78a9ff: 7.68:1 on #161616, 6.43:1 on #262626 (measured
-          2026-07-31, app/globals.css AI-family comment; re-confirmed
-          Step 3 gate). */}
-      <button
-        ref={askPlannerButtonRef}
-        type="button"
-        // "AI" is part of the label, not decoration: the badge below is
-        // aria-hidden but still VISIBLE, and WCAG 2.5.3 (Label in Name)
-        // asks that the accessible name contain the visible text — that
-        // is what lets a speech-input user say what they can see and
-        // have it activate. Lighthouse/axe flagged the mismatch.
-        aria-label={
-          plannerHighlightedSeatIds.length > 0
-            ? `Open Ask Planner AI, ${plannerHighlightedSeatIds.length} seats highlighted`
-            : "Open Ask Planner AI"
-        }
-        aria-controls="ask-planner-drawer"
-        aria-expanded={askPlannerOpen}
-        aria-haspopup="dialog"
-        onClick={openAskPlannerDrawer}
-        className={[
-          "inline-flex h-full shrink-0 items-center gap-1.5 border-b-2 px-3 text-[12.5px] font-medium leading-none text-[var(--sp-ai-chrome-text)] transition-colors duration-150 hover:bg-[var(--sp-background-hover)] hover:text-[var(--sp-ai-chrome-text-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]",
-          askPlannerOpen || plannerHighlightedSeatIds.length > 0 ? "border-[var(--sp-ai-chrome-border)] bg-[var(--sp-background-hover)]" : "border-transparent"
-        ].join(" ")}
-      >
-        <span aria-hidden="true" className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[13px] leading-none">✦</span>
-        {/* The {" "} is load-bearing, not formatting. axe compares the
-            accessible name against the button's TEXT CONTENT, and JSX
-            drops the newline between a string child and the next
-            element — so without it the text reads "Ask PlannerAI",
-            which no honest label contains, and Label in Name fails no
-            matter what the aria-label says. It costs nothing visually:
-            a whitespace-only run inside a flex line box collapses. */}
-        Ask Planner{" "}
-        <span aria-hidden="true" className="border border-[var(--sp-ai-chrome-border)] px-[3px] text-[9px] font-bold leading-none text-[var(--sp-ai-chrome-text)]">AI</span>
-        {plannerHighlightedSeatIds.length > 0 && (
-          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--sp-button-primary)] px-1 text-[11px] font-semibold text-white">{plannerHighlightedSeatIds.length}</span>
-        )}
-      </button>
-
-      {/* Conditional publish cluster (contract #4): nothing renders here
-          without draft changes — no idle status chip, no
-          publish-status-popover. The has-changes styling is unchanged
-          from slice 1. */}
-      {/* The leading hairline (de-cram pass 2026-08-18) marks Ask Planner and
-          the publish cluster as separate groups in the right zone — mx-3 at
-          group boundaries, vs mx-4 at zone boundaries. It sits INSIDE the
-          conditional so a clean draft still renders nothing (and inside the
-          accessibility-source 500-char window, which is why this comment
-          lives above the conditional, not in it). Same for the draft-count
-          text: hidden below lg (chrome-unification 2026-08-20) — it is
-          redundant with the Publish count pill, and at 768 the full right
-          cluster with the text nearly collides with the left command
-          cluster; 12.5px is the one chrome text size. */}
-      {publishSummary.hasChanges && (
-        <>
-          <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule}`} />
-          <div className="flex h-full shrink-0 items-center gap-2.5">
-            <span className="hidden text-[12.5px] text-[var(--sp-text-helper)] lg:inline">
-              Draft · {publishSummary.totalChangeCount} {publishSummary.totalChangeCount === 1 ? "change" : "changes"}
-            </span>
-            <button
-              type="button"
-              onClick={openPublishReview}
-              aria-label={`Review ${draftStatusLabel.toLowerCase()}`}
-              title={draftStatusTitle}
-              className="inline-flex h-full shrink-0 items-center gap-1.5 bg-[var(--sp-button-primary)] px-[15px] text-[12.5px] font-semibold leading-none text-white transition hover:bg-[var(--sp-button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-safe:animate-[sp-chip-pop_240ms_ease-out]"
-            >
-              <span>Publish</span>
-              <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold tabular-nums text-[var(--sp-text-on-color)]">{publishSummary.totalChangeCount}</span>
-            </button>
-          </div>
-        </>
-      )}
-    </>
-  ) : null;
+  // Search results + browse feed for the palette, from the DRAFT working set
+  // this editor holds (never the published snapshot).
+  const searchResults = useMemo(
+    () => buildViewerSeatSearch({ query: search, seats: localSeats, employees: localEmployees, departmentOptions: localDepartmentOptions, zoneOptions: localZoneOptions }),
+    [localDepartmentOptions, localEmployees, localSeats, localZoneOptions, search]
+  );
+  const paletteBrowse = useMemo(
+    () => buildViewerPaletteBrowse({ seats: localSeats, employees: localEmployees, zoneOptions: localZoneOptions }),
+    [localEmployees, localSeats, localZoneOptions]
+  );
+  const scopedResults = useMemo(() => scopeResults(searchResults.results, floor, searchScope), [floor, searchResults.results, searchScope]);
+  const resultCountLabel = searchResults.results.length === 1 ? "1 result" : `${searchResults.results.length} results`;
+  function openResult(result: ViewerSearchResult) {
+    setPaletteOpen(false);
+    if (result.seatId) {
+      selectSeatResult(result.seatId);
+      return;
+    }
+    if (result.kind === "person" && result.employeeId) {
+      openPersonFromResults(result.employeeId);
+      return;
+    }
+    const targets = result.seatIds
+      .map(seatId => localSeats.find(seat => seat.id === seatId))
+      .filter((seat): seat is SeatWithEmployee => Boolean(seat) && floorOf(seat as SeatWithEmployee) === floor);
+    if (targets.length > 0) fitSeatsInMap(targets);
+    suppressPaletteReopenRef.current = true;
+    window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+      suppressPaletteReopenRef.current = false;
+    });
+  }
+  function updateSearch(value: string) {
+    handleSearchInputChange(value);
+    setPaletteOpen(true);
+  }
+  // ?q= landing, second half: a unique match opens itself once the results exist.
+  useEffect(() => {
+    const query = landingQueryRef.current;
+    if (!query || search !== query) return;
+    landingQueryRef.current = null;
+    if (searchResults.results.length === 1) openResult(searchResults.results[0]);
+    // openResult is a render-scope function; the landing runs once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, searchResults.results]);
+  // Find me (D1-f): the shell's PUBLISHED seat (labels are stable across the
+  // layers, so the draft seat with that label is the one to open); unseated →
+  // the roster row; not in the directory → an inline notice.
+  function findMe() {
+    const email = shellState?.email ?? null;
+    const me = email ? findEmployeeByEmail(localEmployees, email) : null;
+    const publishedLabel = shellState?.mySeat?.label ?? null;
+    const draftSeat = publishedLabel ? localSeats.find(seat => seat.label.toLowerCase() === publishedLabel.toLowerCase()) ?? null : null;
+    if (draftSeat) {
+      selectSeatResult(draftSeat.id);
+      return;
+    }
+    if (me && rosterFloorForUnseated(localSeats)) {
+      openPersonFromResults(me.id);
+      return;
+    }
+    setActionNotice("Your account isn't in the published directory. Ask an admin.", "neutral");
+  }
+  const controlCountText = surface === "roster"
+    ? `${rosterPeople.length} ${rosterPeople.length === 1 ? "person" : "people"}`
+    : filtersActive
+      ? `${floorMatchingSeats.length} of ${floorSeats.length} seats match`
+      : `${floorSeats.length} ${floorSeats.length === 1 ? "seat" : "seats"}`;
+  const draftControls = canEdit && editTier
+    ? {
+        undo: { label: undoAvailable ? `${lastUndoLabel ? `Undo ${lastUndoLabel}` : "Undo last map change"} · ${undoShortcutHint(platform)}` : "No map changes to undo", disabled: !undoAvailable || mutationInFlight || inspectorDirty || Boolean(historyOpInFlight), busy: historyOpInFlight === "Undo", onClick: undoDraftEdit },
+        redo: { label: redoAvailable ? `Redo · ${redoShortcutHint(platform)}` : "No undone map changes to redo", disabled: !redoAvailable || mutationInFlight || inspectorDirty || Boolean(historyOpInFlight), busy: historyOpInFlight === "Redo", onClick: redoDraftEdit },
+        addSeat: { active: addSeatMode, hidden: surface !== "plan", onToggle: addSeatMode ? cancelAddSeatMode : startAddSeatMode },
+        askPlanner: { count: plannerHighlightedSeatIds.length, open: askPlannerOpen, onOpen: openAskPlannerDrawer, controlsId: "ask-planner-drawer" },
+        publish: { count: publishSummary.totalChangeCount, onOpen: openPublishReview },
+        discard: { disabled: !publishSummary.hasChanges || pending, onOpen: () => setDiscardDraftConfirmOpen(true) }
+      }
+    : undefined;
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
@@ -3082,39 +2913,50 @@ export function SeatMap({
        (viewport-height at lg), so this root fills it with flex-1 and never
        subtracts chrome itself (redesign-v2 PR 2). */
     <div className="flex min-h-0 flex-1 flex-col overflow-x-clip bg-[var(--sp-background)] text-[var(--sp-text-primary)] lg:overflow-hidden">
-      {/* The chrome is the (shell) layout's persistent AppShell (AppTopBar +
-          rail) — this surface plugs its unsaved-edits veto and Ask Planner
-          opener into it via useAppShellNavigation (see the registration near
-          the drawer logic above); the veto contract is unchanged (true lets
-          the rail navigate, false means the guard dialog is driving). */}
-      {/* Top-bar-first chrome: in-shell, this surface has NO header of its
-          own — its bar tenants portal into AppTopBar's slots (left commands,
-          center floor identity, right actions). The standalone fallback
-          header below keeps harnesses that mount SeatMap without AppShell
-          (the real-browser tier) fully controllable. */}
+      {/* The chrome is the (shell) layout's persistent AppShell — this
+          surface plugs its unsaved-edits veto and Ask Planner opener into it
+          via useAppShellNavigation (see the registration near the drawer
+          logic above); the veto contract is unchanged. Its own controls are
+          the row below (PR 3a), in the page, 48px under the header. */}
       <h1 className="sr-only">Seat Planner — admin map</h1>
-      {shellSlots ? (
-        <>
-          {shellSlots.left && createPortal(barCommandCluster, shellSlots.left)}
-          {shellSlots.center && createPortal(barFloorIdentity, shellSlots.center)}
-          {shellSlots.right && createPortal(barActionCluster, shellSlots.right)}
-        </>
-      ) : (
-        <header className="sp-zone-chrome sticky top-0 z-50 flex h-[var(--sp-shell-header-h)] shrink-0 items-center border-b border-[var(--sp-border-subtle)] bg-[var(--sp-background)] pl-3 text-[var(--sp-text-primary)]" data-chrome="dark">
-          <div className="flex min-w-0 shrink-0 items-center gap-2">
-            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
-              {/* Brand monogram straight on the dark bar — the 2026 mark carries its own contrast. */}
-              <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
-            </span>
-            {/* leading-[18px], not leading-none: truncate's overflow-hidden clips descenders (the g) at line-height 1. */}
-            <div aria-hidden="true" translate="no" className="hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
-              Megeredchian Law <span className="font-normal text-[var(--sp-text-helper)]">· Seat Planner</span>
-            </div>
-          </div>
-          {barCommandCluster}
-          <div className="ml-auto flex h-full shrink-0 items-center">{barActionCluster}</div>
-        </header>
-      )}
+      <MapControlRow
+        floor={floor}
+        onFloorChange={switchFloor}
+        search={{
+          value: search,
+          onChange: updateSearch,
+          onClear: clearSearch,
+          scope: searchScope,
+          onScopeChange: setSearchScope,
+          hint: searchShortcutHint,
+          placeholder: SEAT_SEARCH_PLACEHOLDER,
+          inputId: "admin-seat-search",
+          inputRef: searchInputRef,
+          rootRef: searchFieldRef,
+          paletteOpen,
+          paletteId: paletteOpen ? "viewer-find-palette" : undefined,
+          onOpenPalette: () => {
+            if (suppressPaletteReopenRef.current) return;
+            setPaletteOpen(true);
+          },
+          onClosePalette: () => setPaletteOpen(false),
+          onArrowDown: () => {
+            window.requestAnimationFrame(() => {
+              document.querySelector<HTMLButtonElement>('[aria-label="Viewer search results"] button:not([disabled]), [aria-label="People directory"] button:not([disabled])')?.focus();
+            });
+          },
+          onEnter: () => {
+            if (scopedResults.shown.length > 0) openResult(scopedResults.shown[0]);
+          },
+          ariaLabel: "Admin search"
+        }}
+        filters={{ appliedCount: structuredFilterCount, onOpen: () => shellLeftPanel?.open(), onClear: clearStructuredFilters, panelOpen: shellLeftPanel?.isOpen ?? false }}
+        count={{ text: controlCountText, live: true }}
+        onFindMe={findMe}
+        draft={draftControls}
+        askPlannerAnchor={askPlannerButtonRef}
+        names={canEdit ? { pressed: showNames, hidden: surface !== "plan", onToggle: () => setShowNames(current => !current) } : null}
+      />
 
       {/* v12 slice 3: no width cap and no padding — the floor plan is layer-00
           and runs edge to edge below the bar. stageReservedClassName stays:
@@ -3131,49 +2973,6 @@ export function SeatMap({
             SCREEN-derived rather than content-derived — break a link and the
             feedback loop the aspect pin used to fence off comes back. */}
         <div className="flex min-w-0 flex-col overflow-hidden lg:min-h-0 lg:flex-1">
-          <div role="search" aria-label="Canvas search" className="z-30 px-0.5 pb-2 lg:hidden">
-            <label className="relative block w-full min-w-0 after:absolute after:-inset-y-1 after:inset-x-0">
-              <span className="sr-only">Search employee, seat, job title, department, or zone</span>
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--sp-text-helper)]">
-                <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
-                <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-              </svg>
-              <input
-                ref={canvasSearchInputRef}
-                value={search}
-                onChange={event => handleSearchInputChange(event.target.value)}
-                onKeyDown={event => {
-                  if (event.key === "Escape" && search.trim()) {
-                    event.stopPropagation();
-                    clearSearch();
-                    return;
-                  }
-                  // Results are visually adjacent but far away in DOM order —
-                  // ArrowDown hops focus straight into the results panel.
-                  if (event.key === "ArrowDown" && resultsPanelOpen) {
-                    event.preventDefault();
-                    document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
-                  }
-                }}
-                type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
-                // relative z-[1]: rides above the label's hit-expansion ::after
-                // so direct clicks (caret, drag-select) still reach the field.
-                className="relative z-[1] h-9 w-full border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] pl-11 pr-10 text-sm font-medium text-[var(--sp-text-primary)] shadow-sm outline-none transition placeholder:text-[var(--sp-text-helper)] hover:border-[var(--sp-border-strong)] focus:border-[var(--sp-interactive)] focus:ring-2 focus:ring-[color:var(--sp-border-interactive)]"
-              />
-              {search.trim() && (
-                <button
-                  type="button"
-                  aria-label="Clear top search"
-                  title="Clear top search"
-                  className={["absolute right-2 top-1/2 z-[1] flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--sp-text-helper)] transition after:absolute after:-inset-2 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-secondary)] active:scale-90", focusRingClass].join(" ")}
-                  onClick={clearSearch}
-                >
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </button>
-              )}
-            </label>
-          </div>
-
       <main className={["grid grid-cols-1 lg:min-h-0 lg:flex-1 lg:items-stretch lg:overflow-hidden", desktopMapGridClass].join(" ")}>
         <section id="planning-canvas" tabIndex={-1} aria-labelledby="admin-planning-canvas-title" className="order-1 min-w-0 overflow-hidden relative lg:order-2 lg:flex lg:min-h-0 lg:flex-col lg:gap-2">
           {/* The status strip that used to carry this heading is gone (v12
@@ -3233,98 +3032,6 @@ export function SeatMap({
                 absolutely-positioned search card (measured overlap,
                 2026-08-13 QA). */}
             <div className="pointer-events-none absolute inset-x-3 top-3 z-40 flex flex-col gap-2">
-              <div className="flex items-start gap-2">
-              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              {/* Floor identity: at lg+ (in-shell) it lives centered in the
-                  top bar (barFloorIdentity portal); below lg — and in
-                  standalone harnesses with no bar — the canvas keeps it.
-                  Breakpoint locksteps with barFloorIdentity above. */}
-              <div className={shellSlots ? "pointer-events-auto lg:hidden" : "pointer-events-auto"}>
-                <FloorSelector floor={floor} onChange={switchFloor} />
-              </div>
-              {/* The structured-filter UI (dept quick-chips, Filters trigger
-                  + dropdown, active-filter chips) is GONE from this canvas —
-                  owner ruling 2026-08-20: search is the only way an admin
-                  narrows the map. The viewer keeps its own filter surface in
-                  ViewerSeatFinder; don't reintroduce one here. */}
-              {canEdit && (
-                <AiHighlightChip
-                  seatCount={plannerHighlightedSeatIds.length}
-                  onClear={() => setPlannerHighlightedSeatIds([])}
-                />
-              )}
-              </div>
-              {/* Right half: command search (lg+, the desktop sibling of
-                  the mobile canvas search above <main>) and Add seat. It rides
-                  the stage, so the reserved inspector column slides it inboard
-                  automatically. */}
-              <div className="flex shrink-0 items-start gap-2">
-              <div role="search" aria-label="Command search" className="pointer-events-auto hidden w-[300px] border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp lg:block">
-                <label className="relative flex h-8 w-full min-w-0 items-center after:absolute after:-inset-y-1.5 after:inset-x-0">
-                  <span className="sr-only">Search employee, seat, job title, department, or zone</span>
-                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--sp-text-helper)]">
-                    <circle cx="9" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.7" />
-                    <path d="m13.4 13.4 3.1 3.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                  </svg>
-                  <input
-                    ref={chromeSearchInputRef}
-                    value={search}
-                    onChange={event => handleSearchInputChange(event.target.value)}
-                    onKeyDown={event => {
-                      if (event.key === "Escape" && search.trim()) {
-                        event.stopPropagation();
-                        clearSearch();
-                        return;
-                      }
-                      // Results are visually adjacent but far away in DOM order —
-                      // ArrowDown hops focus straight into the results panel.
-                      if (event.key === "ArrowDown" && resultsPanelOpen) {
-                        event.preventDefault();
-                        document.querySelector<HTMLButtonElement>('[aria-label="Admin search results"] button')?.focus();
-                      }
-                    }}
-                    type="search" name="seat-search" autoComplete="off" spellCheck={false} placeholder={SEAT_SEARCH_PLACEHOLDER}
-                    // relative z-[1]: above the label's hit-expansion ::after
-                    // (same contract as the viewer field).
-                    className="relative z-[1] h-full w-full border-0 bg-transparent pl-8 pr-14 text-[12px] font-medium text-ellipsis text-[var(--sp-text-primary)] outline-none placeholder:text-ellipsis transition placeholder:text-[var(--sp-text-helper)] hover:bg-[var(--sp-background)] focus:ring-2 focus:ring-inset focus:ring-[var(--sp-interactive)]"
-                  />
-                  {search.trim() ? (
-                    <button
-                      type="button"
-                      aria-label="Clear search"
-                      title="Clear search"
-                      className="absolute right-1.5 top-1/2 z-[1] flex h-5 w-5 -translate-y-1/2 items-center justify-center text-[var(--sp-text-helper)] transition after:absolute after:-inset-3 hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-interactive)]"
-                      onClick={clearSearch}
-                    >
-                      <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    </button>
-                  ) : searchShortcutHint ? (
-                    <kbd aria-hidden="true" className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 border border-[var(--sp-border-subtle)] px-1 py-0.5 text-xs font-semibold text-[var(--sp-text-helper)] sm:block">{searchShortcutHint}</kbd>
-                  ) : null}
-                </label>
-              </div>
-              {/* Add seat exists only where there is a plan to click on —
-                  Hidden tier on an unmapped floor, never disabled (D2′). */}
-              {canEdit && surface === "plan" && (
-                <button
-                  type="button"
-                  aria-pressed={addSeatMode}
-                  onClick={addSeatMode ? cancelAddSeatMode : startAddSeatMode}
-                  className={[
-                    "pointer-events-auto relative flex h-8 items-center gap-1.5 border px-3 text-[12.5px] font-semibold shadow-sp transition after:absolute after:-inset-y-1.5 after:inset-x-0 active:scale-[0.97] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
-                    addSeatMode
-                      ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link-hover)]"
-                      : "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-secondary)] hover:bg-[var(--sp-background)] hover:text-[var(--sp-text-primary)]"
-                  ].join(" ")}
-                >
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none">
-                    <path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                  </svg>
-                  {addSeatMode ? "Exit add seat" : "Add seat"}
-                </button>
-              )}
-              </div>
-              </div>
               {/* PR-5 (§8.1): the surface's shared in-flight region — an
                   always-mounted sr-only sibling of the visible outcome toast
                   below (a region that mounts WITH its content is not reliably
@@ -3430,11 +3137,6 @@ export function SeatMap({
                   draggable={false}
                 />
 
-                {/* Zone + room washes, between the floor-plan image and the
-                    marker layer. One implementation shared with the viewer
-                    surface (MapWashLayer) — it documents the decorative /
-                    pointer-inert contract both surfaces rely on. */}
-                <MapWashLayer zoneWash={zoneWash} officeRoomWashes={officeRoomWashes} />
 
                 {/* AUDIT-2 §8.2 first-run: a zero-seat draft is a bare floor
                     plan — name the state and point at the affordance that
@@ -3489,9 +3191,6 @@ export function SeatMap({
                     // Office plates center in their ROOM and size to it (the
                     // click point is wherever the admin happened to add the
                     // seat; the room is the identity). Display-only offset —
-                    // the marker snaps back to the anchor in add/swap.
-                    // One shared implementation with the viewer surface.
-                    const officePlateLayout = getOfficePlateLayout(visualSeat, mapPixelsPerNormalizedUnit);
 
                     return (
                       <SeatMarker
@@ -3510,9 +3209,6 @@ export function SeatMap({
                         hitFloor={hitFloor}
                         swapMode={Boolean(swapSourceSeatId)}
                         moveEmployeeMode={Boolean(moveEmployeeSourceSeatId)}
-                        officePlateOffsetXPx={officePlateLayout?.offsetXPx ?? 0}
-                        officePlateOffsetYPx={officePlateLayout?.offsetYPx ?? 0}
-                        officePlateWidthPx={officePlateLayout?.widthPx}
                         swapSource={seat.id === swapSourceSeatId}
                         swapTarget={seat.id === swapConfirm?.targetSeatId}
                         moveEmployeeSource={seat.id === moveEmployeeSourceSeatId}
@@ -3566,53 +3262,41 @@ export function SeatMap({
                 totalLabel={`${floorMeta.tag} · ${stats.total} ${stats.total === 1 ? "seat" : "seats"}`}
                 entries={SEAT_STATUS_LEGEND
                   .filter(item => !item.draftOnly || legendCounts[item.key] > 0)
-                  .map(item => ({ key: item.key, label: item.label, dotClassName: item.accentClass, count: legendCounts[item.key] }))}
-                summary={filtersActive ? searchStatusSummary : null}
+                  .map(item => ({ key: item.key, label: item.label, mark: item.mark, count: legendCounts[item.key] }))}
+                namesVisible={showNames}
+                count={filtersActive ? `${floorMatchingSeats.length} of ${floorSeats.length} seats match` : `${stats.total} ${stats.total === 1 ? "seat" : "seats"}`}
                 actions={filtersActive ? (
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  <>
                     <button
                       type="button"
+                      className="cds-btn cds-btn--ghost cds-btn--sm"
                       onClick={() => fitSeatsInMap(floorMatchingSeats)}
                       disabled={!floorMatchingSeats.length}
                       aria-label={floorMatchingSeats.length === 0 ? `Fit matches unavailable because there are no matching seats on ${floorMeta.tag}` : `Fit ${floorMatchingSeats.length} matches on the map`}
-                      title={floorMatchingSeats.length === 0 ? `No matching seats on ${floorMeta.tag} to fit` : "Fit active search and filter results on the map"}
-                      className={resultActionButtonClassName}
                     >
                       Fit matches
                     </button>
                     <button
                       type="button"
+                      className="cds-btn cds-btn--ghost cds-btn--sm"
                       onClick={searchActive && structuredFiltersActive ? clearAllConstraints : searchActive ? clearSearch : clearStructuredFilters}
                       aria-label={searchActive && structuredFiltersActive ? "Clear all active search and filters" : searchActive ? "Clear search results" : "Clear filters"}
-                      className={resultClearButtonClassName}
                     >
-                      Clear
+                      {searchActive && structuredFiltersActive ? "Clear all" : searchActive ? "Clear search" : "Clear filters"}
                     </button>
-                  </div>
-                ) : null}
-                controls={
-                  <>
-                    {canEdit ? (
-                      <>
-                        {/* Same accessible name + pressed-state contract as the
-                            kebab item (accessibility-source counts them
-                            relationally); the shared switch owns aria-pressed
-                            and the always-visible track cue, and the viewer
-                            band renders the same control. */}
-                        <NamesVisibilityToggle pressed={showNames} onToggle={() => setShowNames(current => !current)} />
-                        <span aria-hidden="true" className="h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
-                      </>
-                    ) : null}
-                    <MapZoomControl
-                      orientation="horizontal"
-                      label={mapZoomLabel}
-                      onZoomIn={() => applyMapZoom(mapViewMode === "detail" ? zoomFactor + MAP_ZOOM_STEP : 1)}
-                      onZoomOut={() => applyMapZoom(mapViewMode === "detail" ? zoomFactor - MAP_ZOOM_STEP : 1 - MAP_ZOOM_STEP)}
-                      onFit={fitMapToView}
-                      zoomInDisabled={mapViewMode === "detail" && zoomFactor >= MAP_ZOOM_MAX}
-                      zoomOutDisabled={mapViewMode === "detail" && zoomFactor <= MAP_ZOOM_MIN}
-                    />
                   </>
+                ) : null}
+                note={canEdit && !editTier ? "Editing needs a wider window." : undefined}
+                controls={
+                  <MapZoomControl
+                    orientation="horizontal"
+                    label={mapZoomLabel}
+                    onZoomIn={() => applyMapZoom(mapViewMode === "detail" ? zoomFactor + MAP_ZOOM_STEP : 1)}
+                    onZoomOut={() => applyMapZoom(mapViewMode === "detail" ? zoomFactor - MAP_ZOOM_STEP : 1 - MAP_ZOOM_STEP)}
+                    onFit={fitMapToView}
+                    zoomInDisabled={mapViewMode === "detail" && zoomFactor >= MAP_ZOOM_MAX}
+                    zoomOutDisabled={mapViewMode === "detail" && zoomFactor <= MAP_ZOOM_MIN}
+                  />
                 }
               />
             )}
@@ -3696,7 +3380,7 @@ export function SeatMap({
           role="status"
           aria-live="polite"
           aria-label={`${activeMode.label} mode`}
-          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] p-4 shadow-sp motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[calc(2*var(--sp-shell-header-h))] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
+          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] p-4 shadow-sp motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[calc(var(--sp-shell-header-h)+var(--sp-control-row-h))] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
         >
           <div className="text-xs font-semibold text-[var(--sp-link)]">{activeMode.label} mode</div>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--sp-text-primary)]">{activeMode.message}</p>
@@ -3718,22 +3402,32 @@ export function SeatMap({
         </aside>
       )}
 
-      {resultsPanelOpen && !modeCardOpen && (
-        <ResultsPanel
-          results={panelResults}
-          matchCount={matchingSeats.length}
-          emptyTitle={resultEmptyTitle}
-          emptyDescription={resultEmptyDescription}
-          searchActive={searchActive}
-          structuredFiltersActive={structuredFiltersActive}
-          onOpen={selectSeatResult}
-          onOpenPerson={openPersonFromResults}
-          onShowOnMap={queueCenterSeatInMap}
+      {/* The ONE Find surface (D1-d): the same palette as the viewer, over
+          the DRAFT working set, floating from the row's field. */}
+      {paletteOpen && (
+        <ViewerFindPalette
+          anchorRef={searchFieldRef}
+          containerRef={paletteRef}
+          searchInputRef={searchInputRef}
+          query={search.trim()}
+          browse={paletteBrowse}
+          results={scopedResults.shown}
+          resultCountLabel={resultCountLabel}
+          mappedSeatCount={searchResults.resultSeatIds.length}
+          activeResultId={null}
+          selectedSeatId={selectedSeatId}
+          pinnedZone={zone}
+          onZonePin={nextZone => {
+            setZone(nextZone);
+            setPaletteOpen(false);
+          }}
+          onRowHoverChange={() => {}}
+          onOpenRow={openResult}
           onClearSearch={clearSearch}
-          onClearFilters={clearStructuredFilters}
-          onClearAll={clearAllConstraints}
-          collapsedSeatLabel={selectedSeat && inspectorCollapsed ? selectedSeat.label : null}
-          onExpandCollapsedSeat={() => setInspectorCollapsed(false)}
+          currentFloor={floor}
+          scope={searchScope}
+          scopeCounts={{ onFloor: scopedResults.onFloor, inBuilding: scopedResults.inBuilding }}
+          onWiden={() => setSearchScope("building")}
         />
       )}
 

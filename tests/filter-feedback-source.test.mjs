@@ -4,28 +4,31 @@ import { test } from "node:test";
 
 // Filter feedback consolidation (2026-07-16 regrade, review 4): the filter's
 // feedback used to scatter into three corners while the legend kept showing
-// unfiltered counts that contradicted the filtered map.
+// unfiltered counts that contradicted the filtered map. Since Phase 4 PR 3a
+// the ONE home for the live match count is the control row (PHASE2UX §1M.3:
+// "22 of 68 seats match" while search or filters narrow the map, "68 seats"
+// otherwise), announced politely; the legend follows the same constraints.
 
 async function readSource(relativePath) {
   return readFile(new URL(relativePath, import.meta.url), "utf8");
 }
 
-test("the filter popover states its live match count before you commit", async () => {
-  const panel = await readSource("../components/seat-map/FilterPanel.tsx");
-  assert.match(panel, /matchSummary/);
-  assert.match(panel, /aria-live="polite"[^>]*>\s*\r?\n\s*\{matchSummary\}/);
+test("the control row states the live match count, zero included, and announces it", async () => {
+  const row = await readSource("../components/seat-map/MapControlRow.tsx");
+  assert.match(row, /className="sp-control-count" aria-live=\{count\.live \? "polite" : undefined\} aria-atomic="true">\{count\.text\}/);
 
-  // Viewer only: the admin canvas filter UI was removed 2026-08-20 (owner) —
-  // SeatMap no longer mounts FilterPanel, so search is its only constraint.
   const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  // Multi-floor PR-2 (Q5): the line is composed by lib/floors
-  // floorDepartmentSummary — "N of M seats on Floor 3 match", the cross-floor
-  // "… · N people in X are on Floor 2" variant, or the roster floor's people
-  // count — so it stays a lib-tested string.
-  assert.match(viewer, /matchSummary=\{departmentSummary\.text\}/);
-  assert.match(viewer, /matchSummaryAction=\{/);
+  assert.match(viewer, /\$\{floorHighlightedCount\} of \$\{floorSeats\.length\} seats match/);
+  assert.match(viewer, /count=\{\{ text: controlCountText, live: true \}\}/);
+  // Multi-floor PR-2 (Q5): the cross-floor line is composed by lib/floors
+  // floorDepartmentSummary and rides the band's note with its "Show Floor N"
+  // action, and the left panel's note (PR 2).
+  assert.match(viewer, /departmentSummary\.text/);
+  assert.match(viewer, /noteAction=\{structuredFiltersActive && departmentSummaryAction/);
 
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
+  assert.match(seatMap, /\$\{floorMatchingSeats\.length\} of \$\{floorSeats\.length\} seats match/);
+  assert.match(seatMap, /count=\{\{ text: controlCountText, live: true \}\}/);
   assert.doesNotMatch(seatMap, /<FilterPanel/);
   assert.doesNotMatch(seatMap, /<DeptChipRow/);
 });
@@ -41,14 +44,14 @@ test("legend counts follow the active constraints instead of contradicting the m
   assert.match(seatMap, /filtersActive \? floorSeats\.filter\(matchesFilters\) : floorSeats/);
 });
 
-test("active filter chips sit with the trigger's corner, not across the map", async () => {
-  const viewer = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  assert.doesNotMatch(viewer, /<ActiveFilterChips[^/]*className="ml-auto"/);
-
-  const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
-  // The crumb must stay gone entirely (owner call 2026-08-14) — the floor
-  // selector is the map's whole document identity. Admin active-filter chips
-  // are gone with the rest of the canvas filter UI (owner call 2026-08-20).
-  assert.doesNotMatch(seatMap, /\bmapCrumbLabel\b/);
-  assert.doesNotMatch(seatMap, /<ActiveFilterChips/);
+test("the applied-filter count and its Clear live in the row's split control, never as chips across the map", async () => {
+  const row = await readSource("../components/seat-map/MapControlRow.tsx");
+  assert.match(row, /Filters · \{filters\.appliedCount\}/);
+  assert.match(row, /aria-label="Clear filters" onClick=\{filters\.onClear\}/);
+  for (const file of ["../components/seat-map/ViewerSeatFinder.tsx", "../components/seat-map/SeatMap.tsx"]) {
+    const source = await readSource(file);
+    assert.doesNotMatch(source, /<ActiveFilterChips/);
+    assert.doesNotMatch(source, /\bmapCrumbLabel\b/);
+    assert.match(source, /appliedCount: structuredFilterCount/);
+  }
 });

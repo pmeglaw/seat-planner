@@ -31,7 +31,7 @@ test("the Find palette is fed from the published snapshot and reserves no stage 
   assert.doesNotMatch(source, /stageReservedClassName|rightSlotTier/);
   // …and the positive half: the palette is viewport-fixed, so it is out of
   // flow and cannot push the map even if a gutter class came back.
-  assert.match(await readSource("../components/seat-map/ViewerFindPalette.tsx"), /"fixed z-\[70\] flex flex-col/);
+  assert.match(await readSource("../components/seat-map/ViewerFindPalette.tsx"), /"sp-palette fixed z-\[70\] flex flex-col/);
 
   // At rest nothing is open (contract #1): the palette has no persisted
   // preference and no server-side open state to hydrate away from.

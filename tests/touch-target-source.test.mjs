@@ -57,39 +57,12 @@ import test from "node:test";
 
 const LEDGER = [
   {
-    file: "components/seat-map/SeatMap.tsx",
-    token: "h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-y-2",
-    reason: "adjacency-capped",
-    reach: "width 28 in the shared literal — the undo/redo pair is zero-gap, so outward x faces are per-button at the call sites (undo -left-4 = 44, redo -right-3 = 40 capped by the kebab gap); height 44",
-    minReach: { w: 28, h: 44 }
-  },
-  {
-    file: "components/seat-map/FilterPanel.tsx",
-    token: "h-6 w-6 shrink-0 items-center justify-center",
-    reason: "adjacency-capped",
-    reach: "44×30 — chip rows flex-wrap at gap-1.5, vertical cap 3px per side",
-    minReach: { w: 44, h: 30 }
-  },
-  {
-    file: "components/seat-map/FilterPanel.tsx",
-    token: "min-h-6 items-center border",
-    reason: "adjacency-capped",
-    reach: "≈70×30 — same wrap row, vertical cap 3px per side",
-    minReach: { h: 30 }
-  },
-  {
     file: "components/seat-map/SeatInspector.tsx",
     token: "h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)]",
     reason: "adjacency-capped",
     reach: "44×42 — contact rows are space-y-2.5 and the email row above holds a mailto link; vertical cap 5px per side",
     minReach: { w: 44, h: 42 }
   },
-  {
-    file: "components/seat-map/MapStatusBand.tsx",
-    token: "h-10 shrink-0 items-center border-t",
-    reason: "not-pointer-control",
-    reach: "40 — focusable scroll region, keyboard-only affordance, not a pointer control"
-  }
 ];
 
 // <input>/<select> literals whose 44px reach is delivered by the wrapping
@@ -99,7 +72,6 @@ const LABEL_CARRIED = [
   // (The LoginForm remember-me checkbox is the same shape — 15px <input>,
   // expansion on the wrapping label — but its focus classes live in a separate
   // cx() chunk, so the sweep never joins them; its label pin below holds it.)
-  { file: "components/seat-map/SeatMap.tsx", token: "h-9 w-full border border-[var(--sp-border-subtle)]" }
 ];
 
 // Regression pins: sites whose expansion the sweep cannot derive (content
@@ -108,26 +80,8 @@ const LABEL_CARRIED = [
 // fails here.
 const PINS = {
   "components/ui/Button.tsx": ["after:absolute after:-inset-y-1"],
-  "components/seat-map/FloorSelector.tsx": ["after:absolute after:-inset-y-2"],
-  "components/seat-map/MapZoomControl.tsx": [
-    "after:absolute after:-inset-y-2",
-    "after:absolute after:-inset-x-1.5",
-    "after:-left-2",
-    "after:-right-2",
-    "after:-top-1.5",
-    "after:-bottom-1.5"
-  ],
   "components/seat-map/SeatMap.tsx": [
-    // undo/redo outward faces (pair is zero-gap; see LEDGER)
-    "after:-left-4",
-    "after:-right-3",
-    // kebab trigger 32×40 in the 40px bar
-    "after:absolute after:-inset-x-1.5 after:-inset-y-0.5",
-    // result action / clear pair (min-h-8)
     "after:absolute after:-inset-y-1.5",
-    // mobile admin search label (input is LABEL_CARRIED)
-    "after:absolute after:-inset-y-1 ",
-    // desktop command-search label (h-8)
     "after:absolute after:-inset-y-1.5"
   ],
   "components/seat-map/SeatInspector.tsx": [
@@ -152,12 +106,6 @@ const PINS = {
     "after:absolute after:-inset-y-3",
     "after:absolute after:-inset-y-2"
   ],
-  "components/seat-map/ViewerSeatFinder.tsx": [
-    // filter trigger (content-sized in the h-7 rail)
-    "after:absolute after:-inset-y-2",
-    // search clear — the 20×20 phone case
-    "after:absolute after:-inset-3"
-  ],
   "components/auth/LoginForm.tsx": [
     "after:absolute after:-inset-1.5",
     // remember-me label (checkbox is LABEL_CARRIED)
@@ -165,20 +113,9 @@ const PINS = {
     // forgot-password, capped by the password field above / remember row below
     "after:absolute after:-top-1 after:-bottom-2"
   ],
-  "components/seat-map/NamesVisibilityToggle.tsx": ["after:absolute after:-inset-y-[13px]"],
-  "components/seat-map/FilterPanel.tsx": [
-    "after:absolute after:-inset-x-2.5 after:-inset-y-[3px]",
-    // Q5 "Show Floor N" action: 24 + 2×10 = 44, its own literal (never the
-    // chips' adjacency-capped token — review, 2026-09-01)
-    "after:absolute after:-inset-y-2.5",
-    // facet select labels (selects are replaced controls; label ≈54px + 4px/side)
-    "after:absolute after:-inset-y-1"
-  ],
-  "components/seat-map/ResultsPanel.tsx": ["after:absolute after:-inset-y-2"],
   // Zero-result "Clear search" (≈30px content-sized; only a <p> sits above):
   // 30 + 2×7 = 44 on both surfaces that render it.
   "components/seat-map/FloorRoster.tsx": ["after:absolute after:-inset-y-[7px]"],
-  "components/seat-map/ViewerFindPalette.tsx": ["after:absolute after:-inset-y-[7px]"],
   "components/seat-map/AskPlannerDrawer.tsx": [
     "after:absolute after:-inset-y-2.5",
     "after:absolute after:-inset-y-1"

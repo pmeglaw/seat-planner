@@ -19,13 +19,20 @@ async function readPalette() {
   return readFile(new URL("../components/seat-map/ViewerFindPalette.tsx", import.meta.url), "utf8");
 }
 
+// PR 3a: the field itself is the shared MapSearch (both surfaces).
+async function readField() {
+  return readFile(new URL("../components/seat-map/MapSearch.tsx", import.meta.url), "utf8");
+}
+
 test("the viewer search claims Ctrl/⌘+K and shows the platform hint", async () => {
   const source = await readViewer();
 
   assert.match(source, /handleSearchShortcut/);
   assert.match(source, /event\.metaKey \|\| event\.ctrlKey/);
   assert.match(source, /searchShortcutHint/);
-  assert.match(source, /<kbd/);
+  // The hint is the row field's .sp-kbd, from the one platform detector (P3-4).
+  assert.match(source, /shortcutHint\(window\.navigator\.platform, "K"\)/);
+  assert.match(await readField(), /<span className="sp-kbd" aria-hidden="true">\{hint\}<\/span>/);
   // The shortcut has to OPEN the palette, not just focus the field: focusing a
   // field whose surface stays shut is the same dead end as no shortcut.
   assert.match(source, /setPaletteOpen\(true\);\s*searchInputRef\.current\?\.focus\(\)/);
@@ -60,24 +67,24 @@ test("viewer palette rows rove with arrow keys and teach their keys", async () =
 // first arrowed into the list.
 test("the search input honours the three keys its legend promises", async () => {
   const source = await readViewer();
+  const field = await readField();
 
-  // ↑: ArrowDown hops into whichever list the palette is showing, skipping
-  // disabled rows (browse mode can open on an unseated person).
-  assert.match(source, /if \(event\.key === "ArrowDown" && paletteOpen\)/);
+  // ↓: ArrowDown hops into whichever list the palette is showing, skipping
+  // disabled rows (browse mode can open on an unseated person). The field
+  // opens the palette first if it was shut.
+  assert.match(field, /if \(event\.key === "ArrowDown"\) \{\s*event\.preventDefault\(\);\s*if \(!paletteOpen\) onOpenPalette\(\);\s*onArrowDown\(\);/);
   assert.match(source, /\[aria-label="Viewer search results"\] button:not\(\[disabled\]\), \[aria-label="People directory"\] button:not\(\[disabled\]\)/);
 
-  // Enter opens the top result, through the one existing selection path,
-  // exactly as a click does. An empty result set must not swallow the key.
-  assert.match(source, /if \(event\.key === "Enter" && paletteOpen && searchActive\)/);
-  assert.match(source, /const \[firstSearchResult\] = searchResults\.results;/);
-  assert.match(source, /openResult\(firstSearchResult\)/);
-  assert.match(source, /if \(!firstSearchResult\) return;/);
+  // Enter opens the top result in the current scope, through the one existing
+  // selection path, exactly as a click does. An empty result set must not
+  // swallow the key.
+  assert.match(field, /if \(event\.key === "Enter" && value\.trim\(\)\) \{\s*event\.preventDefault\(\);\s*onEnter\(\);/);
+  assert.match(source, /onEnter: \(\) => \{\s*if \(scopedResults\.shown\.length > 0\) openResult\(scopedResults\.shown\[0\]\);/);
 
   // Esc closes the palette first and clears the query only on the next press —
   // the field's own handler owns those two layers so the keystroke is never
-  // counted twice by the global one. preventDefault comes BEFORE the branch
-  // split: a `type="search"` input clears itself on Escape natively, and that
-  // clear fires an input event, which collapsed the two layers into one
-  // keystroke and then re-opened the palette through updateSearch.
-  assert.match(source, /event\.preventDefault\(\);\s*if \(paletteOpen\) \{\s*event\.stopPropagation\(\);\s*setPaletteOpen\(false\);/);
+  // counted twice by the global one. preventDefault on both: a `type="search"`
+  // input clears itself on Escape natively, and that clear fires an input
+  // event, which collapsed the two layers into one keystroke.
+  assert.match(field, /if \(paletteOpen\) \{\s*event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*onClosePalette\(\);\s*return;\s*\}\s*if \(value\) \{\s*event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*onClear\(\);/);
 });

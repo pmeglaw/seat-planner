@@ -8,7 +8,7 @@
 // supabase/migrations/20260901120000_seats_floor.sql (`seats_floor_known`);
 // tests/floor-ids.test.mjs pins the two lists against each other. Change both.
 //
-// The garage (Floor 1) is deliberately absent — see FloorSelector.tsx.
+// The garage (Floor 1) is deliberately absent — see the floor menu (components/seat-map/FloorMenuButton.tsx).
 
 export type FloorId = "3" | "2";
 

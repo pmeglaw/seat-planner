@@ -32,7 +32,9 @@ test("Escape-deselect restores focus to the seat marker on both surfaces", async
 
 test("Esc from inside a transient search surface returns focus to the search input", async () => {
   const seatMap = await readSource("../components/seat-map/SeatMap.tsx");
-  assert.match(seatMap, /closest\('\[aria-label="Admin search results"\]'\)/);
+  // PR 3a: the admin's transient surface is the same Find palette as the
+  // viewer's; Esc from a row hands focus back to the field, never <body>.
+  assert.match(seatMap, /paletteRef\.current\?\.contains\(event\.target\)[\s\S]{0,160}searchInputRef\.current\?\.focus\(\)/);
 
   // Viewer: the transient surface is the Find palette, and Esc dismisses the
   // palette itself (contract #7 puts it one layer above the query) rather than

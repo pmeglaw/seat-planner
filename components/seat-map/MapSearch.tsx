@@ -28,6 +28,8 @@ export type MapSearchProps = {
   /** Stable input id — the marker rig and the surfaces' Ctrl/⌘ K handler focus it. */
   inputId: string;
   inputRef?: RefObject<HTMLInputElement | null>;
+  /** The field wrapper — the palette anchors to its left edge and outside-click treats it as inside. */
+  rootRef?: RefObject<HTMLDivElement | null>;
   paletteOpen: boolean;
   /** id of the palette listbox while open (aria-controls). */
   paletteId?: string;
@@ -41,7 +43,7 @@ export type MapSearchProps = {
 };
 
 export function MapSearch({
-  value, onChange, onClear, scope, onScopeChange, hint, placeholder, inputId, inputRef, paletteOpen, paletteId,
+  value, onChange, onClear, scope, onScopeChange, hint, placeholder, inputId, inputRef, rootRef, paletteOpen, paletteId,
   onOpenPalette, onClosePalette, onArrowDown, onEnter, ariaLabel = "Find a person or seat"
 }: MapSearchProps) {
   const [scopeOpen, setScopeOpen] = useState(false);
@@ -89,12 +91,13 @@ export function MapSearch({
   }
 
   return (
-    <div className="sp-search" role="search" aria-label={ariaLabel}>
+    <div ref={rootRef} className="sp-search" role="search" aria-label={ariaLabel}>
       <SearchIcon />
       <input
         ref={inputRef}
         id={inputId}
         type="search"
+        name="seat-search"
         autoComplete="off"
         spellCheck={false}
         placeholder={placeholder}
@@ -102,7 +105,11 @@ export function MapSearch({
         aria-controls={paletteOpen ? paletteId : undefined}
         value={value}
         onChange={event => onChange(event.target.value)}
+        // Click, focus, typing and Ctrl/⌘ K are the four doors onto the
+        // palette (D1-d): a click on an already-focused field fires no focus
+        // event, so it opens through onClick.
         onFocus={() => { if (!paletteOpen) onOpenPalette(); }}
+        onClick={() => { if (!paletteOpen) onOpenPalette(); }}
         onKeyDown={handleKeyDown}
       />
       {value ? (

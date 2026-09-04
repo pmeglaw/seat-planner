@@ -139,11 +139,11 @@ test("publish review, enabled chrome menu, and discard-draft confirm dialogs", a
   // database where the item renders disabled, and disabled controls are
   // exempt from axe's contrast rule, so this is the item's only contrast
   // coverage.
-  await page.getByRole("button", { name: "More tools" }).click();
-  await expect(page.getByRole("button", { name: "Discard draft changes" })).toBeEnabled();
+  await page.getByRole("button", { name: "More actions" }).click();
+  await expect(page.getByRole("menuitem", { name: "Discard draft changes" })).toBeEnabled();
   await expectNoAxeViolations(page);
 
-  await page.getByRole("button", { name: "Discard draft changes" }).click();
+  await page.getByRole("menuitem", { name: "Discard draft changes" }).click();
   await expect(page.getByRole("heading", { name: "Discard all draft changes?" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Keep draft changes" })).toBeEnabled();
   await expectNoAxeViolations(page);

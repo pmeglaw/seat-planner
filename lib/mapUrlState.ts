@@ -20,7 +20,7 @@ export type MapUrlState = {
   floor: string;               // the current floor id; omitted from the URL at the default floor
   seatLabel: string | null;    // the selected seat's label, or null
   query: string;               // the search text; empty = absent
-  namesVisible: boolean;       // true = absent (the stored preference); false = ?names=off
+  namesVisible: boolean;       // false = absent (the default / stored preference); true = ?names=on
   filters: FilterParamValues;  // "all" = absent
 };
 

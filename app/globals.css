@@ -129,23 +129,22 @@ input[type="search"]::-webkit-search-cancel-button {
   70%, 100% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--sp-interactive) 0%, transparent); }
 }
 
-/* MapStatusBand container tiers. The band root declares
-   [container-type:inline-size], so these key on the BAND's own width — a
-   docked results panel narrows the stage in a way viewport media queries
-   cannot see. Base state: hidden; the counts list, the filter actions and the
-   controls cluster are never gated — the band's overflow-x-auto region is the
-   no-clipping safety valve for those. (Rebuilt as .sp-band in PR 3.) */
-.map-status-band-wide,
-.map-status-band-widest {
-  display: none;
-}
-@container (min-width: 900px) {
-  .map-status-band-wide {
-    display: block;
+/* Map control row below the header-nav breakpoint (owner ruling O6, Phase 4
+   PR 3a): the 1920 row (224 floor menu + 320 search + …) cannot fit a narrow
+   frame, so it wraps — the search takes the whole second line — instead of
+   scrolling the page sideways. That frame is read-only on /admin anyway
+   (D2, deviation 4). Not ruling-bearing; recorded in PHASE4BUILD §1. */
+@media (max-width: 1055px) {
+  .sp-control-row {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--sp-control-row-h);
+    padding-top: var(--sp-space-02);
+    padding-bottom: var(--sp-space-02);
+    white-space: normal;
   }
-}
-@container (min-width: 1140px) {
-  .map-status-band-widest {
-    display: block;
+  .sp-control-row .sp-search {
+    flex: 1 1 100%;
+    width: auto;
   }
 }
