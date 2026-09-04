@@ -30,6 +30,12 @@
   "kind": "graphic"
  },
  {
+  "name": "light · tertiary label terracotta on layer-01 #f4f4f4 (NOT a sanctioned surface for a tertiary — 4.14)",
+  "fg": "#b85c2e",
+  "bg": "#f4f4f4",
+  "kind": "text"
+ },
+ {
   "name": "light · AI border end blue-40 on white (gradient's low stop; the label carries meaning)",
   "fg": "#78a9ff",
   "bg": "#ffffff",

@@ -38,6 +38,9 @@
     "g10": {
       "--cds-button-primary": "#B85C2E",
       "--cds-button-primary-hover": "#8F4521",
+      "--cds-button-tertiary": "#B85C2E",
+      "--cds-button-tertiary-hover": "#8F4521",
+      "--cds-button-tertiary-active": "#7A3A1C",
       "--cds-border-interactive": "#B85C2E",
       "--cds-link-primary": "#8F4521",
       "--cds-ai-border-strong": "#B85C2E"

@@ -248,6 +248,53 @@ Phase 2 gives both modes ONE search (the row's field + the 560 palette) and Phas
 - **Below `lg` on `/admin` the band's plain total count yields** to the read-only note (it duplicates the title's "N seats"); the filtered "N of M match" count never yields. The §1.20 redundancy note stands for the row/band pair at `lg` and up.
 - **Ledgered for 3b:** the palette rows still wear the shipped Tailwind row styling (kind pill, count circles) — the `.sp-palette` frame, header, zero state and footer are Phase 3, the rows are 3b's sweep; the add-seat mode card is placed at `header + 48px` and overlaps a wrapped row's second line by 40px (3b's 400px slot owns the card).
 
+### 1.22 PR 3a — the pre-merge smoke found IBM blue on the row: Carbon's light tertiary (2026-09-04)
+
+**Screen** `/admin`, `/` · **Problem** the owner's pre-merge smoke (local Docker stack, `next start`, real Chrome, 1920×1080)
+scanned every computed colour on the page for the IBM blues and found blue 60 on `Filters · N`, its Clear × and `Ask
+Planner` in the light theme: the asset's `--cds-button-tertiary` is blue 60 (`carbon-tokens.css`), the brand layer
+(1b) overrode primary / interactive / link / focus / brand / AI but never the tertiary role, and PR 3a is the first
+slice to mount a `.cds-btn--tertiary` at all (the row's split Filters control and Ask Planner; the palette's "Widen to
+the whole building"; the left panel's "Add them in Management" link). Neither the token test (blue is allowed in the
+asset), the 195-pair suite (it lists the pre-brand names) nor axe (4.5:1 either way) could see it · **Choice** the
+brand layer owns the tertiary role too — `--cds-button-tertiary: #B85C2E`, `-hover: #8F4521`, `-active: #7A3A1C` in
+the LIGHT block only (CLAUDE.md brand rules 1 and 3: an interactive colour is never blue, primary actions and
+interactive borders use the terracotta scale; no new colour introduced). The two dark states keep Carbon's white
+tertiary — no blue there, and g100's white outline is Carbon's own rule · **Measured** label + 1px outline #B85C2E on
+the white control row 4.56:1 (text) / 4.56:1 (graphic), white on the #8F4521 hover fill 6.91:1 — three gated pairs
+added to `generate-pairs.mjs`, **198/198** (§4). Terracotta text on `layer-01` #f4f4f4 is **4.14:1**, recorded as a
+not-gated pair: a tertiary must sit on white (`layer-02` / the row), never on `layer-01` — every current consumer
+does; PR 4's 403 card (asset `.cds-empty` + one tertiary) must keep that · **Pinned** by
+`tests/phase4-token-layer-source.test.mjs` (light block declares the tertiary role) · **Trade-off** the brand file
+grows by one role; CLAUDE.md's "Where it lives" list names it · **Would change if** the owner rules the dark
+tertiary terracotta too (the dark link `#E8A07A` would be the candidate, 8.39:1 on `#161616`).
+
+### 1.23 PR 3a — the search-scope menu rendered behind the Find palette (2026-09-04)
+
+**Screen** `/admin`, `/` · **Problem** the smoke's step "switch scope to Whole building" could not click the menu
+item: `.sp-menu` is `z-index: 20` inside the row's `.sp-search`, the Find palette is `position: fixed; z-index: 70`
+anchored under the same field, and the palette is open whenever the scope menu is — so the menu painted BEHIND the
+palette and the pointer landed on the palette's result rows. The PR's own capture `screenshots/pr3a/admin-search-scope-*`
+shows exactly that (no menu visible over the zero state) and was read as "the scope segment" — a capture that was not
+verified against what it was named for. Keyboard users could still reach the items (focus is unaffected); mouse users
+could not · **Choice** one product rule in `app/globals.css` beside the O6 wrap rule:
+`.sp-control-row[role="toolbar"] .sp-search .sp-menu { z-index: 80 }` — the sheet's `.sp-menu` stays as landed (the
+floor menu never coexists with the palette), the row-scoped override lifts only the scope menu above the palette ·
+**Trade-off** a second `z` literal outside the sheet (the palette's `z-[70]` is the first) · **Would change if** the
+palette moved into the search's own stacking context (then the sheet's z-20 would order them).
+
+### 1.24 PR 3a — the ⋯ trigger had a name but no tooltip (2026-09-04)
+
+**Screen** `/admin` · **Problem** the smoke tabbed the control row: every stop carried the 2px inset terracotta
+ring, and every icon-only button showed its tier-C tooltip on focus — except "More actions". The asset's
+`.cds-overflow` trigger ships without one, and PHASE2UX §1M.3 names the tooltip only for Undo / Redo; the rule
+that every icon-only control in the row and the shell utilities carries the tier-C tooltip (PHASE3DS §1.9, §2)
+covers it · **Choice** the ⋯ trigger takes the same `sp-has-tooltip` wrapper as the row's `IconWithTooltip`
+(the menu stays a sibling of the wrapper, so focus inside the open menu never shows it); one product rule hides
+the tooltip while the menu is open on hover (`.cds-overflow[data-open] .sp-tooltip`, `app/globals.css`) ·
+**Not a design decision** — the pattern and the copy ("More actions" = the accessible name) already exist ·
+**Would change if** the asset gains a tooltip on `.cds-overflow`.
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -356,6 +403,14 @@ sheet, §1.21; its light + dark pairs added):
 ```
 product-pairs.json: 195 pairs · surface-pairs-not-gated.json: 13 pairs
 195/195 pass
+```
+
+PR 3a pre-merge smoke (2026-09-04, one brand-layer token change — the light tertiary role, §1.22; its three pairs
+added, plus the not-gated tertiary-on-layer-01 4.14 record):
+
+```
+product-pairs.json: 198 pairs · surface-pairs-not-gated.json: 14 pairs
+198/198 pass
 ```
 
 Marker states (`audit/marker-contrast.mjs`, local Docker stack, seed data): unchanged table — the shipped pill is 3b's;

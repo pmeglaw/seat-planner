@@ -720,6 +720,24 @@
   "kind": "text"
  },
  {
+  "name": "light · tertiary label terracotta on the white control row (was blue 60)",
+  "fg": "#b85c2e",
+  "bg": "#ffffff",
+  "kind": "text"
+ },
+ {
+  "name": "light · tertiary 1px outline terracotta on white",
+  "fg": "#b85c2e",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · text-on-color white on tertiary hover #8F4521",
+  "fg": "#ffffff",
+  "bg": "#8f4521",
+  "kind": "text"
+ },
+ {
   "name": "dark · text-primary gray-10 on background #161616",
   "fg": "#f4f4f4",
   "bg": "#161616",

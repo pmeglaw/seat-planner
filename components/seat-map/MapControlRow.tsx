@@ -168,18 +168,27 @@ function OverflowMenu({ disabled, onDiscard }: { disabled: boolean; onDiscard: (
   }, [open]);
   return (
     <span ref={rootRef} className="cds-overflow" data-open={open ? "" : undefined}>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="cds-btn cds-btn--icon cds-btn--md"
-        aria-label="More actions"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        onClick={() => setOpen(value => !value)}
-      >
-        <MoreIcon />
-      </button>
+      {/* Same tier-C tooltip as the row's other icon-only buttons (Undo / Redo / Clear):
+          the ⋯ had an accessible name but no tooltip — PR 3a pre-merge smoke, step 12.
+          The menu is a sibling of this wrapper, so focus inside the open menu never
+          shows the tooltip; `.cds-overflow[data-open] .sp-tooltip` hides it on hover. */}
+      <span className="sp-has-tooltip">
+        <button
+          ref={triggerRef}
+          type="button"
+          className="cds-btn cds-btn--icon cds-btn--md"
+          aria-label="More actions"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? menuId : undefined}
+          onClick={() => setOpen(value => !value)}
+        >
+          <MoreIcon />
+        </button>
+        <span className="sp-tooltip" role="tooltip">
+          More actions
+        </span>
+      </span>
       {open && (
         <div
           id={menuId}

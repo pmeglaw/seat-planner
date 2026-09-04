@@ -157,3 +157,15 @@ input[type="search"]::-webkit-search-cancel-button {
   flex: 0 1 var(--sp-search-w);
   min-width: 240px;
 }
+/* The scope menu opens while the Find palette is up (the palette is `fixed`,
+   z-70, and starts under the same field), so the sheet's z-20 menu rendered
+   BEHIND it and the pointer never reached "Whole building" — caught by the
+   PR 3a pre-merge smoke (PHASE4BUILD §1.23). Stack it above the palette. */
+.sp-control-row[role="toolbar"] .sp-search .sp-menu {
+  z-index: 80;
+}
+/* The ⋯ trigger carries the row's tier-C tooltip (PHASE4BUILD §1.24); while its
+   menu is open the tooltip would sit over the menu's first item on hover. */
+.cds-overflow[data-open] .sp-tooltip {
+  display: none;
+}

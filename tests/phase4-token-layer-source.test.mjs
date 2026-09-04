@@ -356,6 +356,10 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
     assert.match(m[1], /--cds-border-interactive:\s*#B85C2E/i);
   }
   assert.match(css.match(blocks[0])[1], /--cds-link-primary:\s*#8F4521/i, "light links are #8F4521");
+  // Carbon's light tertiary is blue 60 — the PR 3a smoke caught Filters · N / Clear / Ask
+  // Planner rendering IBM blue on /admin. The brand layer owns that role too (PHASE4BUILD §1.22).
+  assert.match(css.match(blocks[0])[1], /--cds-button-tertiary:\s*#B85C2E/i, "light tertiary buttons are terracotta, not blue 60");
+  assert.match(css.match(blocks[0])[1], /--cds-button-tertiary-hover:\s*#8F4521/i, "light tertiary hover is #8F4521");
   assert.match(css.match(blocks[2])[1], /--cds-link-primary:\s*#E8A07A/i, "dark links are #E8A07A");
   assert.doesNotMatch(css, /#0f62fe|#0353e9|#4589ff|#a6c8ff|#78a9ff/i, "no IBM blue in the brand layer");
   // The logo orange is declared once, as --brand-orange-logo, and assigned to nothing else.
