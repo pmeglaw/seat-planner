@@ -32,7 +32,6 @@ import test from "node:test";
 const SUB12_LEDGER = new Map(Object.entries({
   // Marks (Ruling 1 — exempt):
   "components/seat-map/AiHighlightChip.tsx": 1,
-  "components/ui/AppRail.tsx": 1,
   "app/login/page.tsx": 1,
   // Map canvas: marks + words pending the PR-2 zoom-threshold rule:
   "components/seat-map/SeatMarker.tsx": 16,

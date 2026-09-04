@@ -47,7 +47,7 @@ test("every signed-in surface mounts an identity + sign-out affordance", async (
   const shellLayout = await readSource("../app/(shell)/layout.tsx");
   const appShell = await readSource("../components/ui/AppShell.tsx");
   const topBar = await readSource("../components/ui/AppTopBar.tsx");
-  const accountMenu = await readSource("../components/ui/AccountMenu.tsx");
+  const shellPanels = await readSource("../components/ui/ShellPanels.tsx");
   const mapPage = await readSource("../app/(shell)/admin/page.tsx");
   const managementPage = await readSource("../app/(shell)/admin/management/page.tsx");
   const settingsPage = await readSource("../app/(shell)/admin/settings/page.tsx");
@@ -65,17 +65,19 @@ test("every signed-in surface mounts an identity + sign-out affordance", async (
   // rail or bar of their own (that per-page mounting was the blank-flash
   // bug), and the viewer surface still mounts the shared AccountMenu
   // directly.
+  // Redesign-v2 PR 2: the Phase 3 shell — AppTopBar (Account utility) +
+  // ShellPanels (the Account panel hosts the real POST sign-out form) —
+  // mounts ONCE in AppShell. Pages and SeatMap must not mount a second
+  // header or panel host of their own.
   assert.match(shellLayout, /<AppShell/);
-  assert.match(appShell, /<AppRail/);
   assert.match(appShell, /<AppTopBar/);
-  assert.match(topBar, /<AccountMenu/);
-  assert.match(accountMenu, /<form action="\/auth\/signout" method="post"/);
+  assert.match(appShell, /<ShellPanels/);
+  assert.match(topBar, /aria-label=\{utility\.label\}/);
+  assert.match(shellPanels, /<form action="\/auth\/signout" method="post"/);
   for (const page of [mapPage, managementPage, settingsPage, receptionPage]) {
-    assert.doesNotMatch(page, /<AppRail/);
-    assert.doesNotMatch(page, /<AppTopBar/);
+    assert.doesNotMatch(page, /<AppTopBar|<ShellPanels|<LeftPanel/);
   }
-  assert.doesNotMatch(seatMap, /<AppRail/);
-  assert.doesNotMatch(seatMap, /<AppTopBar/);
+  assert.doesNotMatch(seatMap, /<AppTopBar|<ShellPanels|<LeftPanel/);
   assert.match(viewer, /<AccountMenu/);
 });
 

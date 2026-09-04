@@ -1,167 +1,192 @@
 "use client";
 
-import Image from "next/image";
-import { usePathname } from "next/navigation";
-import type { RefObject } from "react";
-import { useCallback } from "react";
-import { AccountMenu } from "@/components/ui/AccountMenu";
-import { adminChromeDividerRule } from "@/components/ui/adminChrome";
-import type { AppRailActive } from "@/components/ui/AppRail";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import Link from "next/link";
+import type { MouseEvent as ReactMouseEvent } from "react";
+import type { ShellPanelId } from "@/components/ui/ShellPanels";
+import type { SectionId } from "@/components/ui/shellNavConfig";
+import { modeIndicatorText, type ShellModeStatus } from "@/lib/shellMode";
 
-// Top-bar-first chrome (2026-08-14 owner redesign): ONE full-width bar spans
-// the viewport top on every (shell) route — the rail starts BELOW it. Zone
-// contract (owner-confirmed): left = brand + surface-owned command cluster;
-// center = document identity (the map's floor selector + crumb, or a static
-// section title on sub-pages); right = surface-owned action cluster + the
-// account menu. This bar replaces both AdminShellBar (the old sub-page brand
-// bar) and SeatMap's own <header> — the map surface now portals its bar
-// tenants into the slot elements this component registers via onSlotElement
-// (see AppShellSlots in AppShell.tsx and the portals in SeatMap.tsx).
+// The Phase 3 shell header (PHASE2UX §1.2, PHASE3DS §1.3 / §1.7 / §1.8,
+// specimen 01-shell.html#header): 48px, Gray 100 in BOTH themes (tier C),
+// composed from the asset's `.cds-header` plus the `.sp-header` overrides.
+// DOM order = tab order (PHASE2UX §1.7 row 2): skip link → hamburger → name
+// → section links → mode indicator → Help → History → Account. Every
+// control is 48px tall; the asset and sp-components.css own every colour
+// and state — this file adds no colour, no shadow, no geometry (the
+// outlined-open treatment on the utilities and the indicator is the
+// `[aria-expanded="true"]` rule, four shadows, PHASE3DS §7 item 7 / P3-9:
+// never re-implement it here).
 //
-// The skip link lives here, as the bar's — and therefore the document's —
-// first focusable. It moved from AppRail when the bar took the top of the
-// tab order; the target ids stay per-surface (AppShell's SKIP_LINKS map).
+// The mode indicator is STATUS, not location (PHASE2UX §1.2): its one
+// behaviour is opening the History panel. The section link says where you
+// are; only the History panel's switch changes mode.
 
-export type AppTopBarSlot = "left" | "center" | "right";
-
-const SECTION_TITLES: Record<AppRailActive, string | null> = {
-  map: null,
-  management: "Management",
-  settings: "Settings",
-  reception: "Reception"
-};
+export type ShellSlot = "left" | "center" | "right";
+/** @deprecated name kept for SeatMap's seam — same three slots. */
+export type AppTopBarSlot = ShellSlot;
 
 export type AppTopBarProps = {
-  active: AppRailActive;
-  email: string;
-  roleLabel: string;
+  isAdmin: boolean;
+  pathname: string;
+  active: SectionId;
+  links: Array<{ id: SectionId; label: string; href: string }>;
   skipLink: { href: string; label: string };
-  onSlotElement: (slot: AppTopBarSlot, element: HTMLElement | null) => void;
-  /** Rail expansion state + toggle (owner call 2026-08-14: the hamburger
-   *  lives in the bar's corner cell, directly above the rail it controls;
-   *  AppShell owns the state). The ref lets the rail return focus here on
-   *  Escape/scrim dismissal. */
-  railOpen: boolean;
-  onToggleRail: () => void;
-  railToggleRef: RefObject<HTMLButtonElement | null>;
+  onLinkClick: (event: ReactMouseEvent<HTMLAnchorElement>, href: string, label: string) => void;
+  /** Hamburger: present only where the left panel has content (D0-h at
+   *  lg+ shows the reserved slot on sub-pages until PR 3 registers admin
+   *  filters). */
+  hasLeftContent: boolean;
+  leftOpen: boolean;
+  onToggleLeft: () => void;
+  modeStatus: ShellModeStatus;
+  /** Below the header-nav breakpoint: compact indicator text (D0-e). */
+  compact: boolean;
+  openPanel: ShellPanelId | null;
+  onTogglePanel: (panel: ShellPanelId) => void;
 };
 
-export function AppTopBar({ active, email, roleLabel, skipLink, onSlotElement, railOpen, onToggleRail, railToggleRef }: AppTopBarProps) {
-  const pathname = usePathname();
-  const sectionTitle = SECTION_TITLES[active];
+const UTILITIES: Array<{ id: ShellPanelId; label: string }> = [
+  { id: "help", label: "Help" },
+  { id: "history", label: "History" },
+  { id: "account", label: "Account" }
+];
 
-  // Stable ref callbacks, one per slot: an inline `el => onSlotElement(...)`
-  // closure would get a new identity every render, making React detach
-  // (null) + re-attach (element) the ref on EVERY commit — each pair fires a
-  // state update in AppShell and the render loops. useCallback keeps the
-  // identity fixed so the refs only fire on real mount/unmount.
-  const setLeftSlot = useCallback((element: HTMLElement | null) => onSlotElement("left", element), [onSlotElement]);
-  const setCenterSlot = useCallback((element: HTMLElement | null) => onSlotElement("center", element), [onSlotElement]);
-  const setRightSlot = useCallback((element: HTMLElement | null) => onSlotElement("right", element), [onSlotElement]);
-
+export function AppTopBar({
+  pathname,
+  active,
+  links,
+  skipLink,
+  onLinkClick,
+  hasLeftContent,
+  leftOpen,
+  onToggleLeft,
+  modeStatus,
+  compact,
+  openPanel,
+  onTogglePanel
+}: AppTopBarProps) {
+  void pathname;
   return (
-    /* z-50 keeps the chrome tier above z-40 page overlays (same rank the old
-       per-surface bars held). sticky, not fixed: the bar participates in flow,
-       so page roots keep their min-h-[calc(100svh-var(--sp-chrome-height))]
-       sizing untouched. NO border-b on the header itself and no left padding:
-       the chrome must read as ONE upside-down L (owner call 2026-08-14) — the
-       brand mark sits centered in a w-12 corner cell aligned with the rail
-       column below, and the bottom hairline starts only to the RIGHT of that
-       column (the absolute span below), so no seam ever cuts the corner. */
-    <header className="sp-zone-chrome sticky top-0 z-50 flex h-[var(--sp-chrome-height)] shrink-0 items-center bg-[var(--sp-background)] text-[var(--sp-text-primary)]" data-chrome="dark">
-      <span aria-hidden="true" className="pointer-events-none absolute bottom-0 left-12 right-0 h-px bg-[var(--sp-border-subtle)]" />
-      <a
-        href={skipLink.href}
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[60] focus:border focus:border-[var(--sp-interactive)] focus:bg-[var(--sp-background)] focus:px-3 focus:py-2 focus:text-[12.5px] focus:font-semibold focus:text-[var(--sp-text-primary)] focus:outline-none"
-      >
+    <header id="shell-header" className="cds-header sp-header">
+      {/* First focusable in the document (PHASE2UX §1.7). */}
+      <a className="cds-skip-link" href={skipLink.href}>
         {skipLink.label}
       </a>
-      <div className="flex min-w-0 shrink-0 items-center">
-        {/* Corner cell: the rail toggle sits in the same 48px column as the
-            rail's icon cells, directly above the overlay it controls — the
-            L's corner is the menu control (owner call 2026-08-14). Quiet
-            styling on purpose: hover brightens the glyph only, no row fill. */}
+      {hasLeftContent ? (
         <button
-          ref={railToggleRef}
           type="button"
-          onClick={onToggleRail}
-          aria-expanded={railOpen}
-          aria-controls="app-rail"
-          aria-label={railOpen ? "Collapse navigation" : "Expand navigation"}
-          title={railOpen ? "Collapse navigation" : "Expand navigation"}
-          className="relative flex h-full w-12 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors after:absolute after:-inset-y-0.5 after:inset-x-0 hover:text-[var(--sp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-interactive)]"
+          className="sp-header-slot"
+          aria-label="Filters"
+          aria-expanded={leftOpen}
+          aria-controls="shell-left-panel"
+          onClick={onToggleLeft}
         >
-          <HamburgerIcon />
+          {/* Both glyphs mounted; the CSS swaps them on aria-expanded (open = Close glyph, NO fill). */}
+          <svg className="sp-glyph-menu" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M2 5h16M2 10h16M2 15h16" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+          <svg className="sp-glyph-close" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M4 4l12 12M16 4L4 16" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
         </button>
-        {/* Brand shifted right of the toggle. leading-[18px], not
-            leading-none: truncate's overflow-hidden clips descenders (the g)
-            at line-height 1. Wordmark only — the "· Seat Planner" suffix was
-            dropped (owner call 2026-08-14): the centered document title
-            carries the app identity now. */}
-        <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
-          <Image src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} unoptimized className="h-6 w-6 object-contain" />
-        </span>
-        <div aria-hidden="true" translate="no" className="ml-2 hidden min-w-0 truncate text-[12.5px] font-semibold leading-[18px] sm:block">
-          Megeredchian Law
-        </div>
+      ) : (
+        <span className="sp-header-slot sp-header-slot--reserved" aria-hidden="true" />
+      )}
+      {/* Text only (D0-d; owner ruling 2026-09-04): no graphic mark in the
+          header. The org name is an identifier — never machine-translated. */}
+      <Link className="cds-header-name" href="/" onClick={event => onLinkClick(event, "/", "the viewer")}>
+        <span translate="no">Megeredchian Law</span> <strong>Seat Planner</strong>
+      </Link>
+      <nav className="cds-header-nav" aria-label="Sections">
+        {links.map(link => (
+          <Link
+            key={link.id}
+            href={link.href}
+            title={link.label}
+            prefetch={false}
+            aria-current={link.id === active ? "page" : undefined}
+            onClick={event => onLinkClick(event, link.href, link.label)}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+      <div className="sp-header-center">
+        <ModeIndicator status={modeStatus} compact={compact} open={openPanel === "history"} onOpen={() => onTogglePanel("history")} />
       </div>
-      {/* Left slot: the map surface portals its command cluster (undo/redo,
-          kebab) here; empty on sub-pages. */}
-      <div data-topbar-slot="left" ref={setLeftSlot} className="flex h-full min-w-0 shrink-0 items-center" />
-      {/* Center: document identity, absolutely centered on the bar like the
-          reference layout. pointer-events pass through the empty gutter so the
-          flanking clusters stay clickable; slot content opts back in. The
-          sub-page title is aria-hidden — each page renders its own real <h1>,
-          this is the bar's visual echo of it (same convention as the brand
-          text on the map header before this bar existed). */}
-      <div className="pointer-events-none absolute left-1/2 top-0 flex h-full max-w-[42%] -translate-x-1/2 items-center">
-        {sectionTitle && (
-          <div aria-hidden="true" className="hidden truncate text-[12.5px] font-semibold md:block">
-            {sectionTitle}
-          </div>
-        )}
-        {/* The slot div is ALWAYS mounted — never swapped out for the title.
-            A route change that deleted this element in the same commit that
-            unmounts the map surface raced React's portal cleanup: the portal
-            tried to remove its children from a container the bar had already
-            deleted, throwing NotFoundError (removeChild) into the route error
-            boundary on EVERY rail navigation off the map. Stable container =
-            safe portal teardown. On sub-pages it simply sits empty beside the
-            title. */}
-        <div data-topbar-slot="center" ref={setCenterSlot} className="pointer-events-auto flex h-full min-w-0 items-center gap-2" />
-      </div>
-      <div className="ml-auto flex h-full shrink-0 items-center">
-        {/* Right slot: the map surface portals Ask Planner + the publish
-            cluster here; empty on sub-pages. */}
-        <div data-topbar-slot="right" ref={setRightSlot} className="peer flex h-full shrink-0 items-center" />
-        {/* Zone divider between surface actions and the account menu, on the
-            standard mx-3 group rhythm (chrome-unification 2026-08-20 — the
-            old mx-1 was a third spacing tier that existed only to offset the
-            avatar's own margin; two tiers is the doctrine, see
-            adminChrome.ts). peer-empty:hidden, not a JS occupancy flag — the
-            slot div above stays mounted for the bar's lifetime
-            (portal-teardown contract), so :empty tracks tenant presence for
-            free: hidden on sub-pages and for viewers, shown whenever the map
-            portals its action cluster in. */}
-        <span aria-hidden="true" className={`mx-3 h-5 ${adminChromeDividerRule} peer-empty:hidden`} />
-        {/* autoCloseKey: the bar persists across client navigations, so the
-            menu must not linger over an incoming page — and a back/forward
-            with the menu open must return focus to the trigger, the same
-            guarantee the old rail account cell gave (see AccountMenu). */}
-        <ThemeToggle />
-        <AccountMenu email={email} roleLabel={roleLabel} autoCloseKey={pathname} />
+      <div className="cds-header-utils">
+        {UTILITIES.map(utility => (
+          <span key={utility.id} className="sp-has-tooltip">
+            <button
+              type="button"
+              aria-label={utility.label}
+              aria-expanded={openPanel === utility.id}
+              aria-controls={`shell-panel-${utility.id}`}
+              onClick={() => onTogglePanel(utility.id)}
+            >
+              <UtilityIcon id={utility.id} />
+            </button>
+            {/* Tier-C tooltip (PHASE3DS §1.8): repeats the aria-label; shown on hover and focus by the CSS. */}
+            <span className="sp-tooltip" role="tooltip">
+              {utility.label}
+            </span>
+          </span>
+        ))}
       </div>
     </header>
   );
 }
 
-function HamburgerIcon() {
-  // Moved from AppRail with the toggle (17px, stroke 1.6 — the one glyph
-  // that keeps its original heavier stroke; see AppRail's icon-sizing note).
+function ModeIndicator({ status, compact, open, onOpen }: { status: ShellModeStatus; compact: boolean; open: boolean; onOpen: () => void }) {
+  if (status.kind === "loading") {
+    // Not a button while loading (aria-busy, not disabled — PHASE3DS §1.3).
+    return (
+      <span className="sp-mode sp-mode--loading" aria-busy="true" aria-label="Loading publish state">
+        <span className="sp-mode-skeleton" />
+      </span>
+    );
+  }
   return (
-    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-      <path d="M3 5.5h14M3 10h14M3 14.5h14" />
+    <button type="button" className={`sp-mode sp-mode--${status.kind}`} aria-expanded={open} aria-controls="shell-panel-history" onClick={onOpen}>
+      <ModeMark kind={status.kind} />
+      {modeIndicatorText(status, { compact })}
+    </button>
+  );
+}
+
+// Inlined, never <use>d: the marks are styled by descendant selectors
+// ([data-fill] / [data-stroke] / [data-cut]) which cannot reach into a
+// <use> shadow tree (PHASE3DS §7 item 4). Two signals in every mark —
+// shape + fill — the text is the third (PHASE2UX §1.2 row 4).
+function ModeMark({ kind }: { kind: Exclude<ShellModeStatus["kind"], "loading"> }) {
+  return (
+    <svg className="sp-mode-mark" viewBox="0 0 12 12" aria-hidden="true">
+      {kind === "published" ? <rect data-fill="" x="0" y="0" width="12" height="12" /> : null}
+      {kind === "draft" ? <path data-stroke="" d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z" /> : null}
+      {kind === "unpublished" ? <rect data-stroke="" x="1" y="1" width="10" height="10" /> : null}
+      {kind === "error" ? (
+        <>
+          <circle data-fill="" cx="6" cy="6" r="6" />
+          <path data-cut="" d="M3.5 3.5 L8.5 8.5 M8.5 3.5 L3.5 8.5" />
+        </>
+      ) : null}
+    </svg>
+  );
+}
+
+function UtilityIcon({ id }: { id: ShellPanelId }) {
+  // Specimen symbols #i-help / #i-history / #i-account, 20px, stroke 1.5.
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      {id === "help" ? <path d="M7.5 8a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .8-1 1.7M10 14.5v.5" fill="none" stroke="currentColor" strokeWidth="1.5" /> : null}
+      {id === "history" ? <path d="M10 5v5l3.5 2" fill="none" stroke="currentColor" strokeWidth="1.5" /> : null}
+      {id === "account" ? (
+        <>
+          <circle cx="10" cy="8" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M5 15.5c1-2.5 3-3.5 5-3.5s4 1 5 3.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </>
+      ) : null}
     </svg>
   );
 }

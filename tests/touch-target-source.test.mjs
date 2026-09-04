@@ -57,13 +57,6 @@ import test from "node:test";
 
 const LEDGER = [
   {
-    file: "components/ui/AppRail.tsx",
-    token: "h-10 w-full items-center overflow-hidden",
-    reason: "adjacency-capped",
-    reach: "48×40 — rail items stack zero-gap under the bar's 40px corner cell; vertical cap 0 on every face",
-    minReach: { h: 40 }
-  },
-  {
     file: "components/seat-map/SeatMap.tsx",
     token: "h-7 w-7 shrink-0 items-center justify-center text-[var(--sp-text-helper)] transition-colors duration-150 after:absolute after:-inset-y-2",
     reason: "adjacency-capped",
@@ -116,7 +109,6 @@ const LABEL_CARRIED = [
 const PINS = {
   "components/ui/Button.tsx": ["after:absolute after:-inset-y-1"],
   "components/ui/AccountMenu.tsx": ["after:-inset-[9px]"],
-  "components/ui/AppTopBar.tsx": ["after:absolute after:-inset-y-0.5"],
   "components/ui/ThemeToggle.tsx": ["after:absolute after:-inset-y-2"],
   "components/seat-map/FloorSelector.tsx": ["after:absolute after:-inset-y-2"],
   "components/seat-map/MapZoomControl.tsx": [

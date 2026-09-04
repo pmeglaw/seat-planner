@@ -1012,6 +1012,48 @@ export async function resetDraftToPublishedAction(
   return { ok: true, ...(await getDraftMapPayload(supabase)) };
 }
 
+export async function getPublishHistoryAction(limit = 10) {
+  const supabase = await requireAdmin();
+  const requestedLimit = Number.isFinite(limit) ? Math.trunc(limit) : 10;
+  const pageSize = Math.min(Math.max(requestedLimit, 1), 25);
+
+  const { data, error } = await supabase
+    .from("publish_events")
+    .select("created_at,seat_count,published_by,change_summary")
+    .order("created_at", { ascending: false })
+    .limit(pageSize);
+
+  if (error) throw new Error(error.message);
+
+  const events = ((data ?? []) as Array<{
+    created_at: string;
+    seat_count: number | string | null;
+    published_by: string | null;
+    change_summary?: unknown;
+  }>).map(record => {
+    const seatCount = Number(record.seat_count ?? 0);
+
+    return {
+      created_at: record.created_at,
+      seat_count: Number.isFinite(seatCount) ? seatCount : 0,
+      published_by: record.published_by,
+      change_summary: record.change_summary ?? null
+    };
+  }) satisfies PublishEventRecord[];
+
+  const publisherIds = Array.from(new Set(events.map(event => event.published_by).filter((id): id is string => Boolean(id))));
+  if (publisherIds.length === 0) return resolvePublishHistoryProfiles(events, []);
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id,email")
+    .in("id", publisherIds);
+
+  if (profilesError) throw new Error(profilesError.message);
+
+  return resolvePublishHistoryProfiles(events, (profiles ?? []) as Array<{ id: string; email: string | null }>);
+}
+
 // Shell mode indicator on admin sub-pages (redesign-v2 PR 2, PHASE2UX §1.5
 // / D2 "the count travels"): /admin/management and /admin/settings load no
 // seat data, so the persistent shell asks for the draft's pending change
@@ -1071,48 +1113,6 @@ export async function getDraftStatusAction(): Promise<{ changeCount: number; las
   const latest = (rows: SeatWithEmployee[]) =>
     rows.reduce<string | null>((max, seat) => (seat.updated_at && (!max || seat.updated_at > max) ? seat.updated_at : max), null);
   return { changeCount: summary.totalChangeCount, lastEditAt: latest(draftSeats), publishedAt: latest(publishedSeats) };
-}
-
-export async function getPublishHistoryAction(limit = 10) {
-  const supabase = await requireAdmin();
-  const requestedLimit = Number.isFinite(limit) ? Math.trunc(limit) : 10;
-  const pageSize = Math.min(Math.max(requestedLimit, 1), 25);
-
-  const { data, error } = await supabase
-    .from("publish_events")
-    .select("created_at,seat_count,published_by,change_summary")
-    .order("created_at", { ascending: false })
-    .limit(pageSize);
-
-  if (error) throw new Error(error.message);
-
-  const events = ((data ?? []) as Array<{
-    created_at: string;
-    seat_count: number | string | null;
-    published_by: string | null;
-    change_summary?: unknown;
-  }>).map(record => {
-    const seatCount = Number(record.seat_count ?? 0);
-
-    return {
-      created_at: record.created_at,
-      seat_count: Number.isFinite(seatCount) ? seatCount : 0,
-      published_by: record.published_by,
-      change_summary: record.change_summary ?? null
-    };
-  }) satisfies PublishEventRecord[];
-
-  const publisherIds = Array.from(new Set(events.map(event => event.published_by).filter((id): id is string => Boolean(id))));
-  if (publisherIds.length === 0) return resolvePublishHistoryProfiles(events, []);
-
-  const { data: profiles, error: profilesError } = await supabase
-    .from("profiles")
-    .select("id,email")
-    .in("id", publisherIds);
-
-  if (profilesError) throw new Error(profilesError.message);
-
-  return resolvePublishHistoryProfiles(events, (profiles ?? []) as Array<{ id: string; email: string | null }>);
 }
 
 export type PublishSeatMapResult =

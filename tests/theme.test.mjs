@@ -77,7 +77,8 @@ test("the layout and the toggle build from lib/theme, never raw literals", async
   assert.doesNotMatch(layoutSource, /(['"`])(?:sp-theme|dark|light|g100|white)\1/);
   assert.doesNotMatch(layoutSource, /prefers-color-scheme|matchMedia/);
 
-  const toggleSource = await readFile(new URL("../components/ui/ThemeToggle.tsx", import.meta.url), "utf8");
+  // The in-page control is the Account panel's Theme radio (redesign-v2 PR 2).
+  const toggleSource = await readFile(new URL("../components/ui/ShellPanels.tsx", import.meta.url), "utf8");
   assert.match(toggleSource, /from "@\/lib\/theme"/);
   assert.match(toggleSource, /\bapplyTheme\(/);
   // The toggle may READ the attribute for its label; it never writes it or
@@ -124,7 +125,7 @@ test("the design system renders all three theme states", async () => {
 test("dark-mode seams: raster parity and toggle mounts", async () => {
   const seatMap = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
   const viewerFinder = await readFile(new URL("../components/seat-map/ViewerSeatFinder.tsx", import.meta.url), "utf8");
-  const topBar = await readFile(new URL("../components/ui/AppTopBar.tsx", import.meta.url), "utf8");
+  const appShell = await readFile(new URL("../components/ui/AppShell.tsx", import.meta.url), "utf8");
   const reception = await readFile(new URL("../components/reception/ReceptionScreen.tsx", import.meta.url), "utf8");
 
   // The floor-plan raster class must stay on BOTH map surfaces (two-surface
@@ -132,8 +133,10 @@ test("dark-mode seams: raster parity and toggle mounts", async () => {
   assert.match(seatMap, /"map-raster /);
   assert.match(viewerFinder, /"map-raster /);
 
-  // One canonical toggle per bar until PR 2 retires it into the Account panel.
-  assert.match(topBar, /<ThemeToggle/);
+  // One canonical control: the Account panel's Theme radio, mounted once by
+  // the shell (ShellPanels). The viewer's own ThemeToggle retires with its
+  // header in the route-group move.
+  assert.match(appShell, /<ShellPanels/);
   assert.match(viewerFinder, /<ThemeToggle/);
   assert.doesNotMatch(reception, /ThemeToggle/);
 });

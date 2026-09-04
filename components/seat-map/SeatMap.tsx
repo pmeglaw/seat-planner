@@ -152,7 +152,11 @@ const GUARDED_NAVIGATION_HREFS = [
 type GuardedNavigationHref = (typeof GUARDED_NAVIGATION_HREFS)[number];
 
 function isGuardedNavigationHref(href: string): href is GuardedNavigationHref {
-  return (GUARDED_NAVIGATION_HREFS as readonly string[]).includes(href);
+  const hrefs = GUARDED_NAVIGATION_HREFS as readonly string[];
+  // The shell's History switch keeps the view (?floor= / ?seat=) on the
+  // other mode's map (redesign-v2 PR 2), so a guarded destination may carry
+  // a query the closed set does not spell out — match the pathname too.
+  return hrefs.includes(href) || hrefs.includes(href.split("?")[0]);
 }
 
 type MapViewMode = "overview" | "detail";
@@ -458,6 +462,14 @@ export function SeatMap({
     applyRestoredDraftPayload,
     handleStaleDraft
   });
+  const maxDraftUpdatedAt = useMemo(
+    () => localSeats.reduce<string | null>((max, seat) => (seat.updated_at && (!max || seat.updated_at > max) ? seat.updated_at : max), null),
+    [localSeats]
+  );
+  const liveDraftStatus = useMemo(
+    () => ({ changeCount: publishSummary.totalChangeCount, lastEditAt: maxDraftUpdatedAt }),
+    [publishSummary.totalChangeCount, maxDraftUpdatedAt]
+  );
 
   // Filter/search values, everything derived from them, and their handlers
   // live in their own hook (M4 step 4). The structured facets (department /
@@ -605,10 +617,13 @@ export function SeatMap({
     // list learns about them.
     guard: (href, label) => (isGuardedNavigationHref(href) ? beforeGuardedNavigation(href, label) : true),
     openAskPlanner: openAskPlannerDrawer,
-    // Live drawer state → the rail AI item's active treatment (parity with
-    // the bar's Ask Planner tenant; flows through AppShell's own channel,
-    // not the register-once handlers).
-    askPlannerOpen
+    // Live drawer state → the shell's Ask Planner channel (PR 3 consumer;
+    // flows through AppShell's own channel, not the register-once handlers).
+    askPlannerOpen,
+    // Live draft status → the shell's mode indicator ("Draft — N changes")
+    // and the History panel's status line (PHASE2UX §1.5): the count is the
+    // publish review's own total, the last edit the newest draft updated_at.
+    draftStatus: liveDraftStatus
   });
   // Top-bar-first chrome: this surface's bar tenants (undo/redo/kebab, the
   // floor identity, Ask Planner + publish) render into AppTopBar's slot

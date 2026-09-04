@@ -14,22 +14,20 @@ test("the viewer's surface tabs render only for admins", async () => {
   assert.match(source, /\{showAdminShortcut && \(\s*\r?\n\s*<div className="flex h-full items-center">\s*\r?\n\s*<span\s*\r?\n\s*aria-current="page"/);
 });
 
-test("the top bar keeps one underline and one cross-surface exit", async () => {
-  const railSource = await readFile(new URL("../components/ui/AppRail.tsx", import.meta.url), "utf8");
+test("the shell header's section links are role-fitted: admin-only sections never render for viewers", async () => {
+  const navConfigSource = await readFile(new URL("../components/ui/shellNavConfig.ts", import.meta.url), "utf8");
   const shellBarSource = await readFile(new URL("../components/ui/AppTopBar.tsx", import.meta.url), "utf8");
 
-  // v12 (2026-07-31 rail shell, Task 3): the "one cross-surface exit"
-  // semantic lives in the rail — AppRail's Viewer item is the one
-  // cross-surface exit on every admin surface.
-  assert.match(railSource, /aria-label="Open viewer surface"/);
-
-  // The one-underline hazard (a redundant active Admin tab fighting a section
-  // nav's underline) stays structurally gone under the top-bar-first chrome:
-  // AppTopBar carries no section nav and no Viewer link — navigation lives in
-  // the rail exclusively, and the bar's AccountMenu stays a session layer
-  // with no promoted Settings entry.
-  assert.doesNotMatch(shellBarSource, /<nav/);
-  assert.doesNotMatch(shellBarSource, /aria-label="Open viewer surface"/);
-  assert.doesNotMatch(shellBarSource, /aria-current=/);
+  // Redesign-v2 PR 2: ONE section nav in the header (Seat map · Reception ·
+  // Management · Settings), filtered by role in shellNavConfig — Management
+  // and Settings are adminOnly, and the map link lands admins on the draft
+  // and everyone else on the published map. The Account panel stays a
+  // session layer with no promoted Settings entry.
+  assert.match(navConfigSource, /id: "management"[^\n]*adminOnly: true/);
+  assert.match(navConfigSource, /id: "settings"[^\n]*adminOnly: true/);
+  assert.match(navConfigSource, /id: "map", label: "Seat map", href: isAdmin => \(isAdmin \? "\/admin" : "\/"\)/);
+  assert.match(navConfigSource, /filter\(link => isAdmin \|\| !link\.adminOnly\)/);
+  assert.match(shellBarSource, /<nav className="cds-header-nav" aria-label="Sections">/);
+  assert.match(shellBarSource, /aria-current=\{link\.id === active \? "page" : undefined\}/);
   assert.doesNotMatch(shellBarSource, /onSelectSettings/);
 });
