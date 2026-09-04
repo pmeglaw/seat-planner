@@ -7,7 +7,7 @@ async function readSource(path) {
 }
 
 test("viewer route renders the published map as read-only", async () => {
-  const viewerSource = await readSource("../app/page.tsx");
+  const viewerSource = await readSource("../app/(shell)/page.tsx");
   const adminSource = await readSource("../app/(shell)/admin/page.tsx");
   const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
 
@@ -15,8 +15,11 @@ test("viewer route renders the published map as read-only", async () => {
   assert.match(viewerSource, /<ViewerSeatFinder/);
   assert.doesNotMatch(viewerSource, /<SeatMap/);
   // Multi-floor PR-2: the own-floor landing hint is matched by email against
-  // the published snapshot already in hand — ONE auth probe, no new table.
-  assert.equal((viewerSource.match(/auth\.getUser\(/g) ?? []).length, 1, "the viewer page makes exactly one auth probe");
+  // the published snapshot already in hand — no new table. Under the shell
+  // (redesign-v2 PR 2) the page reads the React-cache()d session context the
+  // layout already probed: ONE auth probe per render, zero of its own.
+  assert.equal((viewerSource.match(/getSessionContext\(/g) ?? []).length, 1, "the viewer page reads the shared session context once");
+  assert.equal((viewerSource.match(/auth\.getUser\(/g) ?? []).length, 0, "the viewer page makes no auth probe of its own");
   assert.match(viewerFinderSource, /Read-only/);
   assert.match(viewerFinderSource, /Published/);
   assert.doesNotMatch(viewerFinderSource, /createSeatAction|deleteSeatAction|publishSeatMapAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction/);
@@ -168,7 +171,7 @@ test("active modes exit after dialogs and keep visible exit controls", async () 
 });
 
 test("viewer rendering path stays isolated from admin-only draft and delete controls", async () => {
-  const viewerSource = await readSource("../app/page.tsx");
+  const viewerSource = await readSource("../app/(shell)/page.tsx");
   const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
@@ -781,7 +784,10 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   // header (harness-only) keeps the sticky contract until PR 3.
   assert.match(shellBarSource, /<header id="shell-header" className="cds-header sp-header">/);
   assert.match(seatMapSource, /<header className="sp-zone-chrome sticky top-0 /);
-  assert.match(viewerSource, /<header className="sp-zone-chrome sticky top-0 /);
+  // The viewer has no header of its own any more (route-group move): its
+  // search field portals into the shell's tenant row.
+  assert.doesNotMatch(viewerSource, /<header/);
+  assert.match(viewerSource, /createPortal\(searchField, shellSlots\.left\)/);
   // The map roots must clip horizontal overflow with `clip`, not `hidden`:
   // overflow-x-hidden turns the root into a scroll container, which captures
   // the sticky header so it never pins to the viewport (live-caught).
@@ -915,7 +921,9 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   assert.match(navConfigSourceForSkip, /viewer: \{ href: "#viewer-seat-map", label: "Skip to seat map" \}/);
   assert.doesNotMatch(seatMapSource, /<a\s+href="#planning-canvas"/);
   assert.match(seatMapSource, /id="planning-canvas" tabIndex=\{-1\}/);
-  assert.match(viewerSource, /href="#viewer-seat-map"[\s\S]{0,420}Skip to seat map/);
+  // The viewer's skip link is the shell's (shellNavConfig `viewer` entry,
+  // pinned above); the surface keeps only the landing marker.
+  assert.doesNotMatch(viewerSource, /Skip to seat map/);
   assert.match(viewerSource, /id="viewer-seat-map"/);
 
   // AppTopBar itself must render the skip anchor before every other control
@@ -1097,7 +1105,6 @@ test("touch devices get visible destructive affordances, contained modals, and s
   const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  const accountMenuSource = await readSource("../components/ui/AccountMenu.tsx");
   const globalsSource = await readSource("../app/globals.css");
 
   // Hover-revealed delete buttons are invisible on touch (no hover): both
@@ -1133,7 +1140,6 @@ test("touch devices get visible destructive affordances, contained modals, and s
   // the small chrome controls extend their hit area to ~44px without growing
   // visually (#198).
   assert.match(globalsSource, /touch-action: manipulation/);
-  assert.match(accountMenuSource, /after:absolute after:-inset-\[9px\]/);
   // Relational, not a fixed count: every 32px dialog close button must carry
   // the hit-area extension (CSV review, JSON review, reset review, …).
   assert.equal(
@@ -1175,7 +1181,8 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   assert.match(statusBandSource, /<ul aria-label=\{ariaLabel\}/);
 
   // Brand and seat-code tokens are identifiers — never machine-translated.
-  for (const [name, source] of [["SeatMap", seatMapSource], ["Viewer", viewerSource], ["ShellBar", shellBarSource]]) {
+  // (The viewer's brand line retired with its header — the shell's is pinned.)
+  for (const [name, source] of [["SeatMap", seatMapSource], ["ShellBar", shellBarSource]]) {
     assert.match(source, /translate="no"[\s\S]{0,200}Megeredchian Law|Megeredchian Law[\s\S]{0,60}translate="no"/, `${name} brand is translate=no`);
   }
   assert.ok((markerSource.match(/translate="no"/g) ?? []).length >= 2, "seat-code labels are translate=no");

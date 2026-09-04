@@ -296,5 +296,8 @@ test("SeatMap hands actionError to the held-open dialogs and stands the canvas b
 test("/my-seat and /login have their own loading.tsx sentences", () => {
   assert.match(read("app/my-seat/loading.tsx"), /Loading your seat…/);
   assert.match(read("app/login/loading.tsx"), /Loading the sign-in page…/);
-  assert.match(read("app/loading.tsx"), /Loading the seat map…/);
+  // The viewer map lives under the (shell) route group since redesign-v2 PR 2
+  // and streams its own pane skeleton; the root segment serves the rest.
+  assert.match(read("app/(shell)/loading.tsx"), /Loading the seat map…/);
+  assert.match(read("app/loading.tsx"), /Loading…/);
 });

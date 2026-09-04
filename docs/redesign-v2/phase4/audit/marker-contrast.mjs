@@ -152,9 +152,9 @@ for (const theme of ["light", "dark"]) {
   await page.keyboard.press("Escape"); await page.keyboard.press("Escape");
   await page.locator("#viewer-seat-search").fill("");
   await page.waitForTimeout(300);
-  // Filtered-out: open "Filter seating" and press the first real Zone chip; non-matching markers dim.
-  await page.getByRole("button", { name: /^Filter seating/ }).click();
-  const zoneChip = page.locator('#viewer-filter-panel [role="group"][aria-label="Zone"] button[aria-pressed]').nth(1);
+  // Filtered-out: open the shell's left panel (hamburger) and check the first Zone item; non-matching markers dim.
+  await page.locator('#shell-header button[aria-controls="shell-left-panel"]').click();
+  const zoneChip = page.locator('#shell-left-panel fieldset').filter({ hasText: "Zone" }).locator('input[type="checkbox"]').first();
   if (await zoneChip.count()) {
     await zoneChip.click();
     await page.waitForTimeout(500);

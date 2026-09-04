@@ -7,11 +7,14 @@ import { test } from "node:test";
 // "Viewer" tab, the top bar carries no competing section nav, and the
 // account menu stays a session layer with no navigation items.
 
-test("the viewer's surface tabs render only for admins", async () => {
+test("the viewer carries no surface tabs of its own — the shell's role-fitted links replaced them", async () => {
   const source = await readFile(new URL("../components/seat-map/ViewerSeatFinder.tsx", import.meta.url), "utf8");
 
-  // The whole tab group (including the active Viewer span) is gated.
-  assert.match(source, /\{showAdminShortcut && \(\s*\r?\n\s*<div className="flex h-full items-center">\s*\r?\n\s*<span\s*\r?\n\s*aria-current="page"/);
+  // Redesign-v2 PR 2: the Viewer/Admin tab pair (admin equipment) retired
+  // with the viewer's header; the shell header's Seat map link is role-fitted
+  // (shellNavConfig), so a viewer never sees a dead "Admin" destination.
+  assert.doesNotMatch(source, /showAdminShortcut/);
+  assert.doesNotMatch(source, /aria-label="Open admin surface"/);
 });
 
 test("the shell header's section links are role-fitted: admin-only sections never render for viewers", async () => {

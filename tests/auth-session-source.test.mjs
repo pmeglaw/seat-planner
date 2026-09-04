@@ -25,22 +25,21 @@ test("sign-out is a real POST route that ends the Supabase session", async () =>
   assert.match(source, /303/);
 });
 
-test("the account menu shows identity and hosts a no-JS sign-out form", async () => {
-  const source = await readSource("../components/ui/AccountMenu.tsx");
+test("the Account panel shows identity and hosts a no-JS sign-out form", async () => {
+  const source = await readSource("../components/ui/ShellPanels.tsx");
 
-  // Identity is finally displayed somewhere: the menu leads with the signed-in
-  // email and role label.
-  assert.match(source, /\{email\}/);
-  assert.match(source, /\{roleLabel\}/);
-  // The trigger is a labeled menu button, not a decorative avatar.
-  assert.match(source, /aria-haspopup="menu"/);
-  assert.match(source, /role="menu"/);
-  assert.match(source, /role="menuitem"/);
+  // Identity is displayed: the panel leads with the signed-in email and the
+  // role tag (redesign-v2 PR 2 — the Account panel replaced the menu).
+  assert.match(source, /\{email\} <span className="cds-tag">\{roleLabel\}<\/span>/);
+  // The trigger is the header's labelled Account utility (aria-expanded +
+  // aria-controls to this panel); the panel is a complementary landmark.
+  assert.match(source, /<aside id=\{`shell-panel-\$\{open\}`\} className="sp-panel" aria-labelledby=/);
   // Sign-out submits a real form so it works before hydration / without JS.
   assert.match(source, /<form action="\/auth\/signout" method="post"/);
   assert.match(source, /Sign out/);
-  // Menu close restores focus to the trigger (same contract as the map menus).
-  assert.match(source, /returnFocusAfterClose/);
+  // Panel close returns focus to the trigger — AppShell's closePanel does it.
+  const appShell = await readSource("../components/ui/AppShell.tsx");
+  assert.match(appShell, /focusTrigger\(`\[aria-controls="shell-panel-\$\{current\}"\]`\)/);
 });
 
 test("every signed-in surface mounts an identity + sign-out affordance", async () => {
@@ -78,7 +77,11 @@ test("every signed-in surface mounts an identity + sign-out affordance", async (
     assert.doesNotMatch(page, /<AppTopBar|<ShellPanels|<LeftPanel/);
   }
   assert.doesNotMatch(seatMap, /<AppTopBar|<ShellPanels|<LeftPanel/);
-  assert.match(viewer, /<AccountMenu/);
+  // The viewer lives under the shell too now (route-group move, owner
+  // confirmation 2026-09-03): no chrome of its own, it registers with the
+  // shell instead.
+  assert.doesNotMatch(viewer, /<AppTopBar|<ShellPanels|<LeftPanel|<AccountMenu|<ThemeToggle/);
+  assert.match(viewer, /useAppShellFilters\(/);
 });
 
 test("the proxy matcher covers every auth-bearing route", async () => {

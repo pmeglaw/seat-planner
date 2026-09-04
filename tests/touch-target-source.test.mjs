@@ -108,8 +108,6 @@ const LABEL_CARRIED = [
 // fails here.
 const PINS = {
   "components/ui/Button.tsx": ["after:absolute after:-inset-y-1"],
-  "components/ui/AccountMenu.tsx": ["after:-inset-[9px]"],
-  "components/ui/ThemeToggle.tsx": ["after:absolute after:-inset-y-2"],
   "components/seat-map/FloorSelector.tsx": ["after:absolute after:-inset-y-2"],
   "components/seat-map/MapZoomControl.tsx": [
     "after:absolute after:-inset-y-2",
@@ -158,9 +156,7 @@ const PINS = {
     // filter trigger (content-sized in the h-7 rail)
     "after:absolute after:-inset-y-2",
     // search clear — the 20×20 phone case
-    "after:absolute after:-inset-3",
-    // surface shortcut tabs (36×64)
-    "after:absolute after:-inset-y-1"
+    "after:absolute after:-inset-3"
   ],
   "components/auth/LoginForm.tsx": [
     "after:absolute after:-inset-1.5",

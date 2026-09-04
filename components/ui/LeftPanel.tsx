@@ -30,8 +30,12 @@ export type ShellFilterGroup = {
 export type ShellFilterSpec = {
   groups: ShellFilterGroup[];
   appliedCount: number;
-  /** Helper line under the groups (e.g. why zone/status are hidden). */
+  /** Helper line under the groups (e.g. why zone/status are hidden, or the
+   *  floor-aware match summary — Q5: a filter never returns an unchanged map
+   *  in silence). */
   note?: string;
+  /** Optional action beside the note ("Show Floor 2"). */
+  noteAction?: { label: string; onClick: () => void };
   onToggle: (groupId: string, itemId: string) => void;
   onClearGroup: (groupId: string) => void;
   onClearAll: () => void;
@@ -131,7 +135,16 @@ export function LeftPanel({ open, onClose, belowNav, links, onLinkClick, filters
             {filters && !empty
               ? groups.map(group => <FilterGroup key={group.id} group={group} spec={filters} />)
               : null}
-            {filters?.note ? <div className="sp-left-panel-note">{filters.note}</div> : null}
+            {filters?.note ? (
+              <div className="sp-left-panel-note" role="status">
+                {filters.note}
+                {filters.noteAction ? (
+                  <button type="button" className="cds-btn cds-btn--ghost cds-btn--sm" onClick={filters.noteAction.onClick}>
+                    {filters.noteAction.label}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </aside>
       ) : null}

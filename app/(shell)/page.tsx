@@ -4,7 +4,7 @@ import { ViewerSeatFinder } from "@/components/seat-map/ViewerSeatFinder";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { floorOfPerson, urlFloorFor } from "@/lib/floors";
 import { findEmployeeByEmail, findSeatForEmployee } from "@/lib/mySeat";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionContext } from "@/lib/serverAuth";
 import { VIEWER_SEAT_COLUMNS, withNullNotes, type ViewerSeatRow } from "@/lib/viewerSeatColumns";
 import type { DepartmentOption, Employee, ZoneOption } from "@/lib/types";
 
@@ -22,17 +22,12 @@ export default async function HomePage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await connection();
-  const supabase = await createClient();
-
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  // The (shell) layout already probed the session for its chrome; the shared
+  // context is React-cache()d, so this costs no second auth round-trip.
+  const { supabase, user } = await getSessionContext();
 
   if (!user) redirect("/login?next=/");
 
-  // UX-only role lookup: viewers should not see an Admin shortcut that always
-  // fails for them. RLS + requireAdmin() stay the enforced boundary.
-  //
   // Viewer people data comes ONLY from the published_employees snapshot
   // (replaced atomically at publish time) — never the live employees table,
   // which is the admins' draft-side working set. Employee edits therefore
@@ -43,8 +38,7 @@ export default async function HomePage({
   //
   // Everything below only needs user.id, so it all fires together — serial
   // awaits stacked round-trips into this force-dynamic render.
-  const [profileResult, seatRows, employees, departmentsResult, zonesResult] = await Promise.all([
-    supabase.from("profiles").select("role").eq("id", user.id).single(),
+  const [seatRows, employees, departmentsResult, zonesResult] = await Promise.all([
     fetchAllRows<ViewerSeatRow>(
       (from, to) =>
         supabase
@@ -69,8 +63,6 @@ export default async function HomePage({
     supabase.from("department_options").select("*").eq("active", true).order("name"),
     supabase.from("zone_options").select("*").eq("active", true).order("name")
   ]);
-  const { data: profile } = profileResult;
-
   const employeesById = new Map(employees.map(employee => [employee.id, employee]));
   const seats = seatRows.map(seat => ({
     ...withNullNotes(seat),
@@ -110,10 +102,7 @@ export default async function HomePage({
       employees={(employees ?? []) as Employee[]}
       departmentOptions={(departments ?? []) as DepartmentOption[]}
       zoneOptions={(zones ?? []) as ZoneOption[]}
-      showAdminShortcut={profile?.role === "admin"}
       lastPublishedLabel={lastPublishedLabel}
-      accountEmail={user.email ?? ""}
-      accountRoleLabel={profile?.role === "admin" ? "Admin" : "Viewer"}
       landing={{ urlFloor, ownFloor }}
     />
   );

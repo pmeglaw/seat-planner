@@ -56,7 +56,7 @@ const SUB12_LEDGER = new Map(Object.entries({
   // ruling: the mono seat-code pill, the two mono seat counts (chip + result
   // row), and the aria-hidden initials monogram.
   "components/seat-map/ViewerFindPalette.tsx": 4,
-  "components/seat-map/ViewerSeatFinder.tsx": 2,
+  "components/seat-map/ViewerSeatFinder.tsx": 1,
   // SeatSheet (owner rulings 2026-08-24): info-pane CSS promoted to the 12px
   // floor at all widths; SVG plan text raised to fontSize 13 viewBox units and
   // hidden below 1133px viewports where it would render sub-12 (legible-or-

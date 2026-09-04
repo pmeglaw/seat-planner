@@ -158,7 +158,7 @@ test("sanctioned eyebrow variant (2026-08-25): the Ask Planner label keeps the A
 test("desktop marker redesign stays clear of data auth publish and route boundaries", async () => {
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
-  const viewerSource = await readSource("../app/page.tsx");
+  const viewerSource = await readSource("../app/(shell)/page.tsx");
   const viewerFinderSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   const managementSource = await readSource("../app/(shell)/admin/management/page.tsx");
 

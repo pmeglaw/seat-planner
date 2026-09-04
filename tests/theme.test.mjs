@@ -137,6 +137,6 @@ test("dark-mode seams: raster parity and toggle mounts", async () => {
   // the shell (ShellPanels). The viewer's own ThemeToggle retires with its
   // header in the route-group move.
   assert.match(appShell, /<ShellPanels/);
-  assert.match(viewerFinder, /<ThemeToggle/);
+  assert.doesNotMatch(viewerFinder, /ThemeToggle/);
   assert.doesNotMatch(reception, /ThemeToggle/);
 });
