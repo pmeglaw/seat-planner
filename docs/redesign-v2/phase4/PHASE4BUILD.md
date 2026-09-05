@@ -519,6 +519,13 @@ seated person's seat is badged; the unseated person is not; without seats nothin
 - 1024 is `lg`: editing stays, the row wraps to 96, the inspector keeps its 400 (canvas 624); the "Editing needs a
   wider window." line is the 1000 frame (O6, §1.19).
 
+### 1.37 PR 4 — Management + Settings (plan v2 approved 2026-09-05; entries filled as the tasks land)
+
+Plan of record: `~/.claude/plans/spicy-hopping-axolotl.md` v2 (owner-approved with two build notes: the dirty-close
+ask is Keep editing (secondary) · Discard changes (plain primary), and the duplicate-name helper quotes the name and
+names the next step). Building on `feat/phase4-pages`. The record — PHASE2UX §1G / §1S, PHASE3DS §1.22–§1.28 + §5,
+DECISIONS D5 / D6, specimen `03-panels-and-sheets.html` — is the spec; one owner ruling amends it (§1.38).
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
