@@ -1,6 +1,6 @@
 import test, { before, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { loadComponent, renderElement, React, configureContext, cleanup } from "./helpers/renderComponent.mjs";
+import { loadComponent, renderElement, React, configureContext, cleanup, fireEvent } from "./helpers/renderComponent.mjs";
 
 // The publish review as the wide tearsheet (PHASE3DS §1.19, Phase 4 PR 3b
 // C10): no ×, Cancel is the exit; rail readiness; floor group rows in
@@ -115,4 +115,17 @@ test("failure: the error notification with Retry publish, the review intact", as
   assert.equal(confirmed, 1, "Retry publish re-runs the confirm");
   assert.equal(primary().textContent, "Publish 1 change", "the footer primary keeps its name — one Retry publish on screen");
   assert.equal(document.querySelectorAll("button").length, 3, "Cancel · Publish · Retry publish, nothing else");
+});
+
+// PR 4 smoke carry (PHASE4BUILD §1.39): a pointer on the inert overlay must
+// not pull focus out of the trap — otherwise Tab walks the document behind
+// the sheet and Esc is dead. The overlay cancels mousedown.
+test("a mousedown on the overlay leaves focus inside the sheet", async () => {
+  await render({ publishSummary: summary({ hasChanges: true, totalChangeCount: 1 }), publishDiffRows: [row("N01", "3", "assigned", "Open seat", "Alex")], publishDiffCounts: counts({ assigned: 1 }) });
+  const sheet = dialog();
+  assert.ok(sheet.contains(document.activeElement), "the trap lands focus in the sheet on open");
+  const overlay = document.querySelector(".sp-tearsheet-overlay");
+  const cancelled = !fireEvent.mouseDown(overlay);
+  assert.equal(cancelled, true, "the overlay cancels mousedown");
+  assert.ok(sheet.contains(document.activeElement), "focus is still inside the sheet");
 });

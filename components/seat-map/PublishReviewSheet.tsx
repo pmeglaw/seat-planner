@@ -66,7 +66,10 @@ export function PublishReviewSheet({
 
   return (
     <div className="sp-tearsheet-host" data-open="" data-tearsheet-host="">
-      <div className="sp-tearsheet-overlay" />
+      {/* The overlay is inert; mousedown is cancelled so a pointer on it never
+          pulls focus out of the trap — the same rule as the PR 4 sheets
+          (PHASE4BUILD §1.39 carry). */}
+      <div className="sp-tearsheet-overlay" onMouseDown={event => event.preventDefault()} />
       <section
         ref={publishReviewDialogFocusRef}
         tabIndex={-1}

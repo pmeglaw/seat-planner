@@ -601,8 +601,8 @@ fixed on the branch and re-run:
   (behind the sheet's overlay) did nothing — correct — but the mousedown moved `document.activeElement` to `body`,
   after which Tab walked the document and Esc did nothing. `useDialogFocus` traps Tab only while focus is inside the
   node. **Fix** the overlay cancels `mousedown` (`onMouseDown={e => e.preventDefault()}`) in `ManagementConfirmSheet`,
-  `CsvImportSheet`, `SnapshotRestoreSheet` and `CarbonModal`, so the focused control keeps focus. **Flag for the owner:**
-  `PublishReviewSheet` (PR 3b) shares the overlay and the gap; it is outside this PR and untouched.
+  `CsvImportSheet`, `SnapshotRestoreSheet` and `CarbonModal`, so the focused control keeps focus. `PublishReviewSheet` (PR 3b)
+  shared the overlay and the gap — **fixed here, same rule** (owner carry 2026-09-05; `publish-review-sheet` ct pins it).
 - **Step 20 — the narrow frame kept the 1920 widths.** At 1024 the Settings column stayed 776 and the narrow sheet 720,
   where PHASE2UX §1S.5 says full width and viewport − 32. **Fix** sheet **amendment C** (both copies, byte-identical):
   under the asset's 1055 fold, `.sp-settings { max-width: none }` and `.sp-tearsheet--narrow { width: calc(100vw −
