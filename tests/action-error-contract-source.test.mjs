@@ -48,6 +48,18 @@ test("deleteSeatAction returns expected failures instead of throwing", async () 
   assert.match(slice, /ok:\s*true/, "deleteSeatAction should return an { ok: true, seatId } union arm.");
 });
 
+test("deleteEmployeeAction returns the database's refusal instead of throwing", async () => {
+  // Phase 4 PR 4 smoke (step 11): deactivate_employee refuses while the person
+  // is still on the published map, with a written reason naming the seat. A
+  // thrown Error digest-strips it in production; the panel's danger zone
+  // shows the returned message with the "Open <seat> on the map" link.
+  const source = await readSource("../app/actions.ts");
+  const slice = actionSlice(source, "deleteEmployeeAction");
+  assert.doesNotMatch(slice, /throw new Error/, "deleteEmployeeAction must not throw the RPC's refusal — production digest-strips it.");
+  assert.match(slice, /code: "REFUSED", message: error\.message/);
+  assert.match(slice, /ok:\s*true/);
+});
+
 // Client catch blocks must not prefer error.message: expected failures arrive
 // as returned values, so a caught throw is unexpected and its message is a
 // production digest. The written fallback goes through clientActionErrorMessage

@@ -605,9 +605,14 @@ export async function swapSeatAssignmentsAction(input: {
  * message never reaches the admin who typed the value.
  */
 export type ActionValidationFailure = { ok: false; code: "VALIDATION"; message: string };
+// An expected refusal from the database's own guard (deactivate_employee
+// refuses while the person is still on the PUBLISHED map): returned, never
+// thrown — a thrown Error is digest-stripped in production and the written
+// reason never reaches the panel (F-ERR-1; Phase 4 PR 4 smoke, PHASE4BUILD §1.39).
+export type ActionRefusedFailure = { ok: false; code: "REFUSED"; message: string };
 
 export type EmployeeMutationResult = { ok: true; employee: Employee } | ActionValidationFailure;
-export type EmployeeDeleteResult = { ok: true; employeeId: string } | ActionValidationFailure;
+export type EmployeeDeleteResult = { ok: true; employeeId: string } | ActionValidationFailure | ActionRefusedFailure;
 export type DepartmentMutationResult = { ok: true; department: DepartmentOption } | ActionValidationFailure;
 export type DepartmentDeleteResult = { ok: true; department: string } | ActionValidationFailure;
 export type ZoneMutationResult = { ok: true; zone: ZoneOption } | ActionValidationFailure;
@@ -708,7 +713,10 @@ export async function deleteEmployeeAction(targetEmployeeId: string): Promise<Em
     employee_to_deactivate: employeeId
   });
 
-  if (error) throw new Error(error.message);
+  // The RPC's published-map guard is an expected refusal with a written
+  // reason ("…still on the published map at CW01…"): return it so the panel's
+  // danger zone can show it with the seat link (PHASE2UX §1G.3).
+  if (error) return { ok: false, code: "REFUSED", message: error.message };
   revalidatePath("/admin");
   return { ok: true, employeeId };
 }

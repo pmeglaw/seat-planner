@@ -22,17 +22,19 @@ test("dialog closes use the shared icon — no literal 'x' text glyphs remain", 
   // SeatMap's dialogs (and their close buttons) live in SeatMapDialogs.tsx
   // since the R-02a extraction — that file carries the shared-icon contract.
   const seatMapDialogs = await readSource("../components/seat-map/SeatMapDialogs.tsx");
-  const management = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  // PR 4: Management's one × is the toolbar search clear (EmployeesTable);
+  // the panel has no × (PHASE3DS §1.24) and the sheet has none (frame invariant).
+  const management = await readSource("../components/admin-management/EmployeesTable.tsx");
   const settings = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
   const inspector = await readSource("../components/seat-map/SeatInspector.tsx");
 
-  for (const [name, source] of [["SeatMapDialogs", seatMapDialogs], ["AdminManagementPanel", management]]) {
+  for (const [name, source] of [["SeatMapDialogs", seatMapDialogs], ["EmployeesTable", management]]) {
     assert.doesNotMatch(source, /\n\s*x\s*\r?\n\s*<\/button>/, `${name} must not render a literal 'x' close`);
     assert.match(source, /from "@\/components\/ui\/CloseIcon"/, `${name} imports the shared CloseIcon`);
   }
   // The settings review dialogs had two inline copies of the same path —
-  // consolidated onto the shared component.
-  assert.match(settings, /from "@\/components\/ui\/CloseIcon"/);
+  // consolidated onto the shared component, and gone with PR 4: the reviews
+  // are tearsheets (no ×, Cancel is the exit) — no inline copy may return.
   assert.doesNotMatch(settings, /<svg[^>]*><path d="m5\.5 5\.5 9 9m0-9-9 9"/);
   // The inspector's private definition moves to the shared module.
   assert.match(inspector, /from "@\/components\/ui\/CloseIcon"/);

@@ -1,0 +1,937 @@
+{
+  "results": [
+    {
+      "step": "1 Management at rest",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "theme": "white",
+        "indicator": "Draft — no changes",
+        "primaryBg": "rgb(184, 92, 46)",
+        "primaryHover": "rgb(143, 69, 33)",
+        "tabs": [
+          "Employees",
+          "Departments",
+          "Zones"
+        ],
+        "selectedBar": "rgb(184, 92, 46) 0px -2px 0px 0px inset",
+        "stripH": 40,
+        "rows": 38,
+        "count": "98 employees · 58 assigned · 40 unassigned",
+        "seatLabel": "SE06",
+        "linkRest": "rgb(143, 69, 33)",
+        "linkHover": "rgb(122, 58, 28)",
+        "rowRestBg": "rgb(244, 244, 244)",
+        "rowHoverBg": "rgb(232, 232, 232)",
+        "tipFocus": {
+          "text": "Edit",
+          "painted": true,
+          "inViewport": true,
+          "above": false,
+          "below": true,
+          "right": 1720,
+          "placement": null
+        },
+        "tipLast": {
+          "text": "Edit",
+          "painted": true,
+          "inViewport": true,
+          "above": true,
+          "below": false,
+          "right": 1720,
+          "placement": "above"
+        },
+        "lastVindex": "97",
+        "focusOnEdit": {
+          "tag": "button",
+          "label": "Edit Adrienne Moradkhanian",
+          "id": "",
+          "inPanel": false
+        },
+        "ring": "solid 2px rgb(184, 92, 46) offset -2px",
+        "blues": []
+      },
+      "note": "",
+      "files": [
+        "01-management-rest-light.png",
+        "01-row-hover-light.png",
+        "01-edit-tooltip-focus-light.png",
+        "01-edit-tooltip-focus-last-light.png",
+        "01-tab-focus-light.png"
+      ]
+    },
+    {
+      "step": "2 Edit panel and combobox",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "width": 480,
+        "bg": "rgb(255, 255, 255)",
+        "titleText": "Edit employee",
+        "closeX": 0,
+        "focus": {
+          "tag": "input",
+          "label": "",
+          "id": "management-employee-name",
+          "inPanel": true
+        },
+        "fact": "Draft seatSE06· Floor 3Open on the map",
+        "footer": [
+          {
+            "text": "Cancel",
+            "cls": "secondary",
+            "w": 240,
+            "h": 64
+          },
+          {
+            "text": "Save employee",
+            "cls": "primary",
+            "w": 240,
+            "h": 64
+          }
+        ],
+        "danger": "cds-btn cds-btn--danger-ghost",
+        "expanded": "true",
+        "options": 1,
+        "listBg": "rgb(255, 255, 255)",
+        "expandedAfterEsc": "false",
+        "panelAfterListEsc": 1,
+        "ask": 0,
+        "dialogsLeft": 0,
+        "focusBack": {
+          "tag": "button",
+          "label": "Edit Adrienne Moradkhanian",
+          "id": "",
+          "inPanel": false
+        }
+      },
+      "note": "",
+      "files": [
+        "02-panel-edit-light.png",
+        "02-panel-combobox-light.png"
+      ]
+    },
+    {
+      "step": "3 Departments and zones",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "primaryText": "Add department",
+        "rowCount": 15,
+        "rowH": 48,
+        "name": "Accounting",
+        "value": "Accounting",
+        "selected": true,
+        "editBtns": [
+          {
+            "text": "Save",
+            "cls": "primary",
+            "h": 40,
+            "disabled": true
+          },
+          {
+            "text": "Cancel",
+            "cls": "ghost",
+            "h": 40,
+            "disabled": false
+          }
+        ],
+        "editingLeft": 0,
+        "restored": "Accounting",
+        "items": [
+          {
+            "text": "Delete",
+            "label": "Delete Accounting",
+            "cls": "cds-danger"
+          }
+        ],
+        "menuLeft": 0,
+        "zonePrimary": "Add zone",
+        "zoneRows": 8,
+        "modalFooter": [
+          {
+            "text": "Cancel",
+            "cls": "secondary",
+            "w": 240,
+            "disabled": false
+          },
+          {
+            "text": "Add department",
+            "cls": "primary",
+            "w": 240,
+            "disabled": true
+          }
+        ],
+        "modalFocus": {
+          "tag": "input",
+          "label": "",
+          "id": "_r_19_",
+          "inPanel": false
+        },
+        "modalLeft": 0,
+        "actionPostsDuring": []
+      },
+      "note": "",
+      "files": [
+        "03-departments-rest-light.png",
+        "03-rename-editing-light.png",
+        "03-overflow-light.png",
+        "03-zones-rest-light.png",
+        "03-create-modal-light.png"
+      ]
+    },
+    {
+      "step": "7 Indicator and seat link",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "indicator": "Draft — no changes",
+        "label": "SE06",
+        "href": "/admin?seat=SE06",
+        "landed": "/admin?seat=SE06",
+        "navEntries": 1,
+        "inspector": true,
+        "back": "/admin/management",
+        "navEntriesBack": 1
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "4 Settings at rest",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "theme": "white",
+        "indicator": "Draft — no changes",
+        "headerBtns": 0,
+        "calloutFirst": "sp-callout",
+        "calloutText": "The published map is never touched until you publish. Restores replace the entire draft — review before confirming.",
+        "calloutW": 776,
+        "columnW": 776,
+        "calloutInner": 0,
+        "csvRow": [
+          "Import CSV · .csv up to 5 MB|primary",
+          "Export CSV|tertiary",
+          "Download CSV template|ghost"
+        ],
+        "csvLine": "Columns: seat_label, employee_name, employee_email, position, department, zone, status, notes — e.g. A-12, Jane Doe, , Associate, Litigation, North Wing, assigned, Window seat",
+        "snapRow": [
+          "Export draft snapshot|primary",
+          "Restore draft snapshot…|tertiary"
+        ],
+        "snapLine": ".json up to 5 MB — a file exported from this page.",
+        "resetInDom": false,
+        "fileInputs": [
+          {
+            "accept": ".csv,text/csv",
+            "tabindex": "-1",
+            "ariaHidden": "true",
+            "hidden": true
+          },
+          {
+            "accept": ".json,application/json",
+            "tabindex": "-1",
+            "ariaHidden": "true",
+            "hidden": true
+          }
+        ],
+        "primaryBg": "rgb(184, 92, 46)",
+        "blues": []
+      },
+      "note": "",
+      "files": [
+        "04-settings-rest-light.png"
+      ]
+    },
+    {
+      "step": "6 Console",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "management": [],
+        "settings": [],
+        "noise": {
+          "management": 2,
+          "settings": 2
+        }
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "0 Server-action POSTs this frame",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "count": 4,
+        "bodies": [
+          "[]",
+          "[]",
+          "[]",
+          "[]"
+        ]
+      },
+      "note": "recorded, not judged — reads through server actions are allowed; no mutation was triggered by construction",
+      "files": []
+    },
+    {
+      "step": "1 Management at rest",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "theme": "g100",
+        "indicator": "Draft — no changes",
+        "primaryBg": "rgb(184, 92, 46)",
+        "primaryHover": "rgb(143, 69, 33)",
+        "tabs": [
+          "Employees",
+          "Departments",
+          "Zones"
+        ],
+        "selectedBar": "rgb(184, 92, 46) 0px -2px 0px 0px inset",
+        "stripH": 40,
+        "rows": 38,
+        "count": "98 employees · 58 assigned · 40 unassigned",
+        "seatLabel": "SE06",
+        "linkRest": "rgb(232, 160, 122)",
+        "linkHover": "rgb(245, 221, 209)",
+        "rowRestBg": "rgb(38, 38, 38)",
+        "rowHoverBg": "rgb(51, 51, 51)",
+        "tipFocus": {
+          "text": "Edit",
+          "painted": true,
+          "inViewport": true,
+          "above": false,
+          "below": true,
+          "right": 1720,
+          "placement": null
+        },
+        "tipLast": {
+          "text": "Edit",
+          "painted": true,
+          "inViewport": true,
+          "above": true,
+          "below": false,
+          "right": 1720,
+          "placement": "above"
+        },
+        "lastVindex": "97",
+        "focusOnEdit": {
+          "tag": "button",
+          "label": "Edit Adrienne Moradkhanian",
+          "id": "",
+          "inPanel": false
+        },
+        "ring": "solid 2px rgb(184, 92, 46) offset -2px",
+        "blues": []
+      },
+      "note": "",
+      "files": [
+        "01-management-rest-dark.png",
+        "01-row-hover-dark.png",
+        "01-edit-tooltip-focus-dark.png",
+        "01-edit-tooltip-focus-last-dark.png",
+        "01-tab-focus-dark.png"
+      ]
+    },
+    {
+      "step": "2 Edit panel and combobox",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "width": 480,
+        "bg": "rgb(57, 57, 57)",
+        "titleText": "Edit employee",
+        "closeX": 0,
+        "focus": {
+          "tag": "input",
+          "label": "",
+          "id": "management-employee-name",
+          "inPanel": true
+        },
+        "fact": "Draft seatSE06· Floor 3Open on the map",
+        "footer": [
+          {
+            "text": "Cancel",
+            "cls": "secondary",
+            "w": 240,
+            "h": 64
+          },
+          {
+            "text": "Save employee",
+            "cls": "primary",
+            "w": 240,
+            "h": 64
+          }
+        ],
+        "danger": "cds-btn cds-btn--danger-ghost",
+        "expanded": "true",
+        "options": 1,
+        "listBg": "rgb(57, 57, 57)",
+        "expandedAfterEsc": "false",
+        "panelAfterListEsc": 1,
+        "ask": 0,
+        "dialogsLeft": 0,
+        "focusBack": {
+          "tag": "button",
+          "label": "Edit Adrienne Moradkhanian",
+          "id": "",
+          "inPanel": false
+        }
+      },
+      "note": "",
+      "files": [
+        "02-panel-edit-dark.png",
+        "02-panel-combobox-dark.png"
+      ]
+    },
+    {
+      "step": "3 Departments and zones",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "primaryText": "Add department",
+        "rowCount": 15,
+        "rowH": 48,
+        "name": "Accounting",
+        "value": "Accounting",
+        "selected": true,
+        "editBtns": [
+          {
+            "text": "Save",
+            "cls": "primary",
+            "h": 40,
+            "disabled": true
+          },
+          {
+            "text": "Cancel",
+            "cls": "ghost",
+            "h": 40,
+            "disabled": false
+          }
+        ],
+        "editingLeft": 0,
+        "restored": "Accounting",
+        "items": [
+          {
+            "text": "Delete",
+            "label": "Delete Accounting",
+            "cls": "cds-danger"
+          }
+        ],
+        "menuLeft": 0,
+        "zonePrimary": "Add zone",
+        "zoneRows": 8,
+        "modalFooter": [
+          {
+            "text": "Cancel",
+            "cls": "secondary",
+            "w": 240,
+            "disabled": false
+          },
+          {
+            "text": "Add department",
+            "cls": "primary",
+            "w": 240,
+            "disabled": true
+          }
+        ],
+        "modalFocus": {
+          "tag": "input",
+          "label": "",
+          "id": "_r_19_",
+          "inPanel": false
+        },
+        "modalLeft": 0,
+        "actionPostsDuring": []
+      },
+      "note": "",
+      "files": [
+        "03-departments-rest-dark.png",
+        "03-rename-editing-dark.png",
+        "03-overflow-dark.png",
+        "03-zones-rest-dark.png",
+        "03-create-modal-dark.png"
+      ]
+    },
+    {
+      "step": "7 Indicator and seat link",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "indicator": "Draft — no changes",
+        "label": "SE06",
+        "href": "/admin?seat=SE06",
+        "landed": "/admin?seat=SE06",
+        "navEntries": 1,
+        "inspector": true,
+        "back": "/admin/management",
+        "navEntriesBack": 1
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "4 Settings at rest",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "theme": "g100",
+        "indicator": "Draft — no changes",
+        "headerBtns": 0,
+        "calloutFirst": "sp-callout",
+        "calloutText": "The published map is never touched until you publish. Restores replace the entire draft — review before confirming.",
+        "calloutW": 776,
+        "columnW": 776,
+        "calloutInner": 0,
+        "csvRow": [
+          "Import CSV · .csv up to 5 MB|primary",
+          "Export CSV|tertiary",
+          "Download CSV template|ghost"
+        ],
+        "csvLine": "Columns: seat_label, employee_name, employee_email, position, department, zone, status, notes — e.g. A-12, Jane Doe, , Associate, Litigation, North Wing, assigned, Window seat",
+        "snapRow": [
+          "Export draft snapshot|primary",
+          "Restore draft snapshot…|tertiary"
+        ],
+        "snapLine": ".json up to 5 MB — a file exported from this page.",
+        "resetInDom": false,
+        "fileInputs": [
+          {
+            "accept": ".csv,text/csv",
+            "tabindex": "-1",
+            "ariaHidden": "true",
+            "hidden": true
+          },
+          {
+            "accept": ".json,application/json",
+            "tabindex": "-1",
+            "ariaHidden": "true",
+            "hidden": true
+          }
+        ],
+        "primaryBg": "rgb(184, 92, 46)",
+        "blues": []
+      },
+      "note": "",
+      "files": [
+        "04-settings-rest-dark.png"
+      ]
+    },
+    {
+      "step": "6 Console",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "management": [],
+        "settings": [],
+        "noise": {
+          "management": 2,
+          "settings": 2
+        }
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "0 Server-action POSTs this frame",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "count": 3,
+        "bodies": [
+          "[]",
+          "[]",
+          "[]"
+        ]
+      },
+      "note": "recorded, not judged — reads through server actions are allowed; no mutation was triggered by construction",
+      "files": []
+    },
+    {
+      "step": "1 Management at rest",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "theme": "white",
+        "indicator": "Draft — no changes",
+        "primaryBg": "rgb(184, 92, 46)",
+        "primaryHover": "rgb(143, 69, 33)",
+        "tabs": [
+          "Employees",
+          "Departments",
+          "Zones"
+        ],
+        "selectedBar": "rgb(184, 92, 46) 0px -2px 0px 0px inset",
+        "stripH": 40,
+        "rows": 30,
+        "count": "98 employees · 58 assigned · 40 unassigned",
+        "seatLabel": "SE06",
+        "linkRest": "rgb(143, 69, 33)",
+        "linkHover": "rgb(122, 58, 28)",
+        "rowRestBg": "rgb(244, 244, 244)",
+        "rowHoverBg": "rgb(232, 232, 232)",
+        "tipFocus": {
+          "text": "Edit",
+          "painted": true,
+          "inViewport": true,
+          "above": false,
+          "below": true,
+          "right": 1248,
+          "placement": null
+        },
+        "tipLast": {
+          "text": "Edit",
+          "painted": true,
+          "inViewport": true,
+          "above": true,
+          "below": false,
+          "right": 1248,
+          "placement": "above"
+        },
+        "lastVindex": "97",
+        "focusOnEdit": {
+          "tag": "button",
+          "label": "Edit Adrienne Moradkhanian",
+          "id": "",
+          "inPanel": false
+        },
+        "ring": "solid 2px rgb(184, 92, 46) offset -2px",
+        "blues": []
+      },
+      "note": "",
+      "files": [
+        "01-management-rest-1280-light.png",
+        "01-row-hover-1280-light.png",
+        "01-edit-tooltip-focus-1280-light.png",
+        "01-edit-tooltip-focus-last-1280-light.png",
+        "01-tab-focus-1280-light.png"
+      ]
+    },
+    {
+      "step": "2 Edit panel and combobox",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "width": 480,
+        "bg": "rgb(255, 255, 255)",
+        "titleText": "Edit employee",
+        "closeX": 0,
+        "focus": {
+          "tag": "input",
+          "label": "",
+          "id": "management-employee-name",
+          "inPanel": true
+        },
+        "fact": "Draft seatSE06· Floor 3Open on the map",
+        "footer": [
+          {
+            "text": "Cancel",
+            "cls": "secondary",
+            "w": 240,
+            "h": 64
+          },
+          {
+            "text": "Save employee",
+            "cls": "primary",
+            "w": 240,
+            "h": 64
+          }
+        ],
+        "danger": "cds-btn cds-btn--danger-ghost",
+        "expanded": "true",
+        "options": 1,
+        "listBg": "rgb(255, 255, 255)",
+        "expandedAfterEsc": "false",
+        "panelAfterListEsc": 1,
+        "ask": 0,
+        "dialogsLeft": 0,
+        "focusBack": {
+          "tag": "button",
+          "label": "Edit Adrienne Moradkhanian",
+          "id": "",
+          "inPanel": false
+        }
+      },
+      "note": "",
+      "files": [
+        "02-panel-edit-1280-light.png",
+        "02-panel-combobox-1280-light.png"
+      ]
+    },
+    {
+      "step": "3 Departments and zones",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "primaryText": "Add department",
+        "rowCount": 15,
+        "rowH": 48,
+        "name": "Accounting",
+        "value": "Accounting",
+        "selected": true,
+        "editBtns": [
+          {
+            "text": "Save",
+            "cls": "primary",
+            "h": 40,
+            "disabled": true
+          },
+          {
+            "text": "Cancel",
+            "cls": "ghost",
+            "h": 40,
+            "disabled": false
+          }
+        ],
+        "editingLeft": 0,
+        "restored": "Accounting",
+        "items": [
+          {
+            "text": "Delete",
+            "label": "Delete Accounting",
+            "cls": "cds-danger"
+          }
+        ],
+        "menuLeft": 0,
+        "zonePrimary": "Add zone",
+        "zoneRows": 8,
+        "modalFooter": [
+          {
+            "text": "Cancel",
+            "cls": "secondary",
+            "w": 240,
+            "disabled": false
+          },
+          {
+            "text": "Add department",
+            "cls": "primary",
+            "w": 240,
+            "disabled": true
+          }
+        ],
+        "modalFocus": {
+          "tag": "input",
+          "label": "",
+          "id": "_r_19_",
+          "inPanel": false
+        },
+        "modalLeft": 0,
+        "actionPostsDuring": []
+      },
+      "note": "",
+      "files": [
+        "03-departments-rest-1280-light.png",
+        "03-rename-editing-1280-light.png",
+        "03-overflow-1280-light.png",
+        "03-zones-rest-1280-light.png",
+        "03-create-modal-1280-light.png"
+      ]
+    },
+    {
+      "step": "7 Indicator and seat link",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "indicator": "Draft — no changes",
+        "label": "SE06",
+        "href": "/admin?seat=SE06",
+        "landed": "/admin?seat=SE06",
+        "navEntries": 1,
+        "inspector": true,
+        "back": "/admin/management",
+        "navEntriesBack": 1
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "4 Settings at rest",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "theme": "white",
+        "indicator": "Draft — no changes",
+        "headerBtns": 0,
+        "calloutFirst": "sp-callout",
+        "calloutText": "The published map is never touched until you publish. Restores replace the entire draft — review before confirming.",
+        "calloutW": 776,
+        "columnW": 776,
+        "calloutInner": 0,
+        "csvRow": [
+          "Import CSV · .csv up to 5 MB|primary",
+          "Export CSV|tertiary",
+          "Download CSV template|ghost"
+        ],
+        "csvLine": "Columns: seat_label, employee_name, employee_email, position, department, zone, status, notes — e.g. A-12, Jane Doe, , Associate, Litigation, North Wing, assigned, Window seat",
+        "snapRow": [
+          "Export draft snapshot|primary",
+          "Restore draft snapshot…|tertiary"
+        ],
+        "snapLine": ".json up to 5 MB — a file exported from this page.",
+        "resetInDom": false,
+        "fileInputs": [
+          {
+            "accept": ".csv,text/csv",
+            "tabindex": "-1",
+            "ariaHidden": "true",
+            "hidden": true
+          },
+          {
+            "accept": ".json,application/json",
+            "tabindex": "-1",
+            "ariaHidden": "true",
+            "hidden": true
+          }
+        ],
+        "primaryBg": "rgb(184, 92, 46)",
+        "blues": []
+      },
+      "note": "",
+      "files": [
+        "04-settings-rest-1280-light.png"
+      ]
+    },
+    {
+      "step": "6 Console",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "management": [],
+        "settings": [],
+        "noise": {
+          "management": 2,
+          "settings": 2
+        }
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "0 Server-action POSTs this frame",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "count": 4,
+        "bodies": [
+          "[]",
+          "[]",
+          "[]",
+          "[]"
+        ]
+      },
+      "note": "recorded, not judged — reads through server actions are allowed; no mutation was triggered by construction",
+      "files": []
+    },
+    {
+      "step": "8 Indicator net-zero",
+      "frame": "all",
+      "ok": true,
+      "values": {
+        "indicatorAtStart": "Draft — no changes",
+        "indicatorAtEnd": "Draft — no changes",
+        "actionPosts": 19
+      },
+      "note": "",
+      "files": []
+    }
+  ],
+  "actionPosts": [
+    {
+      "at": "2026-09-05T22:23:38.833Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:23:40.404Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:23:55.759Z",
+      "path": "/admin",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:23:56.587Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:23:57.739Z",
+      "path": "/admin/settings",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:23:59.441Z",
+      "path": "/admin/settings",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:02.264Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:03.770Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:19.306Z",
+      "path": "/admin",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:21.442Z",
+      "path": "/admin/settings",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:22.972Z",
+      "path": "/admin/settings",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:25.607Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:27.140Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:42.370Z",
+      "path": "/admin",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:43.202Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:44.345Z",
+      "path": "/admin/settings",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:45.905Z",
+      "path": "/admin/settings",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:48.454Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:49.928Z",
+      "path": "/admin/management",
+      "body": "[]"
+    }
+  ]
+}

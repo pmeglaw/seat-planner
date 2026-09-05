@@ -261,7 +261,11 @@ test("a highlighted viewer seat announces which of the two causes lit it up", as
 
 test("ask planner drawer and settings review dialogs keep dialog semantics and focus targets", async () => {
   const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
-  const settingsPanelSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+  // PR 4: the two reviews are the narrow tearsheets.
+  const settingsPanelSource = [
+    await readSource("../components/admin-settings/CsvImportSheet.tsx"),
+    await readSource("../components/admin-settings/SnapshotRestoreSheet.tsx")
+  ].join("\n");
 
   assert.match(askPlannerSource, /id="ask-planner-drawer"/);
   assert.match(askPlannerSource, /aria-labelledby="ask-planner-title"/);
@@ -320,8 +324,13 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
     "../components/seat-map/PublishReviewSheet.tsx",
     "../components/seat-map/SeatInspector.tsx",
     // (AskPlannerDrawer left this list in PR 3b: it is the right slot, a side panel.)
-    "../components/admin-settings/DataUtilitiesPanel.tsx",
-    "../components/admin-management/AdminManagementPanel.tsx"
+    "../components/admin-settings/CsvImportSheet.tsx",
+    "../components/admin-settings/SnapshotRestoreSheet.tsx",
+    // PR 4: Management's dialogs are the 480 panel, the narrow confirm sheet
+    // and the shared asset modal (dirty-close ask, one-field create).
+    "../components/admin-management/EmployeePanel.tsx",
+    "../components/admin-management/ManagementConfirmSheet.tsx",
+    "../components/ui/CarbonModal.tsx"
   ];
   for (const file of dialogFiles) {
     const source = await readSource(file);
@@ -1072,7 +1081,8 @@ test("form fields carry the hygiene attributes users and password managers rely 
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
   const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
   const loginSource = await readSource("../components/auth/LoginForm.tsx");
-  const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  // PR 4: the employee form lives in the 480 panel.
+  const managementSource = await readSource("../components/admin-management/EmployeePanel.tsx");
   const searchLibSource = await readSource("../lib/viewerSeatSearch.ts");
   const globalsSource = await readSource("../app/globals.css");
 
@@ -1129,8 +1139,13 @@ test("looping animations honor prefers-reduced-motion via motion-safe gating", a
 });
 
 test("touch devices get visible destructive affordances, contained modals, and safe-area sheets", async () => {
-  const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
-  const dataUtilitiesSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+  // PR 4: the panel body is the Management scroll region; the lists' Delete
+  // is a menu item behind ⋯ (always in the tree), never hover-revealed.
+  const managementSource = await readSource("../components/admin-management/EmployeePanel.tsx");
+  const dataUtilitiesSource = [
+    await readSource("../components/admin-settings/CsvImportSheet.tsx"),
+    await readSource("../components/admin-settings/SnapshotRestoreSheet.tsx")
+  ].join("\n");
   const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
@@ -1148,11 +1163,14 @@ test("touch devices get visible destructive affordances, contained modals, and s
   // chain to the page behind (#198).
   // PR 3b: the drawer's scroll region is the slot body (`.sp-slot-body`, overflow: auto in the sheet).
   assert.match(askPlannerSource, /<div className="sp-slot-body">/);
-  assert.equal((dataUtilitiesSource.match(/min-h-0 overflow-y-auto overscroll-contain/g) ?? []).length, 2);
+  // PR 4: the two Settings reviews are narrow tearsheets — their scroll
+  // region is `.sp-tearsheet-body` (overflow: auto in the sheet), one each.
+  assert.equal((dataUtilitiesSource.match(/className="sp-tearsheet-body"/g) ?? []).length, 2);
   // PR 3b: the publish review is the wide tearsheet — its scroll region is
   // `.sp-tearsheet-main` (overflow: auto in the sheet); the body grid is min-height 0.
   assert.match(await readSource("../components/seat-map/PublishReviewSheet.tsx"), /className="sp-tearsheet-main"/);
-  assert.match(managementSource, /role="dialog"[\s\S]{0,600}overscroll-contain/);
+  // (PR 4: the panel header sits between the dialog root and its scroll body.)
+  assert.match(managementSource, /role="dialog"[\s\S]{0,1400}cds-side-panel-body overscroll-contain/);
 
   // Viewport-fixed bottom sheets respect the home-indicator inset (#198).
   // PR 3b: the admin map has no bottom sheet left — the inspector and the
@@ -1219,10 +1237,13 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
   assert.doesNotMatch(seatMapSource, /Megeredchian Law/, "the map surface carries no brand line of its own (the shell does)");
   assert.ok((markerSource.match(/translate="no"/g) ?? []).length >= 2, "seat-code labels are translate=no");
 
-  // Counts render localized, consistent with the panel's own convention.
-  assert.match(managementSource, /\{card\.value\.toLocaleString\(\)\}/);
-  assert.match(managementSource, /\{row\.employeeCount\.toLocaleString\(\)\}/);
-  assert.match(managementSource, /zoneCounts\.get\(name\) \?\? 0\)\.toLocaleString\(\)/);
+  // Counts render localized, consistent with the panel's own convention
+  // (PR 4: the toolbar count in lib/managementCounts, the list counts in OptionList).
+  const managementCountsSource = await readSource("../lib/managementCounts.ts");
+  const optionListSource = await readSource("../components/admin-management/OptionList.tsx");
+  assert.match(managementCountsSource, /total\.toLocaleString\(\)/);
+  assert.match(managementCountsSource, /matching\.toLocaleString\(\)/);
+  assert.match(optionListSource, /\$\{count\.toLocaleString\(\)\} \$\{countNoun\}/);
 
   // Publisher emails truncate with a title tooltip instead of wrapping
   // mid-glyph (#202).
@@ -1303,10 +1324,12 @@ test("CTA labels sit on the ladder's white, not the off-white inverse token", as
 });
 
 test("directory rows are a mouse shortcut, not a third tab stop per employee", async () => {
-  const managementSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  // PR 4: the table is EmployeesTable; the two controls are the seat link and
+  // the ghost Edit icon button (PHASE2UX §1G.3 — no kebab).
+  const managementSource = await readSource("../components/admin-management/EmployeesTable.tsx");
 
-  // Each row already exposes two real controls — the name link (to the map)
-  // and the kebab (to the edit form). Making the <tr> focusable as well put
+  // Each row already exposes two real controls — the seat link (to the map)
+  // and the Edit button (to the panel). Making the <tr> focusable as well put
   // three stops on every employee and announced the entire row for a stop that
   // offered nothing extra, which at production scale buries everything below
   // the table. Keep the row click; do not give it back a tabIndex.

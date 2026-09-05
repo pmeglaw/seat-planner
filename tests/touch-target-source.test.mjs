@@ -94,13 +94,8 @@ const PINS = {
     "sp-pill cds-touch-target",
     "sp-seat-footprint cds-touch-target"
   ],
-  "components/admin-management/AdminManagementPanel.tsx": [
-    "after:absolute after:-inset-2",
-    "after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2",
-    "after:absolute after:-inset-1.5",
-    "after:absolute after:-inset-y-3",
-    "after:absolute after:-inset-y-2"
-  ],
+  // PR 4: Management's controls are the asset's 40px buttons / 32px row
+  // actions on `.cds-btn` (PHASE3DS §1.23) — no pseudo-expansion literals left.
   "components/auth/LoginForm.tsx": [
     "after:absolute after:-inset-1.5",
     // remember-me label (checkbox is LABEL_CARRIED)

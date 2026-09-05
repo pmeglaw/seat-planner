@@ -6,8 +6,19 @@ async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
 
+// PR 4: the review surfaces are the narrow tearsheets (CsvImportSheet /
+// SnapshotRestoreSheet); the file-read, confirm and cancel flows stay in the
+// panel. The copy anchors are read from all three.
+async function readSettingsSources() {
+  return [
+    await readSource("../components/admin-settings/DataUtilitiesPanel.tsx"),
+    await readSource("../components/admin-settings/CsvImportSheet.tsx"),
+    await readSource("../components/admin-settings/SnapshotRestoreSheet.tsx")
+  ].join("\n");
+}
+
 test("settings data utilities review CSV imports in-app before calling the mutation", async () => {
-  const source = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+  const source = await readSettingsSources();
   const importCsvFunction = source.match(/function importCsv\(file: File \| undefined\) \{[\s\S]*?function confirmCsvImport\(\)/);
   const confirmCsvFunction = source.match(/function confirmCsvImport\(\) \{[\s\S]*?function importJson/);
   const closeCsvFunction = source.match(/function closeCsvReview\(\) \{[\s\S]*?\n  \}/);
@@ -34,7 +45,7 @@ test("settings data utilities review CSV imports in-app before calling the mutat
 });
 
 test("settings data utilities review JSON restores in-app before calling the restore action", async () => {
-  const source = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+  const source = await readSettingsSources();
   const importJsonFunction = source.match(/function importJson\(file: File \| undefined\) \{[\s\S]*?function confirmJsonRestore\(\)/);
   const confirmJsonFunction = source.match(/function confirmJsonRestore\(\) \{[\s\S]*?return \(/);
   const closeJsonFunction = source.match(/function closeJsonReview\(\) \{[\s\S]*?\n  \}/);
@@ -63,7 +74,12 @@ test("settings data utilities review JSON restores in-app before calling the res
 });
 
 test("management destructive actions use one in-app confirmation path", async () => {
-  const source = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  // PR 4: the request paths and the confirm mutation stay in the host; the
+  // confirmation surface is the narrow tearsheet (ManagementConfirmSheet,
+  // owner ruling 2026-09-05) — the copy anchors are read from both.
+  const hostSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  const sheetSource = await readSource("../components/admin-management/ManagementConfirmSheet.tsx");
+  const source = `${hostSource}\n${sheetSource}`;
   const deleteEmployeeFunction = source.match(/function deleteEmployee\(\) \{[\s\S]*?function createDepartment/);
   const deleteDepartmentFunction = source.match(/function deleteDepartment\(name: string\) \{[\s\S]*?function createZone/);
   const deleteZoneFunction = source.match(/function deleteZone\(name: string\) \{[\s\S]*?function closeManagementConfirm/);
@@ -113,23 +129,20 @@ test("management confirm dialog stays mounted until its destructive action settl
   assert.match(confirmFunction[0], /\} finally \{\s*setManagementConfirm\(null\);/, "the confirm dialog should close in the transition's finally block.");
 });
 
-test("reset-to-published reviews in-app on both surfaces before calling the reset action", async () => {
-  const settingsSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+test("reset-to-published has ONE call site — the map's Discard confirm; Settings has none (ruling 22)", async () => {
+  // DECISIONS D6-d / PHASE4BUILD: the Settings Reset-draft concept is
+  // superseded by Discard draft changes in the publish flow. The publish
+  // review dialog's discard button opens a SECOND explicit confirm dialog;
+  // only that confirm calls the fenced action. (R-02a extraction seams:
+  // dialog markup in SeatMapDialogs.tsx, the confirm handler in
+  // usePublishReview.ts, the opening control in SeatMap.)
+  const settingsSource = await readSettingsSources();
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
-
-  // Settings: the danger tile opens a review dialog (counts of what gets
-  // discarded) and only the dialog's confirm calls the action.
-  assert.match(settingsSource, /function openResetReview\(\)[\s\S]{0,400}setResetReviewOpen\(true\)/);
-  assert.match(settingsSource, /aria-labelledby="reset-review-title"/);
-  assert.match(settingsSource, /function confirmResetToPublished\(\)[\s\S]{0,900}resetDraftToPublishedAction\(listDraftSeatExpectations\(seats\)\)/);
-  assert.equal((settingsSource.match(/resetDraftToPublishedAction\(/g) ?? []).length, 1, "settings has exactly one reset call site, inside the confirm");
-
-  // Seat map: the publish review dialog's discard button opens a SECOND
-  // explicit confirm dialog; only that confirm calls the fenced action.
-  // (R-02a extraction seams: dialog markup in SeatMapDialogs.tsx, the
-  // confirm handler in usePublishReview.ts, the opening control in SeatMap.)
   const seatMapDialogsSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
   const publishHookSource = await readSource("../components/seat-map/usePublishReview.ts");
+
+  assert.doesNotMatch(settingsSource, /resetDraftToPublishedAction/, "Settings no longer imports or calls the reset action");
+  assert.doesNotMatch(settingsSource, /Reset draft to published|openResetReview|resetReviewOpen/);
   assert.match(seatMapSource, /setDiscardDraftConfirmOpen\(true\)/);
   assert.match(seatMapDialogsSource, /aria-labelledby="discard-draft-title"/);
   assert.match(publishHookSource, /function confirmDiscardDraftChanges\(\)[\s\S]{0,900}resetDraftToPublishedAction\(listDraftSeatExpectations\(localSeats\)\)/);

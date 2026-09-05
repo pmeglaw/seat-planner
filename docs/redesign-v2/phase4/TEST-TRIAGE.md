@@ -150,6 +150,29 @@ dialog, side panel or tearsheet re-enumerates it.
   {1,2,3}, brand gates O2 / O3, `globals.css` resets-only, `--sp-marker-h-max` exemption), `seat-map-components` (trail token).
 - **Retired:** `text-tier` (with the tier), `use-inspector-nudge` (with the pushing slot).
 
+### PR 4 outcomes (2026-09-05)
+
+- **Added:** `management-counts`, `inline-rename`, `file-guard` (unit); `admin-management-panel` grew to 16 ct tests
+  (tabs + landmark, `?tab=` deep link, the live count, two row stops + the two-signal status, the one dirty check with
+  the modal ask, inline rename Enter / Esc / duplicate-on-blur, the create modal, the confirm sheet over the panel);
+  `data-utilities-panel` to 12 (the inline guard before any sheet, the labelled triggers forwarding to hidden inputs,
+  exports never disabled + the header-only empty export, the D6-e done-state ghost, MLS02 keeping the restore review
+  open); `dialog-error-placement` gained three ct tests and discovers `CarbonModal` dialogs by `titleId`.
+- **Rewritten:** `management-detail-source` (● / ○ via `SeatMark`; 16-grid icons; focus to the panel's Name),
+  `management-directory-map-link-source` (the SEAT cell links; one ghost Edit, no kebab; the panel's one dirty check;
+  no ×), `settings-affordance-source` (verbs; triggers state type + limit; the callout; honest section names; one
+  primary per section; exports never disabled).
+- **Re-pointed:** `accessibility-source` (dialog files; hygiene attrs; scroll regions; localized counts; row stops),
+  `bulk-destructive-action-safety-source` (host + sheets; the reset pin is now "one call site, in `usePublishReview`"),
+  `action-input-validation-source` (three sinks), `virtualized-directory` (host + `EmployeesTable`; the toolbar count),
+  `pending-state-source` (flows 15–20), `touch-target-source` (Management rows gone), `close-icon-source` (Management ×
+  = the search clear; Settings none), `draft-concurrency` (unchanged anchors, verified), `phase4-token-layer-source`
+  (`SWEPT` {1,2,3,4}; group 4 swept in Reception), e2e-auth `accessibility.spec.ts` (the sheet over the panel, the ⋯
+  menu item, Cancel / Close instead of ×; a row-level CSV issue for the blocked state — an empty file is refused
+  inline now), `draft-dialogs.spec.ts` (the reset review is gone).
+- **Retired:** `settings-tiles-source` (anchors re-homed, §5 row 4); the two ct reset tests; the e2e-auth reset
+  review test — all with ruling 22.
+
 ## 6. The PR 0 test — `tests/phase4-token-layer-source.test.mjs`
 
 Three rules from the hand-off, phased so PR 0 is green before any component moves:

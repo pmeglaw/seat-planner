@@ -83,7 +83,9 @@ test("every input-parsing action shares one discriminated failure arm", () => {
 
   const unions = [
     /export type EmployeeMutationResult = \{ ok: true; employee: Employee \} \| ActionValidationFailure;/,
-    /export type EmployeeDeleteResult = \{ ok: true; employeeId: string \} \| ActionValidationFailure;/,
+    // PR 4: the deactivate refusal (the RPC's published-map guard) is a second,
+    // named failure arm — returned, never thrown (action-error-contract-source).
+    /export type EmployeeDeleteResult = \{ ok: true; employeeId: string \} \| ActionValidationFailure \| ActionRefusedFailure;/,
     /export type DepartmentMutationResult = \{ ok: true; department: DepartmentOption \} \| ActionValidationFailure;/,
     /export type DepartmentDeleteResult = \{ ok: true; department: string \} \| ActionValidationFailure;/,
     /export type ZoneMutationResult = \{ ok: true; zone: ZoneOption \} \| ActionValidationFailure;/,
@@ -267,9 +269,14 @@ test("the management panel handles every returned option failure", async () => {
     "Could not delete zone."
   ];
   for (const fallback of fallbacks) {
+    // PR 4: three sinks, one rule — the page banner (showError), the field
+    // helper under an inline rename / the create modal (inlineError), the
+    // panel's danger zone for a refused deactivation (showDangerError).
     assert.ok(
       panel.includes(`showError(result.message, "${fallback}")`) ||
-        panel.includes(`showError(zoneResult.message, "${fallback}")`),
+        panel.includes(`showError(zoneResult.message, "${fallback}")`) ||
+        panel.includes(`inlineError(result.message, "${fallback}")`) ||
+        panel.includes(`showDangerError(result.message, "${fallback}")`),
       `${fallback} should be surfaced from a returned failure`
     );
   }

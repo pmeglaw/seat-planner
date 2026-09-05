@@ -180,6 +180,10 @@ target leaves no ambiguity about the anchor, and a caret adds a shape nothing el
 tooltip; while its menu is open the tooltip would sit over the menu's first item on hover, so
 `.cds-overflow[data-open] .sp-tooltip { display: none }` — moved from `globals.css` into this sheet in PR 3b (Q1).
 
+**Phase 4 PR 4 amendment D (2026-09-05).** `.sp-has-tooltip[data-tooltip-placement="above"] .sp-tooltip` — the
+above placement at the same 8px offset, for a host that would push its tooltip out of a clipping ancestor (§1.23:
+the table's last row over `.sp-table-scroll`). Still no caret.
+
 ### 1.9 Right panel — Shell → `.sp-panel` (§3 "Right panel (dark, 320, floats) · hand-built" + dark variants)
 
 **Problem.** Help / History / Account share one 320 panel on Gray 100 that floats over content in both
@@ -449,6 +453,20 @@ saved-status banner is an inline `role="status"` notification under the toolbar.
 inside `.sp-table-scroll`, never the page.
 **Trade-off.** The tooltip on the last column would leave the table on the right; it is right-anchored there.
 
+**Phase 4 PR 4 amendment D (the read-only preview walk, 2026-09-05).** The Edit tooltip never painted — on the
+preview and in the Docker smoke alike, whose step 4 read `visibility` / width, which a clipped box still passes.
+**Cause:** the asset's cell rule `.cds-table th, .cds-table td { overflow: hidden; text-overflow: ellipsis;
+white-space: nowrap }` (the ellipsis for long text) clips everything positioned outside the cell, and the tier-C
+tooltip hangs 8px below its host. **Fix**, both copies byte-identical, no asset edit: `.sp-table td.cds-col-actions
+{ overflow: visible }` — the actions cell holds one icon button and nothing to truncate. `.sp-table-scroll` stays a
+clipping box in both axes (`overflow-x: auto` clips vertically too, and §1G.5 needs it for the narrow frame's sideways
+scroll), so the **last row's** tooltip flips above the button (`data-tooltip-placement="above"`, minted in §1.8 —
+the sheet had only the below placement). Verified by hit test (`document.elementFromPoint` at the tooltip's centre is
+the tooltip — the probe lifts the tooltip's `pointer-events: none` for that one call) with the box inside the viewport, first and last row, hover and focus, light and dark, 1920 / 1280 /
+1024; the smoke rig, the preview walk and the e2e-auth `page-frames` spec assert exactly that from now on (jsdom has
+no layout — the ct tier pins the placement attribute on the last row only). Owner ruling: §1.23's tooltip is
+required; a clipped tooltip is a defect, not a look choice.
+
 ### 1.24 Side panel 480 slide-over — `.sp-side-panel-host` on the asset `.cds-side-panel` (§3 "Side panel 480, slide-over (focus-trapped) · partial")
 
 **Problem.** The asset panel slides *in* beside the page with no overlay; Management's form is a task with
@@ -471,6 +489,16 @@ Carbon's own token for it is `$button-danger-secondary`, which equals `$text-err
 light, red 40 g100); the asset lacks the name, so `--sp-button-danger-ghost-text` aliases `text-error` and
 the product overrides the asset class (and the overflow menu's danger item) globally. Hover stays the
 filled danger surface. 4.87 / 6.38 dark, 5.00 / 4.55 light (§3).
+
+**Phase 4 PR 4 amendment (owner ruling 2026-09-05; PHASE4BUILD §1.38).** The DESTRUCTIVE confirmation (Deactivate…)
+is the narrow tearsheet (§1.28) opening over the still-open panel, not the confirm modal this entry drew — the modal
+sentence above is superseded for that case; "a modal over a side panel is allowed" still governs the **dirty-close
+ask**, which stays the asset modal. On that modal the specimen disagrees with itself: the anatomy text (line 177)
+says "the dirty-close ask uses the same container with a plain primary", its markup (line 201) paints Discard changes
+as `.cds-btn--danger`. **The anatomy text is built** — Keep editing (secondary) · Discard changes (plain primary): a
+discard of unsaved edits is not destruction of data. Panel as built: `EmployeePanel.tsx` (layer-02, 50/50 footer, no
+×, one dirty check for Cancel / Esc / scrim; Department on the 3b combobox with the create row; the refused
+deactivation inline in the danger zone with the seat link).
 
 ### 1.25 Structured list with inline rename — `.sp-list` (§3 "Structured list with inline rename · none needed")
 
@@ -498,6 +526,9 @@ the section *before* any tearsheet opens; MLS02 is a `status`; success is an inl
 link. Busy: the primary keeps its label with `aria-busy`, the tertiary beside it is disabled for the
 transaction, and a progress line with an sr-only "Working…" replaces the file line.
 
+**Phase 4 PR 4 amendment C (the smoke's step 20, 2026-09-05).** Below the asset's 1055 fold the column runs full
+width (`.sp-settings { max-width: none }`) — PHASE2UX §1S.5's narrow frame; 776 is the 1920-frame column, not a cap.
+
 ### 1.28 Narrow tearsheet 720 — `.sp-tearsheet--narrow` (§3 "Narrow tearsheet · hand-built"); count cards; consequences; ghost done-state
 
 Centred, top 112 under the header, no rail; body scrolls; **footer 64 with right-aligned buttons** (Cancel
@@ -511,6 +542,17 @@ edge and tint, and the primary is disabled with its reason in a line above the f
 a done-state** ("Export the current draft first" → "✓ Exported 14:02") swaps its label for the outcome,
 takes text-secondary with a success-mark check, and stays a button — never disabled. Applying: primary
 `aria-busy`, Cancel disabled for the transaction.
+
+**Phase 4 PR 4 amendment B (owner ruling 2026-09-05; PHASE4BUILD §1.38).** The narrow sheet now also hosts the
+three Management confirmations (Deactivate employee · Delete department · Delete zone), whose primary is the DANGER
+button: `.sp-tearsheet--narrow .sp-tearsheet-footer .cds-btn--danger { min-width: 224px }` joins the primary's rule so
+the sheets read alike — the one component-sheet change of PR 4 (both copies, byte-identical). The specimen's modal
+versions of those confirmations (`03-panels-and-sheets.html` lines 194, 204) are superseded. White on red 60 (5.00 /
+5.00) was already in the gated pairs.
+
+**Phase 4 PR 4 amendment C (the smoke's step 20, 2026-09-05).** Below the asset's 1055 fold the narrow sheet is the
+viewport minus 32 (`width: calc(100vw − 2 × 16)`) — PHASE2UX §1S.5; the 720 is the 1920-frame width. Both copies,
+byte-identical; no token change.
 
 ### 1.29 Reception — `.sp-recep` family (§3 "Search input lg with clear ×", "Listbox rows", "Readout tile with display numeral", "Row-buttons", "Error boundary card"); route cards
 
@@ -817,9 +859,10 @@ the file Phase 4 touches. The specimens' HTML is reference; the CSS files are th
 16. **File trigger** — the labelled button forwards its click to a hidden `<input type=file>` with the same `name`
     (`tabindex=-1`, `aria-hidden`), so focus stays on the button (`app/(shell)/admin/settings/page.tsx`); every unhappy
     path renders inline under the section before the tearsheet opens.
-17. **Side panel behaviour** — focus trap, Esc-asks-when-dirty, scrim click = Cancel, confirm modal on top (employee
-    editor in `components/admin-management/`); the tearsheets never open a modal from inside (the review dialogs in
-    `components/admin-settings/`).
+17. **Side panel behaviour** — focus trap, Esc-asks-when-dirty (the confirm modal on top), scrim click = Cancel
+    (employee editor in `components/admin-management/`); **destructive confirmations are the narrow tearsheet over the
+    panel** (owner ruling 2026-09-05, PHASE4BUILD §1.38 — amended from "confirm modal on top"); the tearsheets never
+    open a modal from inside (the review dialogs in `components/admin-settings/`).
 18. **Reception keyboard** — ↑ ↓ move `[data-highlight]`, ↵ sets `aria-selected` (lock), Esc unlocks then clears; the
     readout region is `aria-live` (`components/reception/ReceptionScreen.tsx`).
 19. **Contrast regression** — after every token change, rerun the two commands in §3; a Phase 4 `tests/*.test.mjs` may

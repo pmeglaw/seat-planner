@@ -214,6 +214,10 @@
 /* Phase 4 PR 3a/3b (PHASE3DS §1.8 amendment): an overflow trigger carries the tier-C tooltip; while its
    menu is open the tooltip would sit over the menu's first item on hover, so it yields to the menu. */
 .cds-overflow[data-open] .sp-tooltip { display: none; }
+/* Phase 4 PR 4 amendment D (PHASE3DS §1.8 / §1.23, the preview walk 2026-09-05): the sheet had only the below
+   placement; a host that would push its tooltip out of a clipping ancestor (the last table row over
+   `.sp-table-scroll`) flips it above the control at the same 8px offset. */
+.sp-has-tooltip[data-tooltip-placement="above"] .sp-tooltip { top: auto; bottom: calc(100% + var(--sp-tooltip-offset)); }
 
 /* -----------------------------------------------------------------------------
    5. RIGHT PANEL (dark, 320, floats) — §3 "Right panel · hand-built" + the
@@ -835,6 +839,12 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-table .cds-col-actions .cds-btn--icon { width: var(--sp-size-md); height: var(--sp-table-row-h); }
 .sp-table .cds-col-actions .sp-has-tooltip { display: block; }
 .sp-table .cds-col-actions .sp-tooltip { left: auto; right: 0; transform: none; }   /* last column: the box grows leftward, never off the table */
+/* Phase 4 PR 4 amendment D (PHASE3DS §1.23, the preview walk 2026-09-05): the asset clips every cell
+   (`overflow: hidden; text-overflow: ellipsis` — the ellipsis for long text), which swallowed the below-cell tooltip
+   entirely. The actions cell holds one icon button and nothing to truncate, so it stops clipping. `.sp-table-scroll`
+   stays a clipping box in both axes (§1G.5 scrolls the table sideways in the narrow frame) — the last row's tooltip
+   flips above the button through `data-tooltip-placement="above"` instead. */
+.sp-table td.cds-col-actions { overflow: visible; }
 .sp-toolbar .cds-toolbar-search { max-width: var(--sp-toolbar-search-w); }
 .sp-toolbar .cds-toolbar-search input:focus-visible { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
 .sp-toolbar .sp-search-clear { position: absolute; right: 0; top: 0; width: var(--sp-size-lg); height: var(--sp-size-lg); }
@@ -970,6 +980,7 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-tearsheet--narrow .sp-tearsheet-footer .cds-btn { height: 100%; min-width: 160px; }
 .sp-tearsheet--narrow .sp-tearsheet-footer .cds-btn--secondary { padding-right: var(--sp-space-10); }
 .sp-tearsheet--narrow .sp-tearsheet-footer .cds-btn--primary { min-width: 224px; }
+.sp-tearsheet--narrow .sp-tearsheet-footer .cds-btn--danger { min-width: 224px; }   /* Phase 4 PR 4 amendment B: the destructive confirmations are narrow sheets (owner ruling 2026-09-05) — the danger primary takes the primary's 224 so the sheets read alike */
 .sp-tearsheet--narrow .cds-notification { margin: 0; }
 .sp-tearsheet-reason { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); padding: var(--sp-space-03) var(--sp-tearsheet-narrow-pad); box-shadow: inset 0 1px 0 var(--sp-border-subtle-00); }
 .sp-consequence { font: var(--sp-type-body-01); letter-spacing: var(--sp-tracking-body); color: var(--sp-text-primary); }
@@ -988,6 +999,13 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-tearsheet--narrow .cds-btn--ghost { align-self: flex-start; height: var(--sp-size-md); padding: 0 var(--sp-space-05); }
 .cds-btn--ghost[data-done] { color: var(--sp-text-secondary); }               /* the label now reads the outcome; still a button (re-export) */
 .cds-btn--ghost[data-done] svg { color: var(--sp-status-success-mark); }
+/* Phase 4 PR 4 amendment C (the smoke's step 20, PHASE2UX §1S.5 narrow frame): below the asset's 1055 fold the
+   Settings column runs full width and the narrow sheet is the viewport minus 32 — the 720 / 776 widths are the
+   1920-frame values, not caps for the narrow frame. */
+@media (max-width: 1055px) {
+  .sp-settings { max-width: none; }
+  .sp-tearsheet--narrow { width: calc(100vw - 2 * var(--sp-space-05)); }
+}
 
 /* -----------------------------------------------------------------------------
    27. RECEPTION — §3 "Search input lg with clear × · exists (clear hand-built)",

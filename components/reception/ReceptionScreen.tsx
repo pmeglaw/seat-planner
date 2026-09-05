@@ -182,7 +182,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                   >
                     <span
                       aria-hidden="true"
-                      className="flex h-[34px] w-[34px] shrink-0 items-center justify-center bg-[var(--sp-tag-bg)] text-[12px] font-semibold text-[var(--sp-tag-text)]"
+                      className="flex h-[34px] w-[34px] shrink-0 items-center justify-center bg-[var(--sp-layer-accent)] text-[12px] font-semibold text-[var(--sp-text-primary)]"
                     >
                       {buildInitials(person.name) || "?"}
                     </span>
@@ -216,7 +216,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
               <div className="flex items-center gap-3">
                 <span
                   aria-hidden="true"
-                  className="flex h-[46px] w-[46px] shrink-0 items-center justify-center bg-[var(--sp-identity-avatar-bg)] text-[16px] font-semibold text-[var(--sp-identity-avatar-fg)]"
+                  className="flex h-[46px] w-[46px] shrink-0 items-center justify-center bg-[var(--sp-layer-accent)] text-[16px] font-semibold text-[var(--sp-text-primary)]"
                 >
                   {buildInitials(detail.name) || "?"}
                 </span>
@@ -229,11 +229,11 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
               </div>
 
               {/* The readout is the screen's output — announce changes. */}
-              <div aria-live="polite" className="mt-4 border border-[var(--sp-extension-border)] bg-[var(--sp-extension-bg)] px-4 py-3.5">
+              <div aria-live="polite" className="mt-4 border border-[var(--sp-border-subtle)] bg-[var(--sp-readout-bg)] px-4 py-3.5">
                 <div className="flex items-baseline justify-between">
                   {/* Type-floor Ruling 3 (2026-08-24): eyebrows hold 12px minimum;
                       subordination comes from weight + colour, not size. */}
-                  <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--sp-extension-label)]">Extension</span>
+                  <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--sp-readout-eyebrow)]">Extension</span>
                   {searching && (
                     <span aria-hidden="true" className="text-xs text-[var(--sp-text-helper)]">↵ to lock</span>
                   )}
@@ -312,7 +312,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
                     >
                       <span
                         aria-hidden="true"
-                        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center bg-[var(--sp-tag-bg)] text-xs font-semibold text-[var(--sp-tag-text)]"
+                        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center bg-[var(--sp-layer-accent)] text-xs font-semibold text-[var(--sp-text-primary)]"
                       >
                         {buildInitials(person.name) || "?"}
                       </span>

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { getDraftStatusAction } from "@/app/actions";
+import { DRAFT_STATUS_CHANGED_EVENT } from "@/lib/draftStatusEvent";
 import { AppTopBar } from "@/components/ui/AppTopBar";
 import { LeftPanel, type ShellFilterSpec } from "@/components/ui/LeftPanel";
 import { ShellPanels, type ShellPanelId } from "@/components/ui/ShellPanels";
@@ -260,6 +261,13 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
     setFetchedDraft(null);
     setRetryToken(token => token + 1);
   }, []);
+  // A surface that changed the draft without navigating (a people edit on
+  // Management, a restore on Settings) announces it; the cached per-route
+  // fetch is dropped and the indicator refetches (PR 4 smoke, step 9).
+  useEffect(() => {
+    window.addEventListener(DRAFT_STATUS_CHANGED_EVENT, retryStatus);
+    return () => window.removeEventListener(DRAFT_STATUS_CHANGED_EVENT, retryStatus);
+  }, [retryStatus]);
 
   const draft: DraftStatus | null | "error" = liveDraftStatus ?? (fetchedDraft?.pathname === pathname ? fetchedDraft.status : null);
   const publishedAt = (fetchedDraft?.pathname === pathname && fetchedDraft.publishedAt) || initialShell.publishedAt;

@@ -74,25 +74,28 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
     await page.goto("/admin/management");
     await expect(page.locator("[data-directory-row]").first()).toBeVisible();
 
-    // The per-row kebab is icon-only; its accessible name is `Edit <name>`.
+    // The one row action is the ghost Edit icon button; its accessible name is `Edit <name>`.
     await page.getByRole("button", { name: /^Edit / }).first().click();
-    const dialog = page.getByRole("dialog");
+    const dialog = page.getByRole("dialog", { name: "Edit employee" });
     await expect(dialog.getByRole("heading", { name: "Edit employee" })).toBeVisible();
-    // Edit mode renders content the add-mode scan never sees: the Deactivate
-    // danger button and the deactivation-impact notice.
+    // Edit mode renders content the add-mode scan never sees: the fact row
+    // and the danger zone with Deactivate….
     await expect(dialog.getByRole("button", { name: "Cancel", exact: true })).toBeEnabled();
     await expectNoAxeViolations(page);
 
-    // Deactivate hands off to the shared confirm dialog WITHOUT mutating —
-    // deleteEmployeeAction only runs on the confirm button this test never
-    // clicks. Note the handoff closes the employee form first (one dialog at
-    // a time, so the focus trap moves cleanly).
-    await dialog.getByRole("button", { name: "Deactivate", exact: true }).click();
-    await expect(page.getByRole("heading", { name: /^Deactivate .+\?$/ })).toBeVisible();
-    await expect(page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true })).toBeEnabled();
+    // Deactivate… opens the narrow confirm SHEET over the still-open panel
+    // (owner ruling 2026-09-05) WITHOUT mutating — deleteEmployeeAction only
+    // runs on the sheet's danger primary this test never clicks.
+    await dialog.getByRole("button", { name: "Deactivate…", exact: true }).click();
+    const sheet = page.getByRole("dialog", { name: /^Deactivate .+\?$/ });
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Cancel", exact: true })).toBeEnabled();
     await expectNoAxeViolations(page);
 
-    await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
+    await sheet.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(sheet).toBeHidden();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
     await expect(page.getByRole("dialog")).toBeHidden();
   });
 
@@ -100,10 +103,11 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
     await page.goto("/admin/management");
     await expect(page.locator("[data-directory-row]").first()).toBeVisible();
 
-    await page.getByRole("button", { name: "Departments", exact: true }).click();
-    // Trash buttons are icon-only (`Delete <name>`) and opacity-0 until the
-    // row is hovered; they stay in the accessibility tree and clickable.
-    await page.getByRole("button", { name: /^Delete / }).first().click();
+    await page.getByRole("tab", { name: "Departments", exact: true }).click();
+    // Delete lives in the row's ⋯ overflow (PHASE3DS §1.25): open it, pick the
+    // danger item (`Delete <name>`), and the narrow confirm sheet opens.
+    await page.getByRole("button", { name: /^More actions for / }).first().click();
+    await page.getByRole("menuitem", { name: /^Delete / }).click();
     await expect(page.getByRole("heading", { name: /^Delete department/ })).toBeVisible();
     await expect(page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true })).toBeEnabled();
     await expectNoAxeViolations(page);
@@ -155,11 +159,13 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
       await expect(page.getByRole("heading", { name: "Review CSV import" })).toBeVisible({ timeout: 2_000 });
     }).toPass({ timeout: 20_000 });
 
-    await expect(page.getByRole("button", { name: "Close CSV import review" })).toBeEnabled();
-    await waitForColorSettle(page.getByRole("button", { name: "Close CSV import review" }));
+    // PR 4: the review is a narrow tearsheet — no ×, Cancel is the exit.
+    const cancel = page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true });
+    await expect(cancel).toBeEnabled();
+    await waitForColorSettle(cancel);
     await expectNoAxeViolations(page);
 
-    await page.getByRole("button", { name: "Close CSV import review" }).click();
+    await cancel.click();
     await expect(page.getByRole("dialog")).toBeHidden();
   });
 
@@ -167,23 +173,25 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
     await page.goto("/admin/settings");
     await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
 
-    // An empty file parses to the "CSV is empty." blocking issue — the dialog
-    // still opens, but retitled, with the error list rendered and the confirm
-    // permanently disabled ("Fix CSV first"). That is a distinct surface from
-    // the happy path: danger-toned counts, the issues list, and a disabled
-    // primary that must still satisfy non-contrast rules.
+    // PR 4: an empty file is refused INLINE under the section (D6-b) and never
+    // opens a sheet; a row-level issue (a missing seat label) opens the review
+    // in its blocked state — retitled, the blocked row list rendered, and the
+    // primary disabled with its reason ("Fix CSV first"). That is a distinct
+    // surface from the happy path and must still satisfy non-contrast rules.
+    const header = "seat_label,employee_name,employee_email,position,department,zone,status,notes\n";
     await expect(async () => {
       await page
         .locator('input[accept=".csv,text/csv"]')
-        .setInputFiles({ name: "empty.csv", mimeType: "text/csv", buffer: Buffer.from("") });
+        .setInputFiles({ name: "broken.csv", mimeType: "text/csv", buffer: Buffer.from(`${header},Jane Doe,,,,,assigned,\n`) });
       await expect(page.getByRole("heading", { name: "CSV import has blocking errors" })).toBeVisible({ timeout: 2_000 });
     }).toPass({ timeout: 20_000 });
 
-    await expect(page.getByRole("button", { name: "Close CSV import review" })).toBeEnabled();
-    await waitForColorSettle(page.getByRole("button", { name: "Close CSV import review" }));
+    const close = page.getByRole("dialog").getByRole("button", { name: "Close", exact: true });
+    await expect(close).toBeEnabled();
+    await waitForColorSettle(close);
     await expectNoAxeViolations(page);
 
-    await page.getByRole("button", { name: "Close CSV import review" }).click();
+    await close.click();
     await expect(page.getByRole("dialog")).toBeHidden();
   });
 
@@ -191,8 +199,9 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
     await page.goto("/admin/settings");
     await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
 
-    // Shape-only validation at open: any {seats: [], employees: []} object
-    // reaches the review. Deep row validation is the server action's job and
+    // Shape-only validation at open: a {seats, employees} object with at
+    // least one row reaches the review (PR 4 refuses an EMPTY snapshot inline,
+    // PHASE2UX §1S.4). Deep row validation is the server action's job and
     // only runs on the confirm this test never clicks.
     await expect(async () => {
       await page
@@ -200,16 +209,17 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
         .setInputFiles({
           name: "snapshot.json",
           mimeType: "application/json",
-          buffer: Buffer.from(JSON.stringify({ seats: [], employees: [] }))
+          buffer: Buffer.from(JSON.stringify({ seats: [{ label: "N01" }], employees: [] }))
         });
       await expect(page.getByRole("heading", { name: "Review draft snapshot restore" })).toBeVisible({ timeout: 2_000 });
     }).toPass({ timeout: 20_000 });
 
-    await expect(page.getByRole("button", { name: "Close draft snapshot restore review" })).toBeEnabled();
-    await waitForColorSettle(page.getByRole("button", { name: "Close draft snapshot restore review" }));
+    const cancel = page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true });
+    await expect(cancel).toBeEnabled();
+    await waitForColorSettle(cancel);
     await expectNoAxeViolations(page);
 
-    await page.getByRole("button", { name: "Close draft snapshot restore review" }).click();
+    await cancel.click();
     await expect(page.getByRole("dialog")).toBeHidden();
   });
 });

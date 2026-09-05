@@ -519,6 +519,114 @@ seated person's seat is badged; the unseated person is not; without seats nothin
 - 1024 is `lg`: editing stays, the row wraps to 96, the inspector keeps its 400 (canvas 624); the "Editing needs a
   wider window." line is the 1000 frame (O6, §1.19).
 
+### 1.37 PR 4 — Management + Settings: what the code forced (plan v2 approved 2026-09-05; built 2026-09-05)
+
+Plan of record: `~/.claude/plans/spicy-hopping-axolotl.md` v2 — the record (PHASE2UX §1G / §1S, PHASE3DS §1.22–§1.28
++ §5, DECISIONS D5 / D6, specimen `03-panels-and-sheets.html`) is the spec; the owner's brief was read through it, and
+ONE ruling amends it (§1.38). Built on `feat/phase4-pages`. Engineering calls, one line each:
+
+- **The sticky tab strip zeroes the header offset at `lg` on its own element.** The sheet's `.sp-tabs-host { top:
+  var(--sp-shell-header-h) }` assumes a scrolling document; in the shell the content pane is the scroll container at
+  `lg`, so the strip would float 48px below the pane's top. `ManagementFrame` sets the custom property to `0px` on the
+  strip only (`lg:[--sp-shell-header-h:0px]`) — nothing inside reads it, the tearsheets (fixed, outside the strip)
+  keep the real value. No sheet change.
+- **`?tab=` stays a shallow `history.replaceState`**, not `router.replace`: the page is `force-dynamic`, and a soft
+  navigation refetches the whole directory for a tab click (the plan said `router.replace`; the shipped writer was
+  right).
+- **The directory's scroll listener is capture-phase on `window`**: `scroll` does not bubble, and at `lg` the scroll
+  container is the pane, not the document — the shipped bubbling listener never fired there (pre-existing; fixed in
+  `EmployeesTable`).
+- **The pin-clearing effect is gone**: `pinnedEmployeeIndex` already resolves a departed id to `null`; the stale id is
+  harmless until the next `focusin`. (One React-hooks lint warning fewer.)
+- **`DepartmentCombobox` is a new shared component on the 3b `.sp-combobox` / `.sp-listbox` classes**
+  (`components/ui/`), not an extraction: the inspector's combobox is its EMPLOYEE picker, coupled to its own state; the
+  panel needed a department picker with the `.sp-listbox-create` row ("Add “X” as a new department"). The inspector is
+  untouched.
+- **`CarbonModal`** (`components/ui/`) hosts the asset `.cds-modal` for the two PR 4 modals (dirty-close ask, one-field
+  create); the dialog census (`tests/dialog-error-placement.test.mjs`) discovers those dialogs by their literal
+  `titleId="…"` since the modal's role and labelledby are props.
+- **Three failure sinks, one rule** (`AdminManagementPanel`): the page banner (`showError`), the field helper under an
+  inline rename / the create modal (`inlineError`), the panel's danger zone for a refused deactivation
+  (`showDangerError`) — `action-input-validation-source` accepts all three.
+- **Header-level CSV issues (empty file, missing columns — the parser reports them on row 1) are refused inline under
+  the section** and never open the blocked sheet; only row-level issues do (PHASE2UX §1S.3).
+- **The restore review holds open on MLS02** with the server text inline and Retry (PHASE2UX §1S.4); the CSV review
+  still closes + refreshes (§1S.3). The census ledger moves `json-restore-review-title` to ct-covered.
+- **Settings no longer reads the published layer**: the one consumer (the reset summary) retired with ruling 22; the
+  page is draft-only, verified by grepping the file.
+- **The 403 card's surface is set inline to `layer-02`** (both pages): the sheet paints `.sp-route-card` layer-01
+  (PHASE3DS §1.29) and a utility class loses to that later rule; this card carries the tertiary, which must sit on
+  white (4.14:1 on layer-01 is the not-gated pair, §1.22 — owner review item 9). The rig's first pass caught it
+  (gray card); re-captured on the rebuilt server. On the white page the card's edge disappears (white on white); the
+  tertiary's outline is the visible shape — if a card reading is wanted there, that is a ruling, not a build call.
+- **`lib/fileGuard.ts` tolerates a File-like without `name` / `size`** (the jsdom double) — it refuses on the fields it
+  can see. Real Files always carry both.
+- **Recorded, not built:** positions stay free text (no managed list / RPC; owner 2026-09-05); "clear roster" was
+  loose wording (owner 2026-09-05); drag-and-drop import is optional and never the only path — not built.
+
+### 1.38 PR 4 — destructive confirmations are the narrow tearsheet (OWNER RULING 2026-09-05)
+
+**Screen** `/admin/management` → Deactivate employee · Delete department · Delete zone. **Problem** the record drew a
+confirm MODAL on top of the side panel (DECISIONS D5-b / D5-c; PHASE3DS §1.24; §5 item 17 / P3-17; specimen
+`03-panels-and-sheets.html` lines 194 and 204). **Ruling** (owner, 2026-09-05, on the PR 4 plan): one confirmation
+pattern with the 3a publish tearsheet — `ManagementConfirmSheet` on `.sp-tearsheet--narrow`: header eyebrow + title,
+the impact section with the shipped consequence copy, the publish line; footer right-aligned Cancel (secondary) · the
+danger primary (224 min — sheet **amendment B**, PHASE3DS §1.28); no ×; Esc = Cancel, not while busy; mounted until the
+action settles; a failure renders inside with Retry. For Deactivate the sheet opens OVER the still-open panel (z 8000
+> 7001) — the person's name stays visible; a refusal (a published seat) lands back in the panel's danger zone with the
+seat link. The tearsheet opens nothing from inside (P3-17 holds); the dirty-close ask stays the modal (§1.24). Recorded
+as dated amendments under D5-b, D5-c, PHASE3DS §1.24 and §5 item 17; the specimen's modal versions are superseded.
+**Trade-off** a tearsheet is heavier than a 480 modal for a one-line consequence; accepted for one pattern across the
+product. **Would change if** a confirmation gains a second step (then the modal returns for the short one).
+
+### 1.39 PR 4 — the pre-merge smoke: four findings, two observations (2026-09-05)
+
+The owner's twenty-step smoke (`audit/pr4-smoke.mjs`, local Docker stack, real Chrome 1920×1080, both themes, the
+1280 / 1024 frames; captures + `results.json` in `screenshots/pr4-smoke/`) found four things the tiers had not, each
+fixed on the branch and re-run:
+
+- **Step 9 — the header indicator did not follow a people edit.** After "Alex Shabazian saved." the shell still read
+  "Draft — no changes" until a reload: the indicator fetches the draft status once per admin sub-page route (§1.9) and
+  nothing told it the draft changed. **Fix** `lib/draftStatusEvent.ts` — `notifyDraftStatusChanged()` dispatches a
+  window event; `AppShell` listens and drops its per-route cache (the existing `retryStatus`); Management fires it on
+  every success (`showSuccess`), Settings after an applied import or restore. Verified live: "Draft — 1 change" after
+  the save, "Draft — 2 changes" after the rename.
+- **Step 11 — the deactivate refusal never reached the panel.** `deleteEmployeeAction` threw the RPC's error, and a
+  thrown Server Action error is digest-stripped in production, so the danger zone showed the generic fallback
+  instead of "This employee is still on the published map at CW01…". **Fix** the F-ERR-1 shape the other actions
+  use: `EmployeeDeleteResult` gains `ActionRefusedFailure` (`code: "REFUSED"`, the RPC's message) and the action
+  returns it; `action-error-contract-source` pins it, `action-input-validation-source`'s union list widened. The
+  refusal now renders inline with the "Open CW01 on the map" ghost; no second sheet.
+- **Step 10 — a pointer on the inert overlay pulled focus out of the sheet.** A click on the dimmed panel's Save
+  (behind the sheet's overlay) did nothing — correct — but the mousedown moved `document.activeElement` to `body`,
+  after which Tab walked the document and Esc did nothing. `useDialogFocus` traps Tab only while focus is inside the
+  node. **Fix** the overlay cancels `mousedown` (`onMouseDown={e => e.preventDefault()}`) in `ManagementConfirmSheet`,
+  `CsvImportSheet`, `SnapshotRestoreSheet` and `CarbonModal`, so the focused control keeps focus. `PublishReviewSheet` (PR 3b)
+  shared the overlay and the gap — **fixed here, same rule** (owner carry 2026-09-05; `publish-review-sheet` ct pins it).
+- **Step 20 — the narrow frame kept the 1920 widths.** At 1024 the Settings column stayed 776 and the narrow sheet 720,
+  where PHASE2UX §1S.5 says full width and viewport − 32. **Fix** sheet **amendment C** (both copies, byte-identical):
+  under the asset's 1055 fold, `.sp-settings { max-width: none }` and `.sp-tearsheet--narrow { width: calc(100vw −
+  2 × 16) }`. PHASE3DS §1.27 / §1.28 carry the paragraph. No token change.
+
+**Observations (recorded, not changed):**
+- Step 4: body rows measure 32.5 — the asset's 32px cell plus the collapsed 1px border share (block 21 as landed).
+  The seat link's hover step is the token contract — rest `link-primary` (#8F4521 light / #E8A07A dark), on the
+  ROW's hover `link-primary-hover` (#7A3A1C / #F5DDD1) — the brief's "rgb(143, 69, 33) / rgb(232, 160, 122)" are the
+  rest colours.
+- Step 12: the Deactivate sheet at 1920×1080 spans top 160 → bottom 490 (720 wide, centred); the bottom edge sits at
+  content height, not the viewport bottom — the Phase 3 narrow sheet as landed.
+- Step 3: the seed directory is short, so the strip pins (top 48, opaque `--sp-tabs-bg`) only once the pane scrolls —
+  the smoke used a 1920×420 viewport to force it.
+
+**Preview-walk finding (2026-09-05, after the smoke) — the Edit tooltip never painted.** The read-only preview walk
+(`audit/pr4-preview-walk.mjs`, `screenshots/pr4-preview/`) captured the tooltip on focus and saw nothing: the asset's
+cell `overflow: hidden` clipped it, on the preview and in the smoke alike (step 4 read `visibility`, which a clipped
+box passes). **Fix** PHASE3DS §1.23 **amendment D** (both copies): `.sp-table td.cds-col-actions { overflow: visible }`
+— the actions cell stops clipping; the last row's tooltip, which would leave `.sp-table-scroll`, flips above through
+`data-tooltip-placement="above"` (the above placement minted in §1.8). The smoke's step 4, the walk and the e2e-auth
+`page-frames` spec now hit-test the tooltip on the first and last row (painted + inside the viewport); ct pins the
+placement attribute. Owner ruling: required by §1.23 — a defect, not a look choice. No token change.
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -532,17 +640,17 @@ PHASE2UX §5 item n.
 | P3-4 | Platform-aware shortcut hint (`Ctrl K` / `⌘ K`) decided at hydration | `lib/platformShortcut.ts` (new), `MapSearch.tsx`, `SeatMap.tsx`, `ViewerSeatFinder.tsx`, `ShellPanels.tsx`; `ReceptionScreen.tsx` | 3a, 5 | done for the map + Help (PR 3a); Reception in PR 5 |
 | P3-5 | `SeatMark.tsx` inlines the four symbols' paths with `data-stroke` / `data-fill` / `data-hatch`; never `<use>` | `components/seat-map/SeatMark.tsx` (new) + consumers | 3a (band legend), 3b (marker, inspector), 2 (Account panel), 4 (Management status), 5 (Reception rows) | `SeatMark.tsx` landed in PR 3a (six inlined kinds, `tests/seat-mark.test.mjs` pins no `<use>`); band legend consumes it; marker + inspector in 3b |
 | P3-6 | Tier-C zone rules repeat the asset selector's element names; every dark-panel restyle gets a light-theme render before "done" | `components/ui/ShellPanels.tsx` | 2 | done (PR 2: `span.sp-radio-mark` kept; light-theme renders of Help / History / Account / left panel / tooltip in `screenshots/pr2/`) |
-| P3-7 | Hover-surface text step on the ROW's hover (Management seat link, Ask Planner label); roster rows static; red on dark = `text-error` | `components/admin-management/*`, `AskPlannerDrawer.tsx` | 3, 4 | open — 3b: Ask Planner label row hover step done (`AskPlannerSeatRow`, §1.29); Management seat link in PR 4 |
-| P3-8 | Danger-ghost override covers Delete seat and Deactivate | `sp-components.css` (lands in PR 1), consumers | 3, 4 | open — 3b: Delete seat is the danger ghost (§1.29); Deactivate in PR 4 |
+| P3-7 | Hover-surface text step on the ROW's hover (Management seat link, Ask Planner label); roster rows static; red on dark = `text-error` | `components/admin-management/*`, `AskPlannerDrawer.tsx` | 3, 4 | done (3b: Ask Planner label row; PR 4: `.sp-seat-link` steps on the ROW's hover — `EmployeesTable`) |
+| P3-8 | Danger-ghost override covers Delete seat and Deactivate | `sp-components.css` (lands in PR 1), consumers | 3, 4 | done (3b: Delete seat; PR 4: Deactivate… in the panel's danger zone — `EmployeePanel`) |
 | P3-9 | Outlined-open trigger = four shadows (`.sp-mode`, utilities); the outer shadow never dropped | `components/ui/AppTopBar.tsx` | 2 | done (PR 2: the landed `[aria-expanded="true"]` rules, TSX adds no shadow) |
 | P3-10 | `--sp-event-pad` stays 10px in the History panel | `components/ui/ShellPanels.tsx` | 2 | done (PR 2: `.sp-event` consumed as landed) |
 | P3-11 | Seat code via the tier-C tooltip on hover / focus only; inspector eyebrow on selection; never inline in the pill | `components/seat-map/SeatMarker.tsx` | 3 | done (3b: `.sp-tooltip` sibling of the pill, hover / focus only; eyebrow on selection — §1.27) |
 | P3-12 | Pill width from the label; the nudge reasons about height 28; never a width on a pill | `SeatMarker.tsx`, `lib/` nudge helper | 3 | done (3b: no width on the pill; `PILL_HEIGHT_PX = 2 × PILL_NUDGE_PX` pinned to the token; width-aware nudge graph — §1.27) |
 | P3-13 | Legend follows the Names toggle (mini pill on, ● off) | `components/seat-map/MapStatusBand.tsx` | 3a | done (PR 3a: `namesVisible` prop; `map-status-band.test.mjs`) |
 | P3-14 | "Changed in draft" and the ◇ badge derive from the publish diff | `lib/publishSummary.ts`, `SeatMarker.tsx`, inspector | 3 | done (3b: `lib/draftChanges.ts` feeds the ◇, the inspector note and the legend count from the publish diff — §1.29) |
-| P3-15 | Sticky tab strip offsets by `--sp-shell-header-h`, paints `--sp-tabs-bg`; primary follows `?tab=` | `app/(shell)/admin/management/page.tsx` | 4 | open |
-| P3-16 | File trigger = labelled button forwarding to a hidden input (`tabindex=-1`, `aria-hidden`); unhappy paths inline before the tearsheet | `app/(shell)/admin/settings/page.tsx`, `DataUtilitiesPanel.tsx` | 4 | open |
-| P3-17 | Side panel: focus trap, Esc-asks-when-dirty, scrim = Cancel, confirm modal on top; tearsheets never open a modal from inside | `components/admin-management/*`, `components/admin-settings/*` | 4 | open |
+| P3-15 | Sticky tab strip offsets by `--sp-shell-header-h`, paints `--sp-tabs-bg`; primary follows `?tab=` | `components/admin-management/ManagementFrame.tsx` | 4 | done (PR 4: `.sp-tabs-host`, the `lg` offset zeroed on the strip — §1.37; the primary follows the tab; `?tab=` via `replaceState`) |
+| P3-16 | File trigger = labelled button forwarding to a hidden input (`tabindex=-1`, `aria-hidden`); unhappy paths inline before the tearsheet | `components/admin-settings/FileTrigger.tsx`, `DataUtilitiesPanel.tsx`, `lib/fileGuard.ts` | 4 | done (PR 4) |
+| P3-17 | Side panel: focus trap, Esc-asks-when-dirty (the modal on top), scrim = Cancel; destructive confirms = the narrow tearsheet over the panel (ruling, §1.38); tearsheets never open a modal from inside | `EmployeePanel.tsx`, `ManagementConfirmSheet.tsx`, `CarbonModal.tsx`, the two Settings sheets | 4 | done (PR 4) |
 | P3-18 | Reception keyboard: ↑ ↓ move `[data-highlight]`, ↵ locks (`aria-selected`), Esc unlocks then clears; readout `aria-live` | `components/reception/ReceptionScreen.tsx` | 5 | open |
 | P3-19 | Contrast regression rerun after every token change (192/192 or better), summary line in the PR | `docs/redesign-v2/phase3/contrast/` | 1 (+ any later token change) | done (PR 1: 192/192) |
 | P3-20 | Specimens and screenshots do not ship; only the four CSS files and the generator move | — | 1 | done (PR 1) |
@@ -551,9 +659,9 @@ PHASE2UX §5 item n.
 | P2-3 | Roving tabindex + arrow keys across markers; Esc cancel ladder | `SeatMap.tsx`, `SeatMarker.tsx` | 3 | done (3b: Home / End on both marker layers; the ladder was already in §1M.11 order — §1.30) |
 | P2-4 | `?q=` on `/`, `/admin`, `/reception`; `?dept=` / `?zone=` / `?status=` / `?position=`; `?names=` | map surfaces, `LeftPanel.tsx`, `ReceptionScreen.tsx` | 2 (filters), 3a, 5 | filter params done (PR 2); `?q=` / `?names=on` done on `/` and `/admin` (PR 3a, `lib/mapUrlState.ts`); `/reception` `?q=` in PR 5 |
 | P2-5 | Reception `error.tsx` in its own voice; loading skeleton on the real layout | `app/(shell)/reception/error.tsx` (new), `loading.tsx` | 5 | open |
-| P2-6 | 5 MB client guard on CSV and snapshot files; labelled file triggers | `DataUtilitiesPanel.tsx` | 4 | open |
-| P2-7 | Management: real tablist; 403 card gains its action; tiles removed | `app/(shell)/admin/management/page.tsx`, `AdminManagementPanel.tsx` | 4 | open |
-| P2-8 | Settings: Reset-draft entry removed (ruling 22; Q7 keeps the map's Discard) | `DataUtilitiesPanel.tsx` | 4 | open |
+| P2-6 | 5 MB client guard on CSV and snapshot files; labelled file triggers | `lib/fileGuard.ts`, `FileTrigger.tsx`, `DataUtilitiesPanel.tsx` | 4 | done (PR 4) |
+| P2-7 | Management: real tablist; 403 card gains its action; tiles removed | `ManagementFrame.tsx`, `app/(shell)/admin/management/page.tsx` (+ settings 403), `AdminManagementPanel.tsx` | 4 | done (PR 4; Publish History tab also gone — D5) |
+| P2-8 | Settings: Reset-draft entry removed (ruling 22; Q7 keeps the map's Discard) | `DataUtilitiesPanel.tsx` | 4 | done (PR 4; `resetDraftToPublishedAction` has ONE call site, pinned in `bulk-destructive-action-safety-source`) |
 | P2-9 | Ask Planner drawer 408 → 400 | `AskPlannerDrawer.tsx` | 3 | done (3b: the drawer is the 400 slot — §1.31) |
 
 Architecture item the hand-off named for the **PR 2 plan** — done (owner confirmation 2026-09-03): `app/page.tsx`
@@ -571,6 +679,7 @@ allowlisted `/`; `nav-shell.spec.ts` walks `/` through the History switch.
 | 0 | — | — | — | `tests/phase4-token-layer-source.test.mjs` added (5 tests, green with the PR 0 ledger) |
 | 2 | `app-rail` (its three navigation contracts — veto with modifier bypass, deploy-skew full load, 4s watchdog disarmed on route commit — moved verbatim into `app-top-bar` before deletion) | `app-shell`, `app-top-bar`, `accessibility-source` (shell half: header id, skip-link config, guard wiring, Account panel, viewer header gone), `auth-session-source` (Account panel form; viewer under the shell), `role-fitted-tabs-source` (role-fitted `shellNavConfig`), `shell-viewport-height-source` (flex pane contract), `theme` (radio writes only through `applyTheme`), `touch-target-source` / `type-floor-source` (deleted-file rows), `nav-shell.spec.ts` (header persistence, `/` via the switch) | `full-navigation` (importer = `useShellNavigation.ts`), `published-employee-snapshot` / `viewer-seat-columns` / `desktop-seat-marker-system-source` / `accessibility-source` (page path), `browser/seat-map.spec.ts` (guarded exit = History switch), `viewer-seat-finder` (two header tests retired), `pending-state-source` (loading sentences), `phase4-token-layer-source` (`SWEPT` = {1, 2}), `deep-link` (+ filter params) | added `shell-mode`, `shell-state`, `viewer-filter-groups`, `shell-panels` (ct), `left-panel` (ct), `viewer-shell` (ct, one bundle via `tests/helpers/viewerShellEntry.ts`), `e2e/viewport-matrix.spec.ts` (owner addition); 1414 pass · 0 fail; ct 280; browser 27; build clean |
 | 3a | `office-room-wash`, `zone-wash`, `seat-clusters` (D1-h / D1-i, with their modules) | `filter-feedback-source` (the control row's live count), `seat-map-components` (FloorMenuButton replaces FloorSelector; DeptChipRow + nameplate blocks gone), `map-status-band` (`.sp-band`, marks, Names), `viewer-seat-finder` (filters via URL state; D1-d scope; the row's toggle), `viewer-shell` (control row seam; Filters · N), `app-shell` (left-panel + state hooks in place of slots), `accessibility-source` (map half: control row, palette, canvas status, roster Copy link; none loosened), `browser/seat-map.spec.ts` (wash tests gone; palette; More actions), `browser/draft-history.spec.ts` (row names), `e2e-auth` accessibility / draft-dialogs (More actions menu) | `status-label-source` (Status group from `lib/viewerFilterGroups`), `touch-target-source` + `type-floor-source` (deleted-file rows; the row's 40px controls are on the ladder), `pending-state-source` (flows 12 / 13 → the row's busy Undo / Redo), `seat-creation-ui-source`, `floors` (Add seat Hidden on the roster), `focus-handoff-source`, `viewer-keyboard-parity-source` (the shared field), `ask-planner-ai-source`, `virtualized-directory`, `desktop-seat-marker-system-source`, `session-expiry-source` (the notice's sign-in action), `viewer-find-palette-source` | added `platform-shortcut`, `map-search-scope`, `map-url-state`, `seat-mark` (ct), `map-control-row` (ct); `deep-link` + `floor-roster` extended (Copy link); unit 1407 · ct 289 · browser 25 |
+| 4 | `settings-tiles-source` (both anchors re-homed: the publish-boundary copy → `settings-affordance-source`, the single-call-site pin → `bulk-destructive-action-safety-source`); ct `data-utilities-panel` reset tests (feature gone, ruling 22); e2e-auth `draft-dialogs` reset review | `management-detail-source`, `management-directory-map-link-source`, `settings-affordance-source` (labelled triggers, callout, one primary per section, exports never disabled), `admin-management-panel` (ct: 16 — tabs, count, two row stops, dirty close, inline rename, create modal, the sheet over the panel), `data-utilities-panel` (ct: 12 — guard inline, triggers, header-only export, done-state ghost, MLS02 keeps the restore review) | `accessibility-source` (dialog files = the panel / sheets / `CarbonModal`; hygiene attrs in `EmployeePanel`; scroll regions = `.cds-side-panel-body` / `.sp-tearsheet-body`; counts in `lib/managementCounts` + `OptionList`; row stops in `EmployeesTable`), `bulk-destructive-action-safety-source` (host + sheets), `action-input-validation-source` (three sinks), `virtualized-directory` (host + table), `pending-state-source` (flows 15–20 → the sheets / list / create modal), `touch-target-source` (Management ledger rows gone), `close-icon-source` (Management's × = the search clear; Settings has none), `dialog-error-placement` (census + 3 ct: restore MLS02, create-modal failure, dirty-close ask; `titleId` discovery), `phase4-token-layer-source` (`SWEPT` {1,2,3,4}), e2e-auth `accessibility` (sheet + ⋯ + names) | added `management-counts`, `inline-rename`, `file-guard`; unit 1428 · ct 307 · lint 0 errors · build clean |
 | 1 | `elevation-shadow-tokens-source`, `color-twin-drift-source`, `e2e/publish-ready-badge-contrast.spec.ts`, `marker-contrast.test.mjs` + `scripts/marker-contrast.mjs` (missed by the PR 0 survey: measured the old `--sp-marker-*` values from the deleted block; the obligation — marker contrast in both themes, non-hue pair distinction — is carried by the generated 192-pair suite and Phase 3's two-signal marks) | `auth-theme-source` (both-themes resolution against `sp-tokens.css` + `carbon-tokens.css`; class bans and ledger kept), `focus-brand-contrast-source` (one `--sp-focus` aliasing `$focus`, defined light + system-dark + forced-dark; tier-C panel focus; raw brand orange banned in code, not comments), `theme.test` (derivation function ↔ boot string; three states; toggle writes only through `applyTheme`) | `accessibility-source` (two kind-tag token pins: `pending-surface` → `draft-surface`, `--admin-diff-vacated-text` → `--sp-status-error-text`), `ask-planner-ai-source` (dim rules read from `globals.css` + the bridge), `phase4-token-layer-source` (`SWEPT` = {1}; ledger 4 rows; font-bridge, asset-identity, import-order and bridge-alias assertions added) | 1390 pass · 0 fail; `npm run gate` clean; `npm run build` clean |
 
 ---
@@ -630,6 +739,14 @@ bar #b85c2e — against ΔE 5.3 before the ruling (§1.26). Worst text span 7.1:
 
 PR 3b close (2026-09-05, two component-sheet changes from the rig — the names-off ◇ inverts on the filled footprint
 and the names-off quiet fill is the quiet text colour, §1.16 amendment (6); their four pairs added):
+
+```
+product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs
+202/202 pass
+```
+
+PR 4 (2026-09-05, **no token change** — sheet amendment B only, §1.38; the danger primary's white-on-red-60 pairs
+were already gated by 3b):
 
 ```
 product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs
@@ -704,7 +821,7 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | 2 | #515 | `feat/phase4-shell` | v1.74.3 | shell (P3-2 radio, 6, 9, 10; P2-2; route-group move of `/` confirmed 2026-09-03; Position kept as the fourth filter group, owner ruling 2026-09-04; group-2 sweep; provisional tenant row = PR 2/PR 3 seam; two preview rulings — indicator in the free run, no hover fill on the current link) | merged |
 | 3a | #516 | `feat/phase4-map-frame` | v1.74.5 | map frame (P3-4, 5 band half, 13; P2-1, 4 `?q=` `?names=`): control row on both surfaces, **provisional tenant row removed** (PR 2 seam closed — SeatMap's bar tenants + the viewer search move into the map control row, PHASE2UX §1M.3), one search + palette on `/admin` too, Filters split control, Find me, band + `SeatMark` + legend follows Names, canvas status region, roster Copy link; washes + clusters (D1-h/D1-i), `FilterPanel` / `ActiveFilterChips` / `DeptChipRow` / `AiHighlightChip` / `FloorSelector` / `ResultsPanel` / `adminChrome.ts` retired; owner rulings O1 O5 O6 O7 (2026-09-04); pre-merge smoke 24/24 (`screenshots/pr3a-smoke/`) + §1.22–§1.25 | merged |
 | 3b | #518 | `feat/phase4-map-markers` | v1.74.6 | map markers + slot (P3-5 marker half, 7, 8, 11, 12, 14; P2-3, 9): `.sp-pill` rewrite, seat-code tooltip, ◇ from the publish diff, quiet pill replaces the dim (ledger row closed), invalid target wired (O4), 400 slot (inspector · mode card · Ask Planner), publish tearsheet, group-3 sweep, marker rig + Draft-mark crops; owner rulings O2 O3 (brand-layer tokens); carry-ins C-1 (row rules out of `globals.css`, Q1/Q2), C-2 (palette rows, add-seat card), C-3 (§1.25 Redo fix, Q3 every column); Q4 seed reserved + unavailable; Q5 one PR. **Pre-merge smoke 13/13 steps pass** (18/18 records, `screenshots/pr3b-smoke/`); fix §1.36 — people edits now badge the seat; ◇ `rgb(138, 63, 252)` light / `rgb(190, 149, 255)` dark; live hit-pill contrast **15.23:1** light / **10.50:1** dark; Redo reapplies; invalid targets refused with the notice; 1024 pass; tooltip = seat code only (ruling, §1.36) | merged 2026-09-05 (squash) |
-| 4 | — | — | — | Management + Settings (P3-15, 16, 17; P2-6, 7, 8) | not started |
+| 4 | — | `feat/phase4-pages` | v1.75.0 | Management + Settings (P3-7 Management half, 8 Deactivate, 15, 16, 17; P2-6, 7, 8): `ManagementFrame` (line tabs in the sections landmark, the primary follows the tab), `EmployeesTable` (`.cds-table`, toolbar count, ● / ○, seat-code link, one ghost Edit), `EmployeePanel` (480 layer-02 slide-over, 50/50 footer, no ×, one dirty check → `CarbonModal` ask), `OptionList` (Save · Cancel inline rename, blur validates, ⋯ Delete), `OptionCreateModal`, `ManagementConfirmSheet` (**owner ruling §1.38**, sheet amendment B), Publish History tab gone; Settings: `.sp-callout`, sections in the record's order, `FileTrigger` + `lib/fileGuard` (5 MB / type, inline before a sheet), `CsvImportSheet` / `SnapshotRestoreSheet` (D6-e done-state ghost; MLS02 keeps the restore review), Reset draft gone (one call site pinned), draft-only page; group-4 sweep (`SWEPT` {1,2,3,4}, bridge §2 empty); `lib/managementCounts` / `inlineRename` / `fileGuard` | built 2026-09-05: unit 1428 · ct 307 · gate clean · e2e 36 · **e2e-auth 39/39** (local stack) · runtime audit 0 undefined (6 routes × 2 themes + 1280 + system state) · page-states rig 63 captures (`screenshots/pr4/`) · contrast 202/202 (no token change) · build clean. **Owner's twenty-step smoke 2026-09-05: 47/47 after four fixes (§1.39 — the indicator seam, the returned deactivate refusal, the inert overlay keeping focus, sheet amendment C for the narrow frame); captures + `results.json` in `screenshots/pr4-smoke/`**; PR + preview walk pending |
 | 5 | — | — | — | Reception, route surfaces, `/login` + `/my-seat` confirmed unchanged (P3-18; P2-5) | not started |
 | 6 | — | — | v2.0.0 | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
 
@@ -713,4 +830,5 @@ PR 3b pre-merge smoke (2026-09-05, owner-ordered, thirteen steps, local Docker s
 same build; marker rig 58 measurements, 0 under floor, ledger empty (both planner-highlight passes SKIPPED on a
 broad answer this run — a model outcome, not a marker).
 
-Next: PR 3b merged (#518, v1.74.6); the PR 4 plan (Management + Settings) waits for "go".
+Next: PR 4 built on `feat/phase4-pages` (Tasks 1–10); Task 11 evidence (Docker stack: runtime audit, page-states rig,
+e2e-auth) then the PR + preview; the owner's smoke hand-off runs before merge; on "merge" → v1.75.0.

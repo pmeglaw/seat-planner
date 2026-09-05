@@ -52,6 +52,8 @@ let DeleteSeatConfirmDialog;
 let MoveEmployeeConfirmDialog;
 let AskPlannerDrawer;
 let SeatInspector;
+let SnapshotRestoreSheet;
+let OptionCreateModal;
 before(async () => {
   ({ AdminManagementPanel } = await loadComponent("@/components/admin-management/AdminManagementPanel"));
   ({
@@ -63,6 +65,8 @@ before(async () => {
   } = await loadComponent("@/components/seat-map/SeatMapDialogs"));
   ({ AskPlannerDrawer } = await loadComponent("@/components/seat-map/AskPlannerDrawer"));
   ({ PublishReviewSheet } = await loadComponent("@/components/seat-map/PublishReviewSheet"));
+  ({ SnapshotRestoreSheet } = await loadComponent("@/components/admin-settings/SnapshotRestoreSheet"));
+  ({ OptionCreateModal } = await loadComponent("@/components/admin-management/OptionCreateModal"));
   ({ SeatInspector } = await loadComponent("@/components/seat-map/SeatInspector"));
 });
 beforeEach(() => configureContext({ actions: {} }));
@@ -503,6 +507,9 @@ test("Ask Planner renders its action error inside the open drawer and re-enables
 // Ids covered by the ct tests above. Adding a dialog here without a matching
 // ct test defeats the guard — the reviewer checks this list against the tests.
 const CT_COVERED = new Set([
+  "management-discard-title",
+  "management-option-create-title",
+  "json-restore-review-title",
   "management-employee-title",
   "swap-confirm-title",
   "publish-review-title",
@@ -518,6 +525,12 @@ const CT_COVERED = new Set([
 
 const DIALOG_REGISTRY = {
   "management-employee-title": { kind: "ct" },
+  // PR 4: the dirty-close ask on top of the panel and the one-field create
+  // modal (both the asset modal); the snapshot restore review holds open on
+  // MLS02 with the server text inline (PHASE2UX §1S.4).
+  "management-discard-title": { kind: "ct" },
+  "management-option-create-title": { kind: "ct" },
+  "json-restore-review-title": { kind: "ct" },
   "swap-confirm-title": { kind: "ct" },
   "publish-review-title": { kind: "ct" },
   "discard-draft-title": { kind: "ct" },
@@ -541,22 +554,85 @@ const DIALOG_REGISTRY = {
   "management-confirm-title": {
     kind: "closes-after-resolve-by-design",
     reason:
-      "finally-close + page banner (visible, nothing occludes it); pinned by admin-management-panel.test.mjs failed-deactivation test"
+      "finally-close + the panel's danger zone (deactivate) or the page banner (delete) — visible, nothing occludes it; pinned by admin-management-panel.test.mjs failed-deactivation test"
   },
   "csv-import-review-title": {
     kind: "closes-after-resolve-by-design",
     reason:
       "MLS02 stale-fence recovery: failure means the reviewed rows went stale; close + router.refresh + re-review IS the recovery"
   },
-  "json-restore-review-title": {
-    kind: "closes-after-resolve-by-design",
-    reason: "MLS02 stale-fence recovery, same as the CSV review"
-  },
-  "reset-review-title": {
-    kind: "closes-after-resolve-by-design",
-    reason: "MLS02 stale-fence recovery, same as the CSV review"
-  }
 };
+
+// ---------------------------------------------------------------------------
+// Phase 4 PR 4 — the snapshot restore review holds open on MLS02 with Retry;
+// the create modal keeps a returned failure inline under its field; the
+// dirty-close ask sits on top of the panel and mutates nothing.
+// ---------------------------------------------------------------------------
+
+test("snapshot restore review renders the MLS02 text inline with an enabled Retry restore", async () => {
+  await renderElement(
+    React.createElement(SnapshotRestoreSheet, {
+      review: { fileName: "x.json", exportedAt: null, seatCount: 1, employeeCount: 0 },
+      busy: false,
+      error: "The draft changed in another session.",
+      exportedAtLabel: null,
+      onExportCurrent: noop,
+      onCancel: noop,
+      onConfirm: noop
+    })
+  );
+  const { alert } = assertAlertInsideOpenDialog();
+  assert.match(alert.textContent, /Restore did not complete\..*The draft changed in another session\./);
+  assert.equal(screen.getByRole("button", { name: "Retry restore" }).disabled, false);
+});
+
+test("the one-field create modal keeps a returned failure under its field and re-enables its primary", async () => {
+  await renderElement(
+    React.createElement(OptionCreateModal, {
+      kind: "zone",
+      existing: ["North Pod"],
+      pending: false,
+      busy: false,
+      onCancel: noop,
+      onCreate: async () => "Zone names are limited to 120 characters."
+    })
+  );
+  const dialog = screen.getByRole("dialog");
+  const field = screen.getByLabelText("Name");
+  await act(async () => {
+    fireEvent.change(field, { target: { value: "East Pod" } });
+  });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Add zone" }));
+  });
+  await waitFor(() => assert.match(document.getElementById(field.getAttribute("aria-describedby")).textContent, /limited to 120 characters/));
+  assert.ok(dialog.isConnected, "the modal stays open");
+  assert.equal(field.getAttribute("aria-invalid"), "true");
+  assert.equal(screen.getByRole("button", { name: "Add zone" }).disabled, false, "the primary re-enables for a retry");
+});
+
+test("the dirty-close ask opens on top of the panel and mutates nothing", async () => {
+  let called = false;
+  globalThis.__ct.actions.updateEmployeeAction = async () => {
+    called = true;
+    return { ok: true };
+  };
+  await renderElement(React.createElement(AdminManagementPanel, panelProps()));
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Edit Jane Doe" }));
+  });
+  const panel = screen.getByRole("dialog", { name: "Edit employee" });
+  await act(async () => {
+    fireEvent.change(screen.getByLabelText("Position"), { target: { value: "Changed" } });
+  });
+  await act(async () => {
+    fireEvent.keyDown(panel, { key: "Escape" });
+  });
+  const ask = screen.getByRole("alertdialog", { name: "Discard changes to Jane Doe?" });
+  assert.ok(ask.isConnected);
+  assert.ok(panel.isConnected, "the panel stays mounted under the ask");
+  assert.equal(called, false);
+});
 
 function collectComponentFiles(root) {
   const abs = path.join(repoRoot, root);
@@ -578,6 +654,11 @@ test("every role=dialog is classified: ct-covered or ledgered under one of the t
       const label = window.match(/aria-labelledby="([\w-]+)"/);
       assert.ok(label, `${file}: role="dialog" without aria-labelledby near it — dialogs must be labeled`);
       discovered.set(label[1], file);
+    }
+    // PR 4: dialogs rendered through the shared asset modal (CarbonModal) name
+    // themselves by `titleId` — the modal's own role / labelledby are props.
+    for (const match of source.matchAll(/titleId="([\w-]+)"/g)) {
+      discovered.set(match[1], file);
     }
   }
 
