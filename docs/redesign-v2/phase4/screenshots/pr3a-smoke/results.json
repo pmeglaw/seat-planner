@@ -1,0 +1,56 @@
+[
+  {
+    "step": "5 Undo/Redo",
+    "ok": true,
+    "file": "05-move-applied.png",
+    "note": "baseline \"Draft — no changes\"; origin \"CW01 Alex Shabazian. Assigned seat. Open details.\"; notices after Move them: \"Moved Alex Shabazian to C01.Undo Move Alex Shabazian to C01 | No unsaved changes\" (05-after-move-them.png); moved Alex Shabazian → C01: indicator \"Draft — 2 changes\", target label \"C01 Alex S. Alex Shabazian. Assigned seat. Draft changed. Selected.\"; focus before undo body[]; Ctrl Z: \"Draft — no changes\", CW01 \"CW01 Alex Shabazian. Assigned seat. Open details.\"; focus before redo section#planning-canvas[order-1 min-w-0 overflow-hidden relative], Redo button \"Redo · Ctrl Shift Z\", redo via Ctrl Shift Z: \"Draft — 2 changes\", target \"C01 Alex S. Alex Shabazian. Assigned seat. Draft changed. Selected.\"; final Ctrl Z → \"Draft — no changes\"; also 05-undo.png, 05-redo.png"
+  },
+  {
+    "step": "7 Left panel open at 1920",
+    "ok": true,
+    "file": "07-left-panel-open-row-wrapped-filter-on.png",
+    "note": "panel open, no filter: row h 48 (x 256, w 1664), overlaps none, clipped none (07-left-panel-open-row-fits.png); panel open + Position filter: row h 96, 2 lines, overlaps none, clipped none, scroll overflow false; panel closed h 48 (07-left-panel-closed-row-48.png)"
+  },
+  {
+    "step": "8 Resize to 1024",
+    "ok": true,
+    "file": "08-1024-admin.png",
+    "note": "1024: row h 96; doc scrollWidth 1024; header nav visible false; Sections links in left panel 4; band overflow false; band: \"Floor 3 · 60 seatsAssigned 4Open 56Reserved 0Unavailable 060 seatsFitFit\"; read-only note at 1024: absent (lg = 1024 keeps editing; PHASE4BUILD §1.19 O6); 1000: note \"Editing needs a wider window.\" visible true, row h 48, scrollWidth 1000; also 08-1024-left-panel-sections.png, 08-1000-read-only-note.png"
+  },
+  {
+    "step": "9 Floor 2 roster",
+    "ok": true,
+    "file": "09-floor2-roster-copied.png",
+    "note": "\"Copy link for Jessica Moore\" → data-done=\"Copied\" rendered via ::after true (content \"Copied\"); 8 rows; non-copy interactive in rows: none; row listitem tabindex=null cursor auto"
+  },
+  {
+    "step": "12 Tab through control row",
+    "ok": true,
+    "file": "12-focus-ring-more-actions-tooltip.png",
+    "note": "9 stops: Change floor. Current floor: Floor 3 · Pre-Litigation → Admin search → Search scope: This floor → Find me → Redo · Ctrl Shift Z [tip shown] → Add seat → Open Ask Planner AI → More actions [tip shown] → Show occupant names; ring failures: none; first stop outline: solid 2px rgb(184, 92, 46) offset -2px"
+  },
+  {
+    "step": "10 / as viewer (light)",
+    "ok": true,
+    "file": "10-viewer-home-light.png",
+    "note": "row: Change floor. Current floor: Floor 3 · Pre-Litigation · [search:Viewer search] · Search scope: This floor · 60 seats · Find me · Show occupant names; forbidden present: none; \"Draft\" occurrences on page 0; indicator \"Published · Sep 4, 2026\"; history panel: \"HistoryPublished · Sep 4, 2026, 3:34 PMPublish history is available to admins.\"; console errors 0; also 10-viewer-history-light.png"
+  },
+  {
+    "step": "11 colour audit step 10 (light)",
+    "ok": true,
+    "file": "10-viewer-home-light.png",
+    "note": "blues: none; surfaces: #shell-header: rgb(22, 22, 22); .sp-control-row: rgb(255, 255, 255); .sp-band: rgb(244, 244, 244); #shell-left-panel: not rendered; .sp-panel: absent; [data-map-status-band]: rgb(244, 244, 244)"
+  },
+  {
+    "step": "10 / as viewer (dark)",
+    "ok": true,
+    "file": "10-viewer-home-dark.png",
+    "note": "row: Change floor. Current floor: Floor 3 · Pre-Litigation · [search:Viewer search] · Search scope: This floor · 60 seats · Find me · Show occupant names; forbidden present: none; \"Draft\" occurrences on page 0; indicator \"Published · Sep 4, 2026\"; history panel: \"HistoryPublished · Sep 4, 2026, 3:34 PMPublish history is available to admins.\"; console errors 0; also 10-viewer-history-dark.png"
+  },
+  {
+    "step": "11 colour audit step 10 (dark)",
+    "ok": true,
+    "file": "10-viewer-home-dark.png",
+    "note": "blues: none; surfaces: #shell-header: rgb(22, 22, 22); .sp-control-row: rgb(22, 22, 22); .sp-band: rgb(38, 38, 38); #shell-left-panel: not rendered; .sp-panel: absent; [data-map-status-band]: rgb(38, 38, 38)"
+  }
+]
