@@ -2505,7 +2505,7 @@ export function SeatMap({
   // The 400 right slot (C9, INV-4): a running mode owns it until it ends,
   // otherwise the inspector while a seat is selected and expanded. The canvas
   // column is PUSHED while it is open (D2); the band below never reflows.
-  const slotOwner: RightSlotOwner = modeCardOpen ? "mode" : selectedSeat && !inspectorCollapsed ? "inspector" : null;
+  const slotOwner: RightSlotOwner = modeCardOpen ? "mode" : askPlannerOpen && canEdit ? "ask" : selectedSeat && !inspectorCollapsed ? "inspector" : null;
   const canvasColumnClassName = ["relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1", slotOwner ? "lg:pr-[var(--sp-slot-w)]" : ""].filter(Boolean).join(" ");
 
   // The collapse rail is retired (v12 slice 4): `inspectorCollapsed` is now
@@ -3175,7 +3175,7 @@ export function SeatMap({
             )}
             </div>
             {/* The right slot (PHASE3DS §1.17, D2-a): one owner at a time —
-                mode card or inspector (Ask Planner joins in the next task). It
+                mode card · Ask Planner · inspector (INV-4). It
                 sits over the canvas column only, so the band below stays
                 uncovered; the column's padding is what pushes the plan. */}
             <RightSlot open={slotOwner !== null}>
@@ -3190,6 +3190,22 @@ export function SeatMap({
                   // Create-seat has no confirm button to relabel — the card
                   // carries the visible busy line while the create round-trips.
                   busyLabel={addSeatMode && mutationInFlight ? "Adding seat…" : null}
+                />
+              )}
+              {/* Ask Planner in the slot (P2-9 408 → 400): a side panel, not a
+                  modal — the map stays usable beside it. */}
+              {canEdit && (
+                <AskPlannerDrawer
+                  open={slotOwner === "ask"}
+                  draftDirty={inspectorDirty}
+                  zones={zones}
+                  queuedRequest={askPlannerQueuedRequest}
+                  highlightedSeatIds={plannerHighlightedSeatIds}
+                  floorTagForSeat={plannerFloorTagForSeat}
+                  onClose={closeAskPlannerDrawer}
+                  onHighlightSeats={setPlannerHighlightedSeatIds}
+                  onClearHighlights={() => setPlannerHighlightedSeatIds([])}
+                  onSelectSeat={selectPlannerHighlightedSeat}
                 />
               )}
               {slotOwner === "inspector" && (
@@ -3299,20 +3315,6 @@ export function SeatMap({
       </div>
       </div>
 
-      {canEdit && (
-        <AskPlannerDrawer
-          open={askPlannerOpen}
-          draftDirty={inspectorDirty}
-          zones={zones}
-          queuedRequest={askPlannerQueuedRequest}
-          highlightedSeatIds={plannerHighlightedSeatIds}
-          floorTagForSeat={plannerFloorTagForSeat}
-          onClose={closeAskPlannerDrawer}
-          onHighlightSeats={setPlannerHighlightedSeatIds}
-          onClearHighlights={() => setPlannerHighlightedSeatIds([])}
-          onSelectSeat={selectPlannerHighlightedSeat}
-        />
-      )}
 
       {vacateConfirm && (
         <VacateConfirmDialog

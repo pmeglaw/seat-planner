@@ -108,11 +108,12 @@ const PINS = {
     // forgot-password, capped by the password field above / remember row below
     "after:absolute after:-top-1 after:-bottom-2"
   ],
-  // Zero-result "Clear search" (≈30px content-sized; only a <p> sits above):
-  // 30 + 2×7 = 44 on both surfaces that render it.
+  // PR 3b: the drawer's close is the asset's 40px icon button with the
+  // touch-target pseudo; prompts and follow-ups are 40px ghosts in the
+  // zero-gap `.sp-prompt-list` (PHASE3DS §1.18 — stacked, outward faces only).
   "components/seat-map/AskPlannerDrawer.tsx": [
-    "after:absolute after:-inset-y-2.5",
-    "after:absolute after:-inset-y-1"
+    "cds-btn cds-btn--icon cds-btn--md cds-touch-target",
+    "sp-prompt-list"
   ],
   "app/(shell)/admin/page.tsx": ["after:absolute after:-inset-y-1"]
 };

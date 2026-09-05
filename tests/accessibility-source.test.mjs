@@ -88,9 +88,12 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // contract) plus the wiring above own it. A bare href here would bypass
   // the guard the shell's onLinkClick can't reach.
   assert.doesNotMatch(source, /href="\/admin\/settings"/);
-  // PR 3a: the row button is wired through MapControlRow (aria-haspopup="dialog" there).
+  // PR 3a: the row button is wired through MapControlRow; PR 3b: the drawer is
+  // the right slot (a side panel, not a dialog) — the trigger carries
+  // aria-expanded + aria-controls, no haspopup.
   assert.match(source, /controlsId: "ask-planner-drawer"/);
-  assert.match(controlRowSource, /aria-haspopup="dialog"/);
+  assert.match(controlRowSource, /aria-expanded=\{draft\.askPlanner\.open\}\s*aria-controls=\{draft\.askPlanner\.controlsId\}/);
+  assert.doesNotMatch(controlRowSource, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);
   assert.match(source, /No undone map changes to redo/);
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
@@ -264,7 +267,9 @@ test("ask planner drawer and settings review dialogs keep dialog semantics and f
   assert.match(askPlannerSource, /aria-labelledby="ask-planner-title"/);
   assert.match(askPlannerSource, /aria-describedby="ask-planner-description"/);
   assert.match(askPlannerSource, /questionRef\.current\.focus/);
-  assert.match(askPlannerSource, /z-\[80\][\s\S]*sm:z-50/);
+  // PR 3b: the drawer is the right slot (an <aside> landmark, not a modal) —
+  // its name and description still come from the title + subline ids.
+  assert.match(askPlannerSource, /<aside[\s\S]{0,200}id="ask-planner-drawer"/);
 
   // Map tools is retired (B1/B2): the gated Settings route hosts the data
   // utilities, and both review flows keep proper dialog semantics.
@@ -313,7 +318,7 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
   const dialogFiles = [
     "../components/seat-map/SeatMapDialogs.tsx",
     "../components/seat-map/SeatInspector.tsx",
-    "../components/seat-map/AskPlannerDrawer.tsx",
+    // (AskPlannerDrawer left this list in PR 3b: it is the right slot, a side panel.)
     "../components/admin-settings/DataUtilitiesPanel.tsx",
     "../components/admin-management/AdminManagementPanel.tsx"
   ];
@@ -678,7 +683,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // lives inside the inspector occupant.
   assert.match(seatMapSource, /const modeCardOpen = canEdit && Boolean\(activeMode\) && \(!selectedSeat \|\| inspectorCollapsed\)/);
   // PR 3b: the mode card owns the right slot until the mode ends (INV-4).
-  assert.match(seatMapSource, /const slotOwner: RightSlotOwner = modeCardOpen \? "mode" : selectedSeat && !inspectorCollapsed \? "inspector" : null;/);
+  assert.match(seatMapSource, /const slotOwner: RightSlotOwner = modeCardOpen \? "mode" : askPlannerOpen && canEdit \? "ask" : selectedSeat && !inspectorCollapsed \? "inspector" : null;/);
   assert.match(seatMapSource, /\{slotOwner === "mode" && activeMode && \(/);
   assert.match(seatMapSource, /\{paletteOpen && \(\s*<ViewerFindPalette/);
   // PR 3a: action errors, the stale-draft refresh and the outcome notice ride the canvas status region (PHASE3DS §1.21).
@@ -788,7 +793,10 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   // tier (the drawer's backdrop shields Publish/Settings while the dialog is
   // open), and browser-driven scrolls must not align focused controls under
   // the opaque bar (WCAG 2.4.11 focus-obscured).
-  assert.match(askPlannerSource, /aria-label="Close Ask Planner"[\s\S]{0,320}sm:z-50/);
+  // PR 3b: Ask Planner is the right slot — a side panel with no backdrop; the
+  // map stays usable beside it and nothing sits under a fixed sheet.
+  assert.match(askPlannerSource, /className="sp-slot max-w-full"/);
+  assert.doesNotMatch(askPlannerSource, /fixed inset-0|aria-modal/);
   assert.match(globalsSource, /scroll-padding-top/);
 
   // One scroll behavior on every surface: below lg the page scrolls, and a
@@ -1134,7 +1142,8 @@ test("touch devices get visible destructive affordances, contained modals, and s
 
   // Modal/drawer scroll regions contain overscroll so touch scrolls don't
   // chain to the page behind (#198).
-  assert.match(askPlannerSource, /min-h-0 flex-1 overflow-y-auto overscroll-contain/);
+  // PR 3b: the drawer's scroll region is the slot body (`.sp-slot-body`, overflow: auto in the sheet).
+  assert.match(askPlannerSource, /<div className="sp-slot-body">/);
   assert.equal((dataUtilitiesSource.match(/min-h-0 overflow-y-auto overscroll-contain/g) ?? []).length, 2);
   // The publish-review dialog's scroll region moved to SeatMapDialogs.tsx
   // with the R-02a extraction.

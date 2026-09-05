@@ -127,44 +127,17 @@ test("type-floor ruling 1 (2026-08-24): the micro-glyph MARKS are exempt from th
   assert.match(loginPageSource, /aria-hidden="true"[^]*?text-\[9px\][^]*?C05/);
 });
 
-test("sanctioned eyebrow variant (2026-08-25): the Ask Planner label keeps the AI accent on eyebrow metrics", async () => {
-  // Owner ruling 2026-08-25 (candidate B of the SeatInspector label question,
-  // SEAT-PLANNER-HANDOFF.md §3). The Ask Planner card label unifies METRICS
-  // with the inspector eyebrow family — 12px semibold uppercase
-  // tracking-[0.08em], matching InspectorSectionLabel — because bold on
-  // already-uppercase, already-tracked words was a third emphasis device
-  // ("belt and suspenders"). The COLOUR deliberately stays --sp-ai-accent
-  // (inherited from the wrapper): it marks an AI-touched surface, the same
-  // five-site vocabulary as the "AI" chrome badge in the registry above.
-  // That is signal, not drift — a consistency sweep must NOT re-flag it or
-  // unify it to --sp-text-helper.
-  // Measured 2026-08-25 per the hovered-surface rule (handoff §6): light
-  // #8a3ffc on the hover wash #f6f2ff = 4.54:1 (12px text needs 4.5 — pass);
-  // on white at rest = 5.00. Dark accent RULED 2026-08-25 (handoff §9):
-  // purple-50 #a56eff measured 4.31 on the dark hover wash composite
-  // (rgba(138,63,252,.16) over #1f1f1f = #302442), so the dark
-  // --sp-ai-accent is purple-40 #be95ff — 6.13 on that composite, 6.44 on
-  // the resting #262626, 7.01 on #1f1f1f. Change the accent hexes or the
-  // wash alpha → re-measure all of these.
+test("the inspector's Ask Planner row wears the Carbon-for-AI label and steps it on row hover (PHASE3DS §1.18, P3-7)", async () => {
+  // Phase 4 PR 3b: the eyebrow-metric label (2026-08-25 ruling) is superseded
+  // by the Phase 3 `.sp-ai-label` — the ONE AI marker, label text + gradient
+  // border only, no aura. The row is contact-row-shaped; hovering the ROW
+  // steps the label text (the hover-surface rule) through the one AI token
+  // this file may consume, which accessibility-source confines to this row.
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
-
-  assert.match(
-    inspectorSource,
-    /<span className="text-xs font-semibold uppercase tracking-\[0\.08em\]">Ask Planner<\/span>/,
-    "Ask Planner label holds eyebrow metrics (12px semibold uppercase 0.08em)"
-  );
-  assert.doesNotMatch(
-    inspectorSource,
-    /font-bold[^"]*">Ask Planner</,
-    "Ask Planner label must not return to bold"
-  );
-  // The accent wrapper still colours the label (the sanctioned half of the
-  // variant): the eyebrow row's wrapper carries --sp-ai-accent.
-  assert.match(
-    inspectorSource,
-    /text-\[var\(--sp-ai-accent\)\]">[^]{0,1200}?Ask Planner<\/span>/,
-    "Ask Planner label keeps the AI accent colour"
-  );
+  assert.match(inspectorSource, /<span className="sp-ai-label" aria-hidden="true">AI<\/span>/);
+  assert.match(inspectorSource, /hover:\[&_\.sp-ai-label\]:text-\[var\(--sp-ai-label-text-hover\)\]/);
+  assert.doesNotMatch(inspectorSource, /--sp-ai-accent|text-\[9\.5px\]/);
+  assert.match(inspectorSource, /Ask Planner about this seat/);
 });
 
 test("desktop marker redesign stays clear of data auth publish and route boundaries", async () => {

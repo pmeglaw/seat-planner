@@ -280,13 +280,14 @@ function ContactFacts({ rows, canEdit, personName }: { rows: ContactFactRow[]; c
   );
 }
 
-// AI entry row (v12 slice 4, prototype "Seat Planner v12 Prototype.dc.html"
-// line 264-265): factored into its own component so the AI-blue chrome token
+// AI entry row (PHASE3DS §1.18, P3-7): the `.sp-ai-label` is the ONLY AI
+// styling on this surface — a contact-row-shaped button whose hover steps
+// the label text (the hover-surface rule, §7 item 2) through the one AI token
+// this file may consume. Factored into its own component so the AI token
 // stays provably confined here — the accessibility-source guardrail counts
 // every occurrence of that token in this file and asserts they all fall
-// inside this function (the same technique AppRail's AiCell() uses for the
-// rail's AI nav item). The prop is named `seat` per that contract; it is
-// aliased to `selectedSeat` locally so the aria-label/title text stays
+// inside this function. The prop is named `seat` per that contract; it is
+// aliased to `selectedSeat` locally so the aria-label text stays
 // byte-identical to this row's pre-extraction form.
 function AskPlannerSeatRow({ seat: selectedSeat, onExplainSeat }: { seat: SeatWithEmployee; onExplainSeat: (seat: SeatWithEmployee) => void }) {
   return (
@@ -294,24 +295,11 @@ function AskPlannerSeatRow({ seat: selectedSeat, onExplainSeat }: { seat: SeatWi
       type="button"
       onClick={() => onExplainSeat(selectedSeat)}
       aria-label={`Ask Planner about ${selectedSeat.label}`}
-      title={`Ask Planner about ${selectedSeat.label}`}
-      className="mx-4 mb-3 flex w-auto items-center justify-between gap-3 border border-[var(--sp-border-subtle)] border-l-4 border-l-[var(--sp-ai-accent)] bg-[var(--sp-layer-01)] px-3.5 py-3 text-left transition hover:border-[var(--sp-ai-accent)] hover:border-l-[var(--sp-ai-accent)] hover:bg-[var(--sp-ai-accent-soft)] active:scale-[0.985] active:duration-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-ai-accent)]"
+      className="sp-contact-row mt-4 w-full grid-cols-[auto_1fr_auto] text-left hover:[&_.sp-ai-label]:text-[var(--sp-ai-label-text-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--sp-focus)]"
     >
-      <span className="min-w-0">
-        <span className="mb-1 flex items-center gap-2 text-[var(--sp-ai-accent)]">
-          <span className="border border-[var(--sp-ai-accent)] px-1 text-[9.5px] font-bold tracking-[0.04em]">AI</span>
-          {/* Sanctioned eyebrow variant (owner ruling 2026-08-25): eyebrow
-              metrics (semibold — uppercase + tracking already carry the
-              emphasis; bold would be a third device), but the colour stays
-              --sp-ai-accent from the wrapper: it marks an AI-touched surface,
-              same vocabulary as the five-site "AI" badge. Contrast measured
-              on the HOVER wash per the §6 rule: #8a3ffc on #f6f2ff = 4.54:1.
-              Pinned in desktop-seat-marker-system-source.test.mjs. */}
-          <span className="text-xs font-semibold uppercase tracking-[0.08em]">Ask Planner</span>
-        </span>
-        <span className="block truncate text-[13px] font-medium text-[var(--sp-text-primary)]">Ask Planner about this seat</span>
-      </span>
-      <span aria-hidden="true" className="shrink-0 leading-none text-[var(--sp-ai-accent)]"><ChevronRightIcon /></span>
+      <span className="sp-ai-label" aria-hidden="true">AI</span>
+      <span className="min-w-0 truncate">Ask Planner about this seat</span>
+      <span aria-hidden="true" className="text-[var(--sp-icon-secondary)]"><ChevronRightIcon /></span>
     </button>
   );
 }

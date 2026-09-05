@@ -44,8 +44,6 @@ const SUB12_LEDGER = new Map(Object.entries({
   // publish changes); ViewerSeatFinder = the filter count badge and the
   // aria-hidden "V" brand monogram. Every WORD site in these files sits at
   // the 12px floor now — a count going UP here means a new word slipped in.
-  "components/seat-map/AskPlannerDrawer.tsx": 2,
-  "components/seat-map/SeatInspector.tsx": 1, // PR 3b: only the registry "AI" badge (AskPlannerSeatRow) remains; PR 3b T5 re-labels it
   // P3 ruling 2026-08-25: the palette is the sanctioned FIND surface, so its
   // eight word sites (header count, kind badge — the 9px floor-breaker — result
   // meta, Clear search, zone chip labels, row subtitles, "No seat", footer)
