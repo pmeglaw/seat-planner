@@ -1,6 +1,8 @@
 // Phase 4 runtime audit (rerun on every PR): every var(--…) referenced by a stylesheet rule that
 // MATCHES an element on the page must resolve on :root or on some element.
-// Also captures screenshots at 1920×1080 (both themes) + 1024×768 (light).
+// Also captures screenshots at 1920×1080 (both themes) + 1024×768 (light); the PR 4 document pages
+// (/admin/management, /admin/settings) additionally at 1280×800 (both themes) and in the SYSTEM state
+// (no stored theme — the OS colour scheme decides; attrs must read null/null) light and dark at 1920.
 // Usage: node docs/redesign-v2/phase4/audit/runtime-audit.mjs <baseUrl> <outDir> [email] [password]
 // Run against the LOCAL Docker stack (npm run db:start + db:seed; .env.local pointed at it) — never
 // against production: the seeded local admin is e2e-admin@example.test (tests/e2e-auth/auth-helpers.ts).
@@ -95,6 +97,34 @@ for (const route of ROUTES) {
     }
     console.log(`${route} ${theme} attrs=${attrs.join("/")} referenced=${audit.referenced} undefined=${audit.stillUndefined.length}${audit.stillUndefined.length ? " " + audit.stillUndefined.join(",") : ""}`);
   }
+}
+// PR 4 document pages: the laptop frame in both themes, then the system state (light and dark by
+// emulated colour scheme, no stored theme — the boot script must leave both attributes off).
+const PAGE_ROUTES = ["/admin/management", "/admin/settings"];
+for (const route of PAGE_ROUTES) {
+  const name = route.slice(1).replaceAll("/", "-");
+  for (const theme of ["light", "dark"]) {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(`${base}${route}`, { waitUntil: "networkidle" });
+    await page.evaluate(t => { localStorage.setItem("sp-theme", t); }, theme);
+    await page.reload({ waitUntil: "networkidle" });
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(outDir, `${name}-${theme}-1280.png`), fullPage: false });
+  }
+  await page.evaluate(() => localStorage.removeItem("sp-theme"));
+  for (const scheme of ["light", "dark"]) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto(`${base}${route}`, { waitUntil: "networkidle" });
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(600);
+    const attrs = await page.evaluate(() => [document.documentElement.getAttribute("data-theme"), document.documentElement.getAttribute("data-carbon-theme")]);
+    const audit = await page.evaluate(auditInPage);
+    await page.screenshot({ path: path.join(outDir, `${name}-system-${scheme}-1920.png`), fullPage: false });
+    console.log(`${route} system-${scheme} attrs=${attrs.join("/")} (expected null/null) referenced=${audit.referenced} undefined=${audit.stillUndefined.length}${audit.stillUndefined.length ? " " + audit.stillUndefined.join(",") : ""}`);
+  }
+  await page.emulateMedia({ colorScheme: null });
 }
 await page.evaluate(() => localStorage.removeItem("sp-theme"));
 await page.goto(`${base}/`, { waitUntil: "networkidle" });

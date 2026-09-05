@@ -53,6 +53,17 @@ test("admin header: the indicator never meets a section link or a utility across
   await assertIndicatorClear(page, "admin");
 });
 
+// Phase 4 PR 4: the two document pages carry the same header; their own
+// content (the sticky tab strip, the 776 column) must not shift the run.
+for (const route of ["/admin/management", "/admin/settings"]) {
+  test(`admin header on ${route}: the indicator never meets a section link or a utility across the width ladder`, async ({ page }) => {
+    await signIn(page, SEEDED_ADMIN_EMAIL);
+    await page.goto(route);
+    await expect(page.locator("#shell-header button.sp-mode")).toBeVisible();
+    await assertIndicatorClear(page, "admin");
+  });
+}
+
 test("viewer header: the indicator never meets a section link or a utility across the width ladder", async ({ page }) => {
   await signIn(page, SEEDED_VIEWER_EMAIL);
   await page.goto("/");
