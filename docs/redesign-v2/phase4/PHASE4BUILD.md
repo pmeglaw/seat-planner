@@ -499,10 +499,11 @@ draft", the legend "Changed in draft 1". · **Pinned** `tests/draft-changes.test
 seated person's seat is badged; the unseated person is not; without seats nothing is badged).
 
 **Recorded, not changed (the smoke's other readings):**
-- The invalid-target tooltip shows the seat code; the refusal reason is the canvas status notice ("NE07 is reserved —
-  choose another seat.") and the accessible name ("Not a valid target") — `lib/seatTargets` was written that way
-  (the reason is named in the status region, never colour only). The owner's step 4 expected the reason in the
-  tooltip; ruling wanted before changing the tier-C tooltip's contract (one line, the code — PHASE3DS §1.8).
+- **Decision (owner, 2026-09-05, on the smoke's step 4): the tooltip carries the seat code only, on every seat,
+  always.** The refusal reason ("NE07 is reserved — choose another seat.") lives in the canvas status notice and in
+  the control's accessible name ("Not a valid target"), never in the tooltip — `lib/seatTargets` as written (the
+  reason named in the status region, never colour only); the tier-C tooltip's contract stays one line, the code
+  (PHASE3DS §1.8, §1.16). PHASE2UX §1M.6 carries the same line so the wireframe spec matches.
 - Discard draft changes keeps a people edit made in the inspector (the dialog says so: "People edits in Management
   are kept") — after a department change the header stays "Draft — 1 change" and the ◇ stays. The smoke's step 10
   uses a seat change (a move); the people rule is Management's and predates 3b.
@@ -702,7 +703,7 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | 1b | #514 | `feat/brand-terracotta` | v1.74.2 | brand layer: `app/styles/brand/megeredchian-law-tokens.css` (+ `.json`), `public/Logo-Megeredchian-Law.jpg`, `docs/brand/`, CLAUDE.md "Brand System", DECISIONS §6 no. 16, token test brand rules | merged |
 | 2 | #515 | `feat/phase4-shell` | v1.74.3 | shell (P3-2 radio, 6, 9, 10; P2-2; route-group move of `/` confirmed 2026-09-03; Position kept as the fourth filter group, owner ruling 2026-09-04; group-2 sweep; provisional tenant row = PR 2/PR 3 seam; two preview rulings — indicator in the free run, no hover fill on the current link) | merged |
 | 3a | #516 | `feat/phase4-map-frame` | v1.74.5 | map frame (P3-4, 5 band half, 13; P2-1, 4 `?q=` `?names=`): control row on both surfaces, **provisional tenant row removed** (PR 2 seam closed — SeatMap's bar tenants + the viewer search move into the map control row, PHASE2UX §1M.3), one search + palette on `/admin` too, Filters split control, Find me, band + `SeatMark` + legend follows Names, canvas status region, roster Copy link; washes + clusters (D1-h/D1-i), `FilterPanel` / `ActiveFilterChips` / `DeptChipRow` / `AiHighlightChip` / `FloorSelector` / `ResultsPanel` / `adminChrome.ts` retired; owner rulings O1 O5 O6 O7 (2026-09-04); pre-merge smoke 24/24 (`screenshots/pr3a-smoke/`) + §1.22–§1.25 | merged |
-| 3b | — | `feat/phase4-map-markers` | v1.74.6 | map markers + slot (P3-5 marker half, 7, 8, 11, 12, 14; P2-3, 9): `.sp-pill` rewrite, seat-code tooltip, ◇ from the publish diff, quiet pill replaces the dim (ledger row closed), invalid target wired (O4), 400 slot (inspector · mode card · Ask Planner), publish tearsheet, group-3 sweep, marker rig + Draft-mark crops; owner rulings O2 O3 (brand-layer tokens); carry-ins C-1 (row rules out of `globals.css`, Q1/Q2), C-2 (palette rows, add-seat card), C-3 (§1.25 Redo fix, Q3 every column); Q4 seed reserved + unavailable; Q5 one PR unless the diff passes §3's line after T6 | open — PR 518 (2026-09-05); owner walks the preview, then "merge" → tag v1.74.6 |
+| 3b | #518 | `feat/phase4-map-markers` | v1.74.6 | map markers + slot (P3-5 marker half, 7, 8, 11, 12, 14; P2-3, 9): `.sp-pill` rewrite, seat-code tooltip, ◇ from the publish diff, quiet pill replaces the dim (ledger row closed), invalid target wired (O4), 400 slot (inspector · mode card · Ask Planner), publish tearsheet, group-3 sweep, marker rig + Draft-mark crops; owner rulings O2 O3 (brand-layer tokens); carry-ins C-1 (row rules out of `globals.css`, Q1/Q2), C-2 (palette rows, add-seat card), C-3 (§1.25 Redo fix, Q3 every column); Q4 seed reserved + unavailable; Q5 one PR. **Pre-merge smoke 13/13 steps pass** (18/18 records, `screenshots/pr3b-smoke/`); fix §1.36 — people edits now badge the seat; ◇ `rgb(138, 63, 252)` light / `rgb(190, 149, 255)` dark; live hit-pill contrast **15.23:1** light / **10.50:1** dark; Redo reapplies; invalid targets refused with the notice; 1024 pass; tooltip = seat code only (ruling, §1.36) | merged 2026-09-05 (squash) |
 | 4 | — | — | — | Management + Settings (P3-15, 16, 17; P2-6, 7, 8) | not started |
 | 5 | — | — | — | Reception, route surfaces, `/login` + `/my-seat` confirmed unchanged (P3-18; P2-5) | not started |
 | 6 | — | — | v2.0.0 | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
@@ -712,4 +713,4 @@ PR 3b pre-merge smoke (2026-09-05, owner-ordered, thirteen steps, local Docker s
 same build; marker rig 58 measurements, 0 under floor, ledger empty (both planner-highlight passes SKIPPED on a
 broad answer this run — a model outcome, not a marker).
 
-Next: PR 3b open (#518) — the owner walks the preview (checklist in the PR), then "merge" → squash, tag v1.74.6, prune, pull; then the PR 4 plan (Management + Settings) waits for "go".
+Next: PR 3b merged (#518, v1.74.6); the PR 4 plan (Management + Settings) waits for "go".

@@ -297,6 +297,9 @@ Owns the slot while a mode runs (INV-4). Card: eyebrow "Move employee mode", mes
 from NE04. Select the destination seat."), ghost **Exit move employee**; Esc exits ("Move canceled — no
 changes made." inline). Confirm dialogs stay modal (fewer than five inputs, a decision) with the shipped
 copy ("Move Sarah Reyes to L02?" / "Swap them"), floors tagged when the pair crosses floors (D2′).
+An invalid target (reserved / unavailable — O4) refuses the click; its tooltip still carries the seat code only, as on
+every seat, always — the reason ("NE07 is reserved — choose another seat.") is the canvas status notice and the
+control's accessible name, never the tooltip (owner ruling 2026-09-05, PHASE4BUILD §1.36).
 
 ### 1M.7 Ask Planner drawer (deviation 14) in the slot
 *Built 2026-09-05 (PR 3b, PHASE4BUILD §1.31).*
