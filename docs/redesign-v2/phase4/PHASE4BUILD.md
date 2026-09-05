@@ -295,19 +295,46 @@ the tooltip while the menu is open on hover (`.cds-overflow[data-open] .sp-toolt
 **Not a design decision** — the pattern and the copy ("More actions" = the accessible name) already exist ·
 **Would change if** the asset gains a tooltip on `.cds-overflow`.
 
-### 1.25 PR 3a — one Redo that did nothing (observed once, not reproduced; raised, not fixed)
+### 1.25 PR 3a — the first Redo after a seed does nothing (pre-existing; root cause found; 3b item, not fixed here)
 
-**Screen** `/admin` · **Observed** in one of thirteen rig runs of move → Ctrl Z → Ctrl Shift Z (the first run after a
-fresh `supabase db reset` + seed + `next start`): the undo applied, the row's Redo read "Redo · Ctrl Shift Z", then
-Ctrl Shift Z, Ctrl Y and a click on the Redo button all left the draft at "no changes" with BOTH stacks disabled and
-no notice on screen 90 s later (`screenshots/pr3a-smoke/05-redo.png` of that run). Nine further trials at 300 /
-1500 / 4000 ms after the undo all redid ("Redid Move … · Undo …" in the canvas status) · **Reading** a dropped
-history is what a stale-draft rejection does by design (`draft-history.spec.ts` "stale-draft rejection on Undo drops
-the history and explains why") — the explanation is what the capture lacks, and the rig did not record notices in
-that run · **Not changed here** — the fence is load-bearing (`lib/draftConcurrency.ts`) and the behaviour is not
-reproducible on demand · **Open for the owner** whether to (a) keep the rig's redo step capturing every `role=status`
-/ `role=alert` text for 5 s after the press (done in `probe-redo.mjs`) and re-run it on the next PR, or (b) treat as a
-3b item beside the MLS02 inline-status work (PHASE3DS §1.16: MLS02 = inline `role=status`, never a toast).
+**Screen** `/admin` · **Observed** in one of thirteen smoke-rig runs of move → Ctrl Z → Ctrl Shift Z: the undo
+applied, then Redo left the draft at "no changes" with BOTH stacks disabled. **Reproduced on demand (2026-09-04,
+owner's pre-merge check)** — 30 trials each, fresh `/admin` load per trial, Playwright on real Chrome, local Docker
+stack reseeded before each set:
+
+| build | trigger | result |
+|---|---|---|
+| `main` @ v1.74.3 (9d53408) | Undo / Redo buttons (no shortcuts on main) | trial 1 fails, 2–30 pass (29/30) |
+| `feat/phase4-map-frame` @ 69165a6 | Ctrl Z / Ctrl Shift Z | trial 1 fails, 2–30 pass (29/30) |
+| either build, same database, new browser | — | 0 failures (3/3 runs) |
+| either build, fresh `db reset` + seed | — | trial 1 fails every time (4/4 reseeds) |
+
+**Repro rate** is therefore not a probability: 100 % on the first undo → redo cycle after any whole-draft state
+that holds a seat with `notes = ''`, 0 % thereafter. The smoke's "1 of 13" was the one run after the e2e-auth
+global-setup reseed. **Not a race and not MLS02** — the trace shows no server-action POST on the redo press, only the
+`router.refresh()` RSC GET that `handleStaleDraft` fires; the text on screen (which the smoke rig's selector had
+missed) is the client-side adjacency message: "The draft changed in another session after this edit was undone, so
+redoing it is no longer safe. This page has been refreshed with the latest draft."
+
+**Cause.** `002_seed_initial_data.sql` inserts every seat with `notes = ''` (an empty string, not null). The page
+props carry that `''` into the history entry's `before` snapshot. Undo runs `restore_draft_snapshot`, which writes
+`nullif(trim(coalesce(source.notes, '')), '')` — every draft seat's notes become `null` — and returns the payload
+that `onRestored` adopts. Redo's `historyAdjacencyBroken(entry.before)` then compares `notes: ""` (snapshot) with
+`notes: null` (live) through `draftStatesEquivalent`'s canonical JSON, which strips only `created_at`/`updated_at`,
+so the states differ on all 60 seats and the fence path (`clearHistory()` + refresh) runs. Diff of the persisted
+`seat-planner:draft-history:v1` entry before and after one restore: 60/60 seats differ, field `notes` only
+(`"" → null`); employees 0/12. `update_draft_seat` already stores `nullif(trim(...))`, so an admin clearing a note
+writes `null` and does not re-arm it; CSV import and the seed are the `''` writers. Production seats came from the
+same migration, so any draft seat never rewritten by a restore may still carry `''` (owner to confirm:
+`select layer, count(*) filter (where notes = '') from public.seats group by layer` — read-only).
+
+**Not changed in 3a** — the fence is load-bearing (`lib/draftConcurrency.ts`) and the fix belongs with the
+history helper's tests, not a map-frame PR. **Tracked for 3b** (plan `phase4-pr3-map.md`, "Carried from 3a"):
+make `draftStatesEquivalent` compare the nullable text columns the RPCs normalise (`notes`, `zone`, `department`,
+employee `position` / `department` / `phone_extension` / `avatar_url`) after the same `nullif(trim())` — a pure
+`lib/draftHistory.ts` change with a `tests/draft-history.test.mjs` case pinning `'' ≡ null ≡ '  '` — and re-run
+`redo30.mjs` (scratch rig, 30 trials, expect 30/30 on a fresh seed). Rig and traces: the session scratchpad
+(`redo30.mjs`, `redo30-main-button.json`, `redo30-branch-keys.json`, `hist-fresh.json` / `hist-post.json`).
 
 ## 2. Obligations checklist
 
