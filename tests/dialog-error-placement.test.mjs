@@ -45,7 +45,7 @@ const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 
 let AdminManagementPanel;
 let SwapConfirmDialog;
-let PublishReviewDialog;
+let PublishReviewSheet;
 let DiscardDraftDialog;
 let VacateConfirmDialog;
 let DeleteSeatConfirmDialog;
@@ -56,13 +56,13 @@ before(async () => {
   ({ AdminManagementPanel } = await loadComponent("@/components/admin-management/AdminManagementPanel"));
   ({
     SwapConfirmDialog,
-    PublishReviewDialog,
     DiscardDraftDialog,
     VacateConfirmDialog,
     DeleteSeatConfirmDialog,
     MoveEmployeeConfirmDialog
   } = await loadComponent("@/components/seat-map/SeatMapDialogs"));
   ({ AskPlannerDrawer } = await loadComponent("@/components/seat-map/AskPlannerDrawer"));
+  ({ PublishReviewSheet } = await loadComponent("@/components/seat-map/PublishReviewSheet"));
   ({ SeatInspector } = await loadComponent("@/components/seat-map/SeatInspector"));
 });
 beforeEach(() => configureContext({ actions: {} }));
@@ -421,7 +421,7 @@ test("inspector move-conflict failure renders inside the still-open dialog with 
 
 test("publish review renders actionError inline with an enabled Retry publish", async () => {
   await renderElement(
-    React.createElement(PublishReviewDialog, {
+    React.createElement(PublishReviewSheet, {
       publishSummary: {
         hasChanges: true,
         employeeDetailChanges: [],

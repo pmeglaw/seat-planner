@@ -276,7 +276,7 @@ const RETIRED = {
   ],
   2: [/--sp-chrome-/g],
   3: [
-    /--sp-marker-/g,
+    /--sp-marker-(?!h-max)/g, // --sp-marker-h-max is a live Phase 3 geometry token (deviation 8), not the retired marker family
     /--sp-legend-/g,
     /--sp-selection(?![\w])/g,
     /--sp-ai-(?!label-text|border-start|border-end)/g,
@@ -296,7 +296,7 @@ const RETIRED = {
 // Sweep PRs that have merged. PR 1 adds 1, PR 2 adds 2, PR 3 adds 3, PR 4
 // adds 4. Until a group is swept its names are still the shipped vocabulary
 // and the rule stays silent for them.
-const SWEPT = new Set([1, 2]);
+const SWEPT = new Set([1, 2, 3]);
 
 test("retired --sp-* names are gone once their sweep PR has merged", () => {
   const offenders = [];

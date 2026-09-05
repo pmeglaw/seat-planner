@@ -424,11 +424,13 @@ test("a move trail is one arc, one arrowhead, and a dashed origin ring at the st
   assert.equal(origin.getAttribute("cy"), startY, "ring sits at the path start");
 });
 
-test("trail colors come from the admin accent tokens, never hardcoded hex", async () => {
+test("trail colors come from the pill's origin-edge token (the Phase 3 vocabulary), never hardcoded hex", async () => {
   await renderElement(React.createElement(DraftTrailOverlay, { kind: "move", sourceSeat: trailSource, targetSeat: trailTarget }));
   const svg = document.querySelector("svg[data-draft-trail]");
-  assert.equal(svg.querySelector('[data-trail-part="flow"]').getAttribute("stroke"), "var(--sp-trail)");
-  assert.equal(svg.querySelector('[data-trail-part="arrow"]').getAttribute("fill"), "var(--sp-trail)");
-  assert.equal(svg.querySelector('[data-trail-part="origin"]').getAttribute("stroke"), "var(--sp-trail-origin)");
+  // PR 3b group-3 sweep: --sp-trail / --sp-trail-origin retired for the pill's
+  // dashed-origin edge — the trail and the origin pill read as one construction.
+  assert.equal(svg.querySelector('[data-trail-part="flow"]').getAttribute("stroke"), "var(--sp-pill-origin-edge)");
+  assert.equal(svg.querySelector('[data-trail-part="arrow"]').getAttribute("fill"), "var(--sp-pill-origin-edge)");
+  assert.equal(svg.querySelector('[data-trail-part="origin"]').getAttribute("stroke"), "var(--sp-pill-origin-edge)");
   assert.ok(!/#[0-9a-fA-F]{3,8}/.test(svg.outerHTML), "no hardcoded hex anywhere in the trail markup");
 });

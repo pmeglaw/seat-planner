@@ -17,7 +17,7 @@ const viewerSource = await readFile(new URL("../app/(shell)/page.tsx", import.me
 const adminSource = await readFile(new URL("../app/(shell)/admin/page.tsx", import.meta.url), "utf8");
 // The publish-review dialog markup and hook (R-02a extraction) — where the
 // employee-detail diff is computed and rendered now.
-const seatMapDialogsSource = await readFile(new URL("../components/seat-map/SeatMapDialogs.tsx", import.meta.url), "utf8");
+const seatMapDialogsSource /* PR 3b: the review is PublishReviewSheet.tsx */ = await readFile(new URL("../components/seat-map/PublishReviewSheet.tsx", import.meta.url), "utf8");
 const publishHookSource = await readFile(new URL("../components/seat-map/usePublishReview.ts", import.meta.url), "utf8");
 
 function extractPublishFunction(sql) {

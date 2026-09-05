@@ -1445,7 +1445,7 @@ export function SeatInspector({
           </div>
 
           <div className="mt-4 grid gap-2">
-            <div className="rounded-[12px] border border-[var(--sp-publish-viewer-impact-border)] bg-[var(--sp-publish-viewer-impact-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-publish-viewer-impact-text)]">
+            <div className="rounded-[12px] border border-[var(--sp-status-warning-mark)] bg-[var(--sp-status-warning-surface)] p-3 text-sm font-semibold leading-5 text-[var(--sp-status-warning-text)]">
               {PUBLISH_IMPACT_NOTE}
             </div>
           </div>
@@ -1455,7 +1455,7 @@ export function SeatInspector({
               ref={moveConflictErrorRef}
               tabIndex={-1}
               role="alert"
-              className="mt-4 rounded-[12px] border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+              className="mt-4 rounded-[12px] border border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] p-3 text-sm font-semibold leading-5 text-[var(--sp-status-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
             >
               <span className="font-semibold">Move did not complete.</span> {moveConflictError}
             </div>

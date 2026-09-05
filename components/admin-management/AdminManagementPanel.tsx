@@ -826,7 +826,7 @@ export function AdminManagementPanel({
           <div
             role={error ? "alert" : "status"}
             aria-live={error ? "assertive" : "polite"}
-            className={["border px-4 py-3 text-sm font-semibold", error ? "border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] text-[var(--sp-editor-error-text)]" : "border-[var(--sp-editor-clean-border)] bg-[var(--sp-editor-clean-bg)] text-[var(--sp-editor-clean-text)]"].join(" ")}
+            className={["border px-4 py-3 text-sm font-semibold", error ? "border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] text-[var(--sp-status-error-text)]" : "border-[var(--sp-status-neutral-mark)] bg-[var(--sp-status-neutral-surface)] text-[var(--sp-status-neutral-text)]"].join(" ")}
           >
             {error ?? message}
           </div>
@@ -1059,7 +1059,7 @@ export function AdminManagementPanel({
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-[var(--sp-text-primary)]">{row.name}</span>
                       {!row.managed && (
-                        <span className="rounded-full bg-[var(--sp-editor-dirty-bg)] px-2 py-0.5 text-xs font-medium text-[var(--sp-editor-dirty-text)]">Not in managed list</span>
+                        <span className="rounded-full bg-[var(--sp-status-draft-surface)] px-2 py-0.5 text-xs font-medium text-[var(--sp-status-draft-text)]">Not in managed list</span>
                       )}
                     </div>
                     <div className="text-xs text-[var(--sp-text-secondary)]">{row.employeeCount.toLocaleString()} employee{row.employeeCount === 1 ? "" : "s"}</div>
@@ -1081,7 +1081,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteDepartment(row.name)}
                         disabled={pending}
                         aria-label={`Delete ${row.name}`}
-                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-error-mark)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-status-error-surface)] hover:text-[var(--sp-status-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-error-mark)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1132,7 +1132,7 @@ export function AdminManagementPanel({
                         onClick={() => deleteZone(name)}
                         disabled={pending}
                         aria-label={`Delete ${name}`}
-                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-editor-error-bg)] hover:text-[var(--sp-editor-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-error-mark)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                        className="relative inline-flex h-8 w-8 items-center justify-center text-[var(--sp-text-helper)] opacity-0 outline-none transition after:absolute after:-inset-y-1.5 after:-left-1 after:-right-2 hover:bg-[var(--sp-status-error-surface)] hover:text-[var(--sp-status-error-text)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--sp-status-error-mark)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                       >
                         <TrashIcon />
                       </button>
@@ -1189,7 +1189,7 @@ export function AdminManagementPanel({
             )}
 
             {publishHistoryState.status === "error" && (
-              <div className="mt-4 flex flex-col gap-3 border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-4 text-sm text-[var(--sp-editor-error-text)] md:flex-row md:items-center md:justify-between">
+              <div className="mt-4 flex flex-col gap-3 border border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] p-4 text-sm text-[var(--sp-status-error-text)] md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="font-semibold">Could not load publish history.</div>
                   <div className="mt-1 whitespace-pre-wrap">{publishHistoryState.error}</div>
@@ -1366,7 +1366,7 @@ export function AdminManagementPanel({
               </label>
             </div>
             {selectedEmployee && (
-              <div className="mt-4 border border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] p-3 text-xs leading-5 text-[var(--sp-editor-dirty-text)]">
+              <div className="mt-4 border border-[var(--sp-status-draft-mark)] bg-[var(--sp-status-draft-surface)] p-3 text-xs leading-5 text-[var(--sp-status-draft-text)]">
                 <div className="font-semibold tracking-normal">Deactivation impact</div>
                 <div className="mt-1">
                   Current draft seat: <span className="font-bold">{selectedEmployeeSeatLabel}</span>.
@@ -1385,11 +1385,11 @@ export function AdminManagementPanel({
                 ref={employeeDialogErrorRef}
                 tabIndex={-1}
                 role="alert"
-                className="mt-4 flex items-start gap-2.5 border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] px-3 py-2.5 text-sm font-semibold leading-5 text-[var(--sp-editor-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="mt-4 flex items-start gap-2.5 border border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] px-3 py-2.5 text-sm font-semibold leading-5 text-[var(--sp-status-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
               >
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="mt-0.5 h-[15px] w-[15px] shrink-0">
                   <circle cx="10" cy="10" r="8" fill="currentColor" />
-                  <path d="m7 7 6 6m0-6-6 6" stroke="var(--sp-editor-error-bg)" strokeWidth="1.6" strokeLinecap="round" />
+                  <path d="m7 7 6 6m0-6-6 6" stroke="var(--sp-status-error-surface)" strokeWidth="1.6" strokeLinecap="round" />
                 </svg>
                 <span className="min-w-0 flex-1">{employeeDialogError}</span>
                 <button
@@ -1399,7 +1399,7 @@ export function AdminManagementPanel({
                     employeeSaveButtonRef.current?.focus();
                   }}
                   aria-label="Dismiss save error"
-                  className="relative flex h-8 w-8 shrink-0 items-center justify-center text-[var(--sp-editor-error-text)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-editor-error-border)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                  className="relative flex h-8 w-8 shrink-0 items-center justify-center text-[var(--sp-status-error-text)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-status-error-mark)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 >
                   <CloseIcon />
                 </button>
@@ -1461,7 +1461,7 @@ export function AdminManagementPanel({
 
             <div className="mt-4 grid gap-2">
               {managementConfirm.kind === "employee" && (
-                <div className="border border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] p-3 text-sm leading-5 text-[var(--sp-editor-dirty-text)]">
+                <div className="border border-[var(--sp-status-draft-mark)] bg-[var(--sp-status-draft-surface)] p-3 text-sm leading-5 text-[var(--sp-status-draft-text)]">
                   <div className="font-semibold tracking-normal">Deactivation impact</div>
                   <div className="mt-1">
                     Current draft seat: <span className="font-bold">{managementConfirm.assignedSeatLabel}</span>.
@@ -1473,7 +1473,7 @@ export function AdminManagementPanel({
               )}
 
               {managementConfirm.kind === "department" && (
-                <div className="border border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] p-3 text-sm leading-5 text-[var(--sp-editor-dirty-text)]">
+                <div className="border border-[var(--sp-status-draft-mark)] bg-[var(--sp-status-draft-surface)] p-3 text-sm leading-5 text-[var(--sp-status-draft-text)]">
                   <div className="font-semibold tracking-normal">Department delete impact</div>
                   <div className="mt-1">
                     Clears this department from <span className="font-bold">{pluralize(managementConfirm.affectedCount, "active employee")}</span>. Employee records remain active and physical seat zones are unchanged.
@@ -1482,7 +1482,7 @@ export function AdminManagementPanel({
               )}
 
               {managementConfirm.kind === "zone" && (
-                <div className="border border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)] p-3 text-sm leading-5 text-[var(--sp-editor-dirty-text)]">
+                <div className="border border-[var(--sp-status-draft-mark)] bg-[var(--sp-status-draft-surface)] p-3 text-sm leading-5 text-[var(--sp-status-draft-text)]">
                   <div className="font-semibold tracking-normal">Zone delete impact</div>
                   <div className="mt-1">
                     Clears this physical zone from <span className="font-bold">{pluralize(managementConfirm.affectedCount, "draft seat")}</span>. Seat markers and employees remain in place.
@@ -1490,7 +1490,7 @@ export function AdminManagementPanel({
                 </div>
               )}
 
-              <div className="border border-[var(--sp-publish-ready-border)] bg-[var(--sp-publish-ready-bg)] p-3 text-sm font-semibold leading-5 text-[var(--sp-publish-ready-text)]">
+              <div className="border border-[var(--sp-status-success-mark)] bg-[var(--sp-status-success-surface)] p-3 text-sm font-semibold leading-5 text-[var(--sp-status-success-text)]">
                 {managementConfirm.kind === "employee"
                   ? "The published map everyone sees won't change until you publish again. Publish draft changes when ready."
                   : managementConfirm.kind === "department"

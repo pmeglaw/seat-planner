@@ -193,6 +193,42 @@ test("draftStatesEquivalent ignores volatile timestamps and key order", () => {
   assert.equal(draftHistory.draftStatesEquivalent(left, right), true);
 });
 
+// PHASE4BUILD §1.25 (Phase 4 PR 3b, carry-in C-3): the draft RPCs store
+// nullable text through nullif(trim(x), ''), so a snapshot holding '' (the
+// seed, a CSV import) must compare EQUAL to the restored draft's null — the
+// first Redo after a seed used to clear both stacks on exactly that mismatch.
+test("draftStatesEquivalent treats '', '  ' and null as one value on the columns the RPCs normalise", () => {
+  const { NORMALISED_SEAT_TEXT_COLUMNS, NORMALISED_EMPLOYEE_TEXT_COLUMNS } = draftHistory;
+  assert.deepEqual([...NORMALISED_SEAT_TEXT_COLUMNS], ["notes", "zone", "department"]);
+  assert.deepEqual([...NORMALISED_EMPLOYEE_TEXT_COLUMNS], ["position", "department", "phone_extension", "avatar_url"]);
+  for (const column of NORMALISED_SEAT_TEXT_COLUMNS) {
+    const blank = snapshot("A", "Ann"); blank.seats[0][column] = "";
+    const padded = snapshot("A", "Ann"); padded.seats[0][column] = "   ";
+    const nulled = snapshot("A", "Ann"); nulled.seats[0][column] = null;
+    assert.equal(draftHistory.draftStatesEquivalent(blank, nulled), true, `seat.${column}: '' ≡ null`);
+    assert.equal(draftHistory.draftStatesEquivalent(padded, nulled), true, `seat.${column}: '  ' ≡ null`);
+    const edited = snapshot("A", "Ann"); edited.seats[0][column] = "a";
+    assert.equal(draftHistory.draftStatesEquivalent(edited, nulled), false, `seat.${column}: a real edit still differs`);
+    const paddedEdit = snapshot("A", "Ann"); paddedEdit.seats[0][column] = "  a ";
+    assert.equal(draftHistory.draftStatesEquivalent(paddedEdit, edited), true, `seat.${column}: trimmed like the SQL`);
+  }
+  for (const column of NORMALISED_EMPLOYEE_TEXT_COLUMNS) {
+    const blank = snapshot("A", "Ann"); blank.employees[0][column] = ""; blank.seats[0].employee[column] = "";
+    const nulled = snapshot("A", "Ann"); nulled.employees[0][column] = null; nulled.seats[0].employee[column] = null;
+    assert.equal(draftHistory.draftStatesEquivalent(blank, nulled), true, `employee.${column}: '' ≡ null (directory and the seat's stitched employee)`);
+    const edited = snapshot("A", "Ann"); edited.employees[0][column] = "x"; edited.seats[0].employee[column] = "x";
+    assert.equal(draftHistory.draftStatesEquivalent(edited, nulled), false, `employee.${column}: a real edit still differs`);
+  }
+  // Columns the SQL does NOT normalise stay strict: '' and null differ on full_name.
+  const blankName = snapshot("A", "Ann"); blankName.employees[0].full_name = "";
+  const nullName = snapshot("A", "Ann"); nullName.employees[0].full_name = null;
+  assert.equal(draftHistory.draftStatesEquivalent(blankName, nullName), false);
+  assert.equal(draftHistory.normalizeNullableText("  x "), "x");
+  assert.equal(draftHistory.normalizeNullableText(""), null);
+  assert.equal(draftHistory.normalizeNullableText(undefined), null);
+  assert.equal(draftHistory.normalizeNullableText(3), 3);
+});
+
 test("draftStatesEquivalent detects a foreign edit hiding behind fresh timestamps", () => {
   const left = snapshot("W01", "Alex");
   const right = snapshot("W01", "Alex");

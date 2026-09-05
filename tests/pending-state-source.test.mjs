@@ -43,10 +43,11 @@ const BUTTON = "components/ui/Button.tsx";
 const FLOW_REGISTRY = [
   {
     id: "01-publish",
-    file: DIALOGS,
+    // PR 3b: the review is the wide tearsheet (PublishReviewSheet.tsx).
+    file: "components/seat-map/PublishReviewSheet.tsx",
     patterns: [
-      /pending \? "Publishing…"/,
-      /loading=\{pending\}[\s\S]{0,600}?"Publishing…"|"Publishing…"[\s\S]{0,600}?loading=\{pending\}/,
+      /pending\s*\? "Publishing…"/,
+      /aria-busy=\{pending \|\| undefined\}/,
       // The house-reference in-flight region stays.
       /role="status" aria-live="polite"[\s\S]{0,300}?Publishing reviewed draft changes/
     ]

@@ -151,7 +151,7 @@ export function DraftTrailOverlay({ kind, sourceSeat, targetSeat }: DraftTrailOv
           data-trail-part="underlay"
           d={path.d}
           fill="none"
-          stroke="var(--sp-trail)"
+          stroke="var(--sp-pill-origin-edge)"
           strokeWidth={6}
           opacity={0.16}
           strokeLinecap="round"
@@ -163,14 +163,14 @@ export function DraftTrailOverlay({ kind, sourceSeat, targetSeat }: DraftTrailOv
           data-trail-part="flow"
           d={path.d}
           fill="none"
-          stroke="var(--sp-trail)"
+          stroke="var(--sp-pill-origin-edge)"
           strokeWidth={1.8}
           strokeDasharray="6 4"
           className="motion-safe:animate-[map-trail-dash_1.2s_linear_infinite]"
         />
       ))}
       {trail.paths.map(path => (
-        <polygon key={`arrow ${path.arrowPoints}`} data-trail-part="arrow" points={path.arrowPoints} fill="var(--sp-trail)" />
+        <polygon key={`arrow ${path.arrowPoints}`} data-trail-part="arrow" points={path.arrowPoints} fill="var(--sp-pill-origin-edge)" />
       ))}
       {trail.originRing && (
         <circle
@@ -179,7 +179,7 @@ export function DraftTrailOverlay({ kind, sourceSeat, targetSeat }: DraftTrailOv
           cy={trail.originRing.y}
           r={ORIGIN_RING_RADIUS}
           fill="none"
-          stroke="var(--sp-trail-origin)"
+          stroke="var(--sp-pill-origin-edge)"
           strokeWidth={1.5}
           strokeDasharray="2 2"
         />

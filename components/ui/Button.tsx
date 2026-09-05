@@ -22,7 +22,7 @@ const variants = {
   secondary:
     "border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] text-[var(--sp-text-primary)] hover:border-[var(--sp-border-strong)] hover:bg-[var(--sp-background)]",
   danger:
-    "border-[var(--sp-editor-danger-border)] bg-[var(--sp-editor-danger-bg)] text-[var(--sp-editor-danger-text)] hover:border-[var(--sp-status-error-mark)]"
+    "border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] text-[var(--sp-status-error-text)] hover:border-[var(--sp-status-error-mark)]"
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(

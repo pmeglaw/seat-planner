@@ -317,6 +317,7 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
   // the page is inert while the keyboard proves otherwise.
   const dialogFiles = [
     "../components/seat-map/SeatMapDialogs.tsx",
+    "../components/seat-map/PublishReviewSheet.tsx",
     "../components/seat-map/SeatInspector.tsx",
     // (AskPlannerDrawer left this list in PR 3b: it is the right slot, a side panel.)
     "../components/admin-settings/DataUtilitiesPanel.tsx",
@@ -337,7 +338,8 @@ test("publish review summarizes draft changes before publish", async () => {
   // SeatMapDialogs.tsx and the diff memos + dirty-inspector gate live in
   // usePublishReview.ts — each anchor pins the file that owns it.
   const source = await readSource("../components/seat-map/usePublishReview.ts");
-  const dialogsSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
+  // PR 3b: the review is the wide tearsheet (PublishReviewSheet.tsx, PHASE3DS §1.19).
+  const dialogsSource = await readSource("../components/seat-map/PublishReviewSheet.tsx");
 
   // The summary must also diff live employee details against the viewer
   // snapshot so pending people edits are reviewable before they publish.
@@ -346,26 +348,28 @@ test("publish review summarizes draft changes before publish", async () => {
   // against the published baseline — same drop-out semantics as the summary.
   assert.match(source, /buildPublishDiffRows\(localSeats, localPublishedSeats\)/);
   assert.match(dialogsSource, /aria-labelledby="publish-review-title"/);
+  assert.match(dialogsSource, /aria-modal="true"/);
   assert.match(dialogsSource, /Review draft before publishing/);
-  assert.match(dialogsSource, /Confirm the saved draft changes before they become visible in the read-only viewer/);
-  assert.match(dialogsSource, /Ready to publish reviewed changes/);
   assert.match(dialogsSource, /Saved draft changes only — unsaved inspector edits are excluded\./);
-  assert.match(dialogsSource, /Draft and viewer map are in sync/);
-  // Viewer-impact + undo-history warnings folded into one caution line —
-  // both sentences must survive verbatim.
-  assert.match(dialogsSource, /Publishing copies the saved draft map to the read-only viewer and clears Undo\/Redo history after success\. Until you publish, viewers keep seeing the currently published map\./);
+  assert.match(dialogsSource, /Draft and published map are in sync\./);
+  // No ×: leaving is Cancel (the frame invariant); nothing chains into a second modal.
+  assert.doesNotMatch(dialogsSource, /aria-label="Close publish review"|<CloseIcon/);
+  // Viewer-impact + undo-history warnings, one rail line — both facts must survive verbatim.
+  assert.match(dialogsSource, /Replaces what everyone sees — both floors, in one step — and clears Undo\/Redo\. Viewers keep the current map until it finishes\./);
   assert.match(dialogsSource, /Publish did not complete/);
   assert.match(dialogsSource, /Publishing reviewed draft changes/);
   assert.match(dialogsSource, /\{actionError && !pending && \(/);
   assert.match(dialogsSource, /Retry publish/);
   assert.match(dialogsSource, /No draft changes to publish/);
-  assert.match(dialogsSource, /loading=\{pending\}[\s\S]{0,200}?disabled=\{!publishSummary\.hasChanges\}|disabled=\{!publishSummary\.hasChanges\}[\s\S]{0,200}?loading=\{pending\}/);
-  // The diff table's column contract and kind-tag tokens.
+  assert.match(dialogsSource, /disabled=\{!publishSummary\.hasChanges \|\| pending\}\s*aria-busy=\{pending \|\| undefined\}/);
+  // The diff table's column contract and the floor group rows (registry order).
   assert.match(dialogsSource, /Published now/);
   assert.match(dialogsSource, /After publish/);
-  assert.match(dialogsSource, /--sp-status-success-surface/);
-  assert.match(dialogsSource, /--sp-status-error-text/);
-  assert.match(dialogsSource, /--sp-status-draft-surface/);
+  assert.match(dialogsSource, /groupByFloor\(publishDiffRows\)/);
+  assert.match(dialogsSource, /className="sp-table-group"/);
+  // Kind tags are the asset's `.cds-tag` (the rail's tag set) and plain words in the Change cell.
+  assert.match(dialogsSource, /className="cds-tag"/);
+  assert.match(dialogsSource, /PUBLISH_DIFF_TAG_LABELS\[row\.kind\]/);
   assert.match(dialogsSource, /People details/);
   assert.match(source, /Publish review blocked: Save or discard the selected seat edits before publishing/);
   assert.match(source, /Save or discard the selected seat edits before publishing/);
@@ -393,9 +397,9 @@ test("publish workflow stays server-action gated and clears review history state
   // The confirm wiring crosses the extraction seam: SeatMap hands the
   // transition-gated confirm to the dialog, whose publish button stays
   // disabled without reviewed changes.
-  const dialogsSourceForPublish = await readSource("../components/seat-map/SeatMapDialogs.tsx");
+  const dialogsSourceForPublish = await readSource("../components/seat-map/PublishReviewSheet.tsx");
   assert.match(seatMapSource, /onConfirm=\{confirmPublishDraftMap\}/);
-  assert.match(dialogsSourceForPublish, /onClick=\{onConfirm\}[\s\S]*disabled=\{!publishSummary\.hasChanges\}[\s\S]{0,40}loading=\{pending\}/);
+  assert.match(dialogsSourceForPublish, /onClick=\{onConfirm\}\s*disabled=\{!publishSummary\.hasChanges \|\| pending\}\s*aria-busy=\{pending \|\| undefined\}/);
   assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(publishReviewExpectations, publishReviewEmployeeExpectations\)/);
   assert.match(confirmPublishFunction[0], /setLocalPublishedSeats\(nextPublishedSeats\)/);
   // Publish still drops the undo/redo stacks; they live in useDraftHistory now,
@@ -1145,10 +1149,9 @@ test("touch devices get visible destructive affordances, contained modals, and s
   // PR 3b: the drawer's scroll region is the slot body (`.sp-slot-body`, overflow: auto in the sheet).
   assert.match(askPlannerSource, /<div className="sp-slot-body">/);
   assert.equal((dataUtilitiesSource.match(/min-h-0 overflow-y-auto overscroll-contain/g) ?? []).length, 2);
-  // The publish-review dialog's scroll region moved to SeatMapDialogs.tsx
-  // with the R-02a extraction.
-  const seatMapDialogsSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
-  assert.match(seatMapDialogsSource, /min-h-0 overflow-y-auto overscroll-contain/);
+  // PR 3b: the publish review is the wide tearsheet — its scroll region is
+  // `.sp-tearsheet-main` (overflow: auto in the sheet); the body grid is min-height 0.
+  assert.match(await readSource("../components/seat-map/PublishReviewSheet.tsx"), /className="sp-tearsheet-main"/);
   assert.match(managementSource, /role="dialog"[\s\S]{0,600}overscroll-contain/);
 
   // Viewport-fixed bottom sheets respect the home-indicator inset (#198).

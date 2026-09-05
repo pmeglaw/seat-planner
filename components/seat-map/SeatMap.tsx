@@ -65,6 +65,7 @@ import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { useDraftHistory } from "@/components/seat-map/useDraftHistory";
 import { usePublishReview } from "@/components/seat-map/usePublishReview";
+import { PublishReviewSheet } from "@/components/seat-map/PublishReviewSheet";
 import { getSeatZone, useSeatFilters } from "@/components/seat-map/useSeatFilters";
 import { RightSlot, type RightSlotOwner } from "@/components/seat-map/RightSlot";
 import { ModeCard } from "@/components/seat-map/ModeCard";
@@ -76,7 +77,6 @@ import {
   DiscardDraftDialog,
   InspectorGuardDialog,
   MoveEmployeeConfirmDialog,
-  PublishReviewDialog,
   SwapConfirmDialog,
   VacateConfirmDialog,
   buildSwapSummary,
@@ -3345,8 +3345,11 @@ export function SeatMap({
         />
       )}
 
+      {/* The publish review as the wide tearsheet (PHASE3DS §1.19, C10):
+          Cancel is the exit; PUBLISH_BLOCKED closes it and lands in the canvas
+          status region (usePublishReview). */}
       {publishReviewOpen && (
-        <PublishReviewDialog
+        <PublishReviewSheet
           publishSummary={publishSummary}
           publishDiffRows={publishDiffRows}
           publishDiffCounts={publishDiffCounts}

@@ -95,19 +95,51 @@ function stripVolatile<T extends Record<string, unknown>>(record: T): Record<str
   return copy;
 }
 
+// The nullable text columns the draft RPCs store through
+// `nullif(trim(coalesce(x, '')), '')` — restore_draft_snapshot, update_draft_seat
+// and import_assignments_csv all write NULL for '' and trim what they keep.
+// A snapshot taken from page props can still hold '' (the seed and CSV imports
+// wrote it), so comparing it to the post-restore draft saw `'' ≠ null` on
+// every such row and broke the undo/redo adjacency exactly once, after the
+// first whole-draft restore (PHASE4BUILD §1.25 — the first Redo after a seed
+// did nothing). Both sides are normalised the way the SQL does before the
+// canonical comparison. tests/draft-history-sql-agreement-source.test.mjs pins
+// these lists to the columns the migrations normalise, so the two cannot drift.
+export const NORMALISED_SEAT_TEXT_COLUMNS = ["notes", "zone", "department"] as const;
+export const NORMALISED_EMPLOYEE_TEXT_COLUMNS = ["position", "department", "phone_extension", "avatar_url"] as const;
+
+export function normalizeNullableText(value: unknown): unknown {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+function normalizeColumns(record: Record<string, unknown>, columns: readonly string[]): Record<string, unknown> {
+  const copy = { ...record };
+  for (const column of columns) {
+    if (column in copy) copy[column] = normalizeNullableText(copy[column]);
+  }
+  return copy;
+}
+
+function comparableEmployee(employee: Record<string, unknown>) {
+  return normalizeColumns(stripVolatile(employee), NORMALISED_EMPLOYEE_TEXT_COLUMNS);
+}
+
 function comparableSeats(snapshot: DraftSnapshot) {
   return [...snapshot.seats]
     .sort((a, b) => a.id.localeCompare(b.id))
     .map(seat => ({
-      ...stripVolatile(seat),
-      employee: seat.employee ? stripVolatile(seat.employee) : null
+      ...normalizeColumns(stripVolatile(seat), NORMALISED_SEAT_TEXT_COLUMNS),
+      employee: seat.employee ? comparableEmployee(seat.employee) : null
     }));
 }
 
 function comparableEmployees(snapshot: DraftSnapshot) {
   return [...snapshot.employees]
     .sort((a, b) => a.id.localeCompare(b.id))
-    .map(stripVolatile);
+    .map(comparableEmployee);
 }
 
 // Key-order-independent serialization so equal values always compare equal,
