@@ -24,10 +24,24 @@
         "rowRestBg": "rgb(244, 244, 244)",
         "rowHoverBg": "rgb(232, 232, 232)",
         "tipFocus": {
-          "visible": true,
           "text": "Edit",
-          "right": 1720
+          "painted": true,
+          "inViewport": true,
+          "above": false,
+          "below": true,
+          "right": 1720,
+          "placement": null
         },
+        "tipLast": {
+          "text": "Edit",
+          "painted": true,
+          "inViewport": true,
+          "above": true,
+          "below": false,
+          "right": 1720,
+          "placement": "above"
+        },
+        "lastVindex": "97",
         "focusOnEdit": {
           "tag": "button",
           "label": "Edit Adrienne Moradkhanian",
@@ -42,6 +56,7 @@
         "01-management-rest-light.png",
         "01-row-hover-light.png",
         "01-edit-tooltip-focus-light.png",
+        "01-edit-tooltip-focus-last-light.png",
         "01-tab-focus-light.png"
       ]
     },
@@ -249,8 +264,9 @@
       "frame": "light",
       "ok": true,
       "values": {
-        "count": 3,
+        "count": 4,
         "bodies": [
+          "[]",
           "[]",
           "[]",
           "[]"
@@ -283,10 +299,24 @@
         "rowRestBg": "rgb(38, 38, 38)",
         "rowHoverBg": "rgb(51, 51, 51)",
         "tipFocus": {
-          "visible": true,
           "text": "Edit",
-          "right": 1720
+          "painted": true,
+          "inViewport": true,
+          "above": false,
+          "below": true,
+          "right": 1720,
+          "placement": null
         },
+        "tipLast": {
+          "text": "Edit",
+          "painted": true,
+          "inViewport": true,
+          "above": true,
+          "below": false,
+          "right": 1720,
+          "placement": "above"
+        },
+        "lastVindex": "97",
         "focusOnEdit": {
           "tag": "button",
           "label": "Edit Adrienne Moradkhanian",
@@ -301,6 +331,7 @@
         "01-management-rest-dark.png",
         "01-row-hover-dark.png",
         "01-edit-tooltip-focus-dark.png",
+        "01-edit-tooltip-focus-last-dark.png",
         "01-tab-focus-dark.png"
       ]
     },
@@ -542,10 +573,24 @@
         "rowRestBg": "rgb(244, 244, 244)",
         "rowHoverBg": "rgb(232, 232, 232)",
         "tipFocus": {
-          "visible": true,
           "text": "Edit",
-          "right": 1248
+          "painted": true,
+          "inViewport": true,
+          "above": false,
+          "below": true,
+          "right": 1248,
+          "placement": null
         },
+        "tipLast": {
+          "text": "Edit",
+          "painted": true,
+          "inViewport": true,
+          "above": true,
+          "below": false,
+          "right": 1248,
+          "placement": "above"
+        },
+        "lastVindex": "97",
         "focusOnEdit": {
           "tag": "button",
           "label": "Edit Adrienne Moradkhanian",
@@ -560,6 +605,7 @@
         "01-management-rest-1280-light.png",
         "01-row-hover-1280-light.png",
         "01-edit-tooltip-focus-1280-light.png",
+        "01-edit-tooltip-focus-last-1280-light.png",
         "01-tab-focus-1280-light.png"
       ]
     },
@@ -785,7 +831,7 @@
       "values": {
         "indicatorAtStart": "Draft — no changes",
         "indicatorAtEnd": "Draft — no changes",
-        "actionPosts": 18
+        "actionPosts": 19
       },
       "note": "",
       "files": []
@@ -793,92 +839,97 @@
   ],
   "actionPosts": [
     {
-      "at": "2026-09-05T21:50:55.870Z",
+      "at": "2026-09-05T22:23:38.833Z",
       "path": "/admin/management",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:50:57.385Z",
+      "at": "2026-09-05T22:23:40.404Z",
       "path": "/admin/management",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:10.894Z",
+      "at": "2026-09-05T22:23:55.759Z",
       "path": "/admin",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:12.943Z",
-      "path": "/admin/settings",
-      "body": "[]"
-    },
-    {
-      "at": "2026-09-05T21:51:14.680Z",
-      "path": "/admin/settings",
-      "body": "[]"
-    },
-    {
-      "at": "2026-09-05T21:51:17.346Z",
+      "at": "2026-09-05T22:23:56.587Z",
       "path": "/admin/management",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:18.786Z",
+      "at": "2026-09-05T22:23:57.739Z",
+      "path": "/admin/settings",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:23:59.441Z",
+      "path": "/admin/settings",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:02.264Z",
       "path": "/admin/management",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:32.167Z",
+      "at": "2026-09-05T22:24:03.770Z",
+      "path": "/admin/management",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-05T22:24:19.306Z",
       "path": "/admin",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:34.201Z",
+      "at": "2026-09-05T22:24:21.442Z",
       "path": "/admin/settings",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:35.742Z",
+      "at": "2026-09-05T22:24:22.972Z",
       "path": "/admin/settings",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:38.338Z",
+      "at": "2026-09-05T22:24:25.607Z",
       "path": "/admin/management",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:39.824Z",
+      "at": "2026-09-05T22:24:27.140Z",
       "path": "/admin/management",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:53.254Z",
+      "at": "2026-09-05T22:24:42.370Z",
       "path": "/admin",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:53.656Z",
+      "at": "2026-09-05T22:24:43.202Z",
       "path": "/admin/management",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:54.842Z",
+      "at": "2026-09-05T22:24:44.345Z",
       "path": "/admin/settings",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:56.464Z",
+      "at": "2026-09-05T22:24:45.905Z",
       "path": "/admin/settings",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:51:59.046Z",
+      "at": "2026-09-05T22:24:48.454Z",
       "path": "/admin/management",
       "body": "[]"
     },
     {
-      "at": "2026-09-05T21:52:00.690Z",
+      "at": "2026-09-05T22:24:49.928Z",
       "path": "/admin/management",
       "body": "[]"
     }

@@ -1,4 +1,4 @@
-# Phase 4 · PR 4 read-only preview walk (2026-09-05)
+# Phase 4 · PR 4 read-only preview walk (2026-09-05, re-run on amendment D)
 
 **What these show.** The Vercel branch preview of PR 4 (#519) walked end to end without a single write: both
 document pages at rest, the row hover and the seat-link colour step, the Edit tooltip on keyboard focus, the
@@ -8,18 +8,20 @@ Settings frame — at 1920×1080 light and dark and at 1280×800 light. `results
 pass/fail · computed values · captures, plus every server-action POST the browser sent during the walk.
 
 **Source.** Preview https://seat-planner-git-feat-phase4-pages-patrick-s-projects-c7baae0c.vercel.app —
-Vercel deployment `dpl_5LPVkdb19v4urHoabWoRM3M7ydrj`, READY at commit **`f4c74ae`** (PR #519, branch
-`feat/phase4-pages`). **Read-only.** The preview reads and writes the production database, so the walk
+Vercel deployment `dpl_DmQLhTNR773aTxNaVBDkejgdxR8U`, READY at commit **`2d9b3de`** (PR #519, branch
+`feat/phase4-pages`; the first walk ran on `dpl_5LPVkdb19v4urHoabWoRM3M7ydrj` at `f4c74ae` and found the tooltip
+defect below — these captures and `results.json` are the re-run on the fix). **Read-only.** The preview reads and writes the production database, so the walk
 opened every dialog and closed it with Esc / Cancel only; no Save, Add, Rename commit, Delete, Deactivate,
 Import, Restore, Publish or Discard; the file pickers were never invoked (the two review sheets need a file and
 were not opened). Evidence: the header indicator read **"Draft — no changes"** before the first step and after
-the last, and all 18 `Next-Action` POSTs carried the empty argument list `[]` — the shell's draft-status read
+the last, and all 19 `Next-Action` POSTs carried the empty argument list `[]` — the shell's draft-status read
 on each route load, nothing else.
 
 **Account.** No credentials for the owner's own account exist in the environment; on the owner's ruling
 (2026-09-05) the walk signed in as the repo's e2e fixture account (`SEAT_PLANNER_E2E_EMAIL` in `.env.local`),
 which holds the admin role in production. The preview sits behind Vercel Authentication; the rig entered
-through a 23-hour `_vercel_share` link minted with the Vercel MCP.
+through a 23-hour `_vercel_share` link minted with the Vercel MCP (one per deployment — the link is bound to
+the deployment it was minted for).
 
 **People-data mask.** The repo is public and the preview shows the live directory, so (owner ruling
 2026-09-05) the rig injects one stylesheet before every capture: the Name, Position and Extension cells, the
@@ -31,17 +33,19 @@ not people data and are unmasked.
 **Method.** `audit/pr4-preview-walk.mjs`: Playwright `chromium.launch({ channel: "chrome" })` (real Chrome),
 device scale 1; theme set by writing `sp-theme` to localStorage and reloading; computed values read with
 `getComputedStyle` on the live elements; the row hover measured with the pointer on the row away from the
-link; the tooltip by keyboard focus (Shift+Tab, Tab onto the Edit button); the tab ring by `focus()`; the
+link; the tooltip by keyboard focus (Shift+Tab, Tab onto the Edit button) on the first row and, after scrolling the
+pane to its end, on the last row (`data-vindex` 97 of 98) — "visible" = a hit test at the tooltip's centre (the
+probe lifts `pointer-events: none` for the call) plus the box inside the viewport; the tab ring by `focus()`; the
 IBM-blue scan over every element on the page for `color`, `background-color`, `border-color`,
 `outline-color` and `box-shadow`; navigation counted from `performance.getEntriesByType("navigation")`.
 
-## Captures (36)
+## Captures (39)
 
 | Frame | Files |
 |---|---|
-| 1920 light | 01-management-rest-light, 01-row-hover-light, 01-edit-tooltip-focus-light, 01-tab-focus-light, 02-panel-edit-light, 02-panel-combobox-light, 03-departments-rest-light, 03-rename-editing-light, 03-overflow-light, 03-zones-rest-light, 03-create-modal-light, 04-settings-rest-light |
-| 1920 dark | the same twelve with the `-dark` suffix |
-| 1280 light | the same twelve with the `-1280-light` suffix |
+| 1920 light | 01-management-rest-light, 01-row-hover-light, 01-edit-tooltip-focus-light, 01-edit-tooltip-focus-last-light, 01-tab-focus-light, 02-panel-edit-light, 02-panel-combobox-light, 03-departments-rest-light, 03-rename-editing-light, 03-overflow-light, 03-zones-rest-light, 03-create-modal-light, 04-settings-rest-light |
+| 1920 dark | the same thirteen with the `-dark` suffix |
+| 1280 light | the same thirteen with the `-1280-light` suffix |
 
 ## Computed values (identical in every frame unless a theme is named)
 
@@ -56,6 +60,8 @@ IBM-blue scan over every element on the page for `color`, `background-color`, `b
 | Row surface at rest → hover | `rgb(244, 244, 244)` → `rgb(232, 232, 232)` | `rgb(38, 38, 38)` → `rgb(51, 51, 51)` |
 | Edit panel (480 wide) surface | `rgb(255, 255, 255)` | `rgb(57, 57, 57)` |
 | Settings primary (Import CSV) background | `rgb(184, 92, 46)` | `rgb(184, 92, 46)` |
+| Edit tooltip, first row (focus) | painted, in viewport, below the button | same |
+| Edit tooltip, last row (focus) | painted, in viewport, **above** the button (`data-tooltip-placement="above"`) | same |
 | IBM blue on any element, either page | none (0 hits) | none (0 hits) |
 
 Geometry and vocabulary: tab strip 40; toolbar count "98 employees · 58 assigned · 40 unassigned"; rows
@@ -104,3 +110,8 @@ tooltip, which would leave `.sp-table-scroll` (a clipping box in both axes — n
 `document.elementFromPoint` at the tooltip's centre is the tooltip (lifting its `pointer-events: none` for the
 call) and the box lies inside the viewport — in this rig, the smoke's step 4 and the e2e-auth `page-frames` spec;
 jsdom has no layout, so the ct tier pins only the placement attribute.
+
+**Re-run (2026-09-05, deployment `dpl_DmQLhTNR773aTxNaVBDkejgdxR8U` at `2d9b3de`).** Same rules, zero writes,
+22/22. The tooltip now paints on the first row below the button and on the last row above it, in all three
+frames — `01-edit-tooltip-focus-*` and `01-edit-tooltip-focus-last-*`. Everything else measured identical to the
+first walk. The Docker smoke's step 4 was re-run on the fix as well (`../pr4-smoke/step4-amendment-d/`, 4/4).
