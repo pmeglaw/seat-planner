@@ -422,7 +422,15 @@ test("seat markers remain keyboard buttons with contextual accessible labels", a
   assert.match(source, /highlightedDescription = "Highlighted by Ask Planner"/);
   assert.match(source, /\$\{highlightedDescription\}\./);
   assert.match(source, /Selected\./);
-  assert.match(source, /focus-visible:ring-4/);
+  // Phase 4 PR 3b: the focus ring is the CSS deliverable's — `.sp-pill` and
+  // `.sp-seat-footprint` own a 2px inset `--sp-focus` outline in
+  // sp-components.css, so the marker only has to wear the classes.
+  assert.match(source, /"sp-pill cds-touch-target"/);
+  assert.match(source, /"sp-seat-footprint cds-touch-target/);
+  const componentsCss = await readSource("../app/styles/sp-components.css");
+  assert.match(componentsCss, /\.sp-pill:is\(:focus-visible, \[data-state="focus"\]\) \{ outline: var\(--sp-focus-width\) solid var\(--sp-focus\); outline-offset: var\(--sp-focus-offset\); \}/);
+  assert.match(componentsCss, /\.sp-seat-footprint:is\(:focus-visible, \[data-state="focus"\]\) \{ outline: var\(--sp-focus-width\) solid var\(--sp-focus\); outline-offset: var\(--sp-focus-offset\); \}/);
+  assert.doesNotMatch(source, /focus-visible:outline-none|outline-none/);
 });
 
 test("inspector sections, validation, and actions retain accessible confidence cues", async () => {
@@ -1235,12 +1243,12 @@ test("axe findings stay fixed: allowed roles, single main landmark, marker name 
   assert.match(markerSource, /accessibleSeatName/);
 
   // Subtree-text serializers (axe 4.10 / the Vercel toolbar) join adjacent
-  // spans WITHOUT whitespace, so the literal space text nodes between the
-  // code and name spans are load-bearing — without them the visible text
-  // reads "C07Daniel" and fails name containment (#223). Flex containers
-  // never render whitespace-only nodes, so they are visually inert.
-  assert.match(markerSource, /\{employeeName && " "\}/);
-  assert.match(markerSource, /\{showInlineName && " "\}/);
+  // spans WITHOUT whitespace (#223). Phase 4 PR 3b: the pill renders ONE
+  // visible text node (the short name, or the code for an empty seat in a
+  // move/swap) followed only by the aria-hidden ◇ badge — nothing to join,
+  // and the aria-label opens with that exact text.
+  assert.match(markerSource, /\{hasEmployee \? visibleLabel : <span translate="no">\{visibleLabel\}<\/span>\}\s*\{draftChanged \? <SeatMark kind="draft-badge" \/> : null\}/);
+  assert.match(markerSource, /const accessibleSeatName = !hasEmployee \|\| shortName === displayName \|\| namesOff \? displayName : `\$\{shortName\} \$\{displayName\}`/);
 });
 
 // v12 slice 9 (a11y pass). Both of these were found by running axe and a tab

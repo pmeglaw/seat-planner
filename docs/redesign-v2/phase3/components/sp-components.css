@@ -132,6 +132,13 @@
   box-shadow: inset 0 0 0 1px var(--sp-seat-footprint-border);
 }
 .sp-seat-footprint:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover-02); }
+/* Phase 4 PR 3b amendments (PHASE3DS §1.4): the footprint is a <button> on the plan, so it
+   carries the pill's focus ring and selection edge, and a quiet (filtered-out) variant — the
+   fill/edge step to the quiet pill's tokens, the mark to the quiet text colour. */
+.sp-seat-footprint:is(:focus-visible, [data-state="focus"]) { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
+.sp-seat-footprint[data-state="selected"] { box-shadow: inset 0 0 0 var(--sp-space-01) var(--sp-pill-selected-edge); }
+.sp-seat-footprint--quiet { background: var(--sp-pill-quiet-fill); box-shadow: inset 0 0 0 1px var(--sp-pill-quiet-edge); }
+.sp-seat-footprint--quiet .sp-seat-mark { color: var(--sp-pill-quiet-text); }
 
 /* -----------------------------------------------------------------------------
    3. HEADER OVERRIDES — §3 "Header, name, nav, utils · exists" + "Hamburger ·
@@ -529,6 +536,10 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 /* names off: assigned collapses to the filled 28 footprint; empty seats keep their symbols */
 .sp-pill--names-off { width: var(--sp-seat-footprint); padding: 0; justify-content: center; background: var(--sp-pill-names-off); box-shadow: none; color: transparent; overflow: hidden; }
 .sp-pill--names-off:is(:hover, [data-state="hover"]) { background: var(--sp-pill-names-off); }
+/* names off + quiet (filtered out): the filled footprint steps to the quiet edge colour — still
+   filled (= assigned), lighter than a match; no opacity (PHASE3DS §1.16 amendment, PR 3b) */
+.sp-pill--names-off.sp-pill--quiet { background: var(--sp-pill-quiet-edge); }
+.sp-pill--names-off.sp-pill--quiet:is(:hover, [data-state="hover"]) { background: var(--sp-pill-quiet-edge); }
 /* 44px hit region (deviation 7): the asset's touch-target pseudo, on every marker */
 .sp-pill.cds-touch-target::after, .sp-seat-footprint.cds-touch-target::after { content: ""; }
 .sp-seat-footprint.cds-touch-target { position: relative; }

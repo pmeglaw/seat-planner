@@ -32,8 +32,8 @@ import test from "node:test";
 const SUB12_LEDGER = new Map(Object.entries({
   // Marks (Ruling 1 — exempt):
   "app/login/page.tsx": 1,
-  // Map canvas: marks + words pending the PR-2 zoom-threshold rule:
-  "components/seat-map/SeatMarker.tsx": 16,
+  // Map canvas: the Phase 3 pill is label-01 (12px) — SeatMarker.tsx left the
+  // ledger in Phase 4 PR 3b (was 16: the code tier and the sub-12 marks).
   // Group-3 ruling 2026-08-26 — remaining counts are EXEMPT marks only:
   // AskPlannerDrawer = the two registry "AI" chrome badges (header + response
   // chip); MapZoomControl = the mono tabular zoom readout (both orientation

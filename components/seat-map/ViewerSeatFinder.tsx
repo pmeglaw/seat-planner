@@ -53,11 +53,11 @@ import { MapControlRow } from "@/components/seat-map/MapControlRow";
 import { CanvasStatus, type CanvasNotice } from "@/components/seat-map/CanvasStatus";
 import { MapZoomControl } from "@/components/seat-map/MapZoomControl";
 import { SeatInspector } from "@/components/seat-map/SeatInspector";
-import { SeatMarker } from "@/components/seat-map/SeatMarker";
+import { SeatMarker, seatPillLabel } from "@/components/seat-map/SeatMarker";
 import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
 import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
-import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, markerHitFloorMet, textTierActive } from "@/lib/seatCrowding";
+import { PILL_CLEARANCE_PX, PILL_HEIGHT_PX, clearanceFromScale, computeNameLabelNudges, estimatePillWidthPx } from "@/lib/seatCrowding";
 
 type ViewerSeatFinderProps = {
   seats: SeatWithEmployee[];
@@ -356,44 +356,13 @@ export function ViewerSeatFinder({
   // windows and the fixed-width mobile frame instead. Before first measure
   // (SSR/first paint) the helper falls back to the default fit-zoom clearance.
   //
-  // PR-2 text tier: derived from the SAME live scale — labels are marks below
-  // the collision threshold and 12px text at or above it, with the threshold
-  // computed from the actual seat set (no hardcoded frame width; add seats
-  // that tighten pitch and the tier retreats by construction). The ref
-  // carries the deadband: fit mode makes the frame width CONTINUOUS under
-  // window resize, so textTierActive holds an entered tier across a
-  // jitter-sized slack band instead of flapping at the boundary.
-  const textTierWasActiveRef = useRef(false);
-  const textTier = useMemo(
-    () => textTierActive(
-      visualSeats,
-      mapRenderedWidth ?? 0,
-      (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
-      textTierWasActiveRef.current
-    ),
-    [mapRenderedWidth, visualSeats]
-  );
-  textTierWasActiveRef.current = textTier;
-  // 44px touch floor, same derivation and deadband (lib/seatCrowding
-  // markerHitFloorMet): on at 1920 and `max`, off from `xlg` down where 44px
-  // regions would overlap their pod-mates (DECISIONS.md §2.4, 2026-09-01).
-  const hitFloorWasMetRef = useRef(false);
-  const hitFloor = useMemo(
-    () => markerHitFloorMet(
-      visualSeats,
-      mapRenderedWidth ?? 0,
-      (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
-      hitFloorWasMetRef.current
-    ),
-    [mapRenderedWidth, visualSeats]
-  );
-  hitFloorWasMetRef.current = hitFloor;
-  // Whenever the tier is on, the nudge scorers model the text-tier footprints
-  // — the pills actually on screen — instead of the resting-mark geometry.
-  const seatPillGeometry = textTier ? TEXT_TIER_PILL_GEOMETRY : RESTING_PILL_GEOMETRY;
+  // Phase 4 PR 3b: ONE pill layer (PHASE3DS §1.16) — the text tier and the
+  // pitch-gated 44px hit floor retired with the code pills; every marker
+  // carries the asset's touch target and the collision graph models each
+  // pill at its own estimated width.
   const seatDensityClearance = useMemo(
-    () => clearanceFromScale(mapRenderedWidth ?? 0, (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH), seatPillGeometry.clearancePx),
-    [mapRenderedWidth, seatPillGeometry]
+    () => clearanceFromScale(mapRenderedWidth ?? 0, (mapRenderedWidth ?? 0) * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH), PILL_CLEARANCE_PX),
+    [mapRenderedWidth]
   );
   // Pixel-aspect points for arrow-key traversal (see lib/seatKeyboardNav).
   const seatNavPoints = useMemo(
@@ -504,15 +473,11 @@ export function ViewerSeatFinder({
   // nudged at the same live zoom-aware clearance as the code graph (parity
   // with the admin map).
   const nameLabelNudges = useMemo(
-    () => computeNameLabelNudges(visualSeats, namedSeatIdSet, seatDensityClearance),
-    [namedSeatIdSet, seatDensityClearance, visualSeats]
-  );
-  // Code-pill nudges are computed AFTER the name nudges so the code graph
-  // can dodge the rows the name pills actually occupy (named seats render
-  // name/prominent tokens, not code pills).
-  const codePillNudges = useMemo(
-    () => computeCodePillNudges(visualSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet, geometry: seatPillGeometry }),
-    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, seatPillGeometry, visualSeats]
+    () => computeNameLabelNudges(visualSeats, namedSeatIdSet, seatDensityClearance, {
+      widthPx: seat => seat.employee ? estimatePillWidthPx(seatPillLabel(seat)) : PILL_HEIGHT_PX,
+      pixelsPerXUnit: mapRenderedWidth ?? 0
+    }),
+    [mapRenderedWidth, namedSeatIdSet, seatDensityClearance, visualSeats]
   );
 
   // "X selected on the map" is true for a selected seat (named by its result
@@ -1491,11 +1456,7 @@ export function ViewerSeatFinder({
                           canEdit={false}
                           showNames={showNames}
                           searchResult={filtersActive && inMatches}
-                          compactNameLabel
-                          codeNudge={codePillNudges.get(seat.id) ?? 0}
                           nameNudge={nameLabelNudges.get(seat.id) ?? 0}
-                          textTier={textTier}
-                          hitFloor={hitFloor}
                           swapMode={false}
                           moveEmployeeMode={false}
                           swapSource={false}

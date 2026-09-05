@@ -185,10 +185,9 @@ test("boundingBoxCenter handles a single point and an empty list", () => {
 });
 
 // Fit view sizes the plan to its own aspect ratio, so the sheet ends up exactly
-// as tall as the plan. Seat markers do not scale with it: SeatMarker's resting
-// pill is min-h-[34px] and centres on its coordinate via -translate-y-1/2, so
-// the bottom row hangs a fixed ~17px below the plan, plus 2px for the occupied
-// dot. At a 1920 window that overhang is 1.5% of a 711px-tall plan and lands
+// as tall as the plan. Seat markers do not scale with it: SeatMarker's pill is
+// the constant 28px footprint centred on its coordinate, so the bottom row
+// hangs a fixed 14px below the plan (the pre-Phase-3 pill hung ~19px). At a 1920 window that overhang is 1.5% of a 711px-tall plan and lands
 // inside the sheet's rounding slack; at 1024 it is 3.6% of a 305px plan and
 // spills out of an overflow-auto container whose scrollbar is hidden at lg —
 // content clipped with nothing on screen saying it is clipped. Measured

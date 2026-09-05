@@ -115,8 +115,7 @@ const HEX = /#[0-9a-fA-F]{3,8}(?![\w-])/g;
 const HEX_LEDGER = {
   "app/global-error.tsx": 10, // PR 5 (route cards)
   "app/layout.tsx": 1, // themeColor meta: gray 100, the header colour — Next's Viewport wants a string (owner, PR 1)
-  "components/seat-map/SeatSheet.tsx": 12, // PR 3 (inspector)
-  "components/ui/design-system.tsx": 53, // PR 3 (markerStateClassRecipes; the primitives were re-tokenised in PR 1)
+  "components/seat-map/SeatSheet.tsx": 12, // PR 5 (`/my-seat` ruling, O5 — deviation 12 keeps the sheet chrome-free)
 };
 
 test("no hex literal outside the two asset files (ledger only shrinks)", () => {

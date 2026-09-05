@@ -50,7 +50,7 @@ import {
   seatsToVisualSeats,
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
-import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, markerHitFloorMet, textTierActive } from "@/lib/seatCrowding";
+import { PILL_CLEARANCE_PX, PILL_HEIGHT_PX, clearanceFromScale, computeNameLabelNudges, estimatePillWidthPx } from "@/lib/seatCrowding";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
 import { FloorRoster, focusFloorRoster } from "@/components/seat-map/FloorRoster";
@@ -67,7 +67,7 @@ import { useDraftHistory } from "@/components/seat-map/useDraftHistory";
 import { usePublishReview } from "@/components/seat-map/usePublishReview";
 import { getSeatZone, useSeatFilters } from "@/components/seat-map/useSeatFilters";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
-import { SeatMarker } from "@/components/seat-map/SeatMarker";
+import { SeatMarker, seatPillLabel } from "@/components/seat-map/SeatMarker";
 import {
   DeleteSeatConfirmDialog,
   DiscardDraftDialog,
@@ -2633,48 +2633,17 @@ export function SeatMap({
   // pointer-move-driven re-renders (drag/pan/hover) don't rerun them: with
   // Show names off (the hot-path default) every dep below is
   // identity-stable, so the whole pipeline is cached.
-  // PR-2 text tier: derived from the SAME zoom-aware scale — labels are marks
-  // below the collision threshold and 12px text at or above it, computed from
-  // the actual seat set (no hardcoded frame width or per-base zoom table).
-  // The ref carries the deadband: fit mode keeps the frame width CONTINUOUS
-  // under window resize, so textTierActive holds an entered tier across a
-  // jitter-sized slack band instead of flapping at the boundary.
-  const textTierWasActiveRef = useRef(false);
-  const textTier = useMemo(
-    () => textTierActive(
-      visualLocalSeats,
-      mapPixelsPerNormalizedUnit,
-      mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
-      textTierWasActiveRef.current
-    ),
-    [mapPixelsPerNormalizedUnit, visualLocalSeats]
-  );
-  textTierWasActiveRef.current = textTier;
-  // 44px touch floor, same derivation and deadband (lib/seatCrowding
-  // markerHitFloorMet). Zoom-aware here too: zooming in widens pitch and lets
-  // the floor in; a docked panel that narrows the stage below ~1500px of
-  // rendered frame takes it back out (DECISIONS.md §2.4 / §5, 2026-09-01).
-  const hitFloorWasMetRef = useRef(false);
-  const hitFloor = useMemo(
-    () => markerHitFloorMet(
-      visualLocalSeats,
-      mapPixelsPerNormalizedUnit,
-      mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
-      hitFloorWasMetRef.current
-    ),
-    [mapPixelsPerNormalizedUnit, visualLocalSeats]
-  );
-  hitFloorWasMetRef.current = hitFloor;
-  // Whenever the tier is on, the nudge scorers model the text-tier footprints
-  // — the pills actually on screen — instead of the resting-mark geometry.
-  const seatPillGeometry = textTier ? TEXT_TIER_PILL_GEOMETRY : RESTING_PILL_GEOMETRY;
+  // Phase 4 PR 3b: ONE pill layer (PHASE3DS §1.16). The text tier and the
+  // pitch-gated 44px hit floor retired with the code pills — every marker is
+  // a 28px fit-width pill or footprint carrying the asset's touch target, and
+  // the collision graph models each pill at its own estimated width.
   const seatDensityClearance = useMemo(
     () => clearanceFromScale(
       mapPixelsPerNormalizedUnit,
       mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
-      seatPillGeometry.clearancePx
+      PILL_CLEARANCE_PX
     ),
-    [mapPixelsPerNormalizedUnit, seatPillGeometry]
+    [mapPixelsPerNormalizedUnit]
   );
   // Shared with the marker render loop below (dimmed={dimmedSeatIdSet.has(...)}).
   const dimmedSeatIdSet = new Set(floorSeats.filter(isSeatDimmed).map(seat => seat.id));
@@ -2711,16 +2680,14 @@ export function SeatMap({
         .map(seat => seat.id)
     );
   }, [dimmedSeatIdSet, moveEmployeeConfirm, moveEmployeeSourceSeatId, selectedSeatId, showNames, swapSourceSeatId, swapTargetSeatId, visualLocalSeats]);
+  // Fit-width pills: the scorer sees each pill at its own estimated width
+  // (an empty seat is the 28px footprint) at the live x scale.
   const nameLabelNudges = useMemo(
-    () => computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance),
-    [namedSeatIdSet, seatDensityClearance, visualLocalSeats]
-  );
-  // Code-pill nudges are computed AFTER the name nudges so the code graph
-  // can dodge the rows the name pills actually occupy (named seats render
-  // name tokens, not code pills).
-  const codePillNudges = useMemo(
-    () => computeCodePillNudges(visualLocalSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet, geometry: seatPillGeometry }),
-    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, seatPillGeometry, visualLocalSeats]
+    () => computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance, {
+      widthPx: seat => seat.employee ? estimatePillWidthPx(seatPillLabel(seat)) : PILL_HEIGHT_PX,
+      pixelsPerXUnit: mapPixelsPerNormalizedUnit
+    }),
+    [mapPixelsPerNormalizedUnit, namedSeatIdSet, seatDensityClearance, visualLocalSeats]
   );
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
@@ -3137,9 +3104,6 @@ export function SeatMap({
                     const seatMatchesFilters = matchesFilters(seat);
                     const visualSeat = visualSeatById.get(seat.id) ?? seat;
                     const viewportPlacement = getMarkerViewportPlacement(visualSeat.x);
-                    // Office plates center in their ROOM and size to it (the
-                    // click point is wherever the admin happened to add the
-                    // seat; the room is the identity). Display-only offset —
 
                     return (
                       <SeatMarker
@@ -3151,11 +3115,7 @@ export function SeatMap({
                         showNames={showNames}
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
                         draftChanged={draftChangedSeatLabelSet.has(seat.label)}
-                        compactNameLabel={(nameLabelNudges.get(seat.id) ?? 0) !== 0}
-                        codeNudge={codePillNudges.get(seat.id) ?? 0}
                         nameNudge={nameLabelNudges.get(seat.id) ?? 0}
-                        textTier={textTier}
-                        hitFloor={hitFloor}
                         swapMode={Boolean(swapSourceSeatId)}
                         moveEmployeeMode={Boolean(moveEmployeeSourceSeatId)}
                         swapSource={seat.id === swapSourceSeatId}
@@ -3165,12 +3125,6 @@ export function SeatMap({
                         addSeatMode={addSeatMode}
                         viewportEdge={viewportPlacement.edge}
                         viewportEdgeOffsetPx={viewportPlacement.offsetPx}
-                        // Owner preference: the admin map wears the published viewer's
-                        // seat-marker pills exactly — soft resting pills with the status
-                        // dot, the dark pill + orange ring when selected, orange hover.
-                        // (SeatMarker keeps its admin-token branches; the admin map just
-                        // no longer opts into them.)
-                        variant="viewer"
                         tabIndex={seat.id === mapRovingSeatId ? 0 : -1}
                         onSelect={stableSelectSeat}
                       />

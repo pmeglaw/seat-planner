@@ -36,22 +36,20 @@ test("the explainability disclosure is keyboard-reachable, not a hover tooltip",
   assert.match(source, /id="ask-planner-explain"/, "the disclosure panel must carry the controlled id");
 });
 
-test("AI blue reaches the map only through the planner-highlight state", async () => {
+test("no AI token touches the seat pill — the planner highlight is the search-hit state", async () => {
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
 
-  // Do-not-touch #1: this redesign changes NOTHING about the pills except the
-  // planner-highlight state. If AI blue leaked into a resting, selected or
-  // search state, the aura would stop meaning "the assistant chose this seat".
-  assert.ok((markerSource.match(/--sp-ai-|shadow-marker-ai/g) ?? []).length > 0,
-    "the planner-highlight state should consume the AI token family");
-
-  const plannerBranch = markerSource.match(/plannerHighlighted[\s\S]{0,4000}/);
-  assert.ok(plannerBranch, "the marker must derive a plannerHighlighted predicate");
-  for (const match of markerSource.matchAll(/--sp-ai-[a-z-]+|shadow-marker-ai/g)) {
-    const context = markerSource.slice(Math.max(0, match.index - 400), match.index);
-    assert.match(context, /plannerHighlighted/,
-      `AI token ${match[0]} must sit in a planner-highlight-gated expression`);
-  }
+  // Phase 3 (PHASE3DS §1.16, §1.18): Carbon for AI is the drawer's label +
+  // border only. On the map, "Ask Planner chose this seat" renders as the
+  // search-hit pill with the accessible name saying who highlighted it — the
+  // AI visual language stays exclusive to the AI surface, and no aura, ring
+  // or halo ever reaches a marker.
+  assert.equal((markerSource.match(/--sp-ai-|shadow-marker-ai|aura|halo/g) ?? []).length, 0,
+    "the seat marker must not consume the AI token family");
+  assert.match(markerSource, /const plannerHighlighted = highlighted && !activeMarker;/);
+  assert.match(markerSource, /const hit = \(searchProminent \|\| plannerHighlighted\) && !origin && !target && !invalidTarget;/);
+  assert.match(markerSource, /hit \? "sp-pill--search"/);
+  assert.match(markerSource, /highlightedDescription = "Highlighted by Ask Planner"/);
 });
 
 test("the map's AI emphasis only engages while seats are actually highlighted", async () => {

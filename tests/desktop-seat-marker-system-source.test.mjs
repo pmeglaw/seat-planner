@@ -19,9 +19,14 @@ test("desktop marker system keeps true coordinates and calibration constants unt
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const transformSource = await readSource("../lib/mapLayoutTransform.ts");
 
-  assert.match(markerSource, /style=\{pointToStyle\(\{ x: seat\.x, y: seat\.y \}\)\}/);
+  // The wrapper is placed by the calibration transform (left/top %); the
+  // collision nudge and the viewport-edge hug are an inline transform on top,
+  // and a running mode snaps every marker back to its true coordinate.
+  assert.match(markerSource, /\.\.\.pointToStyle\(\{ x: seat\.x, y: seat\.y \}\)/);
   assert.match(markerSource, /markerUsesTrueCoordinate = addSeatMode \|\| swapMode \|\| moveEmployeeMode/);
-  assert.match(markerSource, /resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate \|\| !tokenCanHugViewportEdge \? 0 : Math\.max\(0, Math\.round\(viewportEdgeOffsetPx\)\)/);
+  assert.match(markerSource, /resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate \? 0 : Math\.max\(0, Math\.round\(viewportEdgeOffsetPx\)\)/);
+  assert.match(markerSource, /const nudge = activeMarker \? 0 : nameNudge;/);
+  assert.match(markerSource, /transform: `translate\(\$\{translateX\}, calc\(-50% \+ \$\{nudge \* PILL_NUDGE_PX\}px\)\)`/);
   assert.match(seatMapSource, /const visualSeat = visualSeatById\.get\(seat\.id\) \?\? seat/);
   assert.match(seatMapSource, /viewportEdgeOffsetPx=\{viewportPlacement\.offsetPx\}/);
 
@@ -45,34 +50,43 @@ test("desktop marker system keeps true coordinates and calibration constants unt
   assert.match(transformSource, /xScale: 0\.835824/);
 });
 
-test("marker vocabulary: glyph presence per state cannot drift (PR-C 1.4.1)", async () => {
+test("marker vocabulary: one silhouette per state cannot drift (PHASE3DS §1.16, WCAG 1.4.1)", async () => {
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
+  const componentsCss = await readSource("../app/styles/sp-components.css");
 
-  // Presence dot = person attached: assigned AND reserved carry it, and it
-  // yields while a target-mode glyph is active (one glyph speaks at a time).
-  assert.match(markerSource, /\(seat\.status === "assigned" \|\| seat\.status === "reserved"\) && !targetGlyphActive &&/);
-  assert.match(markerSource, /const targetGlyphActive = swapCandidate \|\| moveCandidate \|\| invalidTarget;/);
+  // Every state is a distinct silhouette (the specimen's grayscale strip):
+  // rest 1px edge · selected 2px inverse edge · search filled + 1px · quiet
+  // light edge + lighter text · origin dashed 2px · target solid 2px + tint ·
+  // invalid dashed 2px + tint · ◇ badge · names-off filled footprint. The
+  // marker picks ONE modifier by precedence; the sheet draws the shapes.
+  assert.match(markerSource, /const pillModifier = origin \? "sp-pill--origin" : invalidTarget \? "sp-pill--invalid" : target \? "sp-pill--target" : hit \? "sp-pill--search" : quiet \? "sp-pill--quiet" : "";/);
+  assert.match(markerSource, /namesOff \? "sp-pill--names-off" : ""/);
+  assert.match(markerSource, /data-state=\{selected \? "selected" : undefined\}/);
+  for (const rule of [
+    /\.sp-pill\[aria-selected="true"\], \.sp-pill\[data-state="selected"\] \{ box-shadow: inset 0 0 0 var\(--sp-space-01\) var\(--sp-pill-selected-edge\); \}/,
+    /\.sp-pill--origin \{ box-shadow: none; outline: var\(--sp-space-01\) dashed/,
+    /\.sp-pill--target \{ background: var\(--sp-pill-target-fill\); box-shadow: inset 0 0 0 var\(--sp-space-01\) var\(--sp-pill-target-edge\); \}/,
+    /\.sp-pill--invalid \{ background: var\(--sp-pill-invalid-fill\); box-shadow: none; outline: var\(--sp-space-01\) dashed var\(--sp-pill-invalid-edge\);[^}]*cursor: not-allowed; \}/,
+    /\.sp-pill--names-off \{ width: var\(--sp-seat-footprint\);/
+  ]) {
+    assert.match(componentsCss, rule);
+  }
 
-  // Target modes: underlying fill preserved (no tone swap left in the state
-  // classes), validity rides the ✓/✕ badges.
-  assert.match(markerSource, /\(swapCandidate \|\| moveCandidate\) && \(\s*<span[^>]*>\s*✓/);
-  assert.match(markerSource, /invalidTarget && \(\s*<span[^>]*>\s*✕/);
-  assert.doesNotMatch(markerSource, /validTargetTone/);
-  assert.doesNotMatch(markerSource, /--sp-marker-invalid-surface|--sp-legend-target-invalid-surface/);
+  // Empty seats keep their status symbol (○ · lock · hatch), inlined by
+  // SeatMark; the ◇ changed-in-draft badge is the same inlined mark on a pill.
+  assert.match(markerSource, /<SeatMark kind=\{seatMarkKindFor\(seat\.status\)\} \/>/);
+  assert.match(markerSource, /\{draftChanged \? <SeatMark kind="draft-badge" \/> : null\}/);
 
-  // Hatch = structurally unusable, on the unavailable arm only, clipped off
-  // the border so the hover edge's measured contrast stays honest.
-  assert.match(markerSource, /bg-\[image:var\(--sp-marker-unavailable-hatch\)\] bg-clip-padding/);
+  // Invalid targets: aria-disabled + the reason in the accessible name; the
+  // sheet supplies the not-allowed cursor. The candidates' affordance is the
+  // --target edge, never a hover ring on an invalid pill.
+  assert.match(markerSource, /aria-disabled=\{invalidTarget \|\| undefined\}/);
+  assert.match(markerSource, /invalidTarget \? " Not a valid target\." : ""/);
+  assert.match(markerSource, /const target = swapTarget \|\| swapCandidate \|\| moveCandidate;/);
 
-  // Draft badge survives with its glyph-ink token, and also yields to ✓/✕.
-  assert.match(markerSource, /draftChanged && !selected && !searchProminent && !targetGlyphActive &&/);
-
-  // Invalid targets: not-allowed cursor, and no hover affordance ring.
-  assert.match(markerSource, /invalidTarget \? "cursor-not-allowed" : "cursor-pointer"/);
-  assert.match(markerSource, /swapMode && !swapSource && !invalidTarget\) \|\| \(moveEmployeeMode && !moveEmployeeSource && !invalidTarget\)/);
-
-  // Borders carry zero semantic weight — the uniform hover repaint stays.
-  assert.match(markerSource, /group-hover:border-\[var\(--sp-marker-active-edge\)\]/);
+  // The retired vocabularies stay retired: no marker/legend token families,
+  // no opacity dim, no Tailwind state recipes on the pill.
+  assert.doesNotMatch(markerSource, /--sp-marker-|--sp-legend-|opacity-45|group-hover|ring-4|data-token-mode/);
 });
 
 test("type-floor ruling 1 (2026-08-24): the micro-glyph MARKS are exempt from the 12px text floor", async () => {
@@ -98,15 +112,13 @@ test("type-floor ruling 1 (2026-08-24): the micro-glyph MARKS are exempt from th
   // meaning always rides the accessible name / a second signal, never the
   // tiny glyph itself). Sizes and hues stay free.
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
+  const seatMarkSource = await readSource("../components/seat-map/SeatMark.tsx");
 
-  for (const glyph of ["D", "✓", "✕"]) {
-    assert.match(
-      markerSource,
-      new RegExp(`<span[^>]*aria-hidden="true"[^>]*/?>\\s*${glyph}\\s*</span>|aria-hidden="true"\\s*>\\s*${glyph}`),
-      `${glyph} badge must stay aria-hidden decoration`
-    );
-  }
-  assert.match(markerSource, /plannerHighlighted && adminMarker && \(\s*<span\s*aria-hidden="true"/);
+  // Phase 4 PR 3b: the marks are SeatMark's inlined SVGs — the ◇ badge and the
+  // status symbols — every one aria-hidden; the pill's only text is label-01
+  // (12px), so the marker carries no sub-12 type at all.
+  assert.match(seatMarkSource, /className=\{className \? `sp-pill-badge \$\{className\}` : "sp-pill-badge"\} viewBox="0 0 8 8" aria-hidden="true"/);
+  assert.doesNotMatch(markerSource, /text-\[\d/);
 
   // The login "C05" mark stays inside the aria-hidden illustration container
   // (the whole decorative panel is hidden, so the mark can never be read as

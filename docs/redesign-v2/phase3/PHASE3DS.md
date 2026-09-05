@@ -126,6 +126,11 @@ footprint (`--sp-seat-footprint`, deviation 8's height cap) with the symbol cent
 library — Phase 4 may swap them for `@carbon/icons` `Locked` / a pattern fill as long as the grayscale
 strip still separates the four. **Would change if** `reserved` / `unavailable` acquire data and the primary
 read needs them promoted (D1: "symbols specified but not designed into the primary read until data exists").
+**Phase 4 PR 3b amendment (2026-09-05).** On the plan the footprint is a `<button>` (the empty-seat marker), so
+`sp-components.css` gained three states it lacked as a static mark: `:focus-visible` = the pill's 2px inset
+`--sp-focus` outline, `[data-state="selected"]` = the pill's 2px `--sp-pill-selected-edge` (an open seat can be
+selected into the inspector), and `.sp-seat-footprint--quiet` (filtered out: the quiet pill's fill + edge, the mark
+in `--sp-pill-quiet-text`) — the same fill/edge/text step the quiet pill takes, never an opacity. Both CSS copies.
 
 ### 1.5 Specimen state hooks
 
@@ -307,6 +312,15 @@ crisp at 3x and 1.5 straddled pixels at 1x. Rig lesson: the badge's fill and str
 `<svg>` so they inherit into the `<use>`d symbol — a `path` selector cannot reach a use's shadow tree,
 and the first render showed a filled diamond (§7). **Would change if** the marker pitch changes (a new
 plan) or a state is added past the five-indicator budget.
+**Phase 4 PR 3b amendments (2026-09-05, as built in `components/seat-map/SeatMarker.tsx`).** (1) *Names off +
+filtered out* had no state: `.sp-pill--names-off.sp-pill--quiet` fills the footprint with `--sp-pill-quiet-edge` —
+still filled (= assigned), lighter than a match, no opacity. (2) *In a move or swap every seat is a pill* — an
+empty seat shows its code — so the origin, the valid targets and the invalid targets read as one set (the specimen's
+"NE06" target pill, made the rule). (3) Ask Planner's highlight and the viewer's search / people-list hover are the
+search-hit pill; no AI token reaches the map (§1.18). (4) The Draft family is purple 60 / 40 by owner ruling
+(DECISIONS §6 no. 17) — this section's "orange" reads through the brand layer; `sp-tokens.css` still aliases
+Carbon's caution role. (5) The collision nudge (±14 = half the pill height, D1) is an inline transform on the
+marker wrapper, computed per pill at its estimated fit width (`lib/seatCrowding.ts`).
 
 ### 1.17 Right slot and inspector — Map → `.sp-slot`, commit bar, combobox, text area (§3 rows "Seat inspector side panel, 400", "Combobox", "text area", "Danger button")
 
@@ -519,7 +533,7 @@ changes on purpose. Zone-scoped dark variants are overrides too (they live under
 |---|---|---|---|---|---|
 | Foundations: type · spacing · sizes · grid · focus · motion · theme roles · grayscale strip | tokens | tokens only (`--sp-type-*`, `--sp-space-*`, `--sp-size-*`, `--sp-focus-*`, `--sp-duration-*`) | `00-foundations.html#type` … `#grayscale` | 1 | |
 | Mode indicator | hand-built | `.sp-mode`, `.sp-mode--published / --draft / --unpublished / --error / --loading`, `.sp-mode-mark`, `.sp-mode-skeleton` | `05-status-and-marks.html#mode` | 1 | |
-| Status marks (seat legend) | hand-built | `.sp-seat-mark`, `.sp-seat-mark--assigned / --available / --reserved / --unavailable`, `.sp-seat-legend`, `.sp-seat-footprint` | `05-status-and-marks.html#seat` | 1 | |
+| Status marks (seat legend) | hand-built | `.sp-seat-mark`, `.sp-seat-mark--assigned / --available / --reserved / --unavailable`, `.sp-seat-legend`, `.sp-seat-footprint` (+ Phase 4 PR 3b: `:focus-visible`, `[data-state="selected"]`, `--quiet` — §1.4 amendment) | `05-status-and-marks.html#seat` | 1 | |
 | Skip link | asset | `.cds-skip-link` (asset) | `01-shell.html` (first focusable) | 2 | |
 | Header, name, nav, utils | asset-overridden | `.cds-header.sp-header`, `.cds-header-name`, `.cds-header-nav`, `.cds-header-utils`, `.sp-header-center` | `01-shell.html#header` | 2 | `.sp-header-center` centres the indicator in the header's free run (flex: 1), not at x=960 — owner ruling 2026-09-04 (Phase 4 PR 2): the page-midpoint rule met the admin's links between 1056 and ~1580px |
 | Current section link — no hover fill | asset-overridden | `.sp-header .cds-header-nav a[aria-current="page"]:hover` | `01-shell.html#header` | 2 | owner ruling 2026-09-04 (Phase 4 PR 2): the current link is not a destination, so it keeps the shell background on hover and the terracotta bar stays 3.97:1 on gray 100 (2.77:1 on the asset's gray-90-hover) — the fifth hover-surface instance (§3) |
@@ -547,7 +561,7 @@ changes on purpose. Zone-scoped dark variants are overrides too (they live under
 | Ghost / tertiary / primary / icon buttons in the row · Ask Planner count badge | asset | asset `.cds-btn` set; `.cds-btn--tertiary[data-count]` | `02-map.html#row` | 3 | |
 | Toggle (Names) | hand-built | `.sp-toggle` (+`.sp-toggle-track`, `-state`) | `02-map.html#row` | 3 | |
 | Overflow menu ⋯ with danger item | asset | asset `.cds-overflow` / `.cds-overflow-menu` / `.cds-danger` | `02-map.html#row` | 3 | |
-| Seat pill (name marker) and states · ◇ changed-in-draft · names-off · 44px hit | hand-built | `.sp-pill` (+`--search`, `--quiet`, `--origin`, `--target`, `--invalid`, `--names-off`), `.sp-pill-badge`, `.cds-touch-target` | `02-map.html#pill` | 3 | |
+| Seat pill (name marker) and states · ◇ changed-in-draft · names-off · 44px hit | hand-built | `.sp-pill` (+`--search`, `--quiet`, `--origin`, `--target`, `--invalid`, `--names-off`; Phase 4 PR 3b: `--names-off.--quiet` — §1.16 amendment), `.sp-pill-badge`, `.cds-touch-target` | `02-map.html#pill` | 3 | |
 | Seat inspector side panel (400) · commit bar · contact rows | hand-built | `.sp-slot`, `.sp-slot-host[data-open]`, `-header`, `-eyebrow`, `-title`, `-actions`, `-body`, `-section`, `.sp-commit-bar`, `.sp-contact-row`, `.sp-person-role`, `.sp-draft-note` | `02-map.html#slot` | 3 | |
 | Combobox (employee name; inline create) | hand-built | `.sp-combobox` > `.cds-text-input[role=combobox]` + `.sp-listbox` (`.sp-listbox-create`, `-meta`), `.sp-create-note` | `02-map.html#slot` | 3 | |
 | Select · text input · text area · counter | hand-built on asset | asset `.cds-select`, `.cds-text-input`; `.sp-textarea`, `.sp-field-counter` | `02-map.html#slot` | 3 | |

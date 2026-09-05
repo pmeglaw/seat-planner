@@ -91,13 +91,14 @@ const PINS = {
     "after:absolute after:-inset-1.5"
   ],
   "components/seat-map/SeatMapDialogs.tsx": ["after:absolute after:-inset-1.5"],
-  // Seat markers: the canvas stays exempt from the sweep (SKIP_FILES), but
-  // the pitch-gated 44px hit region (lib/seatCrowding markerHitFloorMet,
-  // DECISIONS.md §2.4) is pinned per token box — 32/36/40 + 2×(6/4/2) = 44.
+  // Seat markers: the canvas stays exempt from the sweep (SKIP_FILES). Phase 4
+  // PR 3b: every marker — the name pill and the empty-seat footprint — carries
+  // the asset's `.cds-touch-target` pseudo (44px, deviation 7; the rule is
+  // `.sp-pill.cds-touch-target::after, .sp-seat-footprint.cds-touch-target::after`
+  // in sp-components.css). The pitch-gated floor retired with the code pills.
   "components/seat-map/SeatMarker.tsx": [
-    "after:absolute after:-inset-1.5",
-    "after:absolute after:-inset-1\"",
-    "after:absolute after:-inset-0.5"
+    "sp-pill cds-touch-target",
+    "sp-seat-footprint cds-touch-target"
   ],
   "components/admin-management/AdminManagementPanel.tsx": [
     "after:absolute after:-inset-2",

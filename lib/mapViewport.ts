@@ -45,9 +45,10 @@ export const PAN_DRAG_THRESHOLD_PX = 4;
 /**
  * Vertical room the fit view holds back for seat markers that overhang the plan.
  *
- * Markers do not scale with the map: SeatMarker's resting pill is min-h-[34px]
- * and centres on its coordinate via -translate-y-1/2, so the bottom row always
- * hangs ~17px below the plan's edge, plus 2px for the occupied dot. Fit view
+ * Markers do not scale with the map: SeatMarker's pill is the constant 28px
+ * footprint (lib/seatCrowding PILL_HEIGHT_PX) centred on its coordinate, so the
+ * bottom row always hangs 14px below the plan's edge (plus a nudged row's 14px
+ * in a colliding pod, plus the 4px ◇ badge overhang at the top). Fit view
  * sizes the sheet to the plan's own aspect ratio, so without a reserve the sheet
  * is exactly as tall as the plan and that overhang has nowhere to go — it spills
  * out of an overflow-auto container whose scrollbar is hidden at lg, clipping
@@ -57,9 +58,9 @@ export const PAN_DRAG_THRESHOLD_PX = 4;
  * 2026-07-28: scrollHeight 316 against clientHeight 307).
  *
  * 24px splits to 12px above and below once the plan is centred — clear of the
- * 19px worst case for a resting pill. It is deliberately NOT sized for the 46px
- * selected pill: covering that would cost ~12% of the plan's width to reserve
- * room only one transient marker ever uses.
+ * 14px resting overhang within the sheet's rounding slack. It is deliberately
+ * NOT sized for a nudged bottom row (28px): covering that would cost ~12% of
+ * the plan's width to reserve room only a colliding pair ever uses.
  */
 export const MAP_MARKER_EDGE_GUTTER_PX = 24;
 
