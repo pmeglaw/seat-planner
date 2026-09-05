@@ -15,6 +15,21 @@
    Contrast (WCAG 2.x): #B85C2E on #ffffff 4.56:1 (AA text) · on #161616 3.97:1
    (non-text ≥ 3:1) · #8F4521 on #ffffff 7.3:1 · #E8A07A on #161616 8.4:1.
    #EB7C35 (logo orange) is 2.81:1 on white — LOGO MARK ONLY, never UI.
+
+   Phase 4 PR 3b additions (owner rulings 2026-09-04, built 2026-09-05):
+   · O2 — the search / filter HIT SURFACE takes a terracotta tint instead of
+     Carbon's highlight blue (the one blue that survived no. 16). Light: fill
+     #FBE8DC + edge #B85C2E (--cds-highlight itself is overridden, light only,
+     so every --sp-* alias of it follows). Dark: the fill stays the neutral
+     layer-02 #393939 and the EDGE carries the hue in #E8A07A — terracotta on
+     #393939 is 2.53:1, under the 3:1 graphic floor, so it is never a dark edge.
+   · O3 — the DRAFT FAMILY is Carbon purple (60 light / 40 dark; the header's
+     zone-invariant ◇ is purple 40 on gray 100), not the caution orange Phase 3
+     chose: orange 60 #ba4e00 is ΔE2000 5.3 / 1.10:1 from the terracotta
+     primary — one hue at pill size beside a focus ring. DECISIONS §6 no. 17.
+   Both are expressed by overriding the tier-B/tier-C --sp-* tokens directly:
+   they alias Carbon STATUS roles (caution, info, highlight) that other kinds
+   of status still need, so the roles themselves stay Carbon's.
    ========================================================================== */
 
 :root {
@@ -54,6 +69,15 @@
   --cds-ai-aura-start: rgba(184,92,46,0.06);
   --cds-ai-aura-start-sm: rgba(184,92,46,0.12);
   --cds-ai-aura-end: transparent;
+  /* O2 — hit surface (light): tint fill, terracotta edge. text-primary on #FBE8DC 15.23:1;
+     edge #B85C2E on the tint 3.84:1 (graphic ≥ 3). The hovered hit pill keeps this fill. */
+  --cds-highlight: #FBE8DC;
+  --sp-pill-search-fill: #FBE8DC;
+  --sp-pill-search-edge: #B85C2E;
+  /* O3 — Draft family (light): purple 60. On white 5.00, layer-01 4.55, layer-hover-01 4.08,
+     the hit tint 4.21 — every fill the ◇ badge lands on clears 3:1. */
+  --sp-status-draft-mark: #8A3FFC;
+  --sp-pill-badge: #8A3FFC;
 }
 
 /* DARK — system-dark (no attribute, OS prefers dark) … */
@@ -73,6 +97,12 @@
     --cds-ai-border-end: #B85C2E;
     --cds-ai-aura-start: rgba(184,92,46,0.10);
     --cds-ai-aura-start-sm: rgba(184,92,46,0.16);
+    /* O2 — hit surface (dark): neutral layer-02 fill, the dark link colour as the edge (5.36:1 on it). */
+    --sp-pill-search-fill: #393939;
+    --sp-pill-search-edge: #E8A07A;
+    /* O3 — Draft family (dark): purple 40. On #161616 7.70, #393939 4.91, #474747 3.95. */
+    --sp-status-draft-mark: #BE95FF;
+    --sp-pill-badge: #BE95FF;
   }
 }
 
@@ -92,6 +122,11 @@
   --cds-ai-border-end: #B85C2E;
   --cds-ai-aura-start: rgba(184,92,46,0.10);
   --cds-ai-aura-start-sm: rgba(184,92,46,0.16);
+  /* O2 / O3 — as the system-dark block above */
+  --sp-pill-search-fill: #393939;
+  --sp-pill-search-edge: #E8A07A;
+  --sp-status-draft-mark: #BE95FF;
+  --sp-pill-badge: #BE95FF;
 }
 
 /* -----------------------------------------------------------------------------
@@ -104,4 +139,5 @@
   --sp-panel-dark-link:       #E8A07A;   /* links in Help / History / Account; was blue 40 */
   --sp-panel-dark-link-hover: #F5DDD1;   /* was blue 30 */
   --sp-ai-border-end:         #B85C2E;   /* AI label gradient end; was blue 40 */
+  --sp-mode-draft-mark:       #BE95FF;   /* ◇ Draft indicator in the gray 100 header; was orange 40 (O3, §6 no. 17). 7.70:1 on gray 100, 4.91 on the pressed gray 80 */
 }

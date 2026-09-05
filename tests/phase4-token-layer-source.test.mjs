@@ -360,6 +360,26 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
   // Planner rendering IBM blue on /admin. The brand layer owns that role too (PHASE4BUILD §1.22).
   assert.match(css.match(blocks[0])[1], /--cds-button-tertiary:\s*#B85C2E/i, "light tertiary buttons are terracotta, not blue 60");
   assert.match(css.match(blocks[0])[1], /--cds-button-tertiary-hover:\s*#8F4521/i, "light tertiary hover is #8F4521");
+  // PR 3b, owner rulings O2 + O3 (2026-09-04): the search / filter hit surface is a terracotta tint
+  // (light: --cds-highlight itself; both: the pill's fill + edge — the dark edge is the dark LINK colour,
+  // never terracotta, which is 2.53:1 on #393939), and the Draft family is Carbon purple 60 / 40, not the
+  // caution orange (DECISIONS §6 no. 17). The header's zone-invariant ◇ is checked in the zone test below.
+  const light = css.match(blocks[0])[1];
+  assert.match(light, /--cds-highlight:\s*#FBE8DC/i, "light hit surface: --cds-highlight is the terracotta tint (O2)");
+  assert.match(light, /--sp-pill-search-fill:\s*#FBE8DC/i);
+  assert.match(light, /--sp-pill-search-edge:\s*#B85C2E/i);
+  assert.match(light, /--sp-status-draft-mark:\s*#8A3FFC/i, "light Draft family is purple 60 (O3)");
+  assert.match(light, /--sp-pill-badge:\s*#8A3FFC/i);
+  for (const re of blocks.slice(1)) {
+    const dark = css.match(re)[1];
+    assert.doesNotMatch(dark, /--cds-highlight/i, "--cds-highlight is overridden for the LIGHT value only (owner ruling)");
+    assert.match(dark, /--sp-pill-search-fill:\s*#393939/i, "dark hit fill stays the neutral layer-02");
+    assert.match(dark, /--sp-pill-search-edge:\s*#E8A07A/i, "dark hit edge is the dark link colour, not terracotta");
+    assert.match(dark, /--sp-status-draft-mark:\s*#BE95FF/i, "dark Draft family is purple 40 (O3)");
+    assert.match(dark, /--sp-pill-badge:\s*#BE95FF/i);
+  }
+  assert.doesNotMatch(css, /#ba4e00|#ff832b/i, "the caution orange is not the Draft family any more (O3)");
+  assert.doesNotMatch(css, /#d0e2ff|#001d6c/i, "no highlight blue in the brand layer (O2)");
   assert.match(css.match(blocks[2])[1], /--cds-link-primary:\s*#E8A07A/i, "dark links are #E8A07A");
   assert.doesNotMatch(css, /#0f62fe|#0353e9|#4589ff|#a6c8ff|#78a9ff/i, "no IBM blue in the brand layer");
   // The logo orange is declared once, as --brand-orange-logo, and assigned to nothing else.
@@ -372,6 +392,7 @@ test("brand layer: the zone tokens that bypass --cds-* roles are re-pointed", ()
   assert.match(css, /--sp-shell-current-bar:\s*#B85C2E/i);
   assert.match(css, /--sp-panel-dark-link:\s*#E8A07A/i);
   assert.match(css, /--sp-ai-border-end:\s*#B85C2E/i);
+  assert.match(css, /--sp-mode-draft-mark:\s*#BE95FF/i, "the header's Draft ◇ is purple 40 on gray 100 (O3, §6 no. 17)");
 });
 
 test("logo orange #EB7C35 appears nowhere in app/ or components/ except the brand declaration", () => {

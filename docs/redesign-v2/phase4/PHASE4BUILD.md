@@ -336,6 +336,33 @@ employee `position` / `department` / `phone_extension` / `avatar_url`) after the
 `redo30.mjs` (scratch rig, 30 trials, expect 30/30 on a fresh seed). Rig and traces: the session scratchpad
 (`redo30.mjs`, `redo30-main-button.json`, `redo30-branch-keys.json`, `hist-fresh.json` / `hist-post.json`).
 
+### 1.26 PR 3b — the hit surface and the Draft family leave Carbon's hues (owner rulings O2 / O3, 2026-09-04; built 2026-09-05)
+
+**Screen** `/`, `/admin`, the header. **Two tokens families still read as Carbon after the brand layer (no. 16):**
+the search / filter hit pill (`--cds-highlight` blue 20 light / blue 90 dark, `support-info` edge — the one blue
+CLAUDE.md rule 1 left open) and the Draft family (`--cds-status-caution-mark` orange 60 / 40, `support-caution-major`
+orange 40 in the header), which the plan measured against the terracotta primary at pill size: light orange 60
+`#ba4e00` vs `#B85C2E` = **ΔE2000 5.3, 1.10:1**, same hue angle and lightness — one hue beside a focus ring.
+
+**The skill read the ruling asked for** (`references/status-and-dataviz.md`, before numbering): the table fixes
+*Draft, not started* = **Gray 60**, *Serious warning* = Orange 40 (outline Orange 60), Purple 60 = *Outlier,
+undefined status*, and notes "a draft/published product already has its color decided". It does **not** leave the
+draft hue open, so purple is a **deviation, not a D0-a amendment** — and so was Phase 3's orange, which PHASE3DS
+recorded as TRUE-conformant on the two-signal rule alone. Recorded as **DECISIONS §6 no. 17** with the gray-60
+reasoning (gray 60 is helper text and the quiet pill on a gray-dominant map — it cannot carry a mode identity).
+
+**Built.** Brand file only (the four CSS deliverables untouched; `sp-tokens.css` still *aliases* the Carbon roles —
+its comments naming orange are amended in PHASE3DS §1, not edited): light block `--cds-highlight: #FBE8DC` (light
+only, per the ruling — the dark `--cds-highlight` blue 90 has **no consumer** after PR 3a: `--sp-highlight` feeds
+only the retired `--sp-wash-zone` bridge alias and `--sp-status-search-surface` nothing, both gone in the T7
+sweep), `--sp-pill-search-fill/-edge` in all three states (light tint + terracotta edge; dark neutral `layer-02`
+fill + `#E8A07A` edge — terracotta on `#393939` is 2.53:1), `--sp-status-draft-mark` + `--sp-pill-badge` purple 60
+light / purple 40 dark, zone `--sp-mode-draft-mark` purple 40. Every consumer follows through the tokens: the ◇
+badge, the inspector note, the mode indicator, the History rows, and — until their own tasks restyle them — the
+shipped Ask Planner "refused" / warnings chrome, the inspector dirty chip, the review dialog's "Reassigned" tag and
+Settings' draft callout, which read `--sp-status-draft-*` today. Pairs regenerated (§4); the token test pins every
+value per block and that the caution orange and the highlight blues are absent from the brand file.
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -407,6 +434,14 @@ PR 1 (2026-09-03, tokens landed verbatim — the generator's JSON is unchanged):
 ```
 product-pairs.json: 192 pairs · surface-pairs-not-gated.json: 13 pairs
 192/192 pass
+```
+
+PR 3b Task 1 (2026-09-05, O2 hit surface + O3 Draft family in the brand layer — §1.26; the pair names carry the old
+hue in parentheses so the diff reads):
+
+```
+product-pairs.json: 198 pairs · surface-pairs-not-gated.json: 14 pairs
+198/198 pass
 ```
 
 Marker states (`audit/marker-contrast.mjs`, local Docker stack, seed data, 2026-09-03 after the §1.6 fix) —
