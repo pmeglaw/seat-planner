@@ -296,7 +296,7 @@ const RETIRED = {
 // Sweep PRs that have merged. PR 1 adds 1, PR 2 adds 2, PR 3 adds 3, PR 4
 // adds 4. Until a group is swept its names are still the shipped vocabulary
 // and the rule stays silent for them.
-const SWEPT = new Set([1, 2, 3]);
+const SWEPT = new Set([1, 2, 3, 4]);
 
 test("retired --sp-* names are gone once their sweep PR has merged", () => {
   const offenders = [];

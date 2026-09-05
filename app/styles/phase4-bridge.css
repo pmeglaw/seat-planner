@@ -21,7 +21,7 @@
       no var() is undefined while old components sit on the new tokens. Group 2
       (--sp-chrome-*) LEFT with PR 2, group 3 (marker / legend / selection /
       ai / editor / publish / trail / wash) LEFT with PR 3b, group 4 (tag /
-      table / extension / identity) leaves with PR 4. The token test asserts every alias here
+      table / extension / identity) LEFT with PR 4 — the block is empty. The token test asserts every alias here
       references a defined --sp-* name (or a literal) and is gone once its
       group is swept.
 
@@ -39,19 +39,9 @@
   --cds-font-mono: var(--font-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* 2. Retired-name aliases (old: var(new)) ---------------------------------- */
-:root {
-  --sp-extension-bg: var(--sp-readout-bg);
-  --sp-extension-border: var(--sp-border-subtle);
-  --sp-extension-label: var(--sp-readout-eyebrow);
-  --sp-identity-avatar-bg: var(--sp-layer-accent);
-  --sp-identity-avatar-fg: var(--sp-text-primary);
-  --sp-table-header: var(--sp-layer-selected);
-  --sp-table-row-border: var(--sp-border-subtle);
-  --sp-tag-bg: var(--sp-layer-accent);
-  --sp-tag-text: var(--sp-text-primary);
-}
-
+/* 2. Retired-name aliases — EMPTY since PR 4: group 4 (tag / table / extension /
+   identity) swept mechanically in Reception (same resolved values, zero pixel
+   change); every retired --sp-* name now has a replacement in sp-tokens.css. */
 /* 3. Theme-keyed rules in the three-state shape ---------------------------- */
 /* Floor-plan raster on dark: CSS-only lightbox treatment (no dark asset, so no
    ?v= bump). Applies to the <img> only; markers sit above it unfiltered. The

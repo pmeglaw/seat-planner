@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { expectNoAxeViolations, formatAxeViolations, waitForColorSettle, WCAG_A_AA_TAGS } from "../e2e/axe-helpers";
+import { expectNoAxeViolations, waitForColorSettle, WCAG_A_AA_TAGS } from "../e2e/axe-helpers";
 import { retryUntilVisible, SEEDED_ADMIN_EMAIL, signIn } from "./auth-helpers";
 import { db } from "./db-helpers";
 
