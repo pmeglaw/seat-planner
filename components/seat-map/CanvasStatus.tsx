@@ -28,6 +28,12 @@ const GLYPH: Record<CanvasNoticeKind, ReactNode> = {
   error: <circle cx="8" cy="8" r="7" fill="currentColor" />
 };
 
+// The notification kinds' glyph, for the inline `.cds-notification`s the
+// inspector and the slot render outside this region.
+export function NotificationGlyph({ kind }: { kind: CanvasNoticeKind }) {
+  return <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">{GLYPH[kind]}</svg>;
+}
+
 export function CanvasStatus({ notices }: { notices: CanvasNotice[] }) {
   if (notices.length === 0) return null;
   return (

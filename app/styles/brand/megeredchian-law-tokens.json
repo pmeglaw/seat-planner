@@ -32,6 +32,14 @@
     },
     "paper": {
       "value": "#FFFBF7"
+    },
+    "terracottaLighter": {
+      "value": "#FBE8DC",
+      "usage": "Search / filter hit surface fill (light) — O2, PR 3b"
+    },
+    "terracottaDarkLink": {
+      "value": "#E8A07A",
+      "usage": "Links on dark; search hit edge on the dark pill fill — O2"
     }
   },
   "carbonMapping": {
@@ -43,12 +51,32 @@
       "--cds-button-tertiary-active": "#7A3A1C",
       "--cds-border-interactive": "#B85C2E",
       "--cds-link-primary": "#8F4521",
-      "--cds-ai-border-strong": "#B85C2E"
+      "--cds-ai-border-strong": "#B85C2E",
+      "--cds-highlight": "#FBE8DC",
+      "--sp-pill-search-fill": "#FBE8DC",
+      "--sp-pill-search-edge": "#B85C2E",
+      "--sp-status-draft-mark": "#8A3FFC",
+      "--sp-pill-badge": "#8A3FFC"
     },
     "g100": {
       "--cds-button-primary": "#B85C2E",
       "--cds-link-primary": "#E8A07A",
-      "--cds-ai-border-strong": "#B85C2E"
+      "--cds-ai-border-strong": "#B85C2E",
+      "--sp-pill-search-fill": "#393939",
+      "--sp-pill-search-edge": "#E8A07A",
+      "--sp-status-draft-mark": "#BE95FF",
+      "--sp-pill-badge": "#BE95FF"
     }
+  },
+  "draftFamily": {
+    "light": "#8A3FFC",
+    "dark": "#BE95FF",
+    "header": "#BE95FF",
+    "carbon": [
+      "--sp-status-draft-mark",
+      "--sp-pill-badge",
+      "--sp-mode-draft-mark"
+    ],
+    "why": "Carbon purple 60/40 instead of the caution orange: orange 60 is ΔE2000 5.3 / 1.10:1 from the terracotta primary. DECISIONS §6 no. 17"
   }
 }

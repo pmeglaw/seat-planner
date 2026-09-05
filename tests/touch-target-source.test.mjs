@@ -55,15 +55,7 @@ import test from "node:test";
 //     expansion live in different template chunks, so the sweep cannot join
 //     them; the pins below hold the per-face classes.
 
-const LEDGER = [
-  {
-    file: "components/seat-map/SeatInspector.tsx",
-    token: "h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)]",
-    reason: "adjacency-capped",
-    reach: "44×42 — contact rows are space-y-2.5 and the email row above holds a mailto link; vertical cap 5px per side",
-    minReach: { w: 44, h: 42 }
-  },
-];
+const LEDGER = [];
 
 // <input>/<select> literals whose 44px reach is delivered by the wrapping
 // <label> (::after cannot render on replaced form controls). Each entry has a
@@ -84,20 +76,23 @@ const PINS = {
     "after:absolute after:-inset-y-1.5",
     "after:absolute after:-inset-y-1.5"
   ],
+  // Phase 4 PR 3b: the inspector's icon buttons are the asset's 40px
+  // `.cds-btn--icon` with the `.cds-touch-target` pseudo (44); the move-
+  // conflict dialog's close keeps its Tailwind expansion.
   "components/seat-map/SeatInspector.tsx": [
-    "after:absolute after:-inset-2",
-    "after:absolute after:-inset-x-1.5 after:-inset-y-[5px]",
-    "after:absolute after:-inset-y-0.5",
+    "cds-btn cds-btn--icon cds-btn--md cds-touch-target",
+    "cds-btn cds-btn--icon cds-touch-target",
     "after:absolute after:-inset-1.5"
   ],
   "components/seat-map/SeatMapDialogs.tsx": ["after:absolute after:-inset-1.5"],
-  // Seat markers: the canvas stays exempt from the sweep (SKIP_FILES), but
-  // the pitch-gated 44px hit region (lib/seatCrowding markerHitFloorMet,
-  // DECISIONS.md §2.4) is pinned per token box — 32/36/40 + 2×(6/4/2) = 44.
+  // Seat markers: the canvas stays exempt from the sweep (SKIP_FILES). Phase 4
+  // PR 3b: every marker — the name pill and the empty-seat footprint — carries
+  // the asset's `.cds-touch-target` pseudo (44px, deviation 7; the rule is
+  // `.sp-pill.cds-touch-target::after, .sp-seat-footprint.cds-touch-target::after`
+  // in sp-components.css). The pitch-gated floor retired with the code pills.
   "components/seat-map/SeatMarker.tsx": [
-    "after:absolute after:-inset-1.5",
-    "after:absolute after:-inset-1\"",
-    "after:absolute after:-inset-0.5"
+    "sp-pill cds-touch-target",
+    "sp-seat-footprint cds-touch-target"
   ],
   "components/admin-management/AdminManagementPanel.tsx": [
     "after:absolute after:-inset-2",
@@ -113,11 +108,12 @@ const PINS = {
     // forgot-password, capped by the password field above / remember row below
     "after:absolute after:-top-1 after:-bottom-2"
   ],
-  // Zero-result "Clear search" (≈30px content-sized; only a <p> sits above):
-  // 30 + 2×7 = 44 on both surfaces that render it.
+  // PR 3b: the drawer's close is the asset's 40px icon button with the
+  // touch-target pseudo; prompts and follow-ups are 40px ghosts in the
+  // zero-gap `.sp-prompt-list` (PHASE3DS §1.18 — stacked, outward faces only).
   "components/seat-map/AskPlannerDrawer.tsx": [
-    "after:absolute after:-inset-y-2.5",
-    "after:absolute after:-inset-y-1"
+    "cds-btn cds-btn--icon cds-btn--md cds-touch-target",
+    "sp-prompt-list"
   ],
   "app/(shell)/admin/page.tsx": ["after:absolute after:-inset-y-1"]
 };

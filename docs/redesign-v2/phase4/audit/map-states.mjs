@@ -1,4 +1,4 @@
-// Phase 4 · PR 3a map-state captures (rerun on every PR that touches the map frame).
+// Phase 4 · PR 3a/3b map-state captures (rerun on every PR that touches the map frame, the pill or the slot).
 // Drives the control row, the Find palette, the band and the roster through their states on both
 // surfaces and screenshots each one, both themes at 1920×1080 plus the 1024×768 narrow frame (O6: the
 // row wraps) and a 1000px frame for the below-lg read-only band line (D2 / deviation 4).
@@ -105,8 +105,71 @@ for (const theme of ["light", "dark"]) {
   await shot(`admin-row-filters-${theme}-1920`, { x: 256, y: 48, width: 1664, height: 48 });
   await escape();
 
-  // / — the published row, Find me, the roster floor with Copy link.
-  await open("/", theme);
+  // PR 3b — the right slot (inspector · editing · mode card · Ask Planner), the pills, the tearsheet.
+  await open("/admin", theme);
+  const firstAssigned = page.locator('button[data-seat-id][aria-label*="Assigned seat."]').first();
+  const firstOpen = page.locator('button[data-seat-id][aria-label*="Open seat."]').first();
+  const pillsClip = async () => {
+    const box = await page.locator('[aria-label^="Admin seat map viewport"], [aria-label^="Seat map"], #viewer-seat-map').first().boundingBox();
+    return box ? { x: Math.round(box.x), y: Math.round(box.y), width: Math.round(Math.min(box.width, 1920 - box.x)), height: Math.round(box.height) } : undefined;
+  };
+  await shot(`admin-pills-${theme}-1920`, await pillsClip());
+  await firstAssigned.dispatchEvent("click");
+  await page.locator("#seat-inspector-panel").waitFor();
+  await page.waitForTimeout(500);
+  await shot(`admin-slot-inspector-${theme}-1920`);
+  await page.locator('[aria-label^="Edit assignment for"]').click();
+  await page.waitForTimeout(500);
+  await shot(`admin-slot-inspector-editing-${theme}-1920`);
+  // Leave the editor through its own controls (Esc inside a field is the combobox's), then re-select.
+  await page.locator('[aria-label^="Cancel editing"]').click();
+  await page.waitForTimeout(300);
+  await page.locator('button[aria-label="Close inspector"]').click();
+  await page.waitForTimeout(300);
+  await firstAssigned.dispatchEvent("click");
+  await page.locator("#seat-inspector-panel").waitFor();
+  await page.locator('#seat-inspector-panel button[aria-label^="Move "]').click();
+  await page.waitForTimeout(500);
+  await shot(`admin-slot-mode-card-move-${theme}-1920`);
+  await shot(`admin-pills-move-mode-${theme}-1920`, await pillsClip());
+  // A valid destination → the move confirm modal over the slot; confirm it so the draft has changes.
+  await firstOpen.dispatchEvent("click");
+  await page.getByRole("dialog", { name: /^Move / }).waitFor();
+  await page.waitForTimeout(400);
+  await shot(`admin-move-confirm-over-slot-${theme}-1920`);
+  await page.getByRole("dialog").getByRole("button", { name: /^Move them|^Confirm/ }).first().click().catch(() => {});
+  await page.waitForTimeout(1200);
+  await escape();
+  await shot(`admin-pills-draft-changed-${theme}-1920`, await pillsClip());
+  // Ask Planner in the slot (no question submitted — no model call).
+  await row().getByRole("button", { name: /^Open Ask Planner AI/ }).click();
+  await page.locator("#ask-planner-drawer").waitFor();
+  await page.waitForTimeout(400);
+  await shot(`admin-slot-ask-${theme}-1920`);
+  await page.locator("#ask-planner-drawer .sp-ai-label").click();
+  await page.waitForTimeout(300);
+  await shot(`admin-slot-ask-popover-${theme}-1920`, { x: 1420, y: 48, width: 500, height: 400 });
+  await escape(); await escape();
+  // The publish tearsheet: ready (after the move above), then Cancel.
+  await row().getByRole("button", { name: /^Publish \d+ change/ }).click();
+  await page.getByRole("dialog", { name: "Review draft before publishing" }).waitFor();
+  await page.waitForTimeout(500);
+  await shot(`admin-tearsheet-ready-${theme}-1920`);
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
+  await page.waitForTimeout(300);
+  // Undo the move so the next theme pass (and the e2e tier) start converged.
+  await page.keyboard.press("Control+z");
+  await page.waitForTimeout(1200);
+
+  // / — the published row, Find me, the roster floor with Copy link, the published inspector in the slot.
+  // ?floor=3: the previous pass left the viewer on the Floor 2 roster (the floor is remembered).
+  await open("/?floor=3", theme);
+  await page.locator('button[data-seat-id][aria-label*="Assigned seat."]').first().dispatchEvent("click");
+  await page.locator("#seat-inspector-panel").waitFor();
+  await page.waitForTimeout(400);
+  await shot(`home-slot-inspector-${theme}-1920`);
+  await escape();
+  await open("/?floor=3", theme);
   await shot(`home-${theme}-1920`);
   await shot(`home-row-${theme}-1920`, rowClip);
   await shot(`home-band-${theme}-1920`, await bandClip());

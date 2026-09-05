@@ -45,9 +45,10 @@ export const PAN_DRAG_THRESHOLD_PX = 4;
 /**
  * Vertical room the fit view holds back for seat markers that overhang the plan.
  *
- * Markers do not scale with the map: SeatMarker's resting pill is min-h-[34px]
- * and centres on its coordinate via -translate-y-1/2, so the bottom row always
- * hangs ~17px below the plan's edge, plus 2px for the occupied dot. Fit view
+ * Markers do not scale with the map: SeatMarker's pill is the constant 28px
+ * footprint (lib/seatCrowding PILL_HEIGHT_PX) centred on its coordinate, so the
+ * bottom row always hangs 14px below the plan's edge (plus a nudged row's 14px
+ * in a colliding pod, plus the 4px ◇ badge overhang at the top). Fit view
  * sizes the sheet to the plan's own aspect ratio, so without a reserve the sheet
  * is exactly as tall as the plan and that overhang has nowhere to go — it spills
  * out of an overflow-auto container whose scrollbar is hidden at lg, clipping
@@ -57,9 +58,9 @@ export const PAN_DRAG_THRESHOLD_PX = 4;
  * 2026-07-28: scrollHeight 316 against clientHeight 307).
  *
  * 24px splits to 12px above and below once the plan is centred — clear of the
- * 19px worst case for a resting pill. It is deliberately NOT sized for the 46px
- * selected pill: covering that would cost ~12% of the plan's width to reserve
- * room only one transient marker ever uses.
+ * 14px resting overhang within the sheet's rounding slack. It is deliberately
+ * NOT sized for a nudged bottom row (28px): covering that would cost ~12% of
+ * the plan's width to reserve room only a colliding pair ever uses.
  */
 export const MAP_MARKER_EDGE_GUTTER_PX = 24;
 
@@ -241,47 +242,4 @@ export function boundingBoxCenter(points: readonly NormalizedPoint[]): Normalize
   }
 
   return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
-}
-
-/**
- * v12 floating-inspector geometry (interaction contract #1). The panel is a
- * fixed 332px column inset 12px from the viewport's right edge; a selected
- * seat within 24px of its left edge gets panned out to a 48px clearance.
- */
-export const INSPECTOR_FLOAT_WIDTH_PX = 332;
-export const INSPECTOR_FLOAT_MARGIN_PX = 12;
-export const INSPECTOR_NUDGE_THRESHOLD_PX = 24;
-export const INSPECTOR_NUDGE_CLEARANCE_PX = 48;
-
-export type InspectorNudgePlan = { scrollDelta: number; translateDelta: number };
-
-/**
- * How far to pan the map left so the selected seat clears the floating
- * inspector, split into two channels: real scroll room first, and — because
- * the scroll engine cannot overscroll a fit-view frame — any remainder as a
- * leftward translate on the map frame. One tween drives both, so this returns
- * deltas, not absolute targets. `currentTranslatePx` is the frame's existing
- * leftward translate magnitude (≥ 0); the seat's on-screen x already reflects
- * it, so it is subtracted from the visual position, and a returned
- * translateDelta ADDS to it. Returns null when the seat already clears the
- * threshold — callers must not animate at all in that case.
- */
-export function planInspectorNudge({
-  seatVisualX,
-  map,
-  viewport,
-  currentTranslatePx = 0
-}: {
-  seatVisualX: number;
-  map: MapMetrics;
-  viewport: ViewportMetrics;
-  currentTranslatePx?: number;
-}): InspectorNudgePlan | null {
-  const seatScreenX = map.offsetLeft + seatVisualX * map.offsetWidth - viewport.scrollLeft - currentTranslatePx;
-  const panelLeft = viewport.clientWidth - INSPECTOR_FLOAT_MARGIN_PX - INSPECTOR_FLOAT_WIDTH_PX;
-  if (seatScreenX <= panelLeft - INSPECTOR_NUDGE_THRESHOLD_PX) return null;
-  const delta = seatScreenX - (panelLeft - INSPECTOR_NUDGE_CLEARANCE_PX);
-  const scrollRoom = Math.max(0, viewport.scrollWidth - viewport.clientWidth - viewport.scrollLeft);
-  const scrollDelta = Math.min(delta, scrollRoom);
-  return { scrollDelta, translateDelta: delta - scrollDelta };
 }

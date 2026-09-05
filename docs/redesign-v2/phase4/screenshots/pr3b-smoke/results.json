@@ -1,0 +1,110 @@
+[
+  {
+    "step": "1 /admin loads (light)",
+    "ok": true,
+    "file": "01-admin-loads-light.png",
+    "note": "4 pills, heights 28px, codes inside pill text: none (sample \"Alex S.\", \"Maria L.\", \"Nina P.\", \"David K.\"); hover CW01: tooltip \"CW01\" (01-pill-hover-tooltip-light.png); Tab focus on pill true: outline solid 2px rgb(184, 92, 46) offset -2px, tooltip \"CW01\" (01-pill-focus-ring-light.png); marks — open C01: circle:stroke; NE07: path:stroke+rect:fill (sp-seat-footprint); NE08: rect:stroke+path:hatch (sp-seat-footprint); console errors 0"
+  },
+  {
+    "step": "1 /admin loads (dark)",
+    "ok": true,
+    "file": "01-admin-loads-dark.png",
+    "note": "4 pills, heights 28px, codes inside pill text: none (sample \"Alex S.\", \"Maria L.\", \"Nina P.\", \"David K.\"); hover CW01: tooltip \"CW01\" (01-pill-hover-tooltip-dark.png); Tab focus on pill true: outline solid 2px rgb(184, 92, 46) offset -2px, tooltip \"CW01\" (01-pill-focus-ring-dark.png); marks — open C01: circle:stroke; NE07: path:stroke+rect:fill (sp-seat-footprint); NE08: rect:stroke+path:hatch (sp-seat-footprint); console errors 0"
+  },
+  {
+    "step": "2 Click a pill (light)",
+    "ok": true,
+    "file": "02-inspector-slot-light.png",
+    "note": "selected: data-state=selected, aria-pressed=true, box-shadow \"rgb(22, 22, 22) 0px 0px 0px 2px inset\"; inspector eyebrow \"Seat CW01 · Center West\" (floor text none — eyebrow is code · zone; the floor is the row's floor control), title \"Alex Shabazian\", copy-link true, × true; slot 400px at x 1520, canvas right 1520 (was 1920px wide, now 1520), band width 1920 unchanged true; Esc closed true, canvas back to 1920, focus after Esc button[seat CW01]"
+  },
+  {
+    "step": "2 Click a pill (dark)",
+    "ok": true,
+    "file": "02-inspector-slot-dark.png",
+    "note": "selected: data-state=selected, aria-pressed=true, box-shadow \"rgb(244, 244, 244) 0px 0px 0px 2px inset\"; inspector eyebrow \"Seat CW01 · Center West\" (floor text none — eyebrow is code · zone; the floor is the row's floor control), title \"Alex Shabazian\", copy-link true, × true; slot 400px at x 1520, canvas right 1520 (was 1920px wide, now 1520), band width 1920 unchanged true; Esc closed true, canvas back to 1920, focus after Esc button[seat CW01]"
+  },
+  {
+    "step": "3 Draft edit — purple ◇",
+    "ok": true,
+    "file": "03-draft-badge-light.png",
+    "note": "CW01 department \"Intake\" → \"Accounting\", Save draft changes; light: badge true stroke rgb(138, 63, 252) fill rgb(255, 255, 255), inspector \"Changed in draft\", header \"Draft — 1 change\" mark stroke rgb(190, 149, 255), primary rgb(184, 92, 46), legend \"Changed in draft 1\"; dark (03-draft-badge-dark.png): badge stroke rgb(190, 149, 255) fill rgb(57, 57, 57), \"Changed in draft\", header \"Draft — 1 change\" mark rgb(190, 149, 255), primary rgb(184, 92, 46)"
+  },
+  {
+    "step": "4 Move · invalid targets · Undo · Redo",
+    "ok": true,
+    "file": "04-move-applied.png",
+    "note": "mode card in slot true; valid C01 hover: sp-pill--target bg rgb(232, 232, 232) shadow rgb(25, 128, 56) 0px 0px 0px 2px inset (04-move-valid-target-hover.png); NE07: sp-pill--invalid outline dashed 2px rgb(218, 30, 40) bg rgb(232, 232, 232) cursor not-allowed aria-disabled true, tooltip \"NE07\", click refused true, notice \"NE07 is reserved — choose another seat.\" (04-move-invalid-NE07.png, 04-move-invalid-NE07-canvas.png); NE08: sp-pill--invalid outline dashed 2px rgb(218, 30, 40), tooltip \"NE08\", refused true, notice \"NE08 is unavailable — choose another seat.\" (04-move-invalid-NE08.png); accessible name carries the reason: \"NE07 Unassigned. Reserved seat. Not a valid target. Open details.\"; move Maria Lopez N03 → C01 (04-move-confirm.png): \"Draft — 3 changes\", target \"C01 Maria L. Maria Lopez. Assigned seat. Draft changed. Selected.\"; Ctrl Z \"Draft — 1 change\" origin \"N03 Maria L. Maria Lopez. Assigned seat. Open details.\" (04-undo.png); Ctrl Shift Z reapplied true: \"Draft — 3 changes\" target \"C01 Maria L. Maria Lopez. Assigned seat. Draft changed. Open details.\" (04-redo.png)"
+  },
+  {
+    "step": "5 Names off (light)",
+    "ok": true,
+    "file": "05-names-off-light.png",
+    "note": "4/4 pills → 28px footprints (widths 28), text nodes 0; changed seat C01: ◇ present true, stroke rgb(255, 255, 255) / fill rgb(22, 22, 22) on footprint rgb(22, 22, 22) = 18.10:1 (05-names-off-badge-light.png); legend on: Assigned 4 [pill] → off: Assigned 4 [circle:fill]; names on again: footprints 0, text pills 4"
+  },
+  {
+    "step": "5 Names off (dark)",
+    "ok": true,
+    "file": "05-names-off-dark.png",
+    "note": "4/4 pills → 28px footprints (widths 28), text nodes 0; changed seat C01: ◇ present true, stroke rgb(57, 57, 57) / fill rgb(244, 244, 244) on footprint rgb(244, 244, 244) = 10.50:1 (05-names-off-badge-dark.png); legend on: Assigned 4 [pill] → off: Assigned 4 [circle:fill]; names on again: footprints 0, text pills 4"
+  },
+  {
+    "step": "6 Filter + search hit (light)",
+    "ok": true,
+    "file": "06-filter-search-hit-light.png",
+    "note": "Zone \"Center Desks\" + search \"Maria\": 1 hit / 3 quiet / 4 pills, opacities 1; hit C01 \"Maria L.\": text rgb(22, 22, 22) on rgb(251, 232, 220) = 15.23:1, edge rgb(184, 92, 46) (06-hit-pill-light.png); quiet pill text rgb(82, 82, 82) on rgb(244, 244, 244) = 7.10:1 opacity 1; blues: none"
+  },
+  {
+    "step": "6 Filter + search hit (dark)",
+    "ok": true,
+    "file": "06-filter-search-hit-dark.png",
+    "note": "Zone \"Center Desks\" + search \"Maria\": 1 hit / 3 quiet / 4 pills, opacities 1; hit C01 \"Maria L.\": text rgb(244, 244, 244) on rgb(57, 57, 57) = 10.50:1, edge rgb(232, 160, 122) (06-hit-pill-dark.png); quiet pill text rgb(198, 198, 198) on rgb(38, 38, 38) = 8.86:1 opacity 1; blues: none"
+  },
+  {
+    "step": "7 Add seat mode card",
+    "ok": true,
+    "file": "07-add-seat-card-row-wrapped.png",
+    "note": "card \"Add seat mode\" 400px, top 96 vs row bottom 96 (07-add-seat-mode-card.png); left panel + Position filter: row h 96, 1 controls on line 2, card top 144 vs row bottom 144, overlaps 0; exit clean true"
+  },
+  {
+    "step": "8 Ask Planner",
+    "ok": true,
+    "file": "08-ask-planner-highlight.png",
+    "note": "drawer in slot 400px; AI label \"AI\" border-image none bg linear-gradient(rgb(244, 244, 244), rgb(244, 244, 244)), lin; popover true \"Generated answersAsk Planner reads the saved draft map — seats, directory, zones\" (08-ask-planner-popover.png); \"Which seat does Alex Shabazian sit in?\" → answered true, highlighted 1 seat(s) (answer: \"Alex Shabazian sits in seat CW01 on Floor 3 · Pre-Litigation, in the Center West zone. The draft seat is assigned to Alex Shabazian as an Intake Coordinator in \"); Clear highlights present true → 0 highlighted; click pill C01 while the drawer is open: selected C01, drawer keeps the slot true (INV-4 owner order mode card > ask > inspector — the drawer's own Select buttons rely on it), inspector false, visible slots 1 — never stacked (08-ask-planner-pill-click-drawer-keeps-slot.png); × on the drawer → inspector \"Maria Lopez\" takes the slot true, drawer false, slots 1 (08-ask-planner-closed-inspector-takes-slot.png)"
+  },
+  {
+    "step": "9 Publish review + publish",
+    "ok": true,
+    "file": "09-publish-tearsheet.png",
+    "note": "\"Publish 3 changes\" (was \"Draft — 3 changes\"): tearsheet 1920px, close buttons none, readiness rail true, tags 1 assigned · 1 vacated · 1 person updated, table true, floor groups 1, sections 2 seat changes | People details · 1, consequence/facts \"Draft 60 seats · Published 60 seats · Total changes 3\", footer Cancel · Publish 3 changes right-aligned true; Cancel closed true; Publish → toast \"Draft map published. Undo/Redo history was cleared.\" (09-published-toast.png); admin header \"Draft — no changes\" with the draft ◇ true (the admin draft route always shows the draft indicator — lib/shellMode modeStatusFor; \"Published · date\" is the published surfaces' text), Publish control \"Publish\" disabled true reason \"No changes to publish\" (09-published.png); History panel \"HistoryPublishedDraftDraft matches the published mapPublish history2 assignments changed · 2 status changes · 60 seat detail changes · 1 employee editSep 4, 2026, 9:25 PMe2e-admin@example.test\" (09-published-history-panel.png); viewer / header \"Published · Sep 4, 2026\" filled square true; viewer C01: \"C01 Maria Lopez. Assigned seat. Open details.\" (09-viewer-sees-publish.png)"
+  },
+  {
+    "step": "10 Discard draft changes",
+    "ok": true,
+    "file": "10-discarded.png",
+    "note": "seat edit: move C01 → C02 → \"Draft — 2 changes\", 2 seats badged; ⋯ → Discard draft changes → dialog \"Discard all draft changes?Every reviewed seat change (2 changes) is erased and the draft goes back to exactly what viewers see today. People edits in Management are kept. This cannot be undone — Undo/\" (10-discard-confirm.png); Discard everything → \"Draft — no changes\", badged seats 0, C01 \"C01 Maria L. Maria Lopez. Assigned seat. Open details.\". Note: a PEOPLE edit made in the inspector (department / title / extension) survives Discard by the dialog's own rule (\"People edits in Management are kept\") and keeps its count + ◇ — first run of this step used one and stayed at \"Draft — 1 change\"."
+  },
+  {
+    "step": "11 Roster + stale draft (MLS02)",
+    "ok": true,
+    "file": "11-stale-draft-notice.png",
+    "note": "/admin?floor=2: roster region true, 14 rows, \"Floor 2 · Litigation — 8 people\" (11-admin-floor2-roster.png); tab 2 moved the person out of C01 → C02 (seat row advanced: true; a people-only edit in tab 2 does NOT trip the fence — the fence is per seat row, first run confirmed the stale move simply succeeded); tab 1 (stale) moves CW01 onto C02 which it still lists as \"C02 Unassigned. Open seat. Valid destination seat. Open details.\" → notice true in canvas true: \"Seat C02 changed in another session after it was loaded. Reload to pick up the latest draft, then try again. This page has been refreshed with the latest draft.\", dialogs open 0; self-cleared within 15s true (11-stale-draft-cleared.png); indicator after refresh \"Draft — 2 changes\""
+  },
+  {
+    "step": "12 Viewer / (light)",
+    "ok": true,
+    "file": "12-viewer-inspector-light.png",
+    "note": "hover C01: tooltip \"C01\"; inspector 400px buttons: Copy link to this seat · Close inspector · Copy extension 202 · Copy link to this person; editing verbs none, form fields false; Copy link → Copied true (clipboard \"http://localhost:3000/?seat=C01\"); \"Draft\" on page 0; row editor controls none; blues none; console errors 0"
+  },
+  {
+    "step": "12 Viewer / (dark)",
+    "ok": true,
+    "file": "12-viewer-inspector-dark.png",
+    "note": "hover C01: tooltip \"C01\"; inspector 400px buttons: Copy link to this seat · Close inspector · Copy extension 202 · Copy link to this person; editing verbs none, form fields false; Copy link → Copied true (clipboard \"http://localhost:3000/?seat=C01\"); \"Draft\" on page 0; row editor controls none; blues none; console errors 0"
+  },
+  {
+    "step": "13 Narrow 1024",
+    "ok": true,
+    "file": "13-1024-admin.png",
+    "note": "1024: row h 96, scrollWidth 1024, read-only note absent — lg (1024) keeps editing; PHASE4BUILD §1.19 / O6, editor present true; inspector open: slot 400px, canvas 624px, scrollWidth 1024 (13-1024-inspector.png); 1000: note \"Editing needs a wider window.\", row h 48, scrollWidth 1000 (13-1000-read-only-note.png)"
+  }
+]

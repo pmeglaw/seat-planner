@@ -132,6 +132,13 @@
   box-shadow: inset 0 0 0 1px var(--sp-seat-footprint-border);
 }
 .sp-seat-footprint:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover-02); }
+/* Phase 4 PR 3b amendments (PHASE3DS §1.4): the footprint is a <button> on the plan, so it
+   carries the pill's focus ring and selection edge, and a quiet (filtered-out) variant — the
+   fill/edge step to the quiet pill's tokens, the mark to the quiet text colour. */
+.sp-seat-footprint:is(:focus-visible, [data-state="focus"]) { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
+.sp-seat-footprint[data-state="selected"] { box-shadow: inset 0 0 0 var(--sp-space-01) var(--sp-pill-selected-edge); }
+.sp-seat-footprint--quiet { background: var(--sp-pill-quiet-fill); box-shadow: inset 0 0 0 1px var(--sp-pill-quiet-edge); }
+.sp-seat-footprint--quiet .sp-seat-mark { color: var(--sp-pill-quiet-text); }
 
 /* -----------------------------------------------------------------------------
    3. HEADER OVERRIDES — §3 "Header, name, nav, utils · exists" + "Hamburger ·
@@ -204,6 +211,9 @@
 }
 .sp-has-tooltip:is(:hover, :focus-within, [data-state="hover"], [data-state="focus"]) .sp-tooltip { display: flex; }
 @media (hover: none) { .sp-has-tooltip:hover .sp-tooltip { display: none; } }
+/* Phase 4 PR 3a/3b (PHASE3DS §1.8 amendment): an overflow trigger carries the tier-C tooltip; while its
+   menu is open the tooltip would sit over the menu's first item on hover, so it yields to the menu. */
+.cds-overflow[data-open] .sp-tooltip { display: none; }
 
 /* -----------------------------------------------------------------------------
    5. RIGHT PANEL (dark, 320, floats) — §3 "Right panel · hand-built" + the
@@ -399,8 +409,17 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
        the editor's controls; ONE primary (Publish); disabled Publish states
        its reason beside it in label-01 (aria-describedby), never only a tooltip.
    -------------------------------------------------------------------------- */
-.sp-control-row { display: flex; align-items: center; gap: var(--sp-control-gap); height: var(--sp-control-row-h); padding: 0 var(--sp-space-03);
+/* Phase 4 PR 3a/3b (owner rulings O6 + Q1/Q2, PHASE3DS §1.14 amendment): the row WRAPS when its content
+   does not fit — at 1024, and at 1920 with the left panel open (1664px pane). Content-driven, no viewport
+   query: a single line is exactly 48px (4 + 40 + 4), a wrapped row 96px; the stage above lg absorbs the
+   extra line. white-space stays nowrap — the ROW wraps between controls, the floor label and the ⌘K key
+   never wrap inside their 40px boxes. The search keeps its token width, shrinks to 240px before the row
+   wraps, never grows into the slack; its scope menu stacks above the Find palette (fixed, z-70). */
+.sp-control-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-control-gap); row-gap: var(--sp-control-gap);
+  height: auto; min-height: var(--sp-control-row-h); padding: var(--sp-space-02) var(--sp-space-03);
   background: var(--sp-background); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); white-space: nowrap; }
+.sp-control-row .sp-search { flex: 0 1 var(--sp-search-w); min-width: 240px; }
+.sp-control-row .sp-search .sp-menu { z-index: 80; }
 .sp-control-row .cds-btn { height: var(--sp-control-h); }
 .sp-control-row .cds-btn--icon { width: var(--sp-control-h); }
 .sp-control-divider { width: 1px; height: var(--sp-control-divider-h); background: var(--sp-control-divider); margin: 0 var(--sp-space-03); flex: none; }
@@ -482,6 +501,10 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-palette-row { display: grid; grid-template-columns: 1fr auto auto; column-gap: var(--sp-space-05); align-items: center; height: var(--sp-size-lg); padding: 0 var(--sp-space-05); cursor: pointer; }
 .sp-palette-row:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover-02); }
 .sp-palette-row[aria-selected="true"] { background: var(--sp-layer-selected); box-shadow: inset 3px 0 0 var(--sp-border-interactive); }
+/* Phase 4 PR 3b (PHASE3DS §1.15 amendment): the app's rows are real <button>s inside listitems
+   (accessibility-source), so selection is aria-current and the row carries its own focus ring */
+.sp-palette-row[aria-current="true"] { background: var(--sp-layer-selected); box-shadow: inset 3px 0 0 var(--sp-border-interactive); }
+.sp-palette-row:is(:focus-visible, [data-state="focus"]) { outline: var(--sp-focus-width) solid var(--sp-focus); outline-offset: var(--sp-focus-offset); }
 .sp-palette-row .sp-palette-title { color: var(--sp-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sp-palette-row .sp-palette-sub { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sp-palette-row .sp-palette-code { font: var(--sp-type-code-02); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); }
@@ -525,10 +548,15 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-pill-badge { position: absolute; top: calc(-1 * var(--sp-space-02)); right: calc(-1 * var(--sp-space-02)); width: var(--sp-pill-badge-size); height: var(--sp-pill-badge-size); overflow: visible;
   color: var(--sp-pill-badge); fill: var(--sp-pill-fill); stroke: currentColor; stroke-width: var(--sp-pill-badge-stroke); stroke-linejoin: miter; }
 .sp-pill--search .sp-pill-badge { fill: var(--sp-pill-search-fill); }
-.sp-pill--names-off .sp-pill-badge { fill: var(--sp-pill-names-off); }
+.sp-pill--names-off .sp-pill-badge { fill: var(--sp-pill-names-off); color: var(--sp-pill-fill); }   /* PR 3b rig: purple 40 on the gray-10 square is 2.14 — the ◇ inverts on the filled footprint (§1.16 amendment) */
 /* names off: assigned collapses to the filled 28 footprint; empty seats keep their symbols */
 .sp-pill--names-off { width: var(--sp-seat-footprint); padding: 0; justify-content: center; background: var(--sp-pill-names-off); box-shadow: none; color: transparent; overflow: hidden; }
 .sp-pill--names-off:is(:hover, [data-state="hover"]) { background: var(--sp-pill-names-off); }
+/* names off + quiet (filtered out): the filled footprint steps to the quiet TEXT colour (gray 70 / gray 30)
+   — still filled (= assigned), lighter than a match, 5.7 / 10 on the mat (the quiet EDGE was 1.7); no opacity
+   (PHASE3DS §1.16 amendment, PR 3b) */
+.sp-pill--names-off.sp-pill--quiet { background: var(--sp-pill-quiet-text); }
+.sp-pill--names-off.sp-pill--quiet:is(:hover, [data-state="hover"]) { background: var(--sp-pill-quiet-text); }
 /* 44px hit region (deviation 7): the asset's touch-target pseudo, on every marker */
 .sp-pill.cds-touch-target::after, .sp-seat-footprint.cds-touch-target::after { content: ""; }
 .sp-seat-footprint.cds-touch-target { position: relative; }
@@ -592,6 +620,10 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-block-reason { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-secondary); margin-top: var(--sp-space-02); }
 .sp-slot .cds-notification { max-width: none; margin: var(--sp-space-03) 0 var(--sp-space-05); }
 .sp-slot .cds-form-item[data-invalid] .cds-helper { color: var(--sp-text-error); }
+
+/* Phase 4 PR 3b (asset override, PHASE3DS §2): native <select> popups ignore the control's classes —
+   without explicit option colours Windows dark mode paints OS-coloured options against the layer (#200) */
+.cds-select option { background: var(--sp-layer-01); color: var(--sp-text-primary); }
 
 /* -----------------------------------------------------------------------------
    14. MODE CARD — §3 "Mode card · hand-built". PHASE3DS §1.18. Owns the slot

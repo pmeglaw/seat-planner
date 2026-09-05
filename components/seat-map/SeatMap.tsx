@@ -38,7 +38,7 @@ import {
 } from "@/lib/mapViewport";
 import { clientPointToNormalized } from "@/lib/seatMath";
 import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
-import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
+import { arrowKeyToDirection, edgeKeyToPosition, findNearestSeatInDirection, resolveRovingSeatId, seatAtReadingEdge } from "@/lib/seatKeyboardNav";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { canVacateSeat } from "@/lib/seatDraftActions";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
@@ -50,7 +50,7 @@ import {
   seatsToVisualSeats,
   visualPointToSavedPoint
 } from "@/lib/mapLayoutTransform";
-import { RESTING_PILL_GEOMETRY, TEXT_TIER_PILL_GEOMETRY, clearanceFromScale, computeCodePillNudges, computeNameLabelNudges, markerHitFloorMet, textTierActive } from "@/lib/seatCrowding";
+import { PILL_CLEARANCE_PX, PILL_HEIGHT_PX, clearanceFromScale, computeNameLabelNudges, estimatePillWidthPx } from "@/lib/seatCrowding";
 import { AskPlannerDrawer, type AskPlannerQueuedRequest } from "@/components/seat-map/AskPlannerDrawer";
 import { DraftTrailOverlay } from "@/components/seat-map/DraftTrailOverlay";
 import { FloorRoster, focusFloorRoster } from "@/components/seat-map/FloorRoster";
@@ -65,15 +65,18 @@ import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { useSeatDraftActions } from "@/components/seat-map/useSeatDraftActions";
 import { useDraftHistory } from "@/components/seat-map/useDraftHistory";
 import { usePublishReview } from "@/components/seat-map/usePublishReview";
+import { PublishReviewSheet } from "@/components/seat-map/PublishReviewSheet";
 import { getSeatZone, useSeatFilters } from "@/components/seat-map/useSeatFilters";
-import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
-import { SeatMarker } from "@/components/seat-map/SeatMarker";
+import { RightSlot, type RightSlotOwner } from "@/components/seat-map/RightSlot";
+import { ModeCard } from "@/components/seat-map/ModeCard";
+import { draftChangedSeatLabels } from "@/lib/draftChanges";
+import { SeatMarker, seatPillLabel } from "@/components/seat-map/SeatMarker";
+import { invalidTargetReason, targetValidity, type TargetMode } from "@/lib/seatTargets";
 import {
   DeleteSeatConfirmDialog,
   DiscardDraftDialog,
   InspectorGuardDialog,
   MoveEmployeeConfirmDialog,
-  PublishReviewDialog,
   SwapConfirmDialog,
   VacateConfirmDialog,
   buildSwapSummary,
@@ -394,6 +397,9 @@ export function SeatMap({
   const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
   const [moveEmployeeSourceSeatId, setMoveEmployeeSourceSeatId] = useState<string | null>(null);
   const [moveEmployeeConfirm, setMoveEmployeeConfirm] = useState<MoveEmployeeConfirmState>(null);
+  // The reason the last refused destination gave (lib/seatTargets, O4) — shown
+  // in the canvas status region only while the mode that refused it runs.
+  const [invalidTargetNotice, setInvalidTargetNotice] = useState<string | null>(null);
   const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
   const [vacateConfirm, setVacateConfirm] = useState<VacateConfirmState>(null);
   // Last keyboard-visited seat (roving tabindex anchor). The derived tab stop
@@ -533,23 +539,6 @@ export function SeatMap({
 
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
-
-  // v12 slice 4 nudge (interaction contract #1): keeps the selected seat clear
-  // of the floating inspector at the panel tier. Pan/zoom/wheel/programmatic
-  // scroll paths below call cancelNudge() so a user- or code-initiated
-  // scroll-position change always wins over an in-flight nudge tween.
-  const { cancelNudge, skipNextNudge } = useInspectorNudge({
-    viewportRef: mapViewportRef,
-    frameRef: mapRef,
-    selectedSeatId,
-    inspectorHidden: inspectorCollapsed,
-    panelBreakpointPx: SEAT_CENTER_PANEL_BREAKPOINT_PX,
-    resolveSeatVisualX: seatId => {
-      const seat = localSeats.find(item => item.id === seatId);
-      if (!seat) return null;
-      return savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat).x;
-    }
-  });
 
   const askPlannerButtonRef = useRef<HTMLButtonElement | null>(null);
   // barSeatActions and the inspector's save run ONE commit path — same
@@ -1068,7 +1057,6 @@ export function SeatMap({
         // effect's deps never move to consume the flag — arming it
         // unconditionally would leave it stuck, silently skipping some later,
         // unrelated selection's legitimate nudge.
-        if (selectedSeatId !== seatId) skipNextNudge();
         queueCenterSeatInMap(seatId);
       }
     });
@@ -1139,13 +1127,9 @@ export function SeatMap({
     reserved: floorSeats.filter(seat => seat.status === "reserved").length,
     unavailable: floorSeats.filter(seat => seat.status === "unavailable").length
   }), [floorSeats]);
-  const draftChangedSeatLabelSet = useMemo(() => new Set([
-    ...publishSummary.addedSeats,
-    ...publishSummary.assignmentChanges,
-    ...publishSummary.vacatedSeats,
-    ...publishSummary.statusChanges,
-    ...publishSummary.otherChanges
-  ].map(item => item.label)), [publishSummary]);
+  // ONE source for "changed in draft" (P3-14): the ◇ badge, the inspector
+  // note and the legend count all read this set, derived from the publish diff.
+  const draftChangedSeatLabelSet = useMemo(() => draftChangedSeatLabels(publishSummary, localSeats), [publishSummary, localSeats]);
   // Legend counts follow the active constraints — the number row must not
   // contradict a filtered map (2026-07-16 regrade, review 4). matchesFilters
   // covers search + structured filters, exactly what the map dims by, and
@@ -1244,6 +1228,19 @@ export function SeatMap({
       if (nextSeatId) {
         setRovingSeatId(nextSeatId);
         focusSeatMarker(nextSeatId);
+      }
+      return;
+    }
+
+    // Home / End: the reading-order edges (PHASE2UX §1M.11, parity with the viewer).
+    const edge = edgeKeyToPosition(event.key);
+    if (edge) {
+      event.preventDefault();
+      event.stopPropagation();
+      const edgeSeatId = seatAtReadingEdge(seatNavPoints, edge);
+      if (edgeSeatId) {
+        setRovingSeatId(edgeSeatId);
+        focusSeatMarker(edgeSeatId);
       }
       return;
     }
@@ -1347,7 +1344,6 @@ export function SeatMap({
         // dirty-guard-deferred continuation, so it arms the skip too (only
         // when the selection is actually changing — see the deep-link
         // effect above for why an unconditional arm would go stale).
-        if (isNewSelection) skipNextNudge();
         queueCenterSeatInMap(action.seatId);
       }
       return;
@@ -1599,15 +1595,13 @@ export function SeatMap({
   }
 
   const scrollMapToPoint = useCallback((x: number, y: number, options?: { verticalViewportAnchor?: number }) => {
-    // A programmatic center supersedes any in-flight inspector nudge.
-    cancelNudge();
     const viewport = mapViewportRef.current;
     const map = mapRef.current;
     if (!viewport || !map) return;
 
     const target = scrollTargetForPoint({ x, y }, map, viewport, options?.verticalViewportAnchor ?? 0.5);
     viewport.scrollTo({ ...target, behavior: "smooth" });
-  }, [cancelNudge]);
+  }, []);
 
   const centerMapViewport = useCallback((behavior: ScrollBehavior = "smooth") => {
     const viewport = mapViewportRef.current;
@@ -1641,7 +1635,6 @@ export function SeatMap({
   // viewport on the point that was previously centered. Stored coordinates and
   // the calibration transform are untouched (spec §9).
   function applyMapZoom(nextZoom: number) {
-    cancelNudge();
     const clamped = clampZoom(nextZoom);
 
     // A no-op zoom must not arm pendingZoomCenterRef: setZoomFactor bails on
@@ -1680,7 +1673,6 @@ export function SeatMap({
   }, [zoomFactor]);
 
   function fitMapToView() {
-    cancelNudge();
     setZoomFactor(1);
     if (mapViewMode !== "overview") changeMapViewMode("overview");
   }
@@ -1694,7 +1686,6 @@ export function SeatMap({
   // switch to a floor with no plan to click on.
   function switchFloor(next: FloorId, options: { announce?: boolean } = {}) {
     if (next === floor) return;
-    cancelNudge();
     setFloor(next);
     setRovingSeatId(null);
     setZoomFactor(1);
@@ -1736,7 +1727,6 @@ export function SeatMap({
   }
 
   function handleViewportPointerDown(event: PointerEvent<HTMLDivElement>) {
-    cancelNudge();
     if (mapViewMode !== "detail" || surface !== "plan") return;
     if (event.button !== 0) return;
     if (canEdit && addSeatMode) return;
@@ -1904,6 +1894,25 @@ export function SeatMap({
     return true;
   }
 
+  // Move / swap destination validity (lib/seatTargets, owner ruling O4): the
+  // running mode and its source seat, or null. The marker layer marks every
+  // invalid destination from the same predicate the click consults below.
+  const targetMode: { mode: TargetMode; source: SeatWithEmployee } | null = (() => {
+    if (!canEdit) return null;
+    if (moveEmployeeSourceSeatId) {
+      const source = localSeats.find(seat => seat.id === moveEmployeeSourceSeatId);
+      return source ? { mode: "move", source } : null;
+    }
+    if (swapSourceSeatId) {
+      const source = localSeats.find(seat => seat.id === swapSourceSeatId);
+      return source ? { mode: "swap", source } : null;
+    }
+    return null;
+  })();
+  function isInvalidTarget(seat: SeatWithEmployee): boolean {
+    return targetMode !== null && targetValidity(targetMode.mode, targetMode.source, seat) === "invalid";
+  }
+
   function commitSeatSelection(seatId: string) {
     // The find spans the building (D2′): a result row, a deep link, an Ask
     // Planner highlight or a Move/Swap target can name a seat on the other
@@ -1912,6 +1921,14 @@ export function SeatMap({
     if (targetSeat && floorOf(targetSeat) !== floor) switchFloor(floorOf(targetSeat), { announce: false });
     setAnnouncedFloor(null);
     setRosterHighlightedPersonId(null);
+    setInvalidTargetNotice(null);
+
+    // An invalid destination refuses the click: no dialog, the reason in the
+    // canvas status region (names WHICH rule — never colour only, O4).
+    if (targetMode && targetSeat && targetValidity(targetMode.mode, targetMode.source, targetSeat) === "invalid") {
+      setInvalidTargetNotice(invalidTargetReason(targetMode.mode, targetMode.source, targetSeat));
+      return true;
+    }
 
     if (canEdit && moveEmployeeSourceSeatId) {
       return requestMoveEmployeeTarget(seatId);
@@ -1967,13 +1984,12 @@ export function SeatMap({
 
     // Finding 1 (v12 slice 4 final review): arm the skip in the same commit
     // as this selection so the nudge trigger effect never races this queued
-    // center's native smooth scrollTo (see useInspectorNudge's skipNextNudge).
+    // center's native smooth scrollTo (see the retired inspector nudge).
     // Only when the selection is actually changing — reselecting the already-
     // selected seat (e.g. re-opening its own results row) leaves selectedSeatId
     // unchanged, so the trigger effect's deps never move to consume the flag;
     // arming it anyway would leave it stuck and silently skip a later,
     // unrelated selection's legitimate nudge.
-    if (isNewSelection) skipNextNudge();
     queueCenterSeatInMap(seatId);
   }
 
@@ -2445,24 +2461,32 @@ export function SeatMap({
   // one — no dead "matches published" arm to keep in sync.
   const draftStatusLabel = `${publishSummary.totalChangeCount} unpublished ${publishSummary.totalChangeCount === 1 ? "change" : "changes"}`;
   const draftStatusTitle = `Review draft changes: ${draftChangeBreakdown || `${publishSummary.totalChangeCount} total`}`;
+  // The mode card's copy (PHASE3DS §1.18): eyebrow · title · one sentence ·
+  // the O4 note on the modes that target seats.
   const activeMode = addSeatMode
     ? {
       label: "Add seat",
-      message: "Click inside a seating zone to place an automatically numbered custom marker.",
+      title: "Click the plan to place a seat",
+      body: "New seats are custom draft seats, numbered automatically; they reach viewers at the next publish.",
+      note: undefined,
       exitLabel: "Exit add seat",
       onExit: cancelAddSeatMode
     }
     : moveEmployeeSourceSeat
       ? {
         label: "Move employee",
-        message: `Moving ${seatPersonLabel(moveEmployeeSourceSeat)} from ${moveEmployeeSourceSeat.label}. Select the destination seat.`,
+        title: `Moving ${seatPersonLabel(moveEmployeeSourceSeat)} from ${moveEmployeeSourceSeat.label}`,
+        body: "Select the destination seat — on this floor, or switch floors with the selector.",
+        note: "Reserved and unavailable seats can't be destinations.",
         exitLabel: "Exit move employee",
         onExit: cancelMoveEmployeeMode
       }
       : swapSourceSeat
         ? {
           label: "Swap seats",
-          message: `${swapSourceSeat.label} is the source. Select a target seat to review the swap.`,
+          title: `Swapping ${swapSourceSeat.label}`,
+          body: "Select the seat to swap with; you review the swap before it applies.",
+          note: "Reserved and unavailable seats can't be destinations.",
           exitLabel: "Exit swap seats",
           onExit: cancelSwapSeatMode
         }
@@ -2478,10 +2502,11 @@ export function SeatMap({
   // 3b MODE CARD: while a mode runs without an expanded inspector, the mode
   // owns the panel slot (its microcopy lives in the occupant, INV-4).
   const modeCardOpen = canEdit && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
-  // v12 slice 4: the inspector FLOATS (contract #1) — only the docking
-  // occupants reserve stage width now (results panel / mode card, contract #2).
-  const rightSlotTier: "expanded" | "none" = modeCardOpen ? "expanded" : "none";
-  const stageReservedClassName = rightSlotTier === "expanded" ? "panel:pr-[332px]" : "";
+  // The 400 right slot (C9, INV-4): a running mode owns it until it ends,
+  // otherwise the inspector while a seat is selected and expanded. The canvas
+  // column is PUSHED while it is open (D2); the band below never reflows.
+  const slotOwner: RightSlotOwner = modeCardOpen ? "mode" : askPlannerOpen && canEdit ? "ask" : selectedSeat && !inspectorCollapsed ? "inspector" : null;
+  const canvasColumnClassName = ["relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1", slotOwner ? "lg:pr-[var(--sp-slot-w)]" : ""].filter(Boolean).join(" ");
 
   // The collapse rail is retired (v12 slice 4): `inspectorCollapsed` is now
   // purely the auto-yield flag. Whenever nothing owns the right region anymore
@@ -2511,12 +2536,11 @@ export function SeatMap({
   // mobileMapInteractionSurfaceOpen on purpose: that one is canEdit-gated
   // (it guards edit affordances), while a sheet covers the legend whether or
   // not this session can edit, and the results panel is a sheet down there too.
-  const bottomSheetOwnsBottom = mobileMapInteractionSurfaceOpen || Boolean(selectedSeat);
   // Band visibility (Option A): floor-gated like the legend it replaced, sm+
-  // only, and below the panel tier it yields to whichever sheet owns the
-  // bottom — bottomSheetOwnsBottom is admin-wider than the viewer's flag on
-  // purpose (results panel and the edit-mode sheets are bottom sheets here).
-  const statusBandVisible = surface === "plan" && bandTier && (panelTier || !bottomSheetOwnsBottom);
+  // only. Phase 4 PR 3b: nothing owns the bottom any more — the inspector and
+  // the mode card are the right slot over the canvas column (PHASE3DS §1.17),
+  // so the band never yields to a sheet.
+  const statusBandVisible = surface === "plan" && bandTier;
   const mapViewportClassName = [
     // v12 slice 3: the mounted-sheet treatment (hairline border + elevation +
     // matting padding) is gone. The plan is layer-00 now — it runs edge to
@@ -2633,48 +2657,17 @@ export function SeatMap({
   // pointer-move-driven re-renders (drag/pan/hover) don't rerun them: with
   // Show names off (the hot-path default) every dep below is
   // identity-stable, so the whole pipeline is cached.
-  // PR-2 text tier: derived from the SAME zoom-aware scale — labels are marks
-  // below the collision threshold and 12px text at or above it, computed from
-  // the actual seat set (no hardcoded frame width or per-base zoom table).
-  // The ref carries the deadband: fit mode keeps the frame width CONTINUOUS
-  // under window resize, so textTierActive holds an entered tier across a
-  // jitter-sized slack band instead of flapping at the boundary.
-  const textTierWasActiveRef = useRef(false);
-  const textTier = useMemo(
-    () => textTierActive(
-      visualLocalSeats,
-      mapPixelsPerNormalizedUnit,
-      mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
-      textTierWasActiveRef.current
-    ),
-    [mapPixelsPerNormalizedUnit, visualLocalSeats]
-  );
-  textTierWasActiveRef.current = textTier;
-  // 44px touch floor, same derivation and deadband (lib/seatCrowding
-  // markerHitFloorMet). Zoom-aware here too: zooming in widens pitch and lets
-  // the floor in; a docked panel that narrows the stage below ~1500px of
-  // rendered frame takes it back out (DECISIONS.md §2.4 / §5, 2026-09-01).
-  const hitFloorWasMetRef = useRef(false);
-  const hitFloor = useMemo(
-    () => markerHitFloorMet(
-      visualLocalSeats,
-      mapPixelsPerNormalizedUnit,
-      mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
-      hitFloorWasMetRef.current
-    ),
-    [mapPixelsPerNormalizedUnit, visualLocalSeats]
-  );
-  hitFloorWasMetRef.current = hitFloor;
-  // Whenever the tier is on, the nudge scorers model the text-tier footprints
-  // — the pills actually on screen — instead of the resting-mark geometry.
-  const seatPillGeometry = textTier ? TEXT_TIER_PILL_GEOMETRY : RESTING_PILL_GEOMETRY;
+  // Phase 4 PR 3b: ONE pill layer (PHASE3DS §1.16). The text tier and the
+  // pitch-gated 44px hit floor retired with the code pills — every marker is
+  // a 28px fit-width pill or footprint carrying the asset's touch target, and
+  // the collision graph models each pill at its own estimated width.
   const seatDensityClearance = useMemo(
     () => clearanceFromScale(
       mapPixelsPerNormalizedUnit,
       mapPixelsPerNormalizedUnit * (MAP_IMAGE_HEIGHT / MAP_IMAGE_WIDTH),
-      seatPillGeometry.clearancePx
+      PILL_CLEARANCE_PX
     ),
-    [mapPixelsPerNormalizedUnit, seatPillGeometry]
+    [mapPixelsPerNormalizedUnit]
   );
   // Shared with the marker render loop below (dimmed={dimmedSeatIdSet.has(...)}).
   const dimmedSeatIdSet = new Set(floorSeats.filter(isSeatDimmed).map(seat => seat.id));
@@ -2711,16 +2704,14 @@ export function SeatMap({
         .map(seat => seat.id)
     );
   }, [dimmedSeatIdSet, moveEmployeeConfirm, moveEmployeeSourceSeatId, selectedSeatId, showNames, swapSourceSeatId, swapTargetSeatId, visualLocalSeats]);
+  // Fit-width pills: the scorer sees each pill at its own estimated width
+  // (an empty seat is the 28px footprint) at the live x scale.
   const nameLabelNudges = useMemo(
-    () => computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance),
-    [namedSeatIdSet, seatDensityClearance, visualLocalSeats]
-  );
-  // Code-pill nudges are computed AFTER the name nudges so the code graph
-  // can dodge the rows the name pills actually occupy (named seats render
-  // name tokens, not code pills).
-  const codePillNudges = useMemo(
-    () => computeCodePillNudges(visualLocalSeats, seatDensityClearance, { nameNudges: nameLabelNudges, namedSeatIds: namedSeatIdSet, geometry: seatPillGeometry }),
-    [nameLabelNudges, namedSeatIdSet, seatDensityClearance, seatPillGeometry, visualLocalSeats]
+    () => computeNameLabelNudges(visualLocalSeats, namedSeatIdSet, seatDensityClearance, {
+      widthPx: seat => seat.employee ? estimatePillWidthPx(seatPillLabel(seat)) : PILL_HEIGHT_PX,
+      pixelsPerXUnit: mapPixelsPerNormalizedUnit
+    }),
+    [mapPixelsPerNormalizedUnit, namedSeatIdSet, seatDensityClearance, visualLocalSeats]
   );
   const markerEdgeBaseOffsetPx = 0;
   const markerEdgeMaxOffsetPx = 144;
@@ -2882,6 +2873,9 @@ export function SeatMap({
   if (actionError && !sessionExpired && !swapConfirm && !vacateConfirm && !deleteSeatConfirm && !moveEmployeeConfirm) {
     canvasNotices.push({ id: "action-error", kind: "error", alert: true, text: actionError });
   }
+  if (invalidTargetNotice && targetMode) {
+    canvasNotices.push({ id: "invalid-target", kind: "info", text: invalidTargetNotice, onDismiss: () => setInvalidTargetNotice(null) });
+  }
   if (actionNotice && !swapSourceSeatId && !moveEmployeeSourceSeatId) {
     canvasNotices.push({
       id: "action-notice",
@@ -2954,9 +2948,8 @@ export function SeatMap({
       />
 
       {/* v12 slice 3: no width cap and no padding — the floor plan is layer-00
-          and runs edge to edge below the bar. stageReservedClassName stays:
-          it is the reserved right padding the inspector/results panels ride. */}
-      <div className={["flex w-full flex-1 flex-col lg:min-h-0 lg:overflow-hidden", stageReservedClassName].filter(Boolean).join(" ")}>
+          and runs edge to edge below the bar. */}
+      <div className="flex w-full flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
         
 
         {/* lg:flex-1 keeps the height chain rigid: without it the fit-view
@@ -2979,6 +2972,7 @@ export function SeatMap({
           </h2>
 
           <div className={mapStageClassName}>
+          <div className={canvasColumnClassName}>
             {/* Top-left cluster (v12 slice 3): floor pill and the AI
                 highlight chip float over the full-bleed plan as layer-01
                 white cards. Nothing above the map is in flow, so a chip
@@ -3033,10 +3027,6 @@ export function SeatMap({
               onPointerMove={handleViewportPointerMove}
               onPointerUp={handleViewportPointerEnd}
               onPointerCancel={handleViewportPointerEnd}
-              onWheel={cancelNudge}
-              onKeyDown={event => {
-                if (VIEWPORT_NATIVE_SCROLL_KEYS.has(event.key)) cancelNudge();
-              }}
             >
               {/* Multi-floor PR-3: an unmapped floor renders the same roster
                   the viewer shows, fed from the LIVE working set — who works
@@ -3137,9 +3127,6 @@ export function SeatMap({
                     const seatMatchesFilters = matchesFilters(seat);
                     const visualSeat = visualSeatById.get(seat.id) ?? seat;
                     const viewportPlacement = getMarkerViewportPlacement(visualSeat.x);
-                    // Office plates center in their ROOM and size to it (the
-                    // click point is wherever the admin happened to add the
-                    // seat; the room is the identity). Display-only offset —
 
                     return (
                       <SeatMarker
@@ -3151,26 +3138,17 @@ export function SeatMap({
                         showNames={showNames}
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
                         draftChanged={draftChangedSeatLabelSet.has(seat.label)}
-                        compactNameLabel={(nameLabelNudges.get(seat.id) ?? 0) !== 0}
-                        codeNudge={codePillNudges.get(seat.id) ?? 0}
                         nameNudge={nameLabelNudges.get(seat.id) ?? 0}
-                        textTier={textTier}
-                        hitFloor={hitFloor}
                         swapMode={Boolean(swapSourceSeatId)}
                         moveEmployeeMode={Boolean(moveEmployeeSourceSeatId)}
                         swapSource={seat.id === swapSourceSeatId}
                         swapTarget={seat.id === swapConfirm?.targetSeatId}
                         moveEmployeeSource={seat.id === moveEmployeeSourceSeatId}
+                        invalidTarget={isInvalidTarget(seat)}
                         highlighted={plannerHighlightedSeatIdSet.has(seat.id)}
                         addSeatMode={addSeatMode}
                         viewportEdge={viewportPlacement.edge}
                         viewportEdgeOffsetPx={viewportPlacement.offsetPx}
-                        // Owner preference: the admin map wears the published viewer's
-                        // seat-marker pills exactly — soft resting pills with the status
-                        // dot, the dark pill + orange ring when selected, orange hover.
-                        // (SeatMarker keeps its admin-token branches; the admin map just
-                        // no longer opts into them.)
-                        variant="viewer"
                         tabIndex={seat.id === mapRovingSeatId ? 0 : -1}
                         onSelect={stableSelectSeat}
                       />
@@ -3195,10 +3173,89 @@ export function SeatMap({
                 />
               </div>
             )}
+            </div>
+            {/* The right slot (PHASE3DS §1.17, D2-a): one owner at a time —
+                mode card · Ask Planner · inspector (INV-4). It
+                sits over the canvas column only, so the band below stays
+                uncovered; the column's padding is what pushes the plan. */}
+            <RightSlot open={slotOwner !== null}>
+              {slotOwner === "mode" && activeMode && (
+                <ModeCard
+                  label={activeMode.label}
+                  title={activeMode.title}
+                  body={activeMode.body}
+                  note={activeMode.note}
+                  exitLabel={activeMode.exitLabel}
+                  onExit={activeMode.onExit}
+                  // Create-seat has no confirm button to relabel — the card
+                  // carries the visible busy line while the create round-trips.
+                  busyLabel={addSeatMode && mutationInFlight ? "Adding seat…" : null}
+                />
+              )}
+              {/* Ask Planner in the slot (P2-9 408 → 400): a side panel, not a
+                  modal — the map stays usable beside it. */}
+              {canEdit && (
+                <AskPlannerDrawer
+                  open={slotOwner === "ask"}
+                  draftDirty={inspectorDirty}
+                  zones={zones}
+                  queuedRequest={askPlannerQueuedRequest}
+                  highlightedSeatIds={plannerHighlightedSeatIds}
+                  floorTagForSeat={plannerFloorTagForSeat}
+                  onClose={closeAskPlannerDrawer}
+                  onHighlightSeats={setPlannerHighlightedSeatIds}
+                  onClearHighlights={() => setPlannerHighlightedSeatIds([])}
+                  onSelectSeat={selectPlannerHighlightedSeat}
+                />
+              )}
+              {slotOwner === "inspector" && (
+              <SeatInspector
+                seat={selectedSeat}
+                seats={localSeats}
+                employees={localEmployees}
+                departmentOptions={localDepartmentOptions}
+                canEdit={canEdit}
+                draftChanged={selectedSeat ? draftChangedSeatLabelSet.has(selectedSeat.label) : false}
+                collapsed={inspectorCollapsed}
+                searchMismatchNotice={selectedSeatMismatchNotice}
+                searchMismatchClearLabel={clearSearchContextLabel}
+                onClose={() => {
+                  if (selectedSeatId && inspectorDirty) {
+                    requestInspectorGuard({ kind: "close-inspector" });
+                    return;
+                  }
+                  applyCloseInspectorAction();
+                }}
+                onClearSearchContext={searchActive ? clearSearch : clearStructuredFilters}
+                onMove={() => startMoveEmployeeMode()}
+                onSwap={() => startSwapSeatMode()}
+                onVacate={requestVacateFromBar}
+                // Finding 2 (v12 slice 4 final review): parity with the retired
+                // canvas action bar's busy gate — a mutation in flight from ANY
+                // source (undo/redo, the vacate confirm dialog's own transition, not
+                // just this inspector instance's local `pending`) must still block
+                // Move/Swap/Vacate here.
+                busy={mutationInFlight || barSeatActions.pending}
+                onDeleteSeat={deleteSelectedSeat}
+                onExplainSeat={explainSeatWithPlanner}
+                onBeforeSeatUpdate={captureDraftSnapshot}
+                onSeatUpdated={applySeatUpdated}
+                onError={message => {
+                  setActionError(message);
+                  if (message) setActionNotice(null);
+                }}
+                onStaleDraft={handleStaleDraft}
+                onDirtyChange={setInspectorDirty}
+                onSubmitBlocked={cancelPendingInspectorGuardAction}
+                resetSignal={inspectorResetSignal}
+                activityEntries={selectedSeatActivity}
+              />
+              )}
+            </RightSlot>
             {/* The status band (Option A parity with the viewer, owner call
                 2026-08-17): the in-flow bottom row that replaced the floating
                 legend card + zoom stack from sm up. It narrows with the stage
-                when a docking panel reserves its column (stageReservedClassName
+                when a docking panel reserves its column (the canvas column padding
                 wraps this whole column), so the dock never overlaps it. Counts
                 come from legendCounts, which follows the active filters — the
                 number row must never contradict a filtered map. Gated to
@@ -3258,20 +3315,6 @@ export function SeatMap({
       </div>
       </div>
 
-      {canEdit && (
-        <AskPlannerDrawer
-          open={askPlannerOpen}
-          draftDirty={inspectorDirty}
-          zones={zones}
-          queuedRequest={askPlannerQueuedRequest}
-          highlightedSeatIds={plannerHighlightedSeatIds}
-          floorTagForSeat={plannerFloorTagForSeat}
-          onClose={closeAskPlannerDrawer}
-          onHighlightSeats={setPlannerHighlightedSeatIds}
-          onClearHighlights={() => setPlannerHighlightedSeatIds([])}
-          onSelectSeat={selectPlannerHighlightedSeat}
-        />
-      )}
 
       {vacateConfirm && (
         <VacateConfirmDialog
@@ -3302,8 +3345,11 @@ export function SeatMap({
         />
       )}
 
+      {/* The publish review as the wide tearsheet (PHASE3DS §1.19, C10):
+          Cancel is the exit; PUBLISH_BLOCKED closes it and lands in the canvas
+          status region (usePublishReview). */}
       {publishReviewOpen && (
-        <PublishReviewDialog
+        <PublishReviewSheet
           publishSummary={publishSummary}
           publishDiffRows={publishDiffRows}
           publishDiffCounts={publishDiffCounts}
@@ -3327,32 +3373,6 @@ export function SeatMap({
         />
       )}
 
-      {modeCardOpen && activeMode && (
-        <aside
-          role="status"
-          aria-live="polite"
-          aria-label={`${activeMode.label} mode`}
-          className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[80] border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-01)] p-4 shadow-sp motion-safe:animate-[sp-panel-in_200ms_ease-out] panel:inset-x-auto panel:bottom-auto panel:right-3 panel:top-[calc(var(--sp-shell-header-h)+var(--sp-control-row-h))] panel:z-40 panel:w-[320px] panel:max-w-[calc(100vw-1.5rem)]"
-        >
-          <div className="text-xs font-semibold text-[var(--sp-link)]">{activeMode.label} mode</div>
-          <p className="mt-1 text-sm font-bold leading-5 text-[var(--sp-text-primary)]">{activeMode.message}</p>
-          {/* PR-5 (§8.1) row 11: create-seat has no confirm button to relabel
-              — the mode card carries the visible busy line while the create
-              round-trips (the card is already a polite live region). */}
-          {addSeatMode && mutationInFlight && (
-            <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-[var(--sp-text-secondary)]">
-              <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />
-              Adding seat…
-            </p>
-          )}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={activeMode.onExit} className="shrink-0 whitespace-nowrap rounded-full bg-[var(--sp-layer-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-link-hover)] ring-1 ring-[var(--sp-border-interactive)] transition hover:bg-sp-surface active:scale-[0.97] active:duration-75 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
-              {activeMode.exitLabel}
-            </button>
-            <span className="rounded-full bg-[var(--sp-background)] px-2 py-1 text-xs font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">Esc exits</span>
-          </div>
-        </aside>
-      )}
 
       {/* The ONE Find surface (D1-d): the same palette as the viewer, over
           the DRAFT working set, floating from the row's field. */}
@@ -3383,52 +3403,6 @@ export function SeatMap({
         />
       )}
 
-      <SeatInspector
-        seat={selectedSeat}
-        seats={localSeats}
-        employees={localEmployees}
-        departmentOptions={localDepartmentOptions}
-        canEdit={canEdit}
-        // Clears the 40px status band + the 12px gutter at the panel tier —
-        // but only while the band actually renders (the roster floor has no
-        // band, and a selection survives the floor switch; a static 52px is a
-        // dead gap above nothing). Below the panel tier the sheet owns the
-        // bottom and the band yields instead, so the panel: variant is inert.
-        panelBottomClassName={statusBandVisible ? "panel:bottom-[52px]" : undefined}
-        collapsed={inspectorCollapsed}
-        searchMismatchNotice={selectedSeatMismatchNotice}
-        searchMismatchClearLabel={clearSearchContextLabel}
-        onClose={() => {
-          if (selectedSeatId && inspectorDirty) {
-            requestInspectorGuard({ kind: "close-inspector" });
-            return;
-          }
-          applyCloseInspectorAction();
-        }}
-        onClearSearchContext={searchActive ? clearSearch : clearStructuredFilters}
-        onMove={() => startMoveEmployeeMode()}
-        onSwap={() => startSwapSeatMode()}
-        onVacate={requestVacateFromBar}
-        // Finding 2 (v12 slice 4 final review): parity with the retired
-        // canvas action bar's busy gate — a mutation in flight from ANY
-        // source (undo/redo, the vacate confirm dialog's own transition, not
-        // just this inspector instance's local `pending`) must still block
-        // Move/Swap/Vacate here.
-        busy={mutationInFlight || barSeatActions.pending}
-        onDeleteSeat={deleteSelectedSeat}
-        onExplainSeat={explainSeatWithPlanner}
-        onBeforeSeatUpdate={captureDraftSnapshot}
-        onSeatUpdated={applySeatUpdated}
-        onError={message => {
-          setActionError(message);
-          if (message) setActionNotice(null);
-        }}
-        onStaleDraft={handleStaleDraft}
-        onDirtyChange={setInspectorDirty}
-        onSubmitBlocked={cancelPendingInspectorGuardAction}
-        resetSignal={inspectorResetSignal}
-        activityEntries={selectedSeatActivity}
-      />
 
       {inspectorGuardAction && selectedSeat && (
         <InspectorGuardDialog

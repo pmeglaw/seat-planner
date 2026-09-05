@@ -4,6 +4,9 @@ import type { Employee, SeatWithEmployee } from "@/lib/types";
 export type PublishChangeItem = {
   label: string;
   detail: string;
+  // People-detail items only: the live employee, so the draft map can badge
+  // the seat they sit in (lib/draftChanges) without matching on a name.
+  employeeId?: string;
 };
 
 /**
@@ -139,12 +142,12 @@ function buildEmployeeDetailChanges(inputs: PublishEmployeeInputs | undefined): 
   liveActive.forEach(live => {
     const published = publishedById.get(live.id);
     if (!published) {
-      items.push({ label: live.full_name, detail: "New in the viewer directory" });
+      items.push({ label: live.full_name, detail: "New in the viewer directory", employeeId: live.id });
       return;
     }
 
     const detail = describeEmployeeDetailChange(published, live);
-    if (detail) items.push({ label: live.full_name, detail });
+    if (detail) items.push({ label: live.full_name, detail, employeeId: live.id });
   });
 
   inputs.publishedEmployees.forEach(published => {

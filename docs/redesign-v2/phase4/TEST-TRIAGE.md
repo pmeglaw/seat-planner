@@ -133,6 +133,23 @@ dialog, side panel or tearsheet re-enumerates it.
 | 5 | — | `chunk-recovery-boundary-source`, `reception-source`, `reception-screen`, `e2e-auth/accessibility.spec.ts` | `touch-target-source` / `type-floor-source` (last rows) | — |
 | 6 | — | — | — | — (close-out verifies: no look-pinning test asserts the old look, no guardrail weakened, `HEX_LEDGER` empty, `SWEPT = {1,2,3,4}`) |
 
+### PR 3b outcomes (2026-09-05)
+
+- **Added:** `seat-targets`, `draft-changes`, `right-slot` (ct: RightSlot + ModeCard), `publish-review-sheet` (ct, four states),
+  `draft-history-sql-agreement-source` (the C-3 column lists pinned to the migrations); `seat-crowding` (width-aware
+  nudge, `estimatePillWidthPx`), `seat-keyboard-nav` (Home / End), `draft-history` (`'' ≡ null`) extended; one
+  browser-tier test (a reserved seat refuses a move).
+- **Rewritten:** `seat-map-components` (marker block), `pill-crowding-scale-source` (one pill layer), the marker half of
+  `desktop-seat-marker-system-source` (one silhouette per state; the Ask Planner row's `.sp-ai-label`),
+  `ask-planner-ai-source` (no AI token on the pill), `viewer-seat-finder` (names modes; the band never yields),
+  `browser/seat-map.spec.ts` band tests 16–17 (the slot never covers the band).
+- **Re-pointed:** `accessibility-source` (focus rule in the CSS deliverable; slot / tearsheet / drawer anatomy; the seven
+  strings' roles; Home / End), `touch-target-source` (asset touch targets), `type-floor-source` (SeatMarker, SeatInspector,
+  AskPlannerDrawer, ViewerFindPalette rows gone / shrunk), `pending-state-source` (`aria-busy`), `dialog-error-placement`
+  (the sheet; the drawer's fallback is a status), `published-employee-snapshot`, `phase4-token-layer-source` (`SWEPT`
+  {1,2,3}, brand gates O2 / O3, `globals.css` resets-only, `--sp-marker-h-max` exemption), `seat-map-components` (trail token).
+- **Retired:** `text-tier` (with the tier), `use-inspector-nudge` (with the pushing slot).
+
 ## 6. The PR 0 test — `tests/phase4-token-layer-source.test.mjs`
 
 Three rules from the hand-off, phased so PR 0 is green before any component moves:

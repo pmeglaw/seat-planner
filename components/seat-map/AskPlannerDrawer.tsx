@@ -3,8 +3,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { askPlannerAction, type AskPlannerActionError, type AskPlannerActionResult } from "@/app/actions";
 import type { AskPlannerResponse } from "@/lib/types";
-import { Button } from "@/components/ui/Button";
-import { useDialogFocus } from "@/components/ui/useDialogFocus";
+import { CloseIcon } from "@/components/ui/CloseIcon";
+import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
+import { shortcutHint } from "@/lib/platformShortcut";
+
+// Ask Planner in the 400 right slot (PHASE3DS §1.18, Phase 4 PR 3b; P2-9
+// 408 → 400). Carbon for AI, as ruled: the "AI" label is the marker AND the
+// entry to explainability (a popover: what it reads, what it never changes,
+// where to learn more), and the textarea's border carries the gradient —
+// nothing else. No aura, no glow, no ring. Read-only, always: the drawer asks
+// and highlights, it never mutates the map.
+//
+// One error component, SEVEN strings (the specimen's `#ask` table — each
+// ends in the next step): role="alert" for the five failures that stop the
+// task, role="status" for question-too-long and the fallback.
 
 export type AskPlannerQueuedRequest = {
   id: number;
@@ -26,14 +38,20 @@ type AskPlannerDrawerProps = {
   onHighlightSeats: (seatIds: string[]) => void;
   onClearHighlights: () => void;
   onSelectSeat: (seatId: string) => void;
+  /** Opens the shell's Help panel (the popover's "How Ask Planner works" link). */
+  onOpenHelp?: () => void;
 };
 
-type DrawerError = {
+export type DrawerError = {
   title: string;
   message: string;
+  /** alert = the failure stops the task; status = the admin can act on it in place. */
+  role: "alert" | "status";
+  retryable: boolean;
 };
 
 const emptyResponse: AskPlannerResponse | null = null;
+const QUESTION_MAX = 800;
 
 // Mirrors the server-side constant in lib/mapOperationsAgent.ts (client filter
 // only — do not import it, tests/map-operations-agent.test.mjs:894 pins a
@@ -51,68 +69,34 @@ function statusLabel(status: AskPlannerResponse["status"]) {
   return "Answered";
 }
 
-function statusClassName(status: AskPlannerResponse["status"]) {
-  // Dark-panel state pills (contrast on #161616: #42be65 ≈ 7.3:1, #08bdba ≈ 7.2:1, #78a9ff ≈ 6.6:1).
-  if (status === "refused") return "bg-[color-mix(in_srgb,var(--sp-status-draft-mark)_15%,transparent)] text-[var(--sp-status-draft-text)] ring-[color-mix(in_srgb,var(--sp-status-draft-mark)_40%,transparent)]";
-  if (status === "needs_clarification") return "bg-[color-mix(in_srgb,var(--sp-layer-02)_15%,transparent)] text-[var(--sp-text-primary)] ring-[color-mix(in_srgb,var(--sp-layer-02)_40%,transparent)]";
-  // Success wash/ring derive from the chrome success token (this panel is dark
-  // chrome in BOTH themes) — the retired --admin-status-ok-rgb twin held the
-  // stale #24A148 here, and the light status hex #1D6E41 is tuned for light
-  // surfaces (a 40% ring of it on #161616 is near-invisible, ~1.3:1).
-  return "bg-[color-mix(in_srgb,var(--sp-status-success-text)_15%,transparent)] text-[var(--sp-status-success-text)] ring-[color-mix(in_srgb,var(--sp-status-success-text)_40%,transparent)]";
-}
-
-function friendlyDrawerError(message: string, code?: "RATE_LIMITED"): DrawerError {
-  // Structured codes first (the STALE_DRAFT pattern): the app's own throttle
-  // arrives as code: "RATE_LIMITED", never matched from message text — the
-  // server copy can be reworded without silently landing in the OpenAI
-  // rate-limit branch below.
-  if (code === "RATE_LIMITED") {
-    return {
-      title: "Ask Planner needs a short break",
-      message
-    };
-  }
+// The seven strings (PHASE3DS §1.18, owner ruling). Structured codes first
+// (the STALE_DRAFT pattern): the app's own throttle arrives as code
+// "RATE_LIMITED", never matched from message text.
+export function friendlyDrawerError(message: string, code?: "RATE_LIMITED"): DrawerError {
   const lowerMessage = message.toLowerCase();
+  if (code === "RATE_LIMITED" || lowerMessage.includes("rate limited")) {
+    return { title: "Ask Planner is rate limited right now", message: "Try again in a minute.", role: "alert", retryable: true };
+  }
   if (lowerMessage.includes("not configured") || lowerMessage.includes("openai_api_key")) {
-    return {
-      title: "Ask Planner is not configured",
-      message: "Add OPENAI_API_KEY as a server-side environment variable for this environment, then redeploy."
-    };
+    return { title: "Ask Planner is not set up on this server", message: "Ask the office manager.", role: "alert", retryable: false };
   }
   if (lowerMessage.includes("configured openai model") || lowerMessage.includes("openai_model")) {
-    return {
-      title: "OpenAI model unavailable",
-      message: "Check OPENAI_MODEL and project model access, then try again."
-    };
-  }
-  if (lowerMessage.includes("rate limited")) {
-    return {
-      title: "Ask Planner is rate limited",
-      message: "OpenAI is temporarily rate limiting requests. Try again shortly."
-    };
+    return { title: "The configured model isn't available", message: "Ask the office manager.", role: "alert", retryable: false };
   }
   if (lowerMessage.includes("could not reach openai")) {
-    return {
-      title: "OpenAI is not reachable",
-      message: "Ask Planner could not reach OpenAI. Try again shortly."
-    };
+    return { title: "Ask Planner couldn't reach the planner service", message: "Try again.", role: "alert", retryable: true };
   }
   if (lowerMessage.includes("took too long")) {
-    return {
-      title: "Ask Planner timed out",
-      message: "Try a narrower question or try again shortly."
-    };
+    return { title: "The planner service timed out", message: "Try again, or ask something shorter.", role: "alert", retryable: true };
   }
-  if (lowerMessage.includes("needs a question") || lowerMessage.includes("limited to")) {
-    return {
-      title: "Question needs a tweak",
-      message
-    };
+  if (lowerMessage.includes("limited to")) {
+    return { title: `That question is over ${QUESTION_MAX} characters`, message: "Ask something shorter.", role: "status", retryable: false };
   }
   return {
-    title: "Ask Planner could not answer",
-    message: "Try again shortly or ask a narrower question."
+    title: "Ask Planner couldn't answer that",
+    message: "Try rephrasing, or ask about a zone, department, or person.",
+    role: "status",
+    retryable: false
   };
 }
 
@@ -126,29 +110,28 @@ export function AskPlannerDrawer({
   floorTagForSeat,
   onHighlightSeats,
   onClearHighlights,
-  onSelectSeat
+  onSelectSeat,
+  onOpenHelp
 }: AskPlannerDrawerProps) {
   const [question, setQuestion] = useState("");
   const [submitShortcutHint, setSubmitShortcutHint] = useState("Ctrl+Enter");
   const [response, setResponse] = useState<AskPlannerResponse | null>(emptyResponse);
   // Platform-adaptive hint, set a frame after mount so server markup never
-  // guesses the platform (matches the chrome search hint pattern).
+  // guesses the platform (matches the search field's hint pattern).
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      if (/mac/i.test(window.navigator.platform)) setSubmitShortcutHint("⌘+Enter");
+      setSubmitShortcutHint(shortcutHint(window.navigator.platform, "Enter").replace(" ", "+"));
     });
     return () => window.cancelAnimationFrame(frame);
   }, []);
   const [error, setError] = useState<DrawerError | null>(null);
-  // Provenance disclosure, collapsed by default and re-collapsed for every new
+  const [lastQuestion, setLastQuestion] = useState<string | null>(null);
+  // The explainability popover, closed by default and re-closed for every new
   // answer — leaving it open would attach one answer's explanation to the next.
   const [explainOpen, setExplainOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const questionRef = useRef<HTMLTextAreaElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-  // Tab trap only — the drawer's own effect still moves initial focus to the
-  // question field (it runs after this ref callback, so it wins).
-  const drawerDialogFocusRef = useDialogFocus<HTMLElement>();
   const processedQueuedRequestIdRef = useRef<number | null>(null);
 
   const suggestedPrompts = useMemo(() => {
@@ -197,6 +180,7 @@ export function AskPlannerDrawer({
         setError(null);
         setResponse(null);
         setExplainOpen(false);
+        setLastQuestion(cleanQuestion);
         onHighlightSeats([]);
         const payload = await askPlannerAction({ question: cleanQuestion, seatId: seatId ?? null });
         if (isAskPlannerError(payload)) {
@@ -239,276 +223,249 @@ export function AskPlannerDrawer({
     return () => window.clearTimeout(handle);
   }, [open]);
 
+  function clearDrawer() {
+    setQuestion("");
+    setError(null);
+    setResponse(null);
+    setExplainOpen(false);
+    onClearHighlights();
+    window.setTimeout(() => questionRef.current?.focus(), 0);
+  }
+
   if (!open) return null;
 
+  const visibleWarnings = response?.warnings.filter(warning => warning !== BROAD_ANSWER_EMPTY_HIGHLIGHT_WARNING) ?? [];
+  const broadAnswerWithoutHighlights = Boolean(response && response.highlights.length === 0);
+
   return (
-    <>
-      <button
-        type="button"
-        aria-label="Close Ask Planner"
-        aria-hidden="true"
-        tabIndex={-1}
-        className="fixed inset-0 z-[70] cursor-default bg-[color-mix(in_srgb,var(--sp-background)_30%,transparent)] backdrop-blur-[1px] motion-safe:animate-[sp-fade-in_180ms_ease-out] sm:z-50"
-        onClick={onClose}
-      />
-
-      {/* Carbon for AI gives an AI surface its own luminance: the panel edge
-          shifts to AI blue and a glow falls from the top edge, so the drawer
-          reads as a different KIND of surface than the chrome around it. That
-          legibility is the point — AI blue appears here and nowhere non-AI. */}
-      <aside
-        ref={drawerDialogFocusRef}
-        tabIndex={-1}
-        id="ask-planner-drawer"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ask-planner-title"
-        aria-describedby="ask-planner-description"
-        data-chrome="dark"
-        className="sp-zone-chrome fixed inset-x-3 bottom-3 z-[80] flex max-h-[84vh] flex-col overflow-hidden border border-[var(--sp-ai-panel-border)] bg-[var(--sp-background)] bg-[image:var(--sp-ai-glow)] bg-no-repeat text-[var(--sp-text-primary)] shadow-sp focus-visible:outline-none motion-safe:animate-[sp-panel-in_220ms_cubic-bezier(0.2,0,0,1)] sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[calc(2*var(--sp-shell-header-h)_+_12px)] sm:z-50 sm:max-h-[calc(100vh_-_2*var(--sp-shell-header-h)_-_20px)] sm:w-[408px] sm:max-w-[calc(100vw-2rem)]"
-      >
-        <div className="shrink-0 border-b border-[var(--sp-border-subtle)] px-4 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              {/* The AI label sits WITH the title, not in a corner: Carbon for
-                  AI asks that a user never read AI output without first seeing
-                  what produced it. aria-hidden because the heading text and the
-                  disclosure below already carry that fact for screen readers,
-                  and a bare "AI" would just interrupt the title. */}
-              <h2 id="ask-planner-title" className="flex items-center gap-2 text-base font-semibold">
-                Ask Planner
-                <span aria-hidden="true" className="border border-[var(--sp-ai-chrome-border)] px-[5px] py-px text-[10px] font-bold tracking-[0.04em] text-[var(--sp-ai-chrome-text)]">AI</span>
-              </h2>
-              <p id="ask-planner-description" className="mt-1 text-xs leading-5 text-[var(--sp-text-helper)]">Read-only answers from saved draft map data.</p>
-            </div>
-            <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="relative rounded-full px-3 py-1 text-xs font-medium text-[var(--sp-text-helper)] transition after:absolute after:-inset-y-2.5 after:inset-x-0 hover:bg-white/10 hover:text-[var(--sp-text-secondary)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]">
-              Close
-            </button>
-          </div>
-
-          {draftDirty && (
-            <div className="mt-3 rounded-lg border border-[color-mix(in_srgb,var(--sp-status-draft-mark)_40%,transparent)] bg-[color-mix(in_srgb,var(--sp-status-draft-mark)_10%,transparent)] px-3 py-2 text-xs font-medium text-[var(--sp-status-draft-text)]">
-              Unsaved inspector edits are not included.
-            </div>
-          )}
-        </div>
-
-        <div className="shrink-0 border-b border-[var(--sp-border-subtle)] px-4 py-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="text-xs font-medium text-[var(--sp-text-helper)]">Suggested prompts</div>
-            <div className="text-xs font-medium text-[var(--sp-text-helper)]">Saved draft only</div>
-          </div>
-          <div className="mb-3 flex flex-wrap gap-2">
-            {suggestedPrompts.map(promptOption => (
+    <aside
+      tabIndex={-1}
+      id="ask-planner-drawer"
+      aria-labelledby="ask-planner-title"
+      aria-describedby="ask-planner-description"
+      // The slot itself (RightSlot's host owns presence and the slide): a
+      // side panel, not a modal — the map stays usable beside it, Escape
+      // closes it through the surface's ladder, focus returns to the row's
+      // trigger (SeatMap).
+      className="sp-slot max-w-full"
+    >
+      <div className="sp-slot-header">
+        <div className="min-w-0">
+          <div className="sp-slot-eyebrow flex items-center gap-3">
+            {/* The AI label sits WITH the title, not in a corner: a user must
+                never read AI output without first seeing what produced it. It
+                is the entry to explainability — a popover, not a tooltip, so
+                keyboard and touch users get it too. */}
+            <span className="sp-ai-popover-host" data-open={explainOpen ? "" : undefined}>
               <button
-                key={promptOption.label}
                 type="button"
-                onClick={() => choosePrompt(promptOption.prompt)}
-                disabled={pending}
-                title={pending ? "Wait for Ask Planner to finish" : promptOption.prompt}
-                className="max-w-full rounded-full border border-[var(--sp-border-subtle)] bg-[var(--sp-field)] px-2.5 py-1.5 text-left text-xs font-medium leading-none text-[var(--sp-text-secondary)] transition hover:-translate-y-px hover:border-[var(--sp-interactive)] hover:bg-[var(--sp-background-hover)] hover:text-white hover:shadow-sp focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:hover:translate-y-0"
+                className="sp-ai-label"
+                onClick={() => setExplainOpen(current => !current)}
+                aria-expanded={explainOpen}
+                aria-controls="ask-planner-explain"
+                aria-label="AI — how Ask Planner answers"
               >
-                {promptOption.label}
+                AI
               </button>
-            ))}
-          </div>
-
-          <form
-            className="space-y-2"
-            onSubmit={event => {
-              event.preventDefault();
-              askPlanner();
-            }}
-          >
-            <label className="block">
-              <span className="sr-only">Ask Planner question</span>
-              <textarea
-                ref={questionRef}
-                name="askPlannerQuestion"
-                value={question}
-                onChange={event => setQuestion(event.target.value)}
-                onKeyDown={event => {
-                  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                    event.preventDefault();
-                    askPlanner();
-                  }
-                }}
-                placeholder="Ask about seats, zones, departments, or assignments…"
-                maxLength={800}
-                disabled={pending}
-                className="min-h-24 w-full resize-none rounded-xl border border-white/15 bg-[var(--sp-field)] px-3 py-2 text-sm text-[var(--sp-text-primary)] outline-none transition placeholder:text-[var(--sp-text-helper)] focus:border-[var(--sp-interactive)] focus:ring-2 focus:ring-[color:var(--sp-interactive)] disabled:bg-white/5 disabled:text-[var(--sp-text-helper)]"
-              />
-            </label>
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-              <div className="truncate text-xs font-medium text-[var(--sp-text-helper)]">{question.trim().length}/800 · {submitShortcutHint} to ask</div>
-              <Button type="submit" variant="primary" disabled={pending || !question.trim()} title={!question.trim() ? "Enter a question before asking" : undefined} className="rounded-full px-4">
-                {pending ? "Asking…" : "Ask"}
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
-          {!pending && !error && !response && (
-            <section className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-field)] p-3 text-sm leading-6 text-[var(--sp-text-secondary)]">
-              Ask about seats, assignments, zones, or departments. Ask Planner can highlight supporting seats, but it cannot change the map.
-            </section>
-          )}
-
-          {/* Thinking is AI presence, so it wears AI blue. It used to borrow
-              the firm's orange, which read as an ordinary app-busy state. */}
-          {pending && (
-            <section role="status" aria-live="polite" className="rounded-xl border border-[var(--sp-ai-panel-border)] bg-[var(--sp-ai-row)] p-3">
-              <div className="flex items-center gap-3">
-                <span className="h-3 w-3 shrink-0 motion-safe:animate-pulse rounded-full bg-[var(--sp-ai-chrome-text)]" />
-                <div>
-                  <div className="text-sm font-semibold text-[var(--sp-ai-chrome-text)]">Checking saved draft map data</div>
-                  <p className="mt-1 text-xs leading-5 text-[var(--sp-text-secondary)]">Ask Planner is using read-only lookups. No seats or assignments will be changed.</p>
-                </div>
+              <div id="ask-planner-explain" className="sp-ai-popover" role="note" aria-label="About AI answers" hidden={!explainOpen}>
+                <h4>Generated answers</h4>
+                <p>Ask Planner reads the saved draft map — seats, directory, zones — and answers in text. It cannot change seats, people, or the published map; unsaved inspector edits are excluded.</p>
+                <p>Highlights on the plan are the seats the answer names. Sources: draft seats · directory. Every answer states its confidence.</p>
+                {onOpenHelp ? (
+                  <button type="button" className="cds-btn cds-btn--ghost cds-btn--sm" onClick={onOpenHelp}>How Ask Planner works</button>
+                ) : null}
               </div>
-            </section>
-          )}
-
-          {error && (
-            <div role="alert" className="rounded-xl border border-[color-mix(in_srgb,var(--sp-status-error-text)_40%,transparent)] bg-[color-mix(in_srgb,var(--sp-status-error-mark)_10%,transparent)] p-3 text-sm leading-6 text-[var(--sp-status-error-text)]">
-              <div className="font-semibold">{error.title}</div>
-              <p className="mt-1 font-semibold">{error.message}</p>
-            </div>
-          )}
-
-          {response && (
-            <div className="space-y-3">
-              {/* The answer itself sits on the luminous AI layer, so generated
-                  text is never mistaken for the app's own stated facts. */}
-              <section className="rounded-xl border border-[var(--sp-ai-panel-border)] bg-[image:var(--sp-ai-aura)] bg-[var(--sp-background-hover)] bg-no-repeat p-3">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className={["rounded-full px-2 py-1 text-xs font-semibold ring-1", statusClassName(response.status)].join(" ")}>
-                    {statusLabel(response.status)}
-                  </span>
-                  <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">
-                    {response.confidence} confidence
-                  </span>
-                  {/* Carbon for AI requires the provenance of an answer to be
-                      reachable from the answer — a disclosure button, not a
-                      tooltip, so keyboard and touch users get it too. */}
-                  <button
-                    type="button"
-                    onClick={() => setExplainOpen(current => !current)}
-                    aria-expanded={explainOpen}
-                    aria-controls="ask-planner-explain"
-                    className="ml-auto border border-[var(--sp-ai-chrome-border)] px-[5px] py-px text-[10px] font-bold tracking-[0.04em] text-[var(--sp-ai-chrome-text)] transition hover:bg-[var(--sp-ai-row)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]"
-                  >
-                    AI {explainOpen ? "▴" : "▾"}
-                  </button>
-                </div>
-                <p className="whitespace-pre-wrap text-sm leading-6 text-[var(--sp-text-secondary)]">{response.answer}</p>
-                {response.summary && (
-                  <p className="mt-3 border-t border-[var(--sp-border-subtle)] pt-2 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">{response.summary}</p>
-                )}
-
-                {explainOpen && (
-                  <div id="ask-planner-explain" className="mt-3 border border-[color-mix(in_srgb,var(--sp-ai-border)_40%,transparent)] bg-[var(--sp-background)] p-3">
-                    <div className="text-xs font-semibold text-[var(--sp-ai-chrome-text)]">How this answer was made</div>
-                    <p className="mt-1.5 text-xs leading-5 text-[var(--sp-text-secondary)]">
-                      Generated from the <b className="font-semibold text-[var(--sp-text-primary)]">saved draft layer only</b> — seats, directory, zones. The model reads the map; it cannot modify it. Unsaved inspector edits are excluded.
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-[var(--sp-text-secondary)]">Sources: draft seats · directory</span>
-                      <span className={["rounded-full px-2 py-0.5 text-xs font-semibold ring-1", statusClassName(response.status)].join(" ")}>
-                        {response.confidence} confidence
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </section>
-
-              {(() => {
-                const visibleWarnings = response.warnings.filter(w => w !== BROAD_ANSWER_EMPTY_HIGHLIGHT_WARNING);
-                return visibleWarnings.length > 0 && (
-                  <section className="rounded-xl border border-[color-mix(in_srgb,var(--sp-status-draft-mark)_40%,transparent)] bg-[color-mix(in_srgb,var(--sp-status-draft-mark)_10%,transparent)] p-3">
-                    <div className="text-xs font-semibold text-[var(--sp-status-draft-text)]">Warnings</div>
-                    <ul className="mt-2 space-y-1 text-xs leading-5 text-[var(--sp-status-draft-text)]">
-                      {visibleWarnings.map(warning => (
-                        <li key={warning}>{warning}</li>
-                      ))}
-                    </ul>
-                  </section>
-                );
-              })()}
-
-              <section className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-background-hover)] p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Highlighted seats</div>
-                    <div className="mt-0.5 text-xs font-medium text-[var(--sp-text-helper)]">
-                      {response.highlights.length} in answer · {highlightedSeatIds.length} on map
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={onClearHighlights}
-                    disabled={highlightedSeatIds.length === 0}
-                    title={highlightedSeatIds.length === 0 ? "No highlighted seats to clear" : "Clear highlighted seats"}
-                    className="rounded-full border border-[color-mix(in_srgb,var(--sp-interactive)_50%,transparent)] bg-[color-mix(in_srgb,var(--sp-interactive)_10%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-interactive)] transition hover:bg-[color-mix(in_srgb,var(--sp-interactive)_20%,transparent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:border-[var(--sp-border-subtle)] disabled:bg-white/10 disabled:text-[var(--sp-text-helper)]"
-                  >
-                    Clear highlights
-                  </button>
-                </div>
-
-                {response.highlights.length > 0 ? (
-                  <div className="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
-                    {response.highlights.map(highlight => (
-                      <button
-                        key={highlight.seatId}
-                        type="button"
-                        onClick={() => onSelectSeat(highlight.seatId)}
-                        className="flex w-full items-start justify-between gap-3 rounded-lg border border-[var(--sp-ai-panel-border)] bg-[var(--sp-ai-row)] p-2 text-left transition hover:bg-[color-mix(in_srgb,var(--sp-ai-border)_16%,transparent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
-                      >
-                        <span className="min-w-0">
-                          <span className="flex items-center gap-2 text-sm font-semibold text-[var(--sp-text-primary)]">
-                            {highlight.label}
-                            {floorTagForSeat?.(highlight.seatId) ? (
-                              <span className="rounded-full px-1.5 py-0.5 text-xs font-semibold text-[var(--sp-ai-chrome-text)] ring-1 ring-white/15">
-                                {floorTagForSeat(highlight.seatId)}
-                              </span>
-                            ) : null}
-                          </span>
-                          <span className="mt-0.5 block text-xs leading-5 text-[var(--sp-text-secondary)]">{highlight.reason}</span>
-                        </span>
-                        <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-xs font-semibold text-[var(--sp-ai-chrome-text)] ring-1 ring-white/15">
-                          Select
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs leading-5 text-[var(--sp-text-helper)]">Broad answers don&apos;t highlight seats — ask about a specific zone or department to see them on the map.</p>
-                )}
-              </section>
-
-              {response.followUps.length > 0 && (
-                <section className="rounded-xl border border-[var(--sp-border-subtle)] bg-[var(--sp-background-hover)] p-3">
-                  <div className="text-xs font-semibold text-[var(--sp-text-helper)]">Follow-ups</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {response.followUps.map(followUp => (
-                      <button
-                        key={followUp}
-                        type="button"
-                        onClick={() => askFollowUp(followUp)}
-                        disabled={pending}
-                        title={pending ? "Wait for Ask Planner to finish" : followUp}
-                        className="relative max-w-full rounded-full bg-white/10 px-2.5 py-1.5 text-left text-xs font-medium leading-none text-[var(--sp-text-secondary)] ring-1 ring-[var(--sp-border-subtle)] transition after:absolute after:-inset-y-1 after:inset-x-0 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {followUp}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </div>
-          )}
+            </span>
+            read-only answers
+          </div>
+          <h2 id="ask-planner-title" className="sp-slot-title">Ask Planner</h2>
         </div>
-      </aside>
-    </>
+        <div className="sp-slot-actions">
+          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close Ask Planner" className="cds-btn cds-btn--icon cds-btn--md cds-touch-target">
+            <CloseIcon />
+          </button>
+        </div>
+      </div>
+
+      <div className="sp-slot-body">
+        <div id="ask-planner-description" className="sp-drawer-subline">Read-only answers from saved draft map data.</div>
+
+        {draftDirty && (
+          <div className="cds-notification cds-notification--warning mt-3" role="status">
+            <NotificationGlyph kind="warning" />
+            <div className="cds-notification-text">
+              <strong>Unsaved seat edits</strong>
+              <p>Answers use the saved draft, not the edits open in the inspector.</p>
+            </div>
+          </div>
+        )}
+
+        <div className="sp-slot-section">Suggested</div>
+        <div className="sp-prompt-list">
+          {suggestedPrompts.map(promptOption => (
+            <button
+              key={promptOption.label}
+              type="button"
+              className="cds-btn cds-btn--ghost"
+              onClick={() => choosePrompt(promptOption.prompt)}
+              disabled={pending}
+              title={pending ? "Wait for Ask Planner to finish" : promptOption.prompt}
+            >
+              {promptOption.label}
+            </button>
+          ))}
+        </div>
+
+        <form
+          id="ask-planner-form"
+          onSubmit={event => {
+            event.preventDefault();
+            askPlanner();
+          }}
+        >
+          <div className="cds-form-item">
+            <label htmlFor="ask-planner-question">Ask Planner question</label>
+            <textarea
+              id="ask-planner-question"
+              ref={questionRef}
+              name="askPlannerQuestion"
+              value={question}
+              onChange={event => setQuestion(event.target.value)}
+              onKeyDown={event => {
+                if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                  event.preventDefault();
+                  askPlanner();
+                }
+              }}
+              placeholder="Ask about seats, zones, departments, or assignments…"
+              maxLength={QUESTION_MAX}
+              disabled={pending}
+              className="sp-textarea sp-textarea--ai w-full"
+            />
+            <div className="sp-field-counter">
+              <span>{submitShortcutHint} to ask</span>
+              <span>{question.trim().length} / {QUESTION_MAX}</span>
+            </div>
+          </div>
+        </form>
+
+        {!pending && !error && !response && (
+          <p className="sp-drawer-subline mt-3">
+            Ask about seats, assignments, zones, or departments. Ask Planner can highlight supporting seats, but it cannot change the map.
+          </p>
+        )}
+
+        {pending && (
+          <div className="sp-drawer-loading mt-3" role="status" aria-live="polite" aria-busy="true">
+            <span className="sp-skeleton" aria-hidden="true" />
+            <span>Checking saved draft map data</span>
+          </div>
+        )}
+
+        {error && (
+          <div className={`cds-notification cds-notification--${error.role === "alert" ? "error" : "info"} mt-3`} role={error.role}>
+            <NotificationGlyph kind={error.role === "alert" ? "error" : "info"} />
+            <div className="cds-notification-text">
+              <strong>{error.title}</strong>
+              <p>{error.message}</p>
+            </div>
+            {error.retryable && lastQuestion ? (
+              <button type="button" className="cds-btn cds-btn--ghost" onClick={() => askPlanner(lastQuestion)} disabled={pending}>Retry</button>
+            ) : null}
+          </div>
+        )}
+
+        {response && (
+          <>
+            <div className="sp-answer">
+              <p className="whitespace-pre-wrap">{response.answer}</p>
+              {response.summary && <p className="sp-drawer-subline mt-3">{response.summary}</p>}
+              <p className="sp-drawer-subline mt-2">{statusLabel(response.status)} · {response.confidence} confidence · Sources: draft seats · directory</p>
+            </div>
+
+            {visibleWarnings.map(warning => (
+              <div key={warning} className="cds-notification cds-notification--warning" role="status">
+                <NotificationGlyph kind="warning" />
+                <div className="cds-notification-text">{warning}</div>
+              </div>
+            ))}
+
+            <div className="sp-slot-section">Highlighted seats · {response.highlights.length} in answer · {highlightedSeatIds.length} on map</div>
+            {response.highlights.length > 0 ? (
+              <ul className="sp-highlight-list">
+                {response.highlights.map(highlight => (
+                  <li key={highlight.seatId}>
+                    <button
+                      type="button"
+                      className="cds-btn cds-btn--ghost cds-btn--sm min-w-0"
+                      onClick={() => onSelectSeat(highlight.seatId)}
+                      title={highlight.reason}
+                      aria-label={`Select ${highlight.label}${floorTagForSeat?.(highlight.seatId) ? ` on ${floorTagForSeat(highlight.seatId)}` : ""}: ${highlight.reason}`}
+                    >
+                      <span className="sp-palette-code" translate="no">{highlight.label}</span>
+                      <span className="min-w-0 truncate">{highlight.reason}</span>
+                    </button>
+                    {floorTagForSeat?.(highlight.seatId) ? <span className="sp-highlight-floor">{floorTagForSeat(highlight.seatId)}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {broadAnswerWithoutHighlights && (
+              <div className="cds-notification cds-notification--info" role="status">
+                <NotificationGlyph kind="info" />
+                <div className="cds-notification-text">No seats highlighted for this broad answer — ask about a zone, a department, or a person to see seats on the plan.</div>
+              </div>
+            )}
+            <button
+              type="button"
+              className="cds-btn cds-btn--ghost cds-btn--md mt-3"
+              onClick={onClearHighlights}
+              disabled={highlightedSeatIds.length === 0}
+              title={highlightedSeatIds.length === 0 ? "No highlighted seats to clear" : "Clear highlighted seats"}
+            >
+              Clear highlights
+            </button>
+
+            {response.followUps.length > 0 && (
+              <>
+                <div className="sp-slot-section">Follow-ups</div>
+                <div className="sp-prompt-list">
+                  {response.followUps.map(followUp => (
+                    <button
+                      key={followUp}
+                      type="button"
+                      className="cds-btn cds-btn--ghost"
+                      onClick={() => askFollowUp(followUp)}
+                      disabled={pending}
+                      title={pending ? "Wait for Ask Planner to finish" : followUp}
+                    >
+                      {followUp}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* The drawer's Ask is this container's own primary (a side panel is its
+          own container, PHASE2UX §3) — it never competes with Publish in the row. */}
+      <div className="sp-commit-bar">
+        <button type="button" className="cds-btn cds-btn--ghost" onClick={clearDrawer} disabled={pending || (!question && !response && !error)}>
+          Clear
+        </button>
+        <button
+          type="submit"
+          form="ask-planner-form"
+          className="cds-btn cds-btn--primary"
+          disabled={pending || !question.trim()}
+          aria-busy={pending || undefined}
+          title={!question.trim() ? "Enter a question before asking" : undefined}
+        >
+          {pending ? "Asking…" : "Ask"}
+        </button>
+      </div>
+    </aside>
   );
 }

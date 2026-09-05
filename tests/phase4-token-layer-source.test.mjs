@@ -115,8 +115,7 @@ const HEX = /#[0-9a-fA-F]{3,8}(?![\w-])/g;
 const HEX_LEDGER = {
   "app/global-error.tsx": 10, // PR 5 (route cards)
   "app/layout.tsx": 1, // themeColor meta: gray 100, the header colour — Next's Viewport wants a string (owner, PR 1)
-  "components/seat-map/SeatSheet.tsx": 12, // PR 3 (inspector)
-  "components/ui/design-system.tsx": 53, // PR 3 (markerStateClassRecipes; the primitives were re-tokenised in PR 1)
+  "components/seat-map/SeatSheet.tsx": 12, // PR 5 (`/my-seat` ruling, O5 — deviation 12 keeps the sheet chrome-free)
 };
 
 test("no hex literal outside the two asset files (ledger only shrinks)", () => {
@@ -277,7 +276,7 @@ const RETIRED = {
   ],
   2: [/--sp-chrome-/g],
   3: [
-    /--sp-marker-/g,
+    /--sp-marker-(?!h-max)/g, // --sp-marker-h-max is a live Phase 3 geometry token (deviation 8), not the retired marker family
     /--sp-legend-/g,
     /--sp-selection(?![\w])/g,
     /--sp-ai-(?!label-text|border-start|border-end)/g,
@@ -297,7 +296,7 @@ const RETIRED = {
 // Sweep PRs that have merged. PR 1 adds 1, PR 2 adds 2, PR 3 adds 3, PR 4
 // adds 4. Until a group is swept its names are still the shipped vocabulary
 // and the rule stays silent for them.
-const SWEPT = new Set([1, 2]);
+const SWEPT = new Set([1, 2, 3]);
 
 test("retired --sp-* names are gone once their sweep PR has merged", () => {
   const offenders = [];
@@ -340,6 +339,16 @@ test("no shadow-[var( arbitrary class (Tailwind v3 drops it silently)", () => {
 // the primary-action colour in every theme state; IBM blue is never the
 // primary; the logo orange never appears as a UI colour.
 // ---------------------------------------------------------------------------
+// Owner ruling 2026-09-05 (PR 3b, Q1): `app/globals.css` is Tailwind base + resets
+// (and the font bridge / raster filter app rules) — never a product component
+// rule. The PR 3a row rules that lived here for specificity moved into
+// sp-components.css (both copies) as PHASE3DS §1.14 / §1.8 amendments.
+test("globals.css holds no .sp- or .cds- selector (component rules live in the sheet)", () => {
+  const css = stripCssComments(read("app/globals.css"));
+  const selectors = [...css.matchAll(/(^|[\s,}>])\.(sp|cds)-[a-z][\w-]*/g)].map(m => m[0].trim());
+  assert.deepEqual(selectors, [], `globals.css must not style .sp-* / .cds-* — move the rule into sp-components.css (both copies): ${selectors.join(", ")}`);
+});
+
 test("brand layer: terracotta is the primary in all three theme states, blue is not", () => {
   const css = stripCssComments(read(BRAND_FILE));
   const blocks = [
@@ -360,6 +369,26 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
   // Planner rendering IBM blue on /admin. The brand layer owns that role too (PHASE4BUILD §1.22).
   assert.match(css.match(blocks[0])[1], /--cds-button-tertiary:\s*#B85C2E/i, "light tertiary buttons are terracotta, not blue 60");
   assert.match(css.match(blocks[0])[1], /--cds-button-tertiary-hover:\s*#8F4521/i, "light tertiary hover is #8F4521");
+  // PR 3b, owner rulings O2 + O3 (2026-09-04): the search / filter hit surface is a terracotta tint
+  // (light: --cds-highlight itself; both: the pill's fill + edge — the dark edge is the dark LINK colour,
+  // never terracotta, which is 2.53:1 on #393939), and the Draft family is Carbon purple 60 / 40, not the
+  // caution orange (DECISIONS §6 no. 17). The header's zone-invariant ◇ is checked in the zone test below.
+  const light = css.match(blocks[0])[1];
+  assert.match(light, /--cds-highlight:\s*#FBE8DC/i, "light hit surface: --cds-highlight is the terracotta tint (O2)");
+  assert.match(light, /--sp-pill-search-fill:\s*#FBE8DC/i);
+  assert.match(light, /--sp-pill-search-edge:\s*#B85C2E/i);
+  assert.match(light, /--sp-status-draft-mark:\s*#8A3FFC/i, "light Draft family is purple 60 (O3)");
+  assert.match(light, /--sp-pill-badge:\s*#8A3FFC/i);
+  for (const re of blocks.slice(1)) {
+    const dark = css.match(re)[1];
+    assert.doesNotMatch(dark, /--cds-highlight/i, "--cds-highlight is overridden for the LIGHT value only (owner ruling)");
+    assert.match(dark, /--sp-pill-search-fill:\s*#393939/i, "dark hit fill stays the neutral layer-02");
+    assert.match(dark, /--sp-pill-search-edge:\s*#E8A07A/i, "dark hit edge is the dark link colour, not terracotta");
+    assert.match(dark, /--sp-status-draft-mark:\s*#BE95FF/i, "dark Draft family is purple 40 (O3)");
+    assert.match(dark, /--sp-pill-badge:\s*#BE95FF/i);
+  }
+  assert.doesNotMatch(css, /#ba4e00|#ff832b/i, "the caution orange is not the Draft family any more (O3)");
+  assert.doesNotMatch(css, /#d0e2ff|#001d6c/i, "no highlight blue in the brand layer (O2)");
   assert.match(css.match(blocks[2])[1], /--cds-link-primary:\s*#E8A07A/i, "dark links are #E8A07A");
   assert.doesNotMatch(css, /#0f62fe|#0353e9|#4589ff|#a6c8ff|#78a9ff/i, "no IBM blue in the brand layer");
   // The logo orange is declared once, as --brand-orange-logo, and assigned to nothing else.
@@ -372,6 +401,7 @@ test("brand layer: the zone tokens that bypass --cds-* roles are re-pointed", ()
   assert.match(css, /--sp-shell-current-bar:\s*#B85C2E/i);
   assert.match(css, /--sp-panel-dark-link:\s*#E8A07A/i);
   assert.match(css, /--sp-ai-border-end:\s*#B85C2E/i);
+  assert.match(css, /--sp-mode-draft-mark:\s*#BE95FF/i, "the header's Draft ◇ is purple 40 on gray 100 (O3, §6 no. 17)");
 });
 
 test("logo orange #EB7C35 appears nowhere in app/ or components/ except the brand declaration", () => {

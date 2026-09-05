@@ -160,3 +160,13 @@ select id, full_name, position, department, phone_extension, email, avatar_url, 
 from public.employees
 where active is true
 on conflict (id) do nothing;
+
+-- Phase 4 PR 3b (owner ruling Q4, 2026-09-05): one reserved and one unavailable
+-- seat, BOTH layers, so the invalid-target measure (lib/seatTargets, O4 —
+-- reserved / unavailable seats refuse a move or swap) and the legend's non-zero
+-- counts are real in the local rig and the PR screenshots. Two north-east pod
+-- seats the seed leaves empty (the private offices NE09/NE10 exist only on prod);
+-- the status CHECK wants a null employee_id for both.
+-- Local container only (this file is never applied to a hosted project).
+update public.seats set status = 'reserved'::public.seat_status    where seat_key = 'NE07' and employee_id is null;
+update public.seats set status = 'unavailable'::public.seat_status where seat_key = 'NE08' and employee_id is null;

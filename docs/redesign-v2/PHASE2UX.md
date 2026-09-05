@@ -276,6 +276,7 @@ Widen"). Scope "Whole building" lists cross-floor rows with their floor tag; ope
 then selects. `?q=` landing per D1-d. Loading indicator only past ~300ms.
 
 ### 1M.5 Seat inspector (400px, D2-a)
+*Built 2026-09-05 (Phase 4 PR 3b, PHASE4BUILD §1.28–§1.29).*
 
 | Row | Published mode (read-only) | Draft mode (edit) |
 |---|---|---|
@@ -290,13 +291,18 @@ truncate. Judgment recorded: composition says create containers omit the ×; thi
 that also edits, so it keeps the × (patterns: Close = icon, upper right) and adds Cancel only while dirty.
 
 ### 1M.6 Mode card (Move / Swap / Add seat)
+*Built 2026-09-05 (PR 3b: `ModeCard.tsx` owns the slot while a mode runs; the O4 note on the targeting modes).*
 
 Owns the slot while a mode runs (INV-4). Card: eyebrow "Move employee mode", message ("Moving Sarah Reyes
 from NE04. Select the destination seat."), ghost **Exit move employee**; Esc exits ("Move canceled — no
 changes made." inline). Confirm dialogs stay modal (fewer than five inputs, a decision) with the shipped
 copy ("Move Sarah Reyes to L02?" / "Swap them"), floors tagged when the pair crosses floors (D2′).
+An invalid target (reserved / unavailable — O4) refuses the click; its tooltip still carries the seat code only, as on
+every seat, always — the reason ("NE07 is reserved — choose another seat.") is the canvas status notice and the
+control's accessible name, never the tooltip (owner ruling 2026-09-05, PHASE4BUILD §1.36).
 
 ### 1M.7 Ask Planner drawer (deviation 14) in the slot
+*Built 2026-09-05 (PR 3b, PHASE4BUILD §1.31).*
 
 **400px — the same slot at the same width** as the inspector and the mode card, so the canvas never reflows when one replaces another; the selected seat stays highlighted on the map while the drawer is open. Header "Ask Planner" + AI label (Phase 3: Carbon-for-AI), subline "Read-only answers
 from saved draft map data.", dirty banner when the inspector had unsaved edits, suggested prompts,
@@ -305,6 +311,7 @@ section). Empty / loading / error / answer states as shipped; highlights on the 
 badge on the row button; "Clear highlights". Never for viewers.
 
 ### 1M.8 Publish review — wide tearsheet (D2)
+*Built 2026-09-05 (PR 3b, PHASE4BUILD §1.32).*
 
 Anchored bottom, header visible above, overlay dims the page, **no ×**. Title "Review draft before
 publishing"; readiness line ("Ready · 4 changes" / "No changes — the draft matches the published map");
@@ -334,6 +341,7 @@ Below `lg` (`/admin`): read-only — the draft plan, the shared controls only, n
 band "Editing needs a wider window." (read-only, not disabled — D2).
 
 ### 1M.11 Keyboard
+*Built through PR 3b: roving tabindex + arrows (shipped), Home / End (PR 3b), Esc ladder (order verified), the invalid-target pills refuse the click (O4).*
 
 Control row Tab order = visual order; the canvas is one tab stop with **roving tabindex + arrow keys**
 across markers (Phase 4 obligation), Enter opens the inspector, Esc = cancel ladder (mode → dialog →

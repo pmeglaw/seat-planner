@@ -62,7 +62,6 @@ function markerProps(seat, overrides = {}) {
     canEdit: false,
     showNames: true,
     searchResult: false,
-    compactNameLabel: false,
     swapMode: false,
     swapSource: false,
     swapTarget: false,
@@ -72,7 +71,6 @@ function markerProps(seat, overrides = {}) {
     addSeatMode: false,
     viewportEdge: "none",
     viewportEdgeOffsetPx: 0,
-    variant: "viewer",
     tabIndex: 0,
     onSelect() {},
     ...overrides
@@ -80,36 +78,61 @@ function markerProps(seat, overrides = {}) {
 }
 
 // --- SeatMarker ------------------------------------------------------------
+// Phase 4 PR 3b: the Phase 3 pill (PHASE3DS §1.16). An assigned seat is
+// `button.sp-pill.cds-touch-target` with the short name; the seat code is the
+// tier-C tooltip sibling, never a second line; empty seats are
+// `button.sp-seat-footprint` with the inlined status mark. States are CSS
+// modifiers — one silhouette each — and the ◇ badge marks changed-in-draft.
 
-test("SeatMarker renders the seat code and occupant name", async () => {
+const pill = () => document.querySelector("button.sp-pill");
+const footprint = () => document.querySelector("button.sp-seat-footprint");
+const tooltip = () => document.querySelector('[role="tooltip"]');
+
+test("SeatMarker renders the short name on a pill and the seat code in the tooltip only", async () => {
   await renderElement(React.createElement(SeatMarker, markerProps(makeSeat())));
-  const text = document.body.textContent;
-  assert.match(text, /N01/);
-  assert.match(text, /Alice/);
+  const button = pill();
+  assert.ok(button, "an assigned seat is a .sp-pill");
+  assert.ok(button.classList.contains("cds-touch-target"), "every marker carries the 44px touch target");
+  assert.equal(button.textContent, "Alice S.", "the pill's only text is First L.");
+  assert.equal(button.getAttribute("title"), null, "no native title (F3)");
+  assert.equal(tooltip().textContent, "N01", "the seat code is the tier-C tooltip");
+  assert.ok(!footprint());
+  // Anatomy: wrapper .sp-has-tooltip.sp-marker placed by the calibration
+  // transform, the pill, then the tooltip.
+  const wrapper = button.parentElement;
+  assert.ok(wrapper.classList.contains("sp-has-tooltip") && wrapper.classList.contains("sp-marker"));
+  assert.match(wrapper.getAttribute("style"), /left: 30%; top: 32%;/);
+  assert.match(wrapper.getAttribute("style"), /transform: translate\(-50%, calc\(-50% \+ 0px\)\)/);
+  assert.equal(wrapper.lastElementChild, tooltip());
 });
 
-// 44px touch floor (lib/seatCrowding markerHitFloorMet): the surface decides
-// for the whole layer and the marker grows an out-of-flow hit region only when
-// told to — its drawn 32px box is untouched either way, and the flag is
-// readable off the DOM for the live-geometry probes.
-test("SeatMarker grows a 44px hit region only when the surface says the floor is met", async () => {
-  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { hitFloor: true })));
-  let button = document.querySelector("button");
-  assert.ok(button.className.includes("h-8 w-8"), "the drawn box does not grow");
-  assert.ok(button.className.includes("after:absolute after:-inset-1.5"), "32 + 2×6 = 44");
-  assert.equal(button.getAttribute("data-hit-floor"), "true");
-  cleanup();
+test("an empty seat is a footprint with its status mark, no pill", async () => {
+  for (const [status, expectMark] of [["available", "circle[data-stroke]"], ["reserved", "path[data-stroke]"], ["unavailable", "path[data-hatch]"]]) {
+    cleanup();
+    const empty = makeSeat({ id: "s2", label: "N02", status, employee_id: null, employee: null });
+    await renderElement(React.createElement(SeatMarker, markerProps(empty)));
+    const button = footprint();
+    assert.ok(button, `${status} renders a .sp-seat-footprint`);
+    assert.ok(button.classList.contains("cds-touch-target"));
+    assert.ok(button.querySelector(`svg.sp-seat-mark ${expectMark}`), `${status} carries its inlined mark`);
+    assert.ok(!button.querySelector("use"), "marks are inlined, never <use>d");
+    assert.ok(!pill());
+    assert.equal(tooltip().textContent, "N02");
+  }
+});
 
-  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { hitFloor: true, selected: true })));
-  button = document.querySelector("button");
-  assert.ok(button.className.includes("h-10 w-10"));
-  assert.ok(button.className.includes("after:absolute after:-inset-0.5"), "40 + 2×2 = 44");
+test("the collision nudge is an inline transform on the wrapper; active markers stay on the anchor", async () => {
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { nameNudge: -1 })));
+  assert.match(pill().parentElement.getAttribute("style"), /translate\(-50%, calc\(-50% \+ -14px\)\)/);
   cleanup();
-
-  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat())));
-  button = document.querySelector("button");
-  assert.ok(!button.className.includes("after:"), "below the floor the button keeps its drawn box");
-  assert.equal(button.getAttribute("data-hit-floor"), null);
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { nameNudge: 1, selected: true })));
+  assert.match(pill().parentElement.getAttribute("style"), /translate\(-50%, calc\(-50% \+ 0px\)\)/, "a selected pill never nudges");
+  cleanup();
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { nameNudge: 1, viewportEdge: "left", viewportEdgeOffsetPx: 12 })));
+  assert.match(pill().parentElement.getAttribute("style"), /translate\(12px, calc\(-50% \+ 14px\)\)/, "the viewport-edge hug rides the same transform");
+  cleanup();
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { viewportEdge: "left", viewportEdgeOffsetPx: 12, swapMode: true, canEdit: true })));
+  assert.match(pill().parentElement.getAttribute("style"), /translate\(-50%, calc\(-50% \+ 0px\)\)/, "a running mode snaps to the true coordinate");
 });
 
 test("SeatMarker's accessible label describes the seat, occupant, and status", async () => {
@@ -118,6 +141,7 @@ test("SeatMarker's accessible label describes the seat, occupant, and status", a
   assert.match(label, /N01/);
   assert.match(label, /Alice Smith/);
   assert.match(label, /Assigned/i);
+  assert.equal(label, "N01 Alice S. Alice Smith. Assigned seat. Open details.");
 });
 
 test("an empty seat's accessible label reflects available status, not an occupant", async () => {
@@ -129,15 +153,16 @@ test("an empty seat's accessible label reflects available status, not an occupan
   assert.ok(!/Alice/.test(label));
 });
 
-// F4 (read-path assessment 2026-08-25): with names off, the short name is
-// display:none until hover — no visible text to contain, so concatenating
-// short + full name is pure stutter ("Alice Alice Smith") on every occupied
-// seat, at rest, on every arrow-key step. Axe evaluates at rest, so gating
-// the concatenation on hover disclosure does not weaken
-// label-content-name-mismatch.
-test("with names hidden, the accessible label carries the full name once — no stutter", async () => {
+// F4 (read-path assessment 2026-08-25): with names off the pill renders no
+// text (the filled 28 footprint), so the full name alone is announced —
+// concatenating short + full name would be pure stutter ("Alice Alice Smith")
+// on every occupied seat, at rest, on every arrow-key step.
+test("with names hidden, the pill is the filled footprint and the label carries the full name once", async () => {
   await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { showNames: false })));
-  const label = document.querySelector("button").getAttribute("aria-label");
+  const button = pill();
+  assert.ok(button.classList.contains("sp-pill--names-off"));
+  assert.equal(button.textContent, "", "no visible text with names off");
+  const label = button.getAttribute("aria-label");
   assert.match(label, /Alice Smith/, "full name still announced");
   assert.ok(!/Alice Alice Smith/.test(label), "no doubled first name");
   assert.equal(label.match(/Alice/g).length, 1, "occupant named exactly once");
@@ -150,9 +175,16 @@ test("clicking a SeatMarker selects it by id", async () => {
   assert.deepEqual(selected, ["s1"]);
 });
 
-test("SeatMarker reflects selection through aria-pressed", async () => {
+test("SeatMarker reflects selection through aria-pressed and the 2px inverse edge state", async () => {
   await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { selected: true })));
-  assert.equal(document.querySelector("button").getAttribute("aria-pressed"), "true");
+  const button = pill();
+  assert.equal(button.getAttribute("aria-pressed"), "true");
+  assert.equal(button.getAttribute("data-state"), "selected");
+  assert.equal(button.getAttribute("data-marker-intent"), "selected");
+  cleanup();
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat())));
+  assert.equal(pill().getAttribute("aria-pressed"), "false");
+  assert.equal(pill().getAttribute("data-state"), null);
 });
 
 // Owner call 2026-07-24: pill inline names are first name + last initial —
@@ -168,20 +200,87 @@ test("a selected pill shows the short name; the accessible label keeps the full 
   assert.match(label, /Alice S\. Alice Smith/, "aria contains short form then full name");
 });
 
-// Office nameplate (owner pick 2026-07-24, specimen option 2): South Offices
-// seats render a door-plate card — code eyebrow, always-visible short name,
-// title line — instead of the stadium pill. Pods keep pills.
-// Private offices follow the pill rule (owner ruling O1, 2026-09-04, PR 3a):
-// the door-plate card retired with lib/officeRoomWash — an office seat is
-// the same marker as a pod seat.
+test("one modifier per state — search hit, quiet, origin, target, invalid — and the ◇ badge", async () => {
+  const cases = [
+    [{ searchResult: true }, "sp-pill--search", "search-result", / Search result\./],
+    [{ highlighted: true }, "sp-pill--search", "search-result", / Highlighted by Ask Planner\./],
+    [{ dimmed: true }, "sp-pill--quiet", "assigned", null],
+    [{ dimmed: true, searchResult: true }, "sp-pill--quiet", "assigned", null],
+    [{ canEdit: true, swapMode: true, swapSource: true }, "sp-pill--origin", "swap-source", / Swap source\./],
+    [{ canEdit: true, moveEmployeeMode: true, moveEmployeeSource: true }, "sp-pill--origin", "swap-source", / Move source\./],
+    [{ canEdit: true, swapMode: true }, "sp-pill--target", "target-valid", / Valid swap target\./],
+    [{ canEdit: true, moveEmployeeMode: true }, "sp-pill--target", "target-valid", / Valid destination seat\./],
+    [{ canEdit: true, swapMode: true, swapTarget: true }, "sp-pill--target", "swap-target", / Swap target\./],
+    [{ canEdit: true, moveEmployeeMode: true, invalidTarget: true }, "sp-pill--invalid", "target-invalid", / Not a valid target\./]
+  ];
+  for (const [props, modifier, intent, phrase] of cases) {
+    cleanup();
+    await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), props)));
+    const button = pill();
+    const mods = [...button.classList].filter(c => c.startsWith("sp-pill--"));
+    assert.deepEqual(mods, [modifier], `${JSON.stringify(props)} → exactly ${modifier}`);
+    assert.equal(button.getAttribute("data-marker-intent"), intent);
+    if (phrase) assert.match(button.getAttribute("aria-label"), phrase);
+    assert.ok(!button.className.includes("opacity"), "no opacity dim — quiet is a fill/edge/text step");
+  }
+  // Invalid targets report themselves as not operable; every other state is operable.
+  cleanup();
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { canEdit: true, moveEmployeeMode: true, invalidTarget: true })));
+  assert.equal(pill().getAttribute("aria-disabled"), "true");
+  cleanup();
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { canEdit: true, moveEmployeeMode: true })));
+  assert.equal(pill().getAttribute("aria-disabled"), null);
+  // ◇ changed in draft: the inlined SeatMark badge on the pill, with the label saying so.
+  cleanup();
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { draftChanged: true })));
+  assert.ok(pill().querySelector("svg.sp-pill-badge path"), "the ◇ badge is inlined on the pill");
+  assert.equal(pill().getAttribute("data-marker-intent"), "draft-changed");
+  assert.match(pill().getAttribute("aria-label"), / Draft changed\./);
+  cleanup();
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { draftChanged: true, showNames: false })));
+  assert.ok(pill().querySelector("svg.sp-pill-badge"), "names off keeps the ◇ on the filled footprint");
+});
+
+test("in a move or swap every seat is a pill: empty seats show their code so targets read as one set", async () => {
+  const empty = makeSeat({ id: "s2", label: "N02", status: "available", employee_id: null, employee: null });
+  await renderElement(React.createElement(SeatMarker, markerProps(empty, { canEdit: true, moveEmployeeMode: true })));
+  const button = pill();
+  assert.ok(button, "an empty seat renders as a pill while a mode runs");
+  assert.ok(!footprint());
+  assert.equal(button.textContent, "N02");
+  assert.ok(button.querySelector('span[translate="no"]'), "the code is a translate=no token");
+  assert.ok(button.classList.contains("sp-pill--target"));
+  assert.match(button.getAttribute("aria-label"), /^N02 Unassigned\. Open seat\. Valid destination seat\. Open details\.$/);
+  cleanup();
+  const reserved = makeSeat({ id: "s3", label: "N03", status: "reserved", employee_id: null, employee: null });
+  await renderElement(React.createElement(SeatMarker, markerProps(reserved, { canEdit: true, moveEmployeeMode: true, invalidTarget: true })));
+  assert.ok(pill().classList.contains("sp-pill--invalid"));
+  assert.equal(pill().getAttribute("aria-disabled"), "true");
+  cleanup();
+  // Names off does not apply while a mode runs — the origin must be readable.
+  await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { showNames: false, canEdit: true, swapMode: true, swapSource: true })));
+  assert.equal(pill().textContent, "Alice S.");
+  assert.ok(!pill().classList.contains("sp-pill--names-off"));
+});
+
+test("a filtered-out empty seat is a quiet footprint (no opacity)", async () => {
+  const empty = makeSeat({ id: "s2", label: "N02", status: "available", employee_id: null, employee: null });
+  await renderElement(React.createElement(SeatMarker, markerProps(empty, { dimmed: true })));
+  assert.ok(footprint().classList.contains("sp-seat-footprint--quiet"));
+  assert.ok(!footprint().className.includes("opacity"));
+});
+
+// Office nameplate retired (owner ruling O1, 2026-09-04): an office seat is
+// the same marker as a pod seat — the job title is the inspector's.
 test("a South Offices seat renders the same pill as a pod seat — no plate, no title line", async () => {
   const officeSeat = makeSeat({ id: "s3", seat_key: "s01", label: "S01", zone: "South Offices" });
   await renderElement(React.createElement(SeatMarker, markerProps(officeSeat)));
-  const text = document.body.textContent;
-  assert.match(text, /S01/);
-  assert.ok(!/Analyst/.test(text), "no title line on the marker — the job title is the inspector's");
-  assert.ok(!/Open office/.test(text));
-  assert.equal(document.querySelector("button > span").getAttribute("style"), null, "no room offset or plate width");
+  const button = pill();
+  assert.equal(button.textContent, "Alice S.");
+  assert.ok(!/Analyst/.test(document.body.textContent), "no title line on the marker — the job title is the inspector's");
+  assert.ok(!/Open office/.test(document.body.textContent));
+  assert.equal(button.getAttribute("style"), null, "no room offset or plate width");
+  assert.equal(tooltip().textContent, "S01");
 });
 
 // --- MapZoomControl --------------------------------------------------------
@@ -325,11 +424,13 @@ test("a move trail is one arc, one arrowhead, and a dashed origin ring at the st
   assert.equal(origin.getAttribute("cy"), startY, "ring sits at the path start");
 });
 
-test("trail colors come from the admin accent tokens, never hardcoded hex", async () => {
+test("trail colors come from the pill's origin-edge token (the Phase 3 vocabulary), never hardcoded hex", async () => {
   await renderElement(React.createElement(DraftTrailOverlay, { kind: "move", sourceSeat: trailSource, targetSeat: trailTarget }));
   const svg = document.querySelector("svg[data-draft-trail]");
-  assert.equal(svg.querySelector('[data-trail-part="flow"]').getAttribute("stroke"), "var(--sp-trail)");
-  assert.equal(svg.querySelector('[data-trail-part="arrow"]').getAttribute("fill"), "var(--sp-trail)");
-  assert.equal(svg.querySelector('[data-trail-part="origin"]').getAttribute("stroke"), "var(--sp-trail-origin)");
+  // PR 3b group-3 sweep: --sp-trail / --sp-trail-origin retired for the pill's
+  // dashed-origin edge — the trail and the origin pill read as one construction.
+  assert.equal(svg.querySelector('[data-trail-part="flow"]').getAttribute("stroke"), "var(--sp-pill-origin-edge)");
+  assert.equal(svg.querySelector('[data-trail-part="arrow"]').getAttribute("fill"), "var(--sp-pill-origin-edge)");
+  assert.equal(svg.querySelector('[data-trail-part="origin"]').getAttribute("stroke"), "var(--sp-pill-origin-edge)");
   assert.ok(!/#[0-9a-fA-F]{3,8}/.test(svg.outerHTML), "no hardcoded hex anywhere in the trail markup");
 });

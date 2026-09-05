@@ -163,6 +163,16 @@ async function renderViewer(overrides = {}) {
 }
 
 // A seat marker is a button whose accessible name starts with the seat label.
+// Phase 4 PR 3b: the Phase 3 pill has no token modes — names on = the pill
+// shows "First L.", names off = `.sp-pill--names-off` (the filled footprint,
+// no text), an empty seat = `.sp-seat-footprint` regardless of the toggle.
+function markerMode(label) {
+  const button = seatMarker(label);
+  if (button.classList.contains("sp-seat-footprint")) return "footprint";
+  if (button.classList.contains("sp-pill--names-off")) return button.textContent === "" ? "names-off" : "names-off-with-text";
+  return button.textContent ? "name" : "pill-without-text";
+}
+
 function seatMarker(label) {
   return screen.getByRole("button", { name: new RegExp(`^${label}\\b`) });
 }
@@ -466,14 +476,14 @@ test("the legend names toggle switches markers to name mode and persists the cho
 
   const toggle = screen.getByRole("button", { name: "Show occupant names" });
   assert.equal(toggle.getAttribute("aria-pressed"), "false");
-  assert.equal(seatMarker("A-01").getAttribute("data-token-mode"), "code");
+  assert.equal(markerMode("A-01"), "names-off");
 
   fireEvent.click(toggle);
   await flushFrames();
 
   assert.equal(toggle.getAttribute("aria-pressed"), "true");
-  assert.equal(seatMarker("A-01").getAttribute("data-token-mode"), "name", "an assigned seat must render its occupant name");
-  assert.equal(seatMarker("D-04").getAttribute("data-token-mode"), "code", "an open seat has no name to show");
+  assert.equal(markerMode("A-01"), "name", "an assigned seat must render its occupant name");
+  assert.equal(markerMode("D-04"), "footprint", "an open seat has no name to show");
   assert.equal(window.localStorage.getItem(VIEWER_NAMES_KEY), "true");
   assert.deepEqual(actionCalls, [], "the names toggle is render-local — never a server action");
 });
@@ -486,7 +496,7 @@ test("a persisted names preference hydrates on mount", async () => {
       screen.getByRole("button", { name: "Show occupant names" }).getAttribute("aria-pressed"),
       "true"
     );
-    assert.equal(seatMarker("B-02").getAttribute("data-token-mode"), "name");
+    assert.equal(markerMode("B-02"), "name");
   } finally {
     window.localStorage.removeItem(VIEWER_NAMES_KEY);
   }
@@ -562,30 +572,38 @@ test("below the sm tier the names toggle lives in the control row and still driv
   const toggle = screen.getByRole("button", { name: "Show occupant names" });
   assert.equal(toggle.getAttribute("aria-pressed"), "false");
   assert.ok(toggle.closest('[role="toolbar"][aria-label="Map controls"]'), "it is the control row's switch");
-  assert.equal(seatMarker("A-01").getAttribute("data-token-mode"), "code");
+  assert.equal(markerMode("A-01"), "names-off");
 
   fireEvent.click(toggle);
   await flushFrames();
 
   assert.equal(toggle.getAttribute("aria-pressed"), "true");
-  assert.equal(seatMarker("A-01").getAttribute("data-token-mode"), "name");
+  assert.equal(markerMode("A-01"), "name");
   assert.equal(window.localStorage.getItem(VIEWER_NAMES_KEY), "true");
   assert.deepEqual(actionCalls, [], "render-local — never a server action");
 });
 
-test("below the panel tier the band yields to the inspector sheet and returns on dismiss", async () => {
+// Phase 4 PR 3b: the inspector is the right slot over the canvas column
+// (PHASE3DS §1.17) — it never covers the band, so the band stays at every
+// width while the inspector is open, and the slot host keys presence.
+test("the band stays while the inspector is open at tablet widths — the slot never covers it", async () => {
   setViewportWidth(820);
   await renderViewer();
   assert.ok(statusBand(), "band renders at tablet widths while nothing is selected");
+  assert.equal(document.querySelector("[data-slot-host]").getAttribute("data-open"), null, "closed slot: no presence key");
 
   fireEvent.click(seatMarker("A-01"));
   await flushFrames();
   assert.ok(openInspector(), "selecting a seat opens the inspector");
-  assert.ok(statusBand() === null, "the sheet owns the bottom — the band must yield while it is open");
+  assert.equal(document.querySelector("[data-slot-host]").getAttribute("data-open"), "", "the slot host is open");
+  assert.ok(document.querySelector("[data-slot-host] #seat-inspector-panel"), "the inspector is the slot's child");
+  assert.ok(statusBand() !== null, "the band stays — the slot sits over the canvas column, not the band");
+  assert.ok(!document.querySelector("[data-slot-host]").contains(statusBand()), "the band is never under the slot");
 
   fireEvent.click(screen.getByRole("button", { name: "Close inspector" }));
   await flushFrames();
-  assert.ok(statusBand() !== null, "the band returns once the sheet is dismissed");
+  assert.ok(statusBand() !== null, "the band is still there once the inspector closes");
+  assert.equal(document.querySelector("[data-slot-host]").getAttribute("data-open"), null);
 });
 
 // AUDIT-2 §8.2: a never-published map rendered the bare floor plan with zero

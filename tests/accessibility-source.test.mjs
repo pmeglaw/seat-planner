@@ -88,13 +88,17 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // contract) plus the wiring above own it. A bare href here would bypass
   // the guard the shell's onLinkClick can't reach.
   assert.doesNotMatch(source, /href="\/admin\/settings"/);
-  // PR 3a: the row button is wired through MapControlRow (aria-haspopup="dialog" there).
+  // PR 3a: the row button is wired through MapControlRow; PR 3b: the drawer is
+  // the right slot (a side panel, not a dialog) — the trigger carries
+  // aria-expanded + aria-controls, no haspopup.
   assert.match(source, /controlsId: "ask-planner-drawer"/);
-  assert.match(controlRowSource, /aria-haspopup="dialog"/);
+  assert.match(controlRowSource, /aria-expanded=\{draft\.askPlanner\.open\}\s*aria-controls=\{draft\.askPlanner\.controlsId\}/);
+  assert.doesNotMatch(controlRowSource, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);
   assert.match(source, /No undone map changes to redo/);
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
-  assert.match(source, /Esc exits/);
+  // PR 3b: the mode card lives in the right slot (ModeCard.tsx) and teaches Esc there.
+  assert.match(await readSource("../components/seat-map/ModeCard.tsx"), /Esc also exits\./);
   assert.match(source, /Exit add seat/);
   // Publish chip contract, v12 (contract #4): nothing renders without draft
   // changes — no idle status chip, no publish-status-popover. The has-changes
@@ -263,7 +267,9 @@ test("ask planner drawer and settings review dialogs keep dialog semantics and f
   assert.match(askPlannerSource, /aria-labelledby="ask-planner-title"/);
   assert.match(askPlannerSource, /aria-describedby="ask-planner-description"/);
   assert.match(askPlannerSource, /questionRef\.current\.focus/);
-  assert.match(askPlannerSource, /z-\[80\][\s\S]*sm:z-50/);
+  // PR 3b: the drawer is the right slot (an <aside> landmark, not a modal) —
+  // its name and description still come from the title + subline ids.
+  assert.match(askPlannerSource, /<aside[\s\S]{0,200}id="ask-planner-drawer"/);
 
   // Map tools is retired (B1/B2): the gated Settings route hosts the data
   // utilities, and both review flows keep proper dialog semantics.
@@ -286,6 +292,9 @@ test("seat maps use a roving tabindex with arrow-key traversal on both surfaces"
   for (const source of [seatMapSource, viewerSource]) {
     assert.match(source, /findNearestSeatInDirection/);
     assert.match(source, /resolveRovingSeatId/);
+    // Home / End land on the reading-order edges on both surfaces (PHASE2UX §1M.11, PR 3b).
+    assert.match(source, /const edge = edgeKeyToPosition\(event\.key\);/);
+    assert.match(source, /seatAtReadingEdge\(seatNavPoints, edge\)/);
     assert.match(source, /tabIndex=\{seat\.id === mapRovingSeatId \? 0 : -1\}/);
     assert.match(source, /onKeyDown=\{handleMarkerLayerKeyDown\}/);
     assert.match(source, /getElementById\("seat-inspector-panel"\)\?\.focus\(\)/);
@@ -308,8 +317,9 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
   // the page is inert while the keyboard proves otherwise.
   const dialogFiles = [
     "../components/seat-map/SeatMapDialogs.tsx",
+    "../components/seat-map/PublishReviewSheet.tsx",
     "../components/seat-map/SeatInspector.tsx",
-    "../components/seat-map/AskPlannerDrawer.tsx",
+    // (AskPlannerDrawer left this list in PR 3b: it is the right slot, a side panel.)
     "../components/admin-settings/DataUtilitiesPanel.tsx",
     "../components/admin-management/AdminManagementPanel.tsx"
   ];
@@ -328,7 +338,8 @@ test("publish review summarizes draft changes before publish", async () => {
   // SeatMapDialogs.tsx and the diff memos + dirty-inspector gate live in
   // usePublishReview.ts — each anchor pins the file that owns it.
   const source = await readSource("../components/seat-map/usePublishReview.ts");
-  const dialogsSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
+  // PR 3b: the review is the wide tearsheet (PublishReviewSheet.tsx, PHASE3DS §1.19).
+  const dialogsSource = await readSource("../components/seat-map/PublishReviewSheet.tsx");
 
   // The summary must also diff live employee details against the viewer
   // snapshot so pending people edits are reviewable before they publish.
@@ -337,26 +348,28 @@ test("publish review summarizes draft changes before publish", async () => {
   // against the published baseline — same drop-out semantics as the summary.
   assert.match(source, /buildPublishDiffRows\(localSeats, localPublishedSeats\)/);
   assert.match(dialogsSource, /aria-labelledby="publish-review-title"/);
+  assert.match(dialogsSource, /aria-modal="true"/);
   assert.match(dialogsSource, /Review draft before publishing/);
-  assert.match(dialogsSource, /Confirm the saved draft changes before they become visible in the read-only viewer/);
-  assert.match(dialogsSource, /Ready to publish reviewed changes/);
   assert.match(dialogsSource, /Saved draft changes only — unsaved inspector edits are excluded\./);
-  assert.match(dialogsSource, /Draft and viewer map are in sync/);
-  // Viewer-impact + undo-history warnings folded into one caution line —
-  // both sentences must survive verbatim.
-  assert.match(dialogsSource, /Publishing copies the saved draft map to the read-only viewer and clears Undo\/Redo history after success\. Until you publish, viewers keep seeing the currently published map\./);
+  assert.match(dialogsSource, /Draft and published map are in sync\./);
+  // No ×: leaving is Cancel (the frame invariant); nothing chains into a second modal.
+  assert.doesNotMatch(dialogsSource, /aria-label="Close publish review"|<CloseIcon/);
+  // Viewer-impact + undo-history warnings, one rail line — both facts must survive verbatim.
+  assert.match(dialogsSource, /Replaces what everyone sees — both floors, in one step — and clears Undo\/Redo\. Viewers keep the current map until it finishes\./);
   assert.match(dialogsSource, /Publish did not complete/);
   assert.match(dialogsSource, /Publishing reviewed draft changes/);
   assert.match(dialogsSource, /\{actionError && !pending && \(/);
   assert.match(dialogsSource, /Retry publish/);
   assert.match(dialogsSource, /No draft changes to publish/);
-  assert.match(dialogsSource, /loading=\{pending\}[\s\S]{0,200}?disabled=\{!publishSummary\.hasChanges\}|disabled=\{!publishSummary\.hasChanges\}[\s\S]{0,200}?loading=\{pending\}/);
-  // The diff table's column contract and kind-tag tokens.
+  assert.match(dialogsSource, /disabled=\{!publishSummary\.hasChanges \|\| pending\}\s*aria-busy=\{pending \|\| undefined\}/);
+  // The diff table's column contract and the floor group rows (registry order).
   assert.match(dialogsSource, /Published now/);
   assert.match(dialogsSource, /After publish/);
-  assert.match(dialogsSource, /--sp-status-success-surface/);
-  assert.match(dialogsSource, /--sp-status-error-text/);
-  assert.match(dialogsSource, /--sp-status-draft-surface/);
+  assert.match(dialogsSource, /groupByFloor\(publishDiffRows\)/);
+  assert.match(dialogsSource, /className="sp-table-group"/);
+  // Kind tags are the asset's `.cds-tag` (the rail's tag set) and plain words in the Change cell.
+  assert.match(dialogsSource, /className="cds-tag"/);
+  assert.match(dialogsSource, /PUBLISH_DIFF_TAG_LABELS\[row\.kind\]/);
   assert.match(dialogsSource, /People details/);
   assert.match(source, /Publish review blocked: Save or discard the selected seat edits before publishing/);
   assert.match(source, /Save or discard the selected seat edits before publishing/);
@@ -384,9 +397,9 @@ test("publish workflow stays server-action gated and clears review history state
   // The confirm wiring crosses the extraction seam: SeatMap hands the
   // transition-gated confirm to the dialog, whose publish button stays
   // disabled without reviewed changes.
-  const dialogsSourceForPublish = await readSource("../components/seat-map/SeatMapDialogs.tsx");
+  const dialogsSourceForPublish = await readSource("../components/seat-map/PublishReviewSheet.tsx");
   assert.match(seatMapSource, /onConfirm=\{confirmPublishDraftMap\}/);
-  assert.match(dialogsSourceForPublish, /onClick=\{onConfirm\}[\s\S]*disabled=\{!publishSummary\.hasChanges\}[\s\S]{0,40}loading=\{pending\}/);
+  assert.match(dialogsSourceForPublish, /onClick=\{onConfirm\}\s*disabled=\{!publishSummary\.hasChanges \|\| pending\}\s*aria-busy=\{pending \|\| undefined\}/);
   assert.match(confirmPublishFunction[0], /await publishSeatMapAction\(publishReviewExpectations, publishReviewEmployeeExpectations\)/);
   assert.match(confirmPublishFunction[0], /setLocalPublishedSeats\(nextPublishedSeats\)/);
   // Publish still drops the undo/redo stacks; they live in useDraftHistory now,
@@ -422,7 +435,15 @@ test("seat markers remain keyboard buttons with contextual accessible labels", a
   assert.match(source, /highlightedDescription = "Highlighted by Ask Planner"/);
   assert.match(source, /\$\{highlightedDescription\}\./);
   assert.match(source, /Selected\./);
-  assert.match(source, /focus-visible:ring-4/);
+  // Phase 4 PR 3b: the focus ring is the CSS deliverable's — `.sp-pill` and
+  // `.sp-seat-footprint` own a 2px inset `--sp-focus` outline in
+  // sp-components.css, so the marker only has to wear the classes.
+  assert.match(source, /"sp-pill cds-touch-target"/);
+  assert.match(source, /"sp-seat-footprint cds-touch-target/);
+  const componentsCss = await readSource("../app/styles/sp-components.css");
+  assert.match(componentsCss, /\.sp-pill:is\(:focus-visible, \[data-state="focus"\]\) \{ outline: var\(--sp-focus-width\) solid var\(--sp-focus\); outline-offset: var\(--sp-focus-offset\); \}/);
+  assert.match(componentsCss, /\.sp-seat-footprint:is\(:focus-visible, \[data-state="focus"\]\) \{ outline: var\(--sp-focus-width\) solid var\(--sp-focus\); outline-offset: var\(--sp-focus-offset\); \}/);
+  assert.doesNotMatch(source, /focus-visible:outline-none|outline-none/);
 });
 
 test("inspector sections, validation, and actions retain accessible confidence cues", async () => {
@@ -440,7 +461,10 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.doesNotMatch(inspectorSource, /role="tablist"|role="tabpanel"/);
   assert.doesNotMatch(inspectorSource, /VIEW DETAILS/);
   assert.doesNotMatch(inspectorSource, /Collapse inspector/);
-  assert.match(inspectorSource, /z-\[80\][\s\S]*panel:z-40/);
+  // Phase 4 PR 3b: the inspector IS the right slot (`.sp-slot` inside
+  // RightSlot's host) — no z-index of its own; the move-conflict dialog keeps
+  // its own stacking above everything.
+  assert.match(inspectorSource, /className="sp-slot max-w-full"/);
   assert.match(inspectorSource, /z-\[90\][\s\S]*sm:z-\[70\]/);
   assert.match(inspectorSource, /hasCurrentAssignment \? "Assignment" : "Assign this seat"/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"/);
@@ -473,7 +497,7 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // not appear disabled — so the render gate is canDeleteSeat (draft +
   // custom + unassigned + available + not a protected-original label, which
   // keeps the gate immune to is_custom data drift on original seats).
-  assert.match(inspectorSource, /\{selectedSeatCanDelete && \(/);
+  assert.match(inspectorSource, /\{selectedSeatCanDelete \? \(/);
   assert.match(inspectorSource, /const selectedSeatCanDelete = canDeleteSeat\(selectedSeat\);/);
   // An open seat has no occupant — the Contact section exists only when
   // someone is assigned (admin and viewer variants alike). Department stays
@@ -492,13 +516,13 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // dirty-notes helper and the e2e-auth guard spec reach for.
   assert.match(inspectorSource, /title="Workspace notes"/);
   assert.match(inspectorSource, /<div id="seat-inspector-notes"/);
-  // Status chips are SOFT PAIRS (2026-08-19 Carbon handoff): every arm pulls
-  // bg and text from the same --sp-editor-* family, whose light AND dark
-  // values are measured AA together in globals.css. Solid status fills with
-  // hardcoded text partners are banned here — white on the dark-theme
-  // --sp-status-success-mark (#42be65) fails AA at ~2.2:1, which is how the old
-  // solid tag broke silently when dark mode landed.
-  assert.match(inspectorSource, /bg-\[var\(--sp-editor-clean-bg\)\] text-\[var\(--sp-editor-clean-text\)\]/);
+  // Status is the seat-mark legend row (shape + label, PHASE3DS §1.4) and the
+  // saved confirmation is the one notification component's success kind —
+  // never a solid status fill with a hardcoded text partner (white on the
+  // dark-theme --sp-status-success-mark #42be65 fails AA at ~2.2:1, which is
+  // how the old solid tag broke silently when dark mode landed).
+  assert.match(inspectorSource, /<SeatMark kind=\{legendKind\} \/>\{currentStatusLabel\}/);
+  assert.match(inspectorSource, /cds-notification cds-notification--success/);
   assert.doesNotMatch(inspectorSource, /bg-\[var\(--sp-status-success-mark\)\] text-white/);
   assert.doesNotMatch(inspectorSource, /bg-\[var\(--sp-status-success-mark\)\] text-\[var\(--sp-text-primary\)\]/);
   assert.doesNotMatch(inspectorSource, /sticky bottom-0/);
@@ -511,7 +535,9 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // (person via formatDisplayName, seat code via formatSeatCode) — raw stored
   // values must not surface here (2026-07-16 critique, fix 2 follow-up).
   assert.match(inspectorSource, /Move \{formatDisplayName\(moveConflict\.employeeName\)\} to \{formatSeatCode\(selectedSeat\.label\)\}\?/);
-  assert.match(inspectorSource, /Review inspector fields/);
+  // PR 3b: the error summary is the one notification component (error kind), titled for the seat.
+  assert.match(inspectorSource, /cds-notification cds-notification--error/);
+  assert.match(inspectorSource, /Couldn&apos;t save this seat/);
   assert.match(inspectorSource, /errorSummaryRef\.current\?\.focus\(\)/);
   assert.match(inspectorSource, /focusInspectorField\(error\.field\)/);
   assert.match(inspectorSource, /aria-invalid=\{Boolean\(fieldErrorMap\.employeeName\)\}/);
@@ -520,12 +546,9 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /getSeatDeleteBlockReason/);
   assert.match(inspectorSource, /Delete seat/);
   assert.match(inspectorSource, /aria-describedby="seat-inspector-delete-help"/);
-  // Corner radius is free to evolve (v12 slice 4 flattened it to 0; the
-  // 2026-08-19 reference-image pass rounded the inspector again via
-  // arbitrary rounded-[Npx] values, since the theme radius scale stays
-  // zeroed); the layout guarantee (no-wrap-collapse of the helper line) is
-  // what this pin protects, not the corner radius.
-  assert.match(inspectorSource, /whitespace-normal leading-tight/);
+  // PR 3b: Delete is the asset's danger ghost (P3-8) — the one destructive
+  // treatment, never a filled danger button inside the slot.
+  assert.match(inspectorSource, /className="cds-btn cds-btn--danger-ghost"/);
   // Figma delete treatment: the block reason is a visible helper line, not sr-only.
   // (Class content deliberately unpinned — type-scale values are free to evolve;
   // the guardrail is the visible element carrying the aria-describedby id.)
@@ -663,12 +686,15 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // 3b MODE CARD: modes own the panel slot (no canvas banner); move-mode copy
   // lives inside the inspector occupant.
   assert.match(seatMapSource, /const modeCardOpen = canEdit && Boolean\(activeMode\) && \(!selectedSeat \|\| inspectorCollapsed\)/);
-  assert.match(seatMapSource, /\{modeCardOpen && activeMode && \(/);
+  // PR 3b: the mode card owns the right slot until the mode ends (INV-4).
+  assert.match(seatMapSource, /const slotOwner: RightSlotOwner = modeCardOpen \? "mode" : askPlannerOpen && canEdit \? "ask" : selectedSeat && !inspectorCollapsed \? "inspector" : null;/);
+  assert.match(seatMapSource, /\{slotOwner === "mode" && activeMode && \(/);
   assert.match(seatMapSource, /\{paletteOpen && \(\s*<ViewerFindPalette/);
   // PR 3a: action errors, the stale-draft refresh and the outcome notice ride the canvas status region (PHASE3DS §1.21).
   assert.match(seatMapSource, /<CanvasStatus notices=\{canvasNotices\} \/>/);
   assert.match(seatMapSource, /kind: "error", alert: true, text: actionError/);
-  assert.match(seatMapSource, /aria-label=\{`\$\{activeMode\.label\} mode`\}/);
+  // The card itself (ModeCard.tsx) is the polite live region named "<label> mode".
+  assert.match(await readSource("../components/seat-map/ModeCard.tsx"), /role="status" aria-live="polite" aria-label=\{`\$\{label\} mode`\}/);
   // The action notice toast is IN-FLOW inside the top-cluster overlay (a
   // second flex-col row), never absolutely offset over it: any fixed top
   // clearance overlaps the cluster once its filter chips wrap to a second
@@ -771,7 +797,10 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   // tier (the drawer's backdrop shields Publish/Settings while the dialog is
   // open), and browser-driven scrolls must not align focused controls under
   // the opaque bar (WCAG 2.4.11 focus-obscured).
-  assert.match(askPlannerSource, /aria-label="Close Ask Planner"[\s\S]{0,320}sm:z-50/);
+  // PR 3b: Ask Planner is the right slot — a side panel with no backdrop; the
+  // map stays usable beside it and nothing sits under a fixed sheet.
+  assert.match(askPlannerSource, /className="sp-slot max-w-full"/);
+  assert.doesNotMatch(askPlannerSource, /fixed inset-0|aria-modal/);
   assert.match(globalsSource, /scroll-padding-top/);
 
   // One scroll behavior on every surface: below lg the page scrolls, and a
@@ -1026,10 +1055,12 @@ test("dark-panel selects style their options and the app declares a theme color"
 
   // Native <select> popups ignore the control's classes: without explicit
   // option colors, Windows dark mode renders OS-colored options against the
-  // inspector's dark panel (#200). FilterPanel already does this — the
-  // inspector's shared field class must too. Token VALUES are free to evolve;
-  // the invariant is that option bg+text are explicitly set.
-  assert.match(inspectorSource, /fieldClassName = "[^"]*\[&>option\]:bg-\[[^\]]+\][^"]*\[&>option\]:text-\[[^\]]+\]/);
+  // inspector's dark panel (#200). PR 3b: the inspector's selects are the
+  // asset's `.cds-select`, so the option colours live in the CSS deliverable
+  // (sp-components.css asset override). Token VALUES are free to evolve; the
+  // invariant is that option bg+text are explicitly set.
+  assert.match(inspectorSource, /className="cds-select"/);
+  assert.match(await readSource("../app/styles/sp-components.css"), /\.cds-select option \{ background: var\(--sp-layer-01\); color: var\(--sp-text-primary\); \}/);
 
   // Browser chrome should match the app's dark top bar on mobile (#200).
   assert.match(layoutSource, /themeColor/);
@@ -1115,16 +1146,18 @@ test("touch devices get visible destructive affordances, contained modals, and s
 
   // Modal/drawer scroll regions contain overscroll so touch scrolls don't
   // chain to the page behind (#198).
-  assert.match(askPlannerSource, /min-h-0 flex-1 overflow-y-auto overscroll-contain/);
+  // PR 3b: the drawer's scroll region is the slot body (`.sp-slot-body`, overflow: auto in the sheet).
+  assert.match(askPlannerSource, /<div className="sp-slot-body">/);
   assert.equal((dataUtilitiesSource.match(/min-h-0 overflow-y-auto overscroll-contain/g) ?? []).length, 2);
-  // The publish-review dialog's scroll region moved to SeatMapDialogs.tsx
-  // with the R-02a extraction.
-  const seatMapDialogsSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
-  assert.match(seatMapDialogsSource, /min-h-0 overflow-y-auto overscroll-contain/);
+  // PR 3b: the publish review is the wide tearsheet — its scroll region is
+  // `.sp-tearsheet-main` (overflow: auto in the sheet); the body grid is min-height 0.
+  assert.match(await readSource("../components/seat-map/PublishReviewSheet.tsx"), /className="sp-tearsheet-main"/);
   assert.match(managementSource, /role="dialog"[\s\S]{0,600}overscroll-contain/);
 
   // Viewport-fixed bottom sheets respect the home-indicator inset (#198).
-  assert.match(seatMapSource, /env\(safe-area-inset-bottom\)/);
+  // PR 3b: the admin map has no bottom sheet left — the inspector and the
+  // mode card are the right slot — so nothing there is viewport-fixed.
+  assert.doesNotMatch(seatMapSource, /fixed inset-x-3 bottom-/);
   // The viewer used to need three: two bottom sheets and the PEOPLE pill. All
   // three are retired, and the palette hangs off the TOP of the screen — so
   // what has to clear the home indicator now is the bottom-anchored zoom
@@ -1235,12 +1268,12 @@ test("axe findings stay fixed: allowed roles, single main landmark, marker name 
   assert.match(markerSource, /accessibleSeatName/);
 
   // Subtree-text serializers (axe 4.10 / the Vercel toolbar) join adjacent
-  // spans WITHOUT whitespace, so the literal space text nodes between the
-  // code and name spans are load-bearing — without them the visible text
-  // reads "C07Daniel" and fails name containment (#223). Flex containers
-  // never render whitespace-only nodes, so they are visually inert.
-  assert.match(markerSource, /\{employeeName && " "\}/);
-  assert.match(markerSource, /\{showInlineName && " "\}/);
+  // spans WITHOUT whitespace (#223). Phase 4 PR 3b: the pill renders ONE
+  // visible text node (the short name, or the code for an empty seat in a
+  // move/swap) followed only by the aria-hidden ◇ badge — nothing to join,
+  // and the aria-label opens with that exact text.
+  assert.match(markerSource, /\{hasEmployee \? visibleLabel : <span translate="no">\{visibleLabel\}<\/span>\}\s*\{draftChanged \? <SeatMark kind="draft-badge" \/> : null\}/);
+  assert.match(markerSource, /const accessibleSeatName = !hasEmployee \|\| shortName === displayName \|\| namesOff \? displayName : `\$\{shortName\} \$\{displayName\}`/);
 });
 
 // v12 slice 9 (a11y pass). Both of these were found by running axe and a tab

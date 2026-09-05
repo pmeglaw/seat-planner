@@ -72,20 +72,20 @@
   "kind": "graphic"
  },
  {
-  "name": "shell · mode Draft ◇ orange-40 on shell rest g100",
-  "fg": "#ff832b",
+  "name": "shell · mode Draft ◇ purple-40 (O3, §6 no. 17; was orange-40) on shell rest g100",
+  "fg": "#be95ff",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "shell · mode Draft ◇ orange-40 on shell hover #333333",
-  "fg": "#ff832b",
+  "name": "shell · mode Draft ◇ purple-40 (O3, §6 no. 17; was orange-40) on shell hover #333333",
+  "fg": "#be95ff",
   "bg": "#333333",
   "kind": "graphic"
  },
  {
-  "name": "shell · mode Draft ◇ orange-40 on shell pressed g80",
-  "fg": "#ff832b",
+  "name": "shell · mode Draft ◇ purple-40 (O3, §6 no. 17; was orange-40) on shell pressed g80",
+  "fg": "#be95ff",
   "bg": "#393939",
   "kind": "graphic"
  },
@@ -408,9 +408,9 @@
   "kind": "text"
  },
  {
-  "name": "light · text-primary gray-100 on highlight #d0e2ff",
+  "name": "light · text-primary gray-100 on hit fill #fbe8dc (O2, brand tint; was highlight #d0e2ff)",
   "fg": "#161616",
-  "bg": "#d0e2ff",
+  "bg": "#fbe8dc",
   "kind": "text"
  },
  {
@@ -438,9 +438,9 @@
   "kind": "text"
  },
  {
-  "name": "light · text-secondary gray-70 on highlight #d0e2ff",
+  "name": "light · text-secondary gray-70 on hit fill #fbe8dc (O2, brand tint; was highlight #d0e2ff)",
   "fg": "#525252",
-  "bg": "#d0e2ff",
+  "bg": "#fbe8dc",
   "kind": "text"
  },
  {
@@ -540,44 +540,44 @@
   "kind": "graphic"
  },
  {
-  "name": "light · draft mark orange-60 on white",
-  "fg": "#ba4e00",
+  "name": "light · draft mark purple-60 (was orange-60) on white",
+  "fg": "#8a3ffc",
   "bg": "#ffffff",
   "kind": "graphic"
  },
  {
-  "name": "light · draft mark orange-60 on layer-01 #f4f4f4",
-  "fg": "#ba4e00",
+  "name": "light · draft mark purple-60 (was orange-60) on layer-01 #f4f4f4",
+  "fg": "#8a3ffc",
   "bg": "#f4f4f4",
   "kind": "graphic"
  },
  {
-  "name": "light · draft mark orange-60 on layer-hover-01 #e8e8e8",
-  "fg": "#ba4e00",
+  "name": "light · draft mark purple-60 (was orange-60) on layer-hover-01 #e8e8e8",
+  "fg": "#8a3ffc",
   "bg": "#e8e8e8",
   "kind": "graphic"
  },
  {
-  "name": "light · draft mark orange-60 on highlight #d0e2ff",
-  "fg": "#ba4e00",
-  "bg": "#d0e2ff",
+  "name": "light · draft mark purple-60 (was orange-60) on hit fill #fbe8dc (O2, brand tint; was highlight #d0e2ff)",
+  "fg": "#8a3ffc",
+  "bg": "#fbe8dc",
   "kind": "graphic"
  },
  {
-  "name": "light · search mark blue-70 on highlight #d0e2ff",
-  "fg": "#0043ce",
-  "bg": "#d0e2ff",
+  "name": "light · search edge terracotta (was blue-70) on hit fill #fbe8dc (O2, brand tint; was highlight #d0e2ff)",
+  "fg": "#b85c2e",
+  "bg": "#fbe8dc",
   "kind": "graphic"
  },
  {
-  "name": "light · search mark blue-70 on white",
-  "fg": "#0043ce",
+  "name": "light · search edge terracotta (was blue-70) on white",
+  "fg": "#b85c2e",
   "bg": "#ffffff",
   "kind": "graphic"
  },
  {
-  "name": "light · search mark blue-70 on layer-01 #f4f4f4",
-  "fg": "#0043ce",
+  "name": "light · search edge terracotta (was blue-70) on layer-01 #f4f4f4",
+  "fg": "#b85c2e",
   "bg": "#f4f4f4",
   "kind": "graphic"
  },
@@ -708,6 +708,18 @@
   "kind": "text"
  },
  {
+  "name": "light · names-off quiet footprint gray-70 on the mat (background white)",
+  "fg": "#525252",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · names-off ◇ stroke = pill fill white on the gray-100 footprint",
+  "fg": "#ffffff",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
   "name": "light · kbd shortcut hint text-secondary gray-70 on field-01 #f4f4f4 (PR 3a: was text-helper gray-60, 4.36)",
   "fg": "#525252",
   "bg": "#f4f4f4",
@@ -768,9 +780,9 @@
   "kind": "text"
  },
  {
-  "name": "dark · text-primary gray-10 on highlight #001d6c",
+  "name": "dark · text-primary gray-10 on hit fill = layer-02 #393939 (O2: neutral fill on dark, the edge carries the hue; was highlight #001d6c)",
   "fg": "#f4f4f4",
-  "bg": "#001d6c",
+  "bg": "#393939",
   "kind": "text"
  },
  {
@@ -804,9 +816,9 @@
   "kind": "text"
  },
  {
-  "name": "dark · text-secondary gray-30 on highlight #001d6c",
+  "name": "dark · text-secondary gray-30 on hit fill = layer-02 #393939 (O2: neutral fill on dark, the edge carries the hue; was highlight #001d6c)",
   "fg": "#c6c6c6",
-  "bg": "#001d6c",
+  "bg": "#393939",
   "kind": "text"
  },
  {
@@ -900,44 +912,44 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · draft mark orange-40 on background #161616",
-  "fg": "#ff832b",
+  "name": "dark · draft mark purple-40 (was orange-40) on background #161616",
+  "fg": "#be95ff",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "dark · draft mark orange-40 on layer-02 / pill fill #393939",
-  "fg": "#ff832b",
+  "name": "dark · draft mark purple-40 (was orange-40) on layer-02 / pill fill #393939",
+  "fg": "#be95ff",
   "bg": "#393939",
   "kind": "graphic"
  },
  {
-  "name": "dark · draft mark orange-40 on layer-hover-02 #474747",
-  "fg": "#ff832b",
+  "name": "dark · draft mark purple-40 (was orange-40) on layer-hover-02 #474747",
+  "fg": "#be95ff",
   "bg": "#474747",
   "kind": "graphic"
  },
  {
-  "name": "dark · draft mark orange-40 on highlight #001d6c",
-  "fg": "#ff832b",
-  "bg": "#001d6c",
+  "name": "dark · draft mark purple-40 (was orange-40) on hit fill = layer-02 #393939 (O2: neutral fill on dark, the edge carries the hue; was highlight #001d6c)",
+  "fg": "#be95ff",
+  "bg": "#393939",
   "kind": "graphic"
  },
  {
-  "name": "dark · search mark blue-50 on highlight #001d6c",
-  "fg": "#4589ff",
-  "bg": "#001d6c",
+  "name": "dark · search edge #E8A07A (dark link colour; terracotta on #393939 is 2.53 — never a dark edge) on hit fill = layer-02 #393939 (O2: neutral fill on dark, the edge carries the hue; was highlight #001d6c)",
+  "fg": "#e8a07a",
+  "bg": "#393939",
   "kind": "graphic"
  },
  {
-  "name": "dark · search mark blue-50 on background #161616",
-  "fg": "#4589ff",
+  "name": "dark · search edge #E8A07A (dark link colour; terracotta on #393939 is 2.53 — never a dark edge) on background #161616",
+  "fg": "#e8a07a",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
-  "name": "dark · search mark blue-50 on layer-02 / pill fill #393939",
-  "fg": "#4589ff",
+  "name": "dark · search edge #E8A07A (dark link colour; terracotta on #393939 is 2.53 — never a dark edge) on layer-02 / pill fill #393939",
+  "fg": "#e8a07a",
   "bg": "#393939",
   "kind": "graphic"
  },
@@ -1048,6 +1060,18 @@
   "fg": "#c6c6c6",
   "bg": "#262626",
   "kind": "text"
+ },
+ {
+  "name": "dark · names-off quiet footprint gray-30 on the mat (background #161616)",
+  "fg": "#c6c6c6",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · names-off ◇ stroke = pill fill #393939 on the gray-10 footprint",
+  "fg": "#393939",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
  },
  {
   "name": "dark · text-on-color white on primary blue-60",

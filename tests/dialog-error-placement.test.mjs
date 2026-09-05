@@ -45,7 +45,7 @@ const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 
 let AdminManagementPanel;
 let SwapConfirmDialog;
-let PublishReviewDialog;
+let PublishReviewSheet;
 let DiscardDraftDialog;
 let VacateConfirmDialog;
 let DeleteSeatConfirmDialog;
@@ -56,13 +56,13 @@ before(async () => {
   ({ AdminManagementPanel } = await loadComponent("@/components/admin-management/AdminManagementPanel"));
   ({
     SwapConfirmDialog,
-    PublishReviewDialog,
     DiscardDraftDialog,
     VacateConfirmDialog,
     DeleteSeatConfirmDialog,
     MoveEmployeeConfirmDialog
   } = await loadComponent("@/components/seat-map/SeatMapDialogs"));
   ({ AskPlannerDrawer } = await loadComponent("@/components/seat-map/AskPlannerDrawer"));
+  ({ PublishReviewSheet } = await loadComponent("@/components/seat-map/PublishReviewSheet"));
   ({ SeatInspector } = await loadComponent("@/components/seat-map/SeatInspector"));
 });
 beforeEach(() => configureContext({ actions: {} }));
@@ -421,7 +421,7 @@ test("inspector move-conflict failure renders inside the still-open dialog with 
 
 test("publish review renders actionError inline with an enabled Retry publish", async () => {
   await renderElement(
-    React.createElement(PublishReviewDialog, {
+    React.createElement(PublishReviewSheet, {
       publishSummary: {
         hasChanges: true,
         employeeDetailChanges: [],
@@ -457,6 +457,9 @@ test("discard draft renders actionError inline with an enabled Retry discard", a
   assert.equal(screen.getByRole("button", { name: /Retry discard/ }).disabled, false);
 });
 
+// PR 3b: the drawer is the right slot (a side panel, not a dialog); the
+// fallback string is a STATUS (the admin can rephrase in place), and it lands
+// inside the drawer's own landmark, never in a toast.
 test("Ask Planner renders its action error inside the open drawer and re-enables Ask", async () => {
   globalThis.__ct.actions.askPlannerAction = async () => ({ error: "Ask Planner is unavailable." });
   await renderElement(
@@ -480,11 +483,16 @@ test("Ask Planner renders its action error inside the open drawer and re-enables
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
   });
-  await waitFor(() => screen.getByRole("alert"));
-  const { alert } = assertAlertInsideOpenDialog();
-  // friendlyDrawerError maps the raw action message to written copy — assert
-  // the mapped text, not the raw string.
-  assert.match(alert.textContent, /Ask Planner could not answer/);
+  const notice = await waitFor(() => {
+    const found = [...document.querySelectorAll('[role="status"]')].find(node => /couldn't answer that/.test(node.textContent ?? ""));
+    assert.ok(found, "the fallback lands as a status notification");
+    return found;
+  });
+  assert.ok(document.getElementById("ask-planner-drawer").contains(notice), "the notice renders INSIDE the drawer");
+  // friendlyDrawerError maps the raw action message to written copy — the
+  // fallback of the seven strings, ending in the next step.
+  assert.match(notice.textContent, /Ask Planner couldn't answer that/);
+  assert.match(notice.textContent, /Try rephrasing, or ask about a zone, department, or person\./);
   assert.equal(screen.getByRole("button", { name: "Ask" }).disabled, false);
 });
 
@@ -513,7 +521,6 @@ const DIALOG_REGISTRY = {
   "swap-confirm-title": { kind: "ct" },
   "publish-review-title": { kind: "ct" },
   "discard-draft-title": { kind: "ct" },
-  "ask-planner-title": { kind: "ct" },
   "vacate-seat-confirm-title": { kind: "ct" },
   "delete-seat-confirm-title": { kind: "ct" },
   "move-employee-map-confirm-title": { kind: "ct" },

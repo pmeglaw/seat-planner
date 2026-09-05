@@ -96,7 +96,6 @@ export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters
             type="button"
             className="cds-btn cds-btn--tertiary cds-btn--md"
             data-count={draft.askPlanner.count > 0 ? draft.askPlanner.count : undefined}
-            aria-haspopup="dialog"
             aria-expanded={draft.askPlanner.open}
             aria-controls={draft.askPlanner.controlsId}
             aria-label={draft.askPlanner.count > 0 ? `Open Ask Planner AI, ${draft.askPlanner.count} seats highlighted` : "Open Ask Planner AI"}

@@ -1,11 +1,37 @@
 "use client";
 
 import { memo } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import type { SeatWithEmployee } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { pointToStyle } from "@/lib/seatMath";
 import { formatDisplayName } from "@/lib/formatName";
+import { PILL_NUDGE_PX } from "@/lib/seatCrowding";
+import { SeatMark, seatMarkKindFor } from "@/components/seat-map/SeatMark";
+
+// The Phase 3 seat marker (PHASE3DS §1.16, specimen 02-map.html#pill; Phase 4
+// PR 3b). ONE vocabulary on both surfaces:
+//
+//   assigned seat   <button class="sp-pill cds-touch-target">First L.</button>
+//                   28px tall, fit-width, label-01, 1px edge; the seat CODE is
+//                   the tier-C tooltip on hover / focus (P3-11) and the
+//                   inspector eyebrow on selection — never a second line.
+//   empty seat      <button class="sp-seat-footprint cds-touch-target"> with
+//                   the status mark (○ open · lock reserved · hatch
+//                   unavailable) inlined by SeatMark.
+//   in a move/swap  every seat is a pill — empty seats show their code — so
+//                   the origin (dashed), the valid targets (solid success
+//                   edge + tint) and the invalid targets (dashed error edge +
+//                   tint, aria-disabled) read as one set.
+//
+// States are CSS modifiers, one silhouette each (the grayscale strip in the
+// specimen): --search (search / filter hit, Ask Planner highlight), --quiet
+// (filtered out — replaces the opacity dim PR 1 ledgered), --origin,
+// --target, --invalid, --names-off (the filled 28 footprint). Selection is
+// data-state="selected" (2px inverse edge); the ◇ badge (SeatMark
+// "draft-badge") marks changed-in-draft. Position: the calibration transform
+// stays (left/top % from pointToStyle) and the collision nudge is an inline
+// transform on the wrapper — the anchor never moves.
 
 type SeatMarkerProps = {
   seat: SeatWithEmployee;
@@ -15,32 +41,11 @@ type SeatMarkerProps = {
   showNames: boolean;
   searchResult: boolean;
   draftChanged?: boolean;
-  compactNameLabel: boolean;
-  // Render-layer collision nudge for CODE pills (lib/seatCrowding
-  // computeCodePillNudges): every code pill renders at ONE fixed size, so a
-  // pair whose pitch is tighter than that footprint separates by translating
-  // the TOKEN vertically (±14px) instead of shrinking. The marker anchor
-  // (seat position) never moves. Hover/selected treatments are unchanged.
-  codeNudge?: -1 | 0 | 1;
-  // Render-layer collision nudge for name-mode labels (lib/seatCrowding
-  // computeNameLabelNudges): translates the TOKEN vertically so two
-  // colliding name pills don't render on top of each other. The marker
-  // anchor (seat position) never moves.
+  // Render-layer collision nudge (lib/seatCrowding computeNameLabelNudges):
+  // translates the pill vertically by ±PILL_NUDGE_PX so two colliding pills
+  // don't render on top of each other. The marker anchor never moves.
   nameNudge?: -1 | 0 | 1;
-  // PR-2 text tier (lib/seatCrowding textTierActive): at or above the
-  // collision threshold canvas labels are TEXT and hold the 12px floor — the
-  // hover-disclosure geometry made resting (code pills 12px on w-auto +
-  // min-w-[42px], inline names 12px at the widened hover width, office plate
-  // title 12px). Below the threshold (false, the default) everything renders
-  // exactly as today: the labels function as marks.
-  textTier?: boolean;
   swapMode: boolean;
-  // Office-plate layout, derived by SeatMap from the seat's room rect:
-  // token offset (px) from the seat anchor to the room center, and a width
-  // capped to the room. All display-only; absent/zero for non-office seats.
-  officePlateOffsetXPx?: number;
-  officePlateOffsetYPx?: number;
-  officePlateWidthPx?: number;
   swapSource: boolean;
   swapTarget: boolean;
   moveEmployeeMode: boolean;
@@ -51,64 +56,13 @@ type SeatMarkerProps = {
   addSeatMode: boolean;
   viewportEdge: "left" | "right" | "none";
   viewportEdgeOffsetPx: number;
-  variant?: "admin" | "viewer";
-  // Touch-target floor (lib/seatCrowding markerHitFloorMet): when the live
-  // scale leaves every seat pair more than 44px apart on at least one axis,
-  // the button grows an out-of-flow 44×44 hit region around its drawn box.
-  // The surface decides once for the whole layer, so neighbouring regions
-  // never overlap; off, the button keeps its 32/36/40px box.
-  hitFloor?: boolean;
   // Roving tabindex: the map exposes ONE seat as a tab stop (0) and the rest
   // as -1; arrow keys move between seats (handled by the marker layer).
   tabIndex?: number;
   onSelect: (seatId: string) => void;
 };
 
-type TokenDensity = "compact" | "standard";
-type TokenMode = "code" | "name" | "prominent" | "selected";
 type MarkerIntent = "assigned" | "available" | "reserved" | "unavailable" | "draft-changed" | "search-result" | "search-selected" | "selected" | "swap-source" | "swap-target" | "target-valid" | "target-invalid";
-
-function SeatToken({ className, style, children }: { className: string; style?: CSSProperties; children: ReactNode }) {
-  return <span className={className} style={style}>{children}</span>;
-}
-
-// Tier-flip motion (PR-2, motion doctrine): elements move on ONE AXIS AT A
-// TIME with slight overlap — the token's WIDTH moves immediately and the TYPE
-// follows 75ms behind, both moderate-01 (150ms) on the productive standard
-// curve. Simultaneous width + font-size is two axes at once and flashes type
-// overflowing a pill that hasn't finished growing; growth first, then type,
-// is also the causal order. Lives on the label spans because font-size does
-// not transition through inheritance from the token. Same motion-reduce guard
-// as every other marker transition.
-const LABEL_SIZE_TRANSITION_CLASS =
-  "transition-[font-size] delay-75 duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] motion-reduce:transition-none";
-
-function getSeatLabelPrefix(label: string) {
-  return label.trim().toUpperCase().match(/^[A-Z]+/)?.[0] ?? "";
-}
-
-export function getSeatTokenDensity(seat: Pick<SeatWithEmployee, "label" | "zone" | "department">, compactNameLabel = false): TokenDensity {
-  const prefix = getSeatLabelPrefix(seat.label);
-  const zone = (seat.zone ?? seat.department ?? "").trim().toLowerCase();
-  const denseZone =
-    compactNameLabel ||
-    prefix === "N" ||
-    prefix === "NE" ||
-    prefix === "W" ||
-    prefix === "CW" ||
-    prefix === "C" ||
-    prefix === "E" ||
-    prefix === "SE" ||
-    zone === "north pod" ||
-    zone === "northeast pod" ||
-    zone === "west pod" ||
-    zone === "center west" ||
-    zone === "center desks" ||
-    zone === "east pod" ||
-    zone === "southeast office";
-
-  return denseZone ? "compact" : "standard";
-}
 
 function getEmployeeNameParts(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -122,32 +76,19 @@ function getEmployeeNameParts(name: string) {
   return { firstName, lastInitial };
 }
 
-function getPassiveEmployeeLabel(name: string) {
-  const { firstName, lastInitial } = getEmployeeNameParts(name);
-  if (!firstName) return formatDisplayName(name);
-
-  const compactName = firstName.length <= 4 && lastInitial ? `${firstName} ${lastInitial}.` : firstName;
-  return formatDisplayName(compactName);
-}
-
-// Private offices follow the pill rule (owner ruling O1, 2026-09-04, Phase 4
-// PR 3a — recorded as a PHASE2UX §1M amendment): the door-plate card that
-// used to render for N13 N14 NE09 NE10 SE05 SE06 S01 S02 retired with
-// lib/officeRoomWash (D1-h). Every seat is the same pill; the seat code is
-// the tooltip, the job title is the inspector's. The plate branches below
-// are dead until PR 3b rewrites this component on `.sp-pill`.
-function isOfficePlateSeat(_seat: Pick<SeatWithEmployee, "label" | "zone" | "department" | "x" | "y">) {
-  return false;
-}
-
-// Selected/prominent and names-on pills show "First L." — the full name lives
-// in the inspector header and the aria-label (owner call 2026-07-24). Dense
-// passive pills keep getPassiveEmployeeLabel's tighter width cap above.
+// Pills show "First L." — the full name lives in the inspector header and the
+// aria-label (owner call 2026-07-24).
 function getShortEmployeeLabel(name: string) {
   const { firstName, lastInitial } = getEmployeeNameParts(name);
   if (!firstName) return formatDisplayName(name);
 
   return formatDisplayName(lastInitial ? `${firstName} ${lastInitial}.` : firstName);
+}
+
+// The label the pill renders for a seat — the surfaces feed it to the nudge
+// scorer's width estimate so the collision graph models the pills on screen.
+export function seatPillLabel(seat: Pick<SeatWithEmployee, "label" | "employee">): string {
+  return seat.employee ? getShortEmployeeLabel(seat.employee.full_name ?? "") : seat.label;
 }
 
 function SeatMarkerComponent({
@@ -158,14 +99,8 @@ function SeatMarkerComponent({
   showNames,
   searchResult,
   draftChanged = false,
-  compactNameLabel,
-  codeNudge = 0,
   nameNudge = 0,
-  textTier = false,
   swapMode,
-  officePlateOffsetXPx = 0,
-  officePlateOffsetYPx = 0,
-  officePlateWidthPx,
   swapSource,
   swapTarget,
   moveEmployeeMode,
@@ -176,521 +111,129 @@ function SeatMarkerComponent({
   addSeatMode,
   viewportEdge,
   viewportEdgeOffsetPx,
-  variant = "viewer",
-  hitFloor = false,
   tabIndex = 0,
   onSelect
 }: SeatMarkerProps) {
-  // NOTE: no caller passes variant="admin" — both the admin map (SeatMap.tsx,
-  // variant="viewer" by owner preference) and the viewer render the "viewer"
-  // branch. Every `adminMarker ? … : …` below therefore takes the ELSE arm in
-  // the live app; the admin-token arms (incl. shadow-sp/-hover)
-  // are correct-but-dormant, kept for a future admin variant. Don't assume a
-  // change to an `adminMarker` arm is visible without first flipping a caller.
-  const adminMarker = variant === "admin";
   const employeeName = seat.employee?.full_name ?? "";
   const hasEmployee = Boolean(seat.employee);
-  // Display-formatted for the title tooltip + aria-label below — assistive
-  // strings must match the visible casing, never the raw stored value.
-  // "Unassigned", not "Open seat": the aria-label already appends the status
-  // ("Open seat."), so an "Open seat" fallback read as "Open seat. Open seat."
+  // Display-formatted for the aria-label below — assistive strings must match
+  // the visible casing, never the raw stored value. "Unassigned", not "Open
+  // seat": the aria-label already appends the status ("Open seat."), so an
+  // "Open seat" fallback read as "Open seat. Open seat."
   const displayName = formatDisplayName(employeeName) || "Unassigned";
-  const namesVisible = showNames && hasEmployee && !dimmed;
+  const shortName = hasEmployee ? getShortEmployeeLabel(employeeName) : "";
+  const modeRunning = swapMode || moveEmployeeMode;
+  const origin = swapSource || moveEmployeeSource;
   const swapCandidate = canEdit && swapMode && !swapSource && !swapTarget && !invalidTarget;
   const moveCandidate = canEdit && moveEmployeeMode && !moveEmployeeSource && !invalidTarget;
-  // PR-C: while a target-mode glyph (✓/✕) occupies the badge slots, the
-  // resting glyphs (presence dot, D badge) yield — mode glyph wins, the
-  // underlying state stays readable via the preserved fill.
-  const targetGlyphActive = swapCandidate || moveCandidate || invalidTarget;
-  const activeMarker = selected || swapSource || swapTarget || moveEmployeeSource;
+  const target = swapTarget || swapCandidate || moveCandidate;
+  const activeMarker = selected || origin || swapTarget;
   const searchProminent = searchResult && !dimmed;
-  const searchSelected = selected && searchProminent;
-  const plannerHighlighted = highlighted && !selected && !swapSource && !swapTarget && !moveEmployeeSource;
-  const tokenDensity = getSeatTokenDensity(seat, compactNameLabel);
-  const compactEmployeeName = getPassiveEmployeeLabel(employeeName);
-  const showInlineName = Boolean(employeeName) && (namesVisible || activeMarker || searchProminent || plannerHighlighted);
-  const prominentToken = activeMarker || searchProminent || plannerHighlighted;
-  const tokenMode: TokenMode = selected ? "selected" : prominentToken ? "prominent" : showInlineName ? "name" : "code";
-  const hasHoverDisclosure = hasEmployee && !showInlineName;
-  const expandedNameBadge = hasEmployee && (tokenMode === "selected" || tokenMode === "prominent");
-  const officePlate = isOfficePlateSeat(seat);
-  const officeTitleLabel = officePlate && hasEmployee ? (seat.employee?.position ?? "").trim() : "";
-  const inlineNameLabel = officePlate
-    ? getShortEmployeeLabel(employeeName)
-    : expandedNameBadge || (namesVisible && tokenDensity === "standard" && !compactNameLabel) ? getShortEmployeeLabel(employeeName) : compactEmployeeName;
+  // "Highlighted by Ask Planner" on /admin; a search hit or a people-list
+  // hover on the viewer (highlightedDescription names which). One surface
+  // state for all three: the search-hit pill (§1.16) — no AI token touches
+  // the map, the drawer's label carries the provenance.
+  const plannerHighlighted = highlighted && !activeMarker;
+  const hit = (searchProminent || plannerHighlighted) && !origin && !target && !invalidTarget;
+  const quiet = dimmed && !origin && !target && !invalidTarget && !hit;
+  // Names off = the filled 28 footprint; in a move/swap every seat shows its
+  // label so the origin and the destinations can be told apart.
+  const namesOff = !showNames && hasEmployee && !modeRunning;
+  const asPill = hasEmployee || modeRunning;
+  const visibleLabel = !asPill || namesOff ? "" : hasEmployee ? shortName : seat.label;
   // Accessible name must CONTAIN the pill's visible text verbatim (axe
-  // label-content-name-mismatch): "W08: Patrick" failed because the colon
-  // broke containment, and abbreviated visible names ("Alex S.") must appear
-  // before the full name they abbreviate. Office plates add their visible
-  // title line (and the "Open office" copy) under the same containment rule.
-  // Containment only binds when the short name is VISIBLE at rest — under
-  // hover disclosure it is display:none, axe evaluates at rest, and the
-  // concatenation was pure stutter ("Marcus Marcus Bell" on every occupied
-  // seat; F4, read-path assessment 2026-08-25) — so it gates on
-  // hasHoverDisclosure.
-  const accessibleSeatName = officePlate
-    ? !hasEmployee
-      ? "Open office"
-      : [inlineNameLabel, officeTitleLabel, inlineNameLabel === displayName ? "" : displayName].filter(Boolean).join(" ")
-    : !hasEmployee || inlineNameLabel === displayName || hasHoverDisclosure ? displayName : `${inlineNameLabel} ${displayName}`;
-  const markerIntent: MarkerIntent = swapSource || moveEmployeeSource
+  // label-content-name-mismatch): the abbreviated visible name ("Alex S.")
+  // appears before the full name it abbreviates. With names off the pill
+  // renders no text, so the full name alone is announced — no stutter (F4,
+  // read-path assessment 2026-08-25).
+  const accessibleSeatName = !hasEmployee || shortName === displayName || namesOff ? displayName : `${shortName} ${displayName}`;
+  const markerIntent: MarkerIntent = origin
     ? "swap-source"
     : swapTarget
       ? "swap-target"
       : invalidTarget
         ? "target-invalid"
         : swapCandidate || moveCandidate
-            ? "target-valid"
-            : searchSelected
-              ? "search-selected"
-              : selected
-                ? "selected"
-                : searchProminent || plannerHighlighted
-                  ? "search-result"
-                  : draftChanged
-                    ? "draft-changed"
-                    : seat.status;
+          ? "target-valid"
+          : selected && searchProminent
+            ? "search-selected"
+            : selected
+              ? "selected"
+              : hit
+                ? "search-result"
+                : draftChanged
+                  ? "draft-changed"
+                  : seat.status;
 
-  const baseStatusToneClass =
-    adminMarker
-      ? seat.status === "assigned"
-        ? "border-[var(--sp-legend-assigned-border)] bg-[var(--sp-legend-assigned-surface)] text-[var(--sp-legend-assigned-text)]"
-        : seat.status === "reserved"
-          ? "border-[var(--sp-legend-reserved-border)] bg-[var(--sp-legend-reserved-surface)] text-[var(--sp-legend-reserved-text)]"
-          : seat.status === "unavailable"
-            ? "border-[var(--sp-legend-unavailable-border)] bg-[var(--sp-legend-unavailable-surface)] text-[var(--sp-legend-unavailable-text)]"
-            : "border-[var(--sp-legend-available-border)] bg-[var(--sp-legend-available-surface)] text-[var(--sp-legend-available-text)]"
-      : seat.status === "assigned"
-        ? "border-[var(--sp-marker-assigned-border)] bg-[var(--sp-marker-assigned-surface)] text-[var(--sp-marker-assigned-text)]"
-        : seat.status === "reserved"
-          ? "border-[var(--sp-marker-reserved-border)] bg-[var(--sp-marker-reserved-surface)] text-[var(--sp-marker-reserved-text)]"
-          : seat.status === "unavailable"
-            // PR-C hatch = the "structurally unusable" fill axis value; clipped
-            // to padding-box so the strokes never touch the border (keeps the
-            // hover edge's measured 3.11:1 against the un-hatched fill honest).
-            ? "border-[var(--sp-marker-unavailable-border)] bg-[var(--sp-marker-unavailable-surface)] bg-[image:var(--sp-marker-unavailable-hatch)] bg-clip-padding text-[var(--sp-marker-unavailable-text)]"
-            : "border-[var(--sp-marker-available-border)] bg-[var(--sp-marker-available-surface)] text-[var(--sp-marker-ink)]";
-  // PR-C ruling (change 2): target modes PRESERVE the underlying seat's fill —
-  // the admin still needs occupied/open/unusable mid-swap — and validity rides
-  // the ✓/✕ badge glyphs below instead of a tone swap.
-  const statusToneClass = tokenMode === "selected" || tokenMode === "prominent" ? "" : baseStatusToneClass;
-
-  // Capsule geometry (2026-07-23 owner reference hybrid): every token is a
-  // full stadium (rounded-full on a fixed height), and with the left accent
-  // bar gone the paddings are symmetric again.
-  const tokenSizeClass = officePlate
-    // One plate geometry for every mode — selection/search emphasis comes from
-    // the state classes (ring/surface), never a size jump inside the room.
-    ? "min-h-[46px] w-[152px] max-w-[152px] rounded-lg px-3.5 py-1.5 text-left"
-    : tokenMode === "selected"
-      ? expandedNameBadge
-        ? "min-h-[42px] w-[126px] max-w-[126px] rounded-full px-4 py-1.5 text-left"
-        : "h-[32px] min-h-[32px] min-w-[48px] rounded-full px-3 text-center"
-      : tokenMode === "prominent"
-        ? expandedNameBadge
-          ? "min-h-[39px] w-[118px] max-w-[118px] rounded-full px-4 py-1.5 text-left"
-          : "h-[30px] min-h-[30px] min-w-[46px] rounded-full px-3 text-center"
-        : tokenMode === "name"
-          ? [
-            "min-h-[34px] rounded-full px-3 py-1.5 text-left",
-            // Text tier: the hover width made resting — 124px matches
-            // TEXT_TIER_NAME_OBSTACLE_PX, which the nudge scorers model
-            // whenever the tier is on.
-            textTier
-              ? "w-[124px] max-w-[124px]"
-              : tokenDensity === "standard" ? "w-[92px] max-w-[92px] sm:w-[104px] sm:max-w-[104px]" : "w-[78px] max-w-[78px] sm:w-[86px] sm:max-w-[86px]",
-            "group-hover:w-[124px] group-hover:max-w-[124px] group-focus-visible:w-[124px] group-focus-visible:max-w-[124px]"
-          ].filter(Boolean).join(" ")
-          : [
-            // ONE fixed code-pill geometry for every seat — width included, so
-            // label length never changes the resting footprint. Tight pods
-            // separate via codeNudge, never by a smaller pill. The 46px/24px
-            // numbers must match lib/seatCrowding's CODE_PILL_SIZE_PX (the
-            // nudge scorer reasons in that geometry; a source test pins the
-            // pair). EVERY code pill grows to content on hover/focus
-            // (w-auto + a min-width floor), so an over-long label that
-            // truncates at rest is always recoverable — including on open
-            // seats, which have no name to disclose.
-            // px-1.5 (symmetric): the centered label's content box is
-            // 46 − 2 borders − 12 padding = 32px, which fits the widest
-            // 4-char code ("CW05" ≈ 27px in Plex extrabold at 9.5px). The
-            // old px-2/pl-2.5 left 26px and ellipsized every CW label.
-            // Text tier: the hover-disclosure width made resting — w-auto on a
-            // 42px min-width (= TEXT_TIER_CODE_PILL_SIZE_PX; the widest 4-char
-            // code at 12px extrabold measures 33.9px, + 2px padding each side
-            // + 2 borders = 39.9px, so min-w governs and every pill stays
-            // uniform). px-0.5 here, not the resting px-1.5: with the wider
-            // padding a 4-char code totals 43.9px and w-auto silently grows
-            // the pill past the footprint the tier gate and scorers model
-            // (2026-08-29 hardware-target correction, 48 → 42 — see
-            // lib/seatCrowding.ts).
-            textTier
-              ? "h-[24px] min-h-[24px] w-auto min-w-[42px] rounded-full px-0.5 py-0 text-center"
-              : "h-[24px] min-h-[24px] w-[46px] rounded-full px-1.5 py-0 text-center",
-            "group-hover:w-auto group-focus-visible:w-auto",
-            hasHoverDisclosure
-              ? "group-hover:min-w-[96px] group-hover:px-3 group-hover:text-left group-focus-visible:min-w-[96px] group-focus-visible:px-3 group-focus-visible:text-left"
-              : textTier
-                ? "group-hover:min-w-[42px] group-focus-visible:min-w-[42px]"
-                : "group-hover:min-w-[46px] group-focus-visible:min-w-[46px]"
-          ].filter(Boolean).join(" ");
-
-  const tokenStateClass = [
-    tokenMode === "code" || tokenMode === "name"
-      // Softer, slightly lifted diffusion than the old 2px/5px — the capsule
-      // reads as the reference's soft token without changing the palette.
-      ? "shadow-[0_3px_9px_rgba(23,26,29,0.16),inset_0_1px_0_rgba(255,255,255,0.85)]"
-      : "",
-    draftChanged && !selected && !searchProminent
-      ? adminMarker
-        ? "border-[var(--sp-legend-draft-border)] bg-[var(--sp-legend-draft-surface)] text-[var(--sp-legend-draft-text)] ring-1 ring-[var(--sp-legend-draft-border)] shadow-[0_4px_12px_rgba(0,157,154,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
-        : "border-[var(--sp-marker-draft-border)] bg-[var(--sp-marker-draft-surface)] text-[var(--sp-marker-draft-text)] ring-1 ring-[var(--sp-marker-draft-ring)] shadow-[0_4px_12px_rgba(162,110,35,0.16),inset_0_1px_0_rgba(255,255,255,0.8)]"
-      : "",
-    // Same source-state exclusion as the selected entry below — this is the
-    // other dark-pill state that would collide with the green source tint.
-    searchSelected && !swapSource && !moveEmployeeSource
-      ? adminMarker
-        ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] outline outline-2 outline-offset-2 outline-[var(--sp-legend-search-border)] shadow-[0_12px_28px_rgba(16,17,20,0.34),0_0_0_5px_var(--sp-legend-search-halo),inset_0_1px_0_rgba(255,255,255,0.14)]"
-        : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-search-selected-surface)] text-[var(--sp-text-primary)] ring-2 ring-[var(--sp-marker-active-edge-strong)] outline outline-2 outline-offset-2 outline-[var(--sp-marker-active-edge-soft)] shadow-[0_12px_28px_rgba(23,26,29,0.34),0_0_0_5px_color-mix(in_srgb,var(--sp-interactive)_45%,transparent),inset_0_1px_0_rgba(255,255,255,0.14)]"
-      : "",
-    // Arming swap/move keeps the seat SELECTED (applyStartSwapSeatAction never
-    // clears selection), so without the source-state exclusion this dark pill
-    // and the green source tint below land on the same token and CSS order —
-    // not JSX order — picks per property, so the two arms' bg/text pairs
-    // would interleave. Phase 4 PR 1: the selected pill is the Phase 3 pill
-    // (fill + inverse edge carry selection; text stays --sp-text-primary) —
-    // text-white here rendered white-on-white in the light theme (1:1).
-    tokenMode === "selected" && !swapSource && !moveEmployeeSource
-      ? searchSelected
-        ? ""
-        : adminMarker
-          ? "border-[var(--sp-legend-selected-border)] bg-[var(--sp-legend-selected-surface)] text-[var(--sp-legend-selected-text)] ring-2 ring-[var(--sp-legend-selected-border)] shadow-sp"
-          : "border-[var(--sp-marker-active-edge)] bg-[var(--sp-marker-selected-surface)] text-[var(--sp-text-primary)] ring-2 ring-[var(--sp-marker-active-edge-strong)] shadow-[0_10px_24px_rgba(31,35,39,0.30),inset_0_1px_0_rgba(255,255,255,0.16)]"
-      : "",
-    searchProminent && !selected
-      ? adminMarker
-        ? "border-[var(--sp-legend-search-border)] bg-[var(--sp-legend-search-surface)] text-[var(--sp-legend-search-text)] ring-2 ring-[var(--sp-legend-search-ring)] shadow-[0_8px_18px_rgba(158,47,6,0.20),inset_0_1px_0_rgba(255,255,255,0.78)]"
-        // Search/filter match = the brand accent (was teal until
-        // 2026-07-21). Text #9E2F06 on the #FBEAE1 fill = 6.27:1; the #D23F0A
-        // edge = 4.03:1 on that fill and 4.71:1 on white, so the pill reads
-        // against both the cream floor plan and its own surface. The bright
-        // #FF5715 stays in the outer glow only — at 2.71:1 on the fill it is
-        // decoration, never the boundary that identifies the match.
-        : "border-[var(--sp-marker-search-border)] bg-[var(--sp-marker-search-surface)] text-[var(--sp-marker-search-text)] ring-2 ring-[var(--sp-marker-search-ring)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--sp-interactive)_20%,transparent),0_10px_20px_-4px_color-mix(in_srgb,var(--sp-interactive)_35%,transparent),inset_0_1px_0_rgba(255,255,255,0.78)]"
-      : "",
-    highlighted && selected ? adminMarker ? "outline outline-2 outline-offset-2 outline-[var(--sp-legend-search-ring)]" : "outline outline-2 outline-offset-2 outline-[var(--sp-marker-positive-outline)]" : "",
-    swapSource || moveEmployeeSource ? adminMarker ? "border-[var(--sp-legend-search-border)] bg-[var(--sp-legend-search-surface)] text-[var(--sp-legend-search-text)] ring-4 ring-[var(--sp-legend-search-ring)]" : "border-[var(--sp-marker-positive-border)] bg-[var(--sp-marker-positive-surface)] text-[var(--sp-marker-positive-text)] ring-4 ring-[var(--sp-marker-positive-ring)]" : "",
-    swapTarget ? adminMarker ? "border-[var(--sp-legend-search-border)] bg-[var(--sp-legend-search-surface)] text-[var(--sp-legend-search-text)] ring-4 ring-[var(--sp-legend-search-ring)]" : "border-[var(--sp-marker-neutral-border)] bg-[var(--sp-marker-neutral-surface)] text-[var(--sp-marker-neutral-text)] ring-4 ring-[var(--sp-marker-neutral-ring)]" : "",
-    // v12 slice 7: on ADMIN this state means "Ask Planner chose this seat", so
-    // it wears the AI aura — the only place AI blue touches a pill. The viewer
-    // branch keeps its green: there `highlighted` means a search hit or a
-    // people-list hover, which is not AI presence and must never look like it.
-    plannerHighlighted ? adminMarker ? "border-[var(--sp-ai-border)] bg-[var(--sp-ai-marker-surface)] bg-[image:var(--sp-ai-marker-aura)] bg-no-repeat text-[var(--sp-ai-text)] shadow-sp" : "border-[var(--sp-marker-positive-border)] bg-[var(--sp-marker-positive-surface)] text-[var(--sp-marker-positive-text)] ring-2 ring-[var(--sp-marker-planner-ring)] shadow-[0_0_0_4px_rgba(47,102,104,0.18),0_9px_18px_-4px_rgba(47,102,104,0.32),inset_0_1px_0_rgba(255,255,255,0.75)]" : "",
-    // PR-C (PASS1 §8 `:346` fix): invalid targets are excluded — the hover
-    // affordance ring must fire on seats the drop can land on, never on ✕.
-    (swapMode && !swapSource && !invalidTarget) || (moveEmployeeMode && !moveEmployeeSource && !invalidTarget) ? adminMarker ? "group-hover:ring-4 group-hover:ring-[var(--sp-legend-search-ring)]" : "group-hover:ring-4 group-hover:ring-[var(--sp-marker-positive-ring)]" : ""
-  ].join(" ");
-  const markerFocusClass = adminMarker
-    ? "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sp-focus-offset)]"
-    : "focus-visible:z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--sp-marker-active-edge-soft)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70";
-  // Hover repaints the pill's BORDER, and on the SHIPPED path it does so
-  // unconditionally. Read that before editing either arm below. The `selected ?`
-  // guard is on the adminMarker arm ONLY, where it is load-bearing because that
-  // arm's hover colour (--sp-legend-hover-border #8E8276) differs from its
-  // selected colour (--sp-legend-selected-border -> #D23F0A). The viewer arm —
-  // the one every caller actually renders, see the NOTE at the top of this
-  // component — has no guard and needs none: its hover and selected borders are
-  // the SAME token (--sp-marker-active-edge #D46A24), and the selected
-  // treatment's orange RING is a ring-* box-shadow that a border repaint cannot
-  // reach.
-  //
-  // Consequence, and half the reason PR-C put meaning on fill + glyph instead:
-  // live, EVERY unselected state's status border is overwritten on hover —
-  // assigned, reserved, unavailable, draft-changed alike. The other half is
-  // statusToneClass above, which drops baseStatusToneClass wholesale in
-  // selected/prominent modes. Two independent erasers; borders carry zero
-  // semantic weight (globals.css, above the marker fills; NOTES.md "Read-path
-  // assessment", 2026-08-25).
-  //
-  // This comment used to say the repaint "applies only to unselected markers" —
-  // the adminMarker arm's mechanism, stated as if it were the rule's scope,
-  // which understated the rule. Dormant branches drift because nothing renders
-  // them to contradict them: check which arm ships before trusting one.
-  // Tier-flip stagger (PR-2): font-size joins the token's transition list, and
-  // the easing is the productive standard curve (moderate-01 stays 150ms). The
-  // 75ms type delay lives on the label spans (LABEL_SIZE_TRANSITION_CLASS) —
-  // font-size doesn't transition through inheritance, so the token entry only
-  // covers token-level sizes while width/min-width move immediately here.
-  const tokenInteractionClass = adminMarker
-    ? `transition-[width,min-width,font-size,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] ${selected ? "" : "group-hover:border-[var(--sp-legend-hover-border)] "}group-hover:brightness-105 group-hover:shadow-sp group-active:shadow-[0_2px_6px_rgba(16,17,20,0.16),inset_0_2px_4px_rgba(16,17,20,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-focus)] motion-reduce:transition-none`
-    : "transition-[width,min-width,font-size,filter,box-shadow,border-color,background-color,opacity] duration-150 ease-[cubic-bezier(0.2,0,0.38,0.9)] group-hover:border-[var(--sp-marker-active-edge)] group-hover:brightness-105 group-hover:shadow-[0_6px_14px_rgba(23,26,29,0.20),inset_0_1px_0_rgba(255,255,255,0.82)] group-active:shadow-[0_2px_6px_rgba(23,26,29,0.16),inset_0_2px_4px_rgba(23,26,29,0.08)] group-focus-visible:ring-4 group-focus-visible:ring-[var(--sp-marker-active-edge-soft)] motion-reduce:transition-none";
-  const draftBadgeClass = adminMarker
-    ? "bg-[var(--sp-legend-draft-accent)] shadow-[0_2px_5px_rgba(16,17,20,0.24)]"
-    : "bg-[var(--sp-marker-draft-badge)] shadow-[0_2px_5px_rgba(23,26,29,0.24)]";
-
-  const hitTargetSizeClass = tokenMode === "selected" ? "h-10 w-10" : tokenMode === "prominent" ? "h-9 w-9" : "h-8 w-8";
-  // The 44px floor as the skill ships it (.cds-touch-target): a padded hit
-  // region, not a bigger mark. Inset per box so every mode reaches exactly 44
-  // (40+2×2, 36+2×4, 32+2×6) — the surface gates `hitFloor` on pitch, so no
-  // two regions overlap when it is on. Pointer events on the pseudo-element
-  // resolve to the button itself, which is what every handler and the layer's
-  // closest("[data-seat-id]") lookups already target.
-  const hitFloorClass = hitFloor
-    ? tokenMode === "selected" ? "after:absolute after:-inset-0.5" : tokenMode === "prominent" ? "after:absolute after:-inset-1" : "after:absolute after:-inset-1.5"
-    : "";
-  // Person-first hierarchy on the expanded name badge (2026-07-16 critique):
-  // the seat code demotes to a small muted eyebrow so the occupant name below
-  // it is the card's primary line. Code-only selected/prominent pills (open
-  // seats) keep the larger code — it is the only content there.
-  // The muted-eyebrow opacity is surface-dependent: 70% white on the dark
-  // selected pill holds 9.0:1, but 70% of the ink on the LIGHT prominent
-  // surfaces dips under AA (#284C3B@70 on the #DEF3E4 source/highlight tint =
-  // 3.84:1, #9E2F06@70 on the #FBEAE1 search tint = 3.51:1); 90% keeps the
-  // demoted look while measuring 6.35:1 / 5.22:1 there.
-  // Phase 4 PR 1 (marker-contrast audit): the swap TARGET joins the list —
-  // its quiet pill (text-secondary on layer-01) holds 5.6:1 at 90% but only
-  // 3.47:1 at 70% in the light theme.
-  const lightProminentSurface = swapSource || moveEmployeeSource || plannerHighlighted || swapTarget || (searchProminent && !selected);
-  // Type-floor Ruling 3 (2026-08-24): the expanded badge is the engaged,
-  // reading state, so its code eyebrow holds the 12px floor and demotes via
-  // WEIGHT (medium vs the name's bold) + the opacity above, not via size.
-  // PR-2 ruling extension: at the text tier the NAME-MODE eyebrow follows the
-  // same rule — 12px, medium weight vs the name's bold, opacity-90 (name
-  // pills are light status surfaces, the same case the 90% figure above was
-  // measured for). Measured live 2026-08-24: the 12px eyebrow + 12px name
-  // land every pod name pill at 39.5px, inside the 40px
-  // TEXT_TIER_NAME_OBSTACLE_PX the nudge scorer models — it fits, so the
-  // eyebrow stays (the ruled fallback was dropping it at tier). Below the
-  // threshold the resting-pill branches stay sub-12 (marks, not text).
-  const codeTextClass = expandedNameBadge
-    ? `text-[12px] font-medium tracking-[0.04em] ${lightProminentSurface ? "opacity-90" : "opacity-70"}`
-    : tokenMode === "selected" || tokenMode === "prominent"
-      ? "text-[10px] font-extrabold"
-      : textTier
-        ? "text-[12px] font-medium tracking-[0.04em] opacity-90"
-        : "text-[9.5px] font-extrabold";
+  // Add / swap / move modes snap the marker to its true coordinate so
+  // targeting stays honest: no viewport-edge hugging, and active markers
+  // (selected, origin, target) never take a nudge.
   const markerUsesTrueCoordinate = addSeatMode || swapMode || moveEmployeeMode;
-  const tokenCanHugViewportEdge = showInlineName || prominentToken;
-  const resolvedViewportEdge = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? "none" : viewportEdge;
-  const resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate || !tokenCanHugViewportEdge ? 0 : Math.max(0, Math.round(viewportEdgeOffsetPx));
-  // Render-layer name-label collision nudge (lib/seatCrowding
-  // computeNameLabelNudges): only ever a vertical offset added on top of the
-  // existing centering translate on the TOKEN — the marker anchor (button,
-  // positioned via pointToStyle at seat.x/seat.y) never moves. It applies to
-  // resting name-bearing tokens: "name" mode (admin Show-names) and passive
-  // "prominent" pills (viewer search results show names via prominent mode,
-  // not name mode, because viewers have no Show-names). Active markers
-  // (selected / swap) always stay exactly on their anchor.
-  const nameNudgeApplicable = tokenMode === "name" || (tokenMode === "prominent" && !activeMarker);
-  const nameNudgeActive = nameNudgeApplicable && nameNudge !== 0;
-  // Code pills use the same token-only vertical translate to de-collide tight
-  // pods at their uniform size. Resting code tokens only — selection/search
-  // promote the token to selected/prominent, which always sits on the anchor.
-  const codeNudgeActive = tokenMode === "code" && codeNudge !== 0;
-  const activeTokenNudge = nameNudgeActive ? nameNudge : codeNudgeActive ? codeNudge : 0;
-  const tokenVerticalTranslateClass = activeTokenNudge === 0
-    ? "-translate-y-1/2"
-    : activeTokenNudge === -1
-      ? "-translate-y-[calc(50%+14px)]"
-      : "-translate-y-[calc(50%-14px)]";
-  // Room-centered plate offset (display-only, same contract as the nudge and
-  // viewport-edge offsets above: the anchor button NEVER moves). SeatMap
-  // derives the offset from the seat's office-room rect; add/swap/move
-  // modes snap the token back to the true coordinate so targeting stays
-  // honest.
-  const officePlateOffsetActive =
-    officePlate && !markerUsesTrueCoordinate && (officePlateOffsetXPx !== 0 || officePlateOffsetYPx !== 0);
-  const tokenPositionClass = officePlateOffsetActive
-    ? "absolute -translate-x-1/2 -translate-y-1/2"
-    : resolvedViewportEdge === "left"
-      ? `absolute top-1/2 translate-x-0 ${tokenVerticalTranslateClass}`
-      : resolvedViewportEdge === "right"
-        ? `absolute top-1/2 translate-x-0 ${tokenVerticalTranslateClass}`
-        : `absolute left-1/2 top-1/2 -translate-x-1/2 ${tokenVerticalTranslateClass}`;
-  // The room-fitted width applies in EVERY mode (a 152px plate must not
-  // overflow a ~123px NE room); only the centering offset is mode-dependent.
-  const officePlateSizeStyle: CSSProperties | undefined =
-    officePlate && officePlateWidthPx
-      ? { width: `${officePlateWidthPx}px`, maxWidth: `${officePlateWidthPx}px` }
-      : undefined;
-  const tokenPositionStyle: CSSProperties | undefined = officePlateOffsetActive
-    ? {
-        left: `calc(50% + ${officePlateOffsetXPx}px)`,
-        top: `calc(50% + ${officePlateOffsetYPx}px)`,
-        ...officePlateSizeStyle
-      }
-    : resolvedViewportEdge === "left"
-      ? { left: `calc(50% + ${resolvedViewportEdgeOffsetPx}px)`, ...officePlateSizeStyle }
-      : resolvedViewportEdge === "right"
-        ? { right: `calc(50% + ${resolvedViewportEdgeOffsetPx}px)`, ...officePlateSizeStyle }
-        : officePlateSizeStyle;
-  const nameTextClass =
-    tokenMode === "selected"
-      ? "max-w-[98px] text-[13px]"
-      : tokenMode === "prominent"
-        ? "max-w-[88px] text-[12.5px]"
-        // Text tier: 12px at the widened hover max-widths, resting — no
-        // hover overrides (hover would otherwise SHRINK the type back to
-        // 10px).
-        : textTier
-          ? tokenDensity === "standard" ? "max-w-[96px] text-[12px]" : "max-w-[94px] text-[12px]"
-          : tokenDensity === "standard"
-            ? "max-w-[74px] text-[9.5px] group-hover:max-w-[96px] group-hover:text-[10px] group-focus-visible:max-w-[96px] group-focus-visible:text-[10px]"
-            : "max-w-[58px] text-[9px] group-hover:max-w-[94px] group-hover:text-[10px] group-focus-visible:max-w-[94px] group-focus-visible:text-[10px]";
+  const resolvedViewportEdge = markerUsesTrueCoordinate ? "none" : viewportEdge;
+  const resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate ? 0 : Math.max(0, Math.round(viewportEdgeOffsetPx));
+  const nudge = activeMarker ? 0 : nameNudge;
+  const translateX = resolvedViewportEdge === "left"
+    ? `${resolvedViewportEdgeOffsetPx}px`
+    : resolvedViewportEdge === "right"
+      ? `calc(-100% - ${resolvedViewportEdgeOffsetPx}px)`
+      : "-50%";
+  const wrapperStyle: CSSProperties = {
+    ...pointToStyle({ x: seat.x, y: seat.y }),
+    transform: `translate(${translateX}, calc(-50% + ${nudge * PILL_NUDGE_PX}px))`
+  };
+  // Stacking: hovered / focused markers rise above their neighbours, active
+  // and prominent ones stay above resting pills.
+  const wrapperClassName = [
+    "sp-has-tooltip sp-marker",
+    "z-10 hover:z-30 focus-within:z-30",
+    selected ? "z-40" : origin || target || hit ? "z-30" : ""
+  ].filter(Boolean).join(" ");
+
+  // One modifier per silhouette; precedence = the mode the marker is in.
+  const pillModifier = origin ? "sp-pill--origin" : invalidTarget ? "sp-pill--invalid" : target ? "sp-pill--target" : hit ? "sp-pill--search" : quiet ? "sp-pill--quiet" : "";
+  const buttonClassName = asPill
+    ? ["sp-pill cds-touch-target", pillModifier, namesOff ? "sp-pill--names-off" : ""].filter(Boolean).join(" ")
+    : ["sp-seat-footprint cds-touch-target cursor-pointer", quiet ? "sp-seat-footprint--quiet" : ""].filter(Boolean).join(" ");
 
   return (
-    <button
-      type="button"
-      onClick={event => {
-        if (addSeatMode) {
-          event.preventDefault();
-          return;
-        }
-        onSelect(seat.id);
-      }}
-      tabIndex={tabIndex}
-      data-seat-id={seat.id}
-      data-marker-intent={markerIntent}
-      data-token-mode={tokenMode}
-      data-hit-floor={hitFloor || undefined}
-      data-draft-changed={draftChanged || undefined}
-      aria-pressed={selected}
-      // No title attribute — ruled off with F3 (read-path assessment,
-      // 2026-08-25). It was a second, uncontrolled disclosure channel that
-      // out-informed the designed hover cue on exactly one input modality;
-      // the aria-label carries everything for AT, and the full name is read
-      // in the inspector.
-      className={[
-        "group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-manipulation select-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 font-extrabold leading-none text-[var(--sp-marker-ink)]",
-        "transition-[transform,opacity,filter] duration-150 ease-out hover:z-30 active:scale-[0.96] active:duration-75 motion-reduce:transition-none",
-        markerFocusClass,
-        hitTargetSizeClass,
-        hitFloorClass,
-        selected ? "z-40 focus-visible:z-40" : "",
-        prominentToken ? "z-30" : "",
-        dimmed ? "opacity-45 saturate-50" : "",
-        // PR-C: the pointer everywhere EXCEPT a rejecting drop target —
-        // requested with the ✓/✕ pass (PASS1 §8; never landed in PR-A).
-        invalidTarget ? "cursor-not-allowed" : "cursor-pointer"
-      ].join(" ")}
-      style={pointToStyle({ x: seat.x, y: seat.y })}
-      aria-label={`${seat.label} ${accessibleSeatName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${moveEmployeeSource ? " Move source." : ""}${moveCandidate ? " Valid destination seat." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
-    >
-      <SeatToken
-        style={tokenPositionStyle}
-        className={[
-          "z-10 isolate flex items-center justify-center overflow-visible border ring-1 ring-[var(--sp-marker-pill-ring)] backdrop-blur-[1px]",
-          tokenInteractionClass,
-          tokenPositionClass,
-          statusToneClass,
-          tokenSizeClass,
-          tokenStateClass
-        ].join(" ")}
+    <span className={wrapperClassName} style={wrapperStyle}>
+      <button
+        type="button"
+        tabIndex={tabIndex}
+        data-seat-id={seat.id}
+        data-marker-intent={markerIntent}
+        data-draft-changed={draftChanged || undefined}
+        data-state={selected ? "selected" : undefined}
+        aria-pressed={selected}
+        // The invalid target stays focusable (the reason is in its name) but
+        // reports itself as not operable; the surface refuses the click too.
+        aria-disabled={invalidTarget || undefined}
+        // No title attribute — ruled off with F3 (read-path assessment,
+        // 2026-08-25); the seat code is the tier-C tooltip below, the
+        // aria-label carries everything for AT.
+        aria-label={`${seat.label} ${accessibleSeatName}. ${STATUS_LABELS[seat.status]} seat.${draftChanged ? " Draft changed." : ""}${searchProminent ? " Search result." : ""}${highlighted ? ` ${highlightedDescription}.` : ""}${swapSource ? " Swap source." : ""}${swapTarget ? " Swap target." : ""}${swapCandidate ? " Valid swap target." : ""}${moveEmployeeSource ? " Move source." : ""}${moveCandidate ? " Valid destination seat." : ""}${invalidTarget ? " Not a valid target." : ""}${selected ? " Selected." : " Open details."}`}
+        className={buttonClassName}
+        onClick={(event: MouseEvent<HTMLButtonElement>) => {
+          if (addSeatMode) {
+            event.preventDefault();
+            return;
+          }
+          onSelect(seat.id);
+        }}
       >
-        {/* PR-C glyph axis (extends the 2026-07-23 capsule hybrid's single
-            dot): dot = a person is attached to the seat — assigned (solid
-            fill) and reserved (hollow fill) both carry it, and the FILL axis
-            separates the pair. Glyph PRESENCE/SHAPE (not hue) carries the
-            meaning, so the A3 colorblind-legibility intent survives; the
-            per-state dot hue is redundancy only. Yields to the ✓/✕ mode
-            badges (targetGlyphActive) so one glyph speaks at a time. */}
-        {(seat.status === "assigned" || seat.status === "reserved") && !targetGlyphActive && (
-          <span
-            className={[
-              "pointer-events-none absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full ring-[1.5px] ring-white/90",
-              seat.status === "assigned" ? "bg-[var(--sp-marker-assigned-glyph)]" : "bg-[var(--sp-marker-reserved-glyph)]"
-            ].join(" ")}
-            aria-hidden="true"
-          />
-        )}
-        {draftChanged && !selected && !searchProminent && !targetGlyphActive && (
-          <span className={["pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 text-[8px] font-black leading-none text-[var(--sp-marker-glyph-ink)]", draftBadgeClass].join(" ")} aria-hidden="true">
-            D
-          </span>
-        )}
-        {/* Target-mode reason glyphs (PR-C ruling change 2): the underlying
-            fill stays, ✓/✕ says whether the armed swap/move can land here.
-            aria-hidden — the accessible name already carries "Valid swap
-            target." / "Not a valid target." */}
-        {(swapCandidate || moveCandidate) && (
-          <span className="pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 bg-[var(--sp-marker-valid-glyph)] text-[8px] font-black leading-none text-[var(--sp-marker-glyph-ink)] shadow-[0_2px_5px_rgba(23,26,29,0.24)]" aria-hidden="true">
-            ✓
-          </span>
-        )}
-        {invalidTarget && (
-          <span className="pointer-events-none absolute -right-1 -top-1 grid h-3.5 w-3.5 place-items-center rounded-full border border-white/85 bg-[var(--sp-marker-invalid-glyph)] text-[8px] font-black leading-none text-[var(--sp-marker-glyph-ink)] shadow-[0_2px_5px_rgba(23,26,29,0.24)]" aria-hidden="true">
-            ✕
-          </span>
-        )}
-        {/* AI provenance on the seat itself: the aura says "something picked
-            this", the chip says WHAT picked it. aria-hidden because the
-            marker's accessible name already carries the highlight reason
-            (highlightedDescription) — the chip would only repeat it. */}
-        {plannerHighlighted && adminMarker && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-2 -top-[7px] rounded-[2px] border border-[var(--sp-ai-border)] bg-[var(--sp-ai-marker-surface)] px-[3px] text-[7.5px] font-bold leading-[1.4] tracking-[0.04em] text-[var(--sp-ai-text)]"
-          >
-            AI
-          </span>
-        )}
-        {officePlate ? (
-          <span className="relative z-10 flex w-full min-w-0 flex-col items-start gap-0.5 text-left">
-            {/* Same surface-conditional opacity as codeTextClass above: an
-                office seat armed as swap/move source wears the light green
-                tint too, where a 70% eyebrow dips under AA. */}
-            <span translate="no" className={`whitespace-nowrap text-[8.5px] font-extrabold tracking-[0.09em] ${lightProminentSurface ? "opacity-90" : "opacity-70"}`}>{seat.label}</span>
-            {/* Literal space text nodes between the plate's lines — same axe
-                4.10 subtree-serialization contract as the pill branches. */}
-            {hasEmployee ? (
-              <>
-                {" "}
-                <span className="block w-full min-w-0 truncate text-[13px] font-bold leading-[1.15]">{inlineNameLabel}</span>
-                {officeTitleLabel && " "}
-                {officeTitleLabel && (
-                  <span className={`block w-full min-w-0 truncate font-semibold leading-[1.2] opacity-75 ${LABEL_SIZE_TRANSITION_CLASS} ${textTier ? "text-[12px]" : "text-[9.5px]"}`}>{officeTitleLabel}</span>
-                )}
-              </>
-            ) : (
-              <>
-                {" "}
-                <span className="block text-[12px] font-semibold leading-[1.15] opacity-80">Open office</span>
-              </>
-            )}
-          </span>
-        ) : tokenMode === "code" ? (
-          <span className="relative z-10 flex w-full min-w-0 items-center justify-center gap-1 group-hover:justify-start group-focus-visible:justify-start">
-            {/* truncate (not plain nowrap): an over-long label must clip
-                inside the fixed pill rather than spill over neighbouring
-                markers — hover/focus grows the token, revealing it fully. */}
-            <span translate="no" className={`max-w-full truncate font-extrabold leading-[1.05] ${LABEL_SIZE_TRANSITION_CLASS} ${textTier ? "text-[12px]" : "text-[9.5px]"}`}>{seat.label}</span>
-            {/* The literal space text node keeps the code and name as separate
-                words when a checker serializes the subtree (axe 4.10's
-                label-content-name-mismatch joins spans without one); flex
-                containers never render whitespace-only nodes, so it is
-                visually inert. */}
-            {employeeName && " "}
-            {employeeName && (
-              <span className="hidden max-w-[64px] truncate text-[10px] font-bold leading-[1.05] opacity-90 group-hover:block group-focus-visible:block">
-                {compactEmployeeName}
-              </span>
-            )}
-          </span>
+        {asPill ? (
+          <>
+            {hasEmployee ? visibleLabel : <span translate="no">{visibleLabel}</span>}
+            {draftChanged ? <SeatMark kind="draft-badge" /> : null}
+          </>
         ) : (
-          <span className="relative z-10 flex w-full min-w-0 flex-col items-start text-left">
-            <span translate="no" className={["whitespace-nowrap leading-[1.05]", LABEL_SIZE_TRANSITION_CLASS, codeTextClass].join(" ")}>{seat.label}</span>
-            {/* Word separator for subtree-text serializers — see the twin
-                comment in the hover-disclosure branch above. */}
-            {showInlineName && " "}
-            {showInlineName && (
-              <span className={["block min-w-0 truncate font-bold leading-[1.08] opacity-95", LABEL_SIZE_TRANSITION_CLASS, nameTextClass].join(" ")}>
-                {inlineNameLabel}
-              </span>
-            )}
-          </span>
+          <SeatMark kind={seatMarkKindFor(seat.status)} />
         )}
-      </SeatToken>
-    </button>
+      </button>
+      {/* Tier-C tooltip: the seat code on hover / focus only (P3-11) — the
+          landed rule is `.sp-has-tooltip:is(:hover, :focus-within) .sp-tooltip`. */}
+      <span className="sp-tooltip" role="tooltip" translate="no">{seat.label}</span>
+    </span>
   );
 }
 
@@ -703,15 +246,17 @@ function SeatMarkerComponent({
 // comparator says "equal", React skips the update. tests/seat-marker-memo.test.mjs
 // greps this file and fails if the two lists drift apart, so the mistake is
 // caught in CI rather than in someone's face on the map.
-const RENDERED_SEAT_FIELDS = ["id", "label", "x", "y", "status", "zone", "department"] as const;
+const RENDERED_SEAT_FIELDS = ["id", "label", "x", "y", "status"] as const;
 
 function seatRenderEqual(previous: SeatWithEmployee, next: SeatWithEmployee) {
   for (const field of RENDERED_SEAT_FIELDS) {
     if (!Object.is(previous[field], next[field])) return false;
   }
-  // Occupant is read through two fields only; comparing the employee object by
+  // Occupant is read through the name only; comparing the employee object by
   // reference would defeat the memo, because the map rebuilds those objects
-  // whenever it re-stitches seats to employees.
+  // whenever it re-stitches seats to employees. `position` is compared too so
+  // an inspector-driven title edit re-renders the marker's employee identity
+  // alongside the rest of the layer.
   return (
     (previous.employee?.full_name ?? null) === (next.employee?.full_name ?? null) &&
     (previous.employee?.position ?? null) === (next.employee?.position ?? null)

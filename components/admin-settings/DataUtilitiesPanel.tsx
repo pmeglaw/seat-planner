@@ -68,8 +68,8 @@ function isDraftSnapshot(value: unknown): value is DraftSnapshot {
 
 function ReviewCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
   return (
-    <div className={["border p-3", tone === "warn" ? "border-[var(--sp-editor-dirty-border)] bg-[var(--sp-editor-dirty-bg)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)]"].join(" ")}>
-      <div className={["text-xs font-medium", tone === "warn" ? "text-[var(--sp-editor-dirty-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>
+    <div className={["border p-3", tone === "warn" ? "border-[var(--sp-status-draft-mark)] bg-[var(--sp-status-draft-surface)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)]"].join(" ")}>
+      <div className={["text-xs font-medium", tone === "warn" ? "text-[var(--sp-status-draft-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>
         {label}
       </div>
       <div className="mt-1 text-xl font-semibold text-[var(--sp-text-primary)]">{value.toLocaleString()}</div>
@@ -327,13 +327,13 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
         {busy ? "Working…" : ""}
       </div>
       {error && (
-        <div role="alert" className="whitespace-pre-wrap border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm font-medium text-[var(--sp-editor-error-text)]">
+        <div role="alert" className="whitespace-pre-wrap border border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] p-3 text-sm font-medium text-[var(--sp-status-error-text)]">
           {error}
         </div>
       )}
 
       {notice && (
-        <div role="status" className="border border-[var(--sp-editor-clean-border)] bg-[var(--sp-editor-clean-bg)] p-3 text-sm font-semibold text-[var(--sp-editor-clean-text)]">
+        <div role="status" className="border border-[var(--sp-status-neutral-mark)] bg-[var(--sp-status-neutral-surface)] p-3 text-sm font-semibold text-[var(--sp-status-neutral-text)]">
           {notice}
         </div>
       )}
@@ -406,7 +406,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 onClick={() => setResetReviewOpen(false)}
                 disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-status-neutral-surface)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close reset review"
               >
                 <CloseIcon />
@@ -460,7 +460,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 onClick={closeCsvReview}
                 disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-status-neutral-surface)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close CSV import review"
               >
                 <CloseIcon />
@@ -477,7 +477,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
               </div>
 
               {csvReview.issues.length > 0 ? (
-                <div className="mt-3 border border-[var(--sp-editor-error-border)] bg-[var(--sp-editor-error-bg)] p-3 text-sm text-[var(--sp-editor-error-text)]">
+                <div className="mt-3 border border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] p-3 text-sm text-[var(--sp-status-error-text)]">
                   <div className="font-semibold">Blocking validation errors</div>
                   <p className="mt-1 leading-5">
                     Fix these rows in the CSV, then import the file again. No draft data has changed.
@@ -545,7 +545,7 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
                 type="button"
                 onClick={closeJsonReview}
                 disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-editor-neutral-bg)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-status-neutral-surface)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
                 aria-label="Close draft snapshot restore review"
               >
                 <CloseIcon />

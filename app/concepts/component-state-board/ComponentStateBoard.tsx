@@ -5,11 +5,11 @@ import {
   IconButton,
   StatusBadge,
   focusRingClass,
-  markerStateClassRecipes,
   type ButtonVariant,
   type IconButtonVariant,
   type StatusBadgeTone
 } from "@/components/ui/design-system";
+import { markerStateClassRecipes } from "./markerStateClassRecipes";
 import {
   avoidItems,
   colorGroups,
