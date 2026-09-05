@@ -51,8 +51,13 @@ const clickMarker = (page: Page, label: string) => marker(page, label).dispatchE
 // The command-row controls, addressed by their stable aria-labels. The notice
 // strip renders a SECOND undo affordance labelled "Undo <entry>"; these names
 // never collide with it.
-const undoButton = (page: Page) => page.getByRole("button", { name: "Undo last map change" });
-const redoButton = (page: Page) => page.getByRole("button", { name: "Redo last undone change" });
+// PR 3a: the control row's Undo / Redo names carry the shortcut when armed
+// ("Undo last map change · Ctrl Z") and the reason when not ("No map changes
+// to undo"); scoped to the toolbar so the notice strip's "Undo <entry>" never
+// collides.
+const controlRow = (page: Page) => page.getByRole("toolbar", { name: "Map controls" });
+const undoButton = (page: Page) => controlRow(page).getByRole("button", { name: /^(Undo |No map changes to undo)/ });
+const redoButton = (page: Page) => controlRow(page).getByRole("button", { name: /^(Redo ·|No undone map changes to redo)/ });
 
 // Delete S01 through the real flow — select, inspector delete, confirm — so a
 // history entry is recorded exactly the way the product records one. Delete
@@ -83,8 +88,9 @@ test("a draft edit enables Undo, and Undo puts the seat back", async ({ page }) 
   await deleteCustomSeat(page);
 
   await expect(undoButton(page)).toBeEnabled();
-  // The entry label reaches the control's tooltip, not just the stack.
-  await expect(undoButton(page)).toHaveAttribute("title", "Undo Delete S01");
+  // The entry label reaches the control's name and tier-C tooltip (PR 3a:
+  // "Undo <entry> · Ctrl Z" — the shortcut the tooltip promises, P2-1).
+  await expect(undoButton(page)).toHaveAttribute("aria-label", /^Undo Delete S01 · /);
 
   await undoButton(page).dispatchEvent("click");
 
@@ -141,7 +147,8 @@ test("Redo becomes available after an Undo and re-applies the change", async ({ 
   await expect(marker(page, "S01")).toBeAttached();
 
   await expect(redoButton(page)).toBeEnabled();
-  await expect(redoButton(page)).toHaveAttribute("title", "Redo Delete S01");
+  // Redo names its shortcut (PHASE2UX §1M.3: "Redo · Ctrl Shift Z").
+  await expect(redoButton(page)).toHaveAttribute("aria-label", /^Redo · /);
 
   await redoButton(page).dispatchEvent("click");
 

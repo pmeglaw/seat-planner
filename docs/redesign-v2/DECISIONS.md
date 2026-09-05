@@ -858,9 +858,13 @@ not taken.)
 Field in the control row (320px, never labelled, magnifier + placeholder, Ctrl/⌘ K). Results open in the existing 560px palette anchored to the field's left edge — a disclosure, results in place. A trailing scope segment **"This floor ▾ / Whole building"** sits inside the field; the results header always carries both counts ("7 on this floor · 11 in building"), zero included. Typing never changes the floor; opening a result on the other floor does (status-role announcement, D1′). `?q=` landing: field pre-filled and results open; a unique match auto-selects (seat → inspector; unseated person → roster row) and auto-switches floor; several matches stay a list; zero shows the zero state with the query kept. (Ruling 17; closes E2.4 for good.)
 
 #### D1-e · Copy link
+*Roster rows built 2026-09-04 (PR 3a: `?q=<name>`, in-place "Copied", announced); inspector header + person block in PR 3b.*
+
 Copy icon with a "Copied" confirmation (patterns: Copy) on the inspector header → `?seat=<label>`; on the person block inside the inspector and on roster rows → `?q=<name>`. Roster rows stay non-opening (deviation 9 holds — an icon button on a static row is not a disclosure). Closes backlog DIR-1 (D1-a).
 
 #### D1-f · Find me
+*Built 2026-09-04 (PR 3a) on both surfaces from the shell's published seat.*
+
 Ghost button in the control row, every role. Seated → own floor, own seat selected, inspector open. Unseated → roster floor, own row highlighted. Not in the published directory → inline notification in the map region: "Your account isn't in the published directory. Ask an admin." Own seat comes from the email match already in `app/page.tsx`.
 
 #### D1-g · Status band kept; names toggle moves to the control row
@@ -873,11 +877,12 @@ The private-office room tint and the zone-filter frame with its pill fills retir
 search hits render as the pill highlight (`--sp-highlight` surface, interactive edge), non-matches quiet, count
 and Clear in the control row and status band — the Phase 2 treatment already covers every job the washes did.
 `MapWashLayer`, `lib/officeRoomWash`, `lib/zoneWash`, `--sp-wash-zone` and `office-room-wash.test.mjs` retire
-together. Not a deviation: nothing in Carbon asks for a wash.
+together. Not a deviation: nothing in Carbon asks for a wash. **Built 2026-09-04 (Phase 4 PR 3a)** — and with the
+room rects the private-office nameplate card retired too (owner ruling O1, PHASE2UX §1M amendment).
 
 #### D1-i · Unused module removed
 `lib/seatClusters.ts` is imported by nothing; it and `seat-clusters.test.mjs` are deleted in Phase 4 PR 3. No
-design content.
+design content. **Built 2026-09-04 (PR 3a).**
 
 ---
 

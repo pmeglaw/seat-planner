@@ -164,8 +164,7 @@ test("desktop marker redesign stays clear of data auth publish and route boundar
 
   assert.match(viewerSource, /\.eq\("layer", "published"\)/);
   assert.match(viewerSource, /<ViewerSeatFinder/);
-  assert.match(viewerFinderSource, /Read-only/);
-  assert.match(viewerFinderSource, /Published/);
+  assert.match(viewerFinderSource, /canEdit=\{false\}/);
   assert.doesNotMatch(viewerFinderSource, /Map tools|Undo|Redo|CSV|JSON|Publish changes|Vacate|Delete seat/);
   assert.doesNotMatch(managementSource, /SeatMarker|draftChangedSeatLabelSet|Admin command row/);
 

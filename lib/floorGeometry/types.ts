@@ -1,7 +1,7 @@
 // LEAF — zero `@/` imports. The geometry vocabulary shared by every floor:
 // calibration areas (saved -> visual per-area linear fits), zone rectangles,
 // office-room rectangles and the plan asset. lib/mapLayoutTransform,
-// lib/seatZones and lib/officeRoomWash keep their floor-3 literals where they
+// lib/seatZones and the retired lib/officeRoomWash (PR 3a) keep their floor-3 literals where they
 // have always been and import only the TYPES from here; the floor-2 data
 // module (lib/floorGeometry/floor2.ts) imports this file and lib/floorIds and
 // nothing else. That layering is what keeps the whole thing an acyclic graph
@@ -36,7 +36,7 @@ export type CalibrationArea = {
 export const IDENTITY_TRANSFORM: LinearTransform = { xScale: 1, xOffset: 0, yScale: 1, yOffset: 0 };
 
 // Structurally identical to SeatZoneRect (lib/seatZones) and OfficeRoomRect
-// (lib/officeRoomWash); declared here so the data module never has to import
+// (the retired lib/officeRoomWash (PR 3a)); declared here so the data module never has to import
 // the modules that consume it.
 export type FloorZoneRect = { zone: string } & Bounds;
 export type FloorOfficeRoomRect = { key: string } & Bounds;

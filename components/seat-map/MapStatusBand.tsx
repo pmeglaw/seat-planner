@@ -1,102 +1,80 @@
 "use client";
 
-// The shared in-flow bottom status band (Option A, owner-picked 2026-08-17):
-// the ONE home for legend counts, the match summary, filter actions, the names
-// switch and the zoom cluster from the sm tier up. The viewer shipped it first
-// (v1.45.0, replacing its floating legend card + zoom stack); the admin map
-// renders the same band with its extra entries (unavailable, draft-changed)
-// and filter actions. Parents own count computation (counts-follow-filters
-// semantics stay pinned at the call sites by filter-feedback-source) and tier
-// gating: the band renders only >=640, and below the panel tier it yields to
-// the bottom sheets (each surface owns both decisions — this renders the row).
-// The retired MapStatusLegend was deleted once it had no caller left (owner
-// call 2026-08-19); its entry type lives here now.
+// The 40px status band under the canvas (DECISIONS D1-g; PHASE3DS §1.21
+// `.sp-band`; Phase 4 PR 3a): title · legend (the Phase 3 marks, following
+// the Names toggle — P3-13) · count (zero included) with the filtered map's
+// verbs and the cross-floor hint · zoom / fit as 32px controls. It spans the
+// canvas, not the slot. Parents own count computation (counts follow every
+// active constraint — filter-feedback-source pins the call sites) and tier
+// gating: the band renders only from the sm tier up and yields to the
+// bottom sheets below the panel tier.
 //
-// Multi-floor PR-2: a roster floor has no map to summarise, so a band with no
-// entries renders the TITLE alone — no Legend word, no list, and no controls
-// seam unless a caller passes controls (Hidden tier: absent, never disabled).
+// A roster floor has no map to summarise: with no entries the band renders
+// the TITLE alone — no list, no controls seam (Hidden tier, never disabled).
+// Below `lg` on /admin the note line reads "Editing needs a wider window."
+// (D2, deviation 4: read-only, not disabled).
 import type { ReactNode } from "react";
+import { SeatMark, type SeatMarkKind } from "@/components/seat-map/SeatMark";
 
 export type MapLegendEntry = {
   key: string;
   label: string;
-  dotClassName: string;
+  mark: SeatMarkKind;
   count: number;
 };
 
-export function MapStatusBand({ ariaLabel, totalLabel, entries, summary, actions, controls }: {
+export function MapStatusBand({ ariaLabel, totalLabel, entries, namesVisible = true, count, actions, note, noteAction, controls }: {
   ariaLabel: string;
   totalLabel: string;
   entries: MapLegendEntry[];
-  summary?: ReactNode;
-  /** Surface-owned inline cluster after the summary (admin: Fit matches / Clear). */
+  /** The legend follows the Names toggle: assigned = mini pill on, ● off (P3-13). */
+  namesVisible?: boolean;
+  /** "68 seats" / "22 of 68 seats match" / "0 of 68 seats match" — zero included. */
+  count?: string;
+  /** Surface-owned verbs after the count (Clear filters, Fit matches). */
   actions?: ReactNode;
-  /** Surface-owned right cluster (names switch, zoom) — rendered ml-auto. */
+  /** The cross-floor hint or the read-only line. */
+  note?: string;
+  noteAction?: ReactNode;
+  /** Surface-owned right cluster (zoom / fit) — absent on a roster floor. */
   controls?: ReactNode;
 }) {
   const hasEntries = entries.length > 0;
   return (
-    // The band is a CSS SIZE CONTAINER: its optional pieces (title/total,
-    // summary — .map-status-band-* in globals.css) key on the band's own
-    // width, never the viewport's. Viewport media queries cannot see that a
-    // docked results panel took 332px of the stage, so md:/lg: tiers clipped
-    // the controls exactly there (CodeRabbit on #408, confirmed by measure:
-    // a filtered admin row is ~790px against a 640px floor).
-    <div
-      data-map-status-band
-      className="relative z-30 flex h-10 shrink-0 items-center border-t border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] [container-type:inline-size]"
-    >
-      {/* Everything informational scrolls; the controls never do. The
-          overflow-x-auto is the safety valve that makes clipping impossible
-          at ANY band width — the counts and the filter verbs stay reachable
-          by scroll and by keyboard (focus auto-scrolls into view) even in the
-          worst case (five entries + actions in a 640px stage). The summary
-          truncates instead of scrolling: prose is the one piece that may
-          shorten, verbs and counts are not. */}
+    <div data-map-status-band className="sp-band">
       {/* Focusable labelled group, not a bare div: at rest the region holds
           only text, so without tabindex a keyboard user could never scroll
-          clipped counts into view (axe scrollable-region-focusable, serious —
-          the e2e-auth viewer scan caught exactly this). Focused, the region
-          scrolls natively with the arrow keys; the ul inside keeps its own
-          list semantics and shares the accessible name by design. */}
+          clipped counts into view (axe scrollable-region-focusable — the
+          e2e-auth viewer scan caught exactly this). The overflow-x-auto is
+          the safety valve that makes clipping impossible at any band width. */}
       <div
         data-band-scroll-region
         role="group"
         aria-label={ariaLabel}
         tabIndex={0}
-        className="flex min-w-0 flex-1 items-center gap-2.5 overflow-x-auto px-3 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] md:gap-3"
+        className="flex min-w-0 flex-1 items-center gap-[var(--sp-space-05)] overflow-x-auto [scrollbar-width:thin] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--sp-focus)]"
       >
-        {hasEntries && <span className="map-status-band-wide shrink-0 text-[12px] font-semibold text-[var(--sp-text-primary)]">Legend</span>}
-        {/* Title-only band: the total is the whole message, so it stays at
-            every band width instead of hiding below the wide tier. */}
-        <span className={`${hasEntries ? "map-status-band-wide " : ""}shrink-0 text-xs font-semibold tabular-nums text-[var(--sp-text-secondary)]`}>{totalLabel}</span>
+        <span className="sp-band-title">{totalLabel}</span>
         {hasEntries && (
-          <>
-            <span aria-hidden="true" className="map-status-band-wide h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
-            <ul aria-label={ariaLabel} className="flex shrink-0 items-center gap-2.5 md:gap-3.5">
-              {entries.map(entry => (
-                <li key={entry.key} className="flex items-center gap-1.5 text-xs font-semibold text-[var(--sp-text-secondary)]">
-                  <span aria-hidden="true" className={`h-[7px] w-[7px] shrink-0 rounded-full ${entry.dotClassName}`} />
-                  <span className="whitespace-nowrap">{entry.label}</span>
-                  <span className="tabular-nums text-[var(--sp-text-primary)]">{entry.count}</span>
-                </li>
-              ))}
-            </ul>
-          </>
+          <ul aria-label={ariaLabel} className="sp-band-legend">
+            {entries.map(entry => (
+              <li key={entry.key} className="sp-seat-legend">
+                <SeatMark kind={entry.mark === "assigned" && !namesVisible ? "assigned-dot" : entry.mark} />
+                {entry.label} <span className="tabular-nums">{entry.count}</span>
+              </li>
+            ))}
+          </ul>
         )}
-        {summary ? (
-          <>
-            <span aria-hidden="true" className="map-status-band-widest h-5 w-px shrink-0 bg-[var(--sp-border-subtle)]" />
-            <p className="map-status-band-widest min-w-0 truncate text-xs text-[var(--sp-text-secondary)]">{summary}</p>
-          </>
-        ) : null}
-        {/* Actions stay present at every band width (unlike the prose
-            summary): Fit matches / Clear are the filtered map's verbs. */}
-        {actions ? <div className="shrink-0">{actions}</div> : null}
+        {count ? <span className="sp-band-count">{count}</span> : null}
+        {actions ?? null}
       </div>
-      {/* border-l draws the seam the scroll boundary otherwise lacks — under
-          overflow, clipped content butts straight against these controls. */}
-      {controls ? <div className="flex shrink-0 items-center gap-3 border-l border-[var(--sp-border-subtle)] pl-3 pr-3 md:gap-4">{controls}</div> : null}
+      {/* The note sits OUTSIDE the scroll region: it is the one line that must
+          never scroll out of view (below lg on /admin it is the only thing that
+          says why the editor cluster is gone). The legend + count tail is what
+          scrolls when the band is tight; the DOM/reading order is unchanged. */}
+      {note ? <span className="sp-band-note">{note}</span> : null}
+      {noteAction ?? null}
+      {controls ? <span className="sp-band-zoom">{controls}</span> : null}
     </div>
   );
 }

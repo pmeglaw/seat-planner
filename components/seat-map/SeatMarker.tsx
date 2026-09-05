@@ -6,7 +6,6 @@ import type { SeatWithEmployee } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { pointToStyle } from "@/lib/seatMath";
 import { formatDisplayName } from "@/lib/formatName";
-import { isInsideOfficeRoom } from "@/lib/officeRoomWash";
 
 type SeatMarkerProps = {
   seat: SeatWithEmployee;
@@ -131,18 +130,14 @@ function getPassiveEmployeeLabel(name: string) {
   return formatDisplayName(compactName);
 }
 
-// Private-office door-plate (owner pick 2026-07-24, specimen option 2):
-// office seats render as a rectangular nameplate — always-visible short name
-// plus a title line — instead of the stadium pill; pods keep pills. The gate
-// is ROOM GEOMETRY (the seat's VISUAL point inside a measured office rect in
-// lib/officeRoomWash): office seats can carry pod zones (N13 is zone "North
-// Pod" — zone inference has no room concept). The South zone / exact-"S"
-// prefix checks stay as a belt for those rows even if their rect ever moves.
-function isOfficePlateSeat(seat: Pick<SeatWithEmployee, "label" | "zone" | "department" | "x" | "y">) {
-  const zone = (seat.zone ?? seat.department ?? "").trim().toLowerCase();
-  if (zone === "south offices") return true;
-  if (!zone && getSeatLabelPrefix(seat.label) === "S") return true;
-  return isInsideOfficeRoom({ x: seat.x, y: seat.y });
+// Private offices follow the pill rule (owner ruling O1, 2026-09-04, Phase 4
+// PR 3a — recorded as a PHASE2UX §1M amendment): the door-plate card that
+// used to render for N13 N14 NE09 NE10 SE05 SE06 S01 S02 retired with
+// lib/officeRoomWash (D1-h). Every seat is the same pill; the seat code is
+// the tooltip, the job title is the inspector's. The plate branches below
+// are dead until PR 3b rewrites this component on `.sp-pill`.
+function isOfficePlateSeat(_seat: Pick<SeatWithEmployee, "label" | "zone" | "department" | "x" | "y">) {
+  return false;
 }
 
 // Selected/prominent and names-on pills show "First L." — the full name lives

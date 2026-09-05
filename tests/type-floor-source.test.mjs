@@ -31,7 +31,6 @@ import test from "node:test";
 // update the ledger to the new number so the ratchet holds.
 const SUB12_LEDGER = new Map(Object.entries({
   // Marks (Ruling 1 — exempt):
-  "components/seat-map/AiHighlightChip.tsx": 1,
   "app/login/page.tsx": 1,
   // Map canvas: marks + words pending the PR-2 zoom-threshold rule:
   "components/seat-map/SeatMarker.tsx": 16,
@@ -46,9 +45,7 @@ const SUB12_LEDGER = new Map(Object.entries({
   // aria-hidden "V" brand monogram. Every WORD site in these files sits at
   // the 12px floor now — a count going UP here means a new word slipped in.
   "components/seat-map/AskPlannerDrawer.tsx": 2,
-  "components/seat-map/MapZoomControl.tsx": 2,
   "components/seat-map/SeatInspector.tsx": 4,
-  "components/seat-map/SeatMap.tsx": 3,
   // P3 ruling 2026-08-25: the palette is the sanctioned FIND surface, so its
   // eight word sites (header count, kind badge — the 9px floor-breaker — result
   // meta, Clear search, zone chip labels, row subtitles, "No seat", footer)
@@ -56,7 +53,6 @@ const SUB12_LEDGER = new Map(Object.entries({
   // ruling: the mono seat-code pill, the two mono seat counts (chip + result
   // row), and the aria-hidden initials monogram.
   "components/seat-map/ViewerFindPalette.tsx": 4,
-  "components/seat-map/ViewerSeatFinder.tsx": 1,
   // SeatSheet (owner rulings 2026-08-24): info-pane CSS promoted to the 12px
   // floor at all widths; SVG plan text raised to fontSize 13 viewBox units and
   // hidden below 1133px viewports where it would render sub-12 (legible-or-

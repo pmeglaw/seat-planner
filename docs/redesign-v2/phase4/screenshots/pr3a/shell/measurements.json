@@ -1,0 +1,46 @@
+{
+  "light-current-bar": "rgb(184, 92, 46) 0px -3px 0px 0px inset",
+  "light-utility-rest": {
+    "background": "rgba(0, 0, 0, 0)",
+    "color": "rgb(244, 244, 244)",
+    "shadow": "none"
+  },
+  "light-utility-hover": {
+    "background": "rgb(51, 51, 51)",
+    "color": "rgb(244, 244, 244)",
+    "shadow": "none"
+  },
+  "light-utility-open": {
+    "background": "rgb(22, 22, 22)",
+    "color": "rgb(244, 244, 244)",
+    "shadow": "rgb(57, 57, 57) 1px 0px 0px 0px inset, rgb(57, 57, 57) -1px 0px 0px 0px inset, rgb(57, 57, 57) 0px 1px 0px 0px inset, rgb(22, 22, 22) 0px 1px 0px 0px"
+  },
+  "light-panel-link": null,
+  "light-utility-pressed": {
+    "background": "rgb(57, 57, 57)",
+    "color": "rgb(244, 244, 244)",
+    "shadow": "none"
+  },
+  "dark-current-bar": "rgb(184, 92, 46) 0px -3px 0px 0px inset",
+  "dark-utility-rest": {
+    "background": "rgba(0, 0, 0, 0)",
+    "color": "rgb(244, 244, 244)",
+    "shadow": "none"
+  },
+  "dark-utility-hover": {
+    "background": "rgb(51, 51, 51)",
+    "color": "rgb(244, 244, 244)",
+    "shadow": "none"
+  },
+  "dark-utility-open": {
+    "background": "rgb(22, 22, 22)",
+    "color": "rgb(244, 244, 244)",
+    "shadow": "rgb(57, 57, 57) 1px 0px 0px 0px inset, rgb(57, 57, 57) -1px 0px 0px 0px inset, rgb(57, 57, 57) 0px 1px 0px 0px inset, rgb(22, 22, 22) 0px 1px 0px 0px"
+  },
+  "dark-panel-link": null,
+  "dark-utility-pressed": {
+    "background": "rgb(57, 57, 57)",
+    "color": "rgb(244, 244, 244)",
+    "shadow": "none"
+  }
+}

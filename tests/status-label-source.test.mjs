@@ -23,9 +23,11 @@ test("STATUS_LABELS is the single source of truth and calls 'available' Open", a
 });
 
 test("status pickers render their options from STATUS_LABELS", async () => {
-  const filterPanel = await readSource("../components/seat-map/FilterPanel.tsx");
-  assert.match(filterPanel, /\{STATUS_LABELS\.available\}/);
-  assert.doesNotMatch(filterPanel, />Available</);
+  // The Status filter group (shell left panel, PR 2 / 3a) is built by
+  // lib/viewerFilterGroups from STATUS_LABELS, never from the enum value.
+  const filterGroups = await readSource("../lib/viewerFilterGroups.ts");
+  assert.match(filterGroups, /STATUS_LABELS\[status\]/);
+  assert.doesNotMatch(filterGroups, /"Available"/);
 
   const inspector = await readSource("../components/seat-map/SeatInspector.tsx");
   assert.match(inspector, /\{STATUS_LABELS\.available\}/);

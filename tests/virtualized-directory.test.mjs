@@ -217,14 +217,13 @@ test("management directory is windowed with an indexed seat lookup, look unchang
   assert.match(source, /of \{activeEmployees\.length\.toLocaleString\(\)\} shown/);
 });
 
-test("viewer directory and admin results panel window through the shared hook", async () => {
+test("the Find palette (both surfaces) windows its directory through the shared hook", async () => {
   const hookSource = await readFile(new URL("../components/seat-map/useVirtualListWindow.ts", import.meta.url), "utf8");
   // The viewer's A→Z list moved from a docked panel into the Find palette's
   // browse mode. It matters MORE there, not less: production's 16 people are
   // placeholder data, and at launch the directory is 61+ rows, which is where
   // the windowing stops being dormant.
   const viewerSource = await readFile(new URL("../components/seat-map/ViewerFindPalette.tsx", import.meta.url), "utf8");
-  const resultsSource = await readFile(new URL("../components/seat-map/ResultsPanel.tsx", import.meta.url), "utf8");
 
   // The hook delegates the math to the unit-tested lib module.
   assert.match(hookSource, /from "@\/lib\/virtualizedList"/);
@@ -248,11 +247,8 @@ test("viewer directory and admin results panel window through the shared hook", 
   // through the absolute-index handler, never by walking the rendered slice.
   assert.match(viewerSource, /if \(direction === -1\) searchInputRef\.current\?\.focus\(\)/);
 
-  // Admin results panel: same segments pattern and absolute-index roving.
-  assert.match(resultsSource, /useVirtualListWindow\(results\.length/);
-  assert.match(resultsSource, /segments\.map\(/);
-  assert.match(resultsSource, /data-vindex=\{segment\.index\}/);
-  assert.match(resultsSource, /stepFocusIndex\(\{/);
-  assert.match(resultsSource, /ArrowDown/);
-  assert.match(resultsSource, /ArrowUp/);
+  // The admin map mounts the SAME palette since PR 3a (its results panel
+  // retired), so the windowing covers both surfaces through one component.
+  const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
+  assert.match(seatMapSource, /<ViewerFindPalette/);
 });

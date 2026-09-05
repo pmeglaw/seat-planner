@@ -131,10 +131,13 @@ test("admin names visibility preference persists locally without server storage"
 
 test("canvas add seat toggle is wired to add-seat mode", async () => {
   const seatMapSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
-  const addSeatToggle = seatMapSource.match(/aria-pressed=\{addSeatMode\}[\s\S]*?\{addSeatMode \? "Exit add seat" : "Add seat"\}/);
+  // PR 3a: the toggle renders in the shared control row; SeatMap wires it.
+  const controlRowSource = await readFile(new URL("../components/seat-map/MapControlRow.tsx", import.meta.url), "utf8");
+  assert.match(controlRowSource, /aria-pressed=\{draft\.addSeat\.active\}[\s\S]*?\{draft\.addSeat\.active \? "Exit add seat" : "Add seat"\}/);
+  const addSeatToggle = seatMapSource.match(/addSeat: \{ active: addSeatMode, hidden: surface !== "plan", onToggle: addSeatMode \? cancelAddSeatMode : startAddSeatMode \}/);
 
   assert.ok(addSeatToggle, "Canvas Add seat toggle should be source-visible.");
-  assert.match(addSeatToggle[0], /onClick=\{addSeatMode \? cancelAddSeatMode : startAddSeatMode\}/);
+  assert.match(addSeatToggle[0], /onToggle: addSeatMode \? cancelAddSeatMode : startAddSeatMode/);
 });
 
 test("inspector copy uses Job Title instead of Team", async () => {

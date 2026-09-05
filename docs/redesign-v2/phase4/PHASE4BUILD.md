@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 4: code
 
-**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 merged (v1.74.1). 1b #514 merged (v1.74.2). PR 2 #515 shell open (`feat/phase4-shell`). PR 3–6 not started.** Inputs, in reading order:
+**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 merged (v1.74.1). 1b #514 merged (v1.74.2). PR 2 #515 merged (v1.74.3). PR 3a map frame open — #516 (`feat/phase4-map-frame`); 3b markers + slot planned. PR 4–6 not started.** Inputs, in reading order:
 `CLAUDE.md` / `AGENTS.md`; `phase3/PHASE3DS.md` §5 (20 obligations with landing files, landing files by PR, retired
 names) and §7 (what Phase 3 learned); `PHASE2UX.md` §3 (component checklist), §5 (nine obligations), the per-screen
 decision logs and the wireframes under `wireframes/`; `PHASE1IA.md` §B–§C; `DECISIONS.md` D0–D6 + §6 (deviations
@@ -215,6 +215,127 @@ with the owner (60 % is the floor at which `text-primary` clears 4.5:1 on both t
 
 **Current bar on a hovered current link.** Measured 2.77:1 (`#B85C2E` on the asset's gray-90-hover) against 3.97:1 at rest. **Ruling: the current link takes no hover fill** — it is not a destination, so a hover affordance promises nothing and no new colour is introduced; other links keep the asset's hover. An `sp-components.css` override (PHASE3DS §2), the fifth hover-surface instance (§3), and the bar's rest + hovered pairs added to `contrast/generate-pairs.mjs` (193/193).
 
+### 1.16 PR 3a — the provisional tenant row is gone; the map's own control row (PHASE2UX §1M.3)
+
+The PR 2 seam closed as named: `AppShell` no longer renders a tenant row or a slots context; `SeatMap` and `ViewerSeatFinder` mount the shared `MapControlRow` (`.sp-control-row`) as the first thing in their content pane — 48px under the fixed shell header, above canvas and slot, so the row never reflows when a panel opens. Every budget that carried `2 * var(--sp-shell-header-h)` for the row now carries `var(--sp-shell-header-h) + var(--sp-control-row-h)`; the interim 96px chrome is 48 again. The shell gained two read-only hooks in place of the slots: `useAppShellLeftPanel()` (the row's "Filters · N" opens the same panel the hamburger does — patterns.md: a collapsed filter shows its count and clears without reopening) and `useAppShellState()` (the person's published seat for "Find me", D1-f — the published layer on every surface, the admin's included). `SeatMap` now registers the same four filter groups the viewer does (`useAppShellFilters`, counted on the draft layer), so the hamburger appears on `/admin` at every width (D0-h) and the four params are URL state on both routes (PHASE1IA B3).
+
+### 1.17 PR 3a — one Find surface on both surfaces (D1-d); the admin's results panel retires
+
+Phase 2 gives both modes ONE search (the row's field + the 560 palette) and Phase 3 names no results panel, so the admin's `ResultsPanel`, its floating command-search card and the mobile canvas search retired into the same `ViewerFindPalette` the viewer mounts, fed from the draft working set. The field is the shared `MapSearch` (`.sp-search`: magnifier, unlabelled input, the `.sp-kbd` platform hint from the one detector in `lib/platformShortcut.ts` — P3-4 — a clear × once a query exists, and the trailing scope segment). **Scope semantics built as D1-d writes them:** "This floor" lists this floor's rows, the header always carries both counts (`Results · 7 on this floor · 11 in building`, zero included), and the zero state offers Widen when the building has hits. A row on the other floor is therefore reached by widening first — the tests that used to expect cross-floor rows under the default scope were re-pointed, not the rule. `AiHighlightChip` retired too: the row's Ask Planner button carries the highlight count (D1-c re-entry point) and the drawer's "Clear highlights" is the labelled way out.
+
+### 1.18 PR 3a — `?q=` and `?names=` join the URL contract; one writer
+
+`lib/deepLink.ts` gained `?q=` (the search text, D1-d landing: field pre-filled, palette open, a unique match opens itself, several stay a list, zero shows the zero state with the query kept) and `?names=`. **Finding, recorded:** the names toggle is OFF by default on both surfaces (a remembered per-browser preference), so the shareable state is ON — the URL carries `names=on` and never `names=off` (the plan said `off`; a shared link must not force names off for someone who turned them on). `lib/mapUrlState.ts` composes the whole B3 set (`floor` `seat` `q` `names` `dept` `zone` `status` `position`) in one `replaceState` per change (debounced 150ms for the query) — the viewer's two racing effects over `window.location.search` are gone — and the History switch keeps the whole set when it hops between `/` and `/admin`.
+
+### 1.19 PR 3a — owner rulings applied (2026-09-04)
+
+- **O1 private offices → the pill rule.** The door-plate card (`isOfficePlateSeat`, `getOfficePlateLayout`) retired with `lib/officeRoomWash.ts` (D1-h); every seat is the same marker — the shipped pill in this PR, the Phase 3 `.sp-pill` in 3b — with the seat code on hover / focus and the job title in the inspector. Recorded as a PHASE2UX §1M amendment, not a deviation.
+- **O5** `SeatSheet.tsx` keeps its 12 ledgered hex until PR 5 (`/my-seat` ruling).
+- **O6 the row wraps when its content does not fit** (`app/globals.css`, `.sp-control-row[role="toolbar"]`: content-driven, not a viewport query — the Docker captures showed the same overflow at 1920 with the left panel open, a 1664px pane). One line is exactly 48px, a wrapped row 96px; the search shrinks to 240px before the row wraps and never grows into the slack; above `lg` the stage is `flex-1` and absorbs the line. Not ruling-bearing (hardware target); editing is `lg`-and-up (D2 / deviation 4), so the 1024 frame keeps the draft cluster while a 1000px frame hides it and the band says "Editing needs a wider window." — captured both in `screenshots/pr3a/` (README findings 1–2: the first capture hid the wrapped line under the canvas — the rule lost to `sp-components.css` on load order; the band's note now sits outside its scroll region so it never clips).
+- **O7** `public/brand/mark-1024.png` removed (no consumer; the CLAUDE.md sentence with it).
+- **Retirements per D1-h / D1-i and the slice-log row:** `MapWashLayer`, `lib/zoneWash`, `lib/officeRoomWash`, `lib/seatClusters` and their three tests; `FilterPanel` / `ActiveFilterChips` / `DeptChipRow` (the shell's left panel + the row's split control are the filter UI); `FloorSelector` (→ `FloorMenuButton`, `.sp-menu-button`); `components/ui/adminChrome.ts`; the phone-stack names flipper (exactly one names control at any width — the row's). The `--sp-wash-zone` bridge alias left with the wash; the remaining group-3 aliases stay until 3b's marker sweep.
+
+### 1.20 PR 3a — what did not fit the documents (recorded, not decided)
+
+- **Undo / Redo disabled reasons.** The tooltips promise the shortcut ("Undo <last change> · Ctrl Z", "Redo · Ctrl Shift Z", P2-1) and the shipped controls stated their disabled reason ("No map changes to undo"); the row keeps both — the name carries the reason while nothing is undoable and the shortcut once something is. Both are the accessible name and the tier-C tooltip.
+- **The band's count and the row's count are the same string** ("22 of 68 seats match"); the band adds the cross-floor line (Q5) and the row adds the live announcement. Redundant on purpose until 3b's slot work decides which one the pill states lean on.
+- **Sign-in from an expired session** stays a full document navigation (`<a href="/login?next=/admin">` inside the canvas status notice) — the one sanctioned escape hatch (`lib/fullNavigation.ts`).
+
+### 1.21 PR 3a — what the Docker-stack captures and the tiers found (2026-09-04)
+
+- **`Ctrl K` hint 4.36:1.** The e2e-auth axe scan of `/` flagged `.sp-kbd`: the Phase 3 sheet set `--sp-text-helper` (gray 60) on `field-01` (gray 10) — Carbon's helper role is meant for text beside a field, not inside it. Now `--sp-text-secondary` (7.10 light / 8.86 dark) in `app/styles/sp-components.css` **and** the Phase 3 copy (the byte-identical pair kept; the one Phase 3 sheet amendment so far); two gated pairs added to `generate-pairs.mjs` (§4).
+- **Marker rig, dark pass:** the `Swap CW01` locator matched the row's Undo ("Undo Swap CW01 · Ctrl Z") once a swap was in the history — `exact: true`. Rig captures are only trustworthy on a fresh seed: the e2e-auth publish leaves a draft the seed cannot re-apply over (`supabase db reset` + `db:seed` between runs).
+- **Below `lg` on `/admin` the band's plain total count yields** to the read-only note (it duplicates the title's "N seats"); the filtered "N of M match" count never yields. The §1.20 redundancy note stands for the row/band pair at `lg` and up.
+- **Ledgered for 3b:** the palette rows still wear the shipped Tailwind row styling (kind pill, count circles) — the `.sp-palette` frame, header, zero state and footer are Phase 3, the rows are 3b's sweep; the add-seat mode card is placed at `header + 48px` and overlaps a wrapped row's second line by 40px (3b's 400px slot owns the card).
+
+### 1.22 PR 3a — the pre-merge smoke found IBM blue on the row: Carbon's light tertiary (2026-09-04)
+
+**Screen** `/admin`, `/` · **Problem** the owner's pre-merge smoke (local Docker stack, `next start`, real Chrome, 1920×1080)
+scanned every computed colour on the page for the IBM blues and found blue 60 on `Filters · N`, its Clear × and `Ask
+Planner` in the light theme: the asset's `--cds-button-tertiary` is blue 60 (`carbon-tokens.css`), the brand layer
+(1b) overrode primary / interactive / link / focus / brand / AI but never the tertiary role, and PR 3a is the first
+slice to mount a `.cds-btn--tertiary` at all (the row's split Filters control and Ask Planner; the palette's "Widen to
+the whole building"; the left panel's "Add them in Management" link). Neither the token test (blue is allowed in the
+asset), the 195-pair suite (it lists the pre-brand names) nor axe (4.5:1 either way) could see it · **Choice** the
+brand layer owns the tertiary role too — `--cds-button-tertiary: #B85C2E`, `-hover: #8F4521`, `-active: #7A3A1C` in
+the LIGHT block only (CLAUDE.md brand rules 1 and 3: an interactive colour is never blue, primary actions and
+interactive borders use the terracotta scale; no new colour introduced). The two dark states keep Carbon's white
+tertiary — no blue there, and g100's white outline is Carbon's own rule · **Measured** label + 1px outline #B85C2E on
+the white control row 4.56:1 (text) / 4.56:1 (graphic), white on the #8F4521 hover fill 6.91:1 — three gated pairs
+added to `generate-pairs.mjs`, **198/198** (§4). Terracotta text on `layer-01` #f4f4f4 is **4.14:1**, recorded as a
+not-gated pair: a tertiary must sit on white (`layer-02` / the row), never on `layer-01` — every current consumer
+does; PR 4's 403 card (asset `.cds-empty` + one tertiary) must keep that · **Pinned** by
+`tests/phase4-token-layer-source.test.mjs` (light block declares the tertiary role) · **Trade-off** the brand file
+grows by one role; CLAUDE.md's "Where it lives" list names it · **Would change if** the owner rules the dark
+tertiary terracotta too (the dark link `#E8A07A` would be the candidate, 8.39:1 on `#161616`).
+
+### 1.23 PR 3a — the search-scope menu rendered behind the Find palette (2026-09-04)
+
+**Screen** `/admin`, `/` · **Problem** the smoke's step "switch scope to Whole building" could not click the menu
+item: `.sp-menu` is `z-index: 20` inside the row's `.sp-search`, the Find palette is `position: fixed; z-index: 70`
+anchored under the same field, and the palette is open whenever the scope menu is — so the menu painted BEHIND the
+palette and the pointer landed on the palette's result rows. The PR's own capture `screenshots/pr3a/admin-search-scope-*`
+shows exactly that (no menu visible over the zero state) and was read as "the scope segment" — a capture that was not
+verified against what it was named for. Keyboard users could still reach the items (focus is unaffected); mouse users
+could not · **Choice** one product rule in `app/globals.css` beside the O6 wrap rule:
+`.sp-control-row[role="toolbar"] .sp-search .sp-menu { z-index: 80 }` — the sheet's `.sp-menu` stays as landed (the
+floor menu never coexists with the palette), the row-scoped override lifts only the scope menu above the palette ·
+**Trade-off** a second `z` literal outside the sheet (the palette's `z-[70]` is the first) · **Would change if** the
+palette moved into the search's own stacking context (then the sheet's z-20 would order them).
+
+### 1.24 PR 3a — the ⋯ trigger had a name but no tooltip (2026-09-04)
+
+**Screen** `/admin` · **Problem** the smoke tabbed the control row: every stop carried the 2px inset terracotta
+ring, and every icon-only button showed its tier-C tooltip on focus — except "More actions". The asset's
+`.cds-overflow` trigger ships without one, and PHASE2UX §1M.3 names the tooltip only for Undo / Redo; the rule
+that every icon-only control in the row and the shell utilities carries the tier-C tooltip (PHASE3DS §1.9, §2)
+covers it · **Choice** the ⋯ trigger takes the same `sp-has-tooltip` wrapper as the row's `IconWithTooltip`
+(the menu stays a sibling of the wrapper, so focus inside the open menu never shows it); one product rule hides
+the tooltip while the menu is open on hover (`.cds-overflow[data-open] .sp-tooltip`, `app/globals.css`) ·
+**Not a design decision** — the pattern and the copy ("More actions" = the accessible name) already exist ·
+**Would change if** the asset gains a tooltip on `.cds-overflow`.
+
+### 1.25 PR 3a — the first Redo after a seed does nothing (pre-existing; root cause found; 3b item, not fixed here)
+
+**Screen** `/admin` · **Observed** in one of thirteen smoke-rig runs of move → Ctrl Z → Ctrl Shift Z: the undo
+applied, then Redo left the draft at "no changes" with BOTH stacks disabled. **Reproduced on demand (2026-09-04,
+owner's pre-merge check)** — 30 trials each, fresh `/admin` load per trial, Playwright on real Chrome, local Docker
+stack reseeded before each set:
+
+| build | trigger | result |
+|---|---|---|
+| `main` @ v1.74.3 (9d53408) | Undo / Redo buttons (no shortcuts on main) | trial 1 fails, 2–30 pass (29/30) |
+| `feat/phase4-map-frame` @ 69165a6 | Ctrl Z / Ctrl Shift Z | trial 1 fails, 2–30 pass (29/30) |
+| either build, same database, new browser | — | 0 failures (3/3 runs) |
+| either build, fresh `db reset` + seed | — | trial 1 fails every time (4/4 reseeds) |
+
+**Repro rate** is therefore not a probability: 100 % on the first undo → redo cycle after any whole-draft state
+that holds a seat with `notes = ''`, 0 % thereafter. The smoke's "1 of 13" was the one run after the e2e-auth
+global-setup reseed. **Not a race and not MLS02** — the trace shows no server-action POST on the redo press, only the
+`router.refresh()` RSC GET that `handleStaleDraft` fires; the text on screen (which the smoke rig's selector had
+missed) is the client-side adjacency message: "The draft changed in another session after this edit was undone, so
+redoing it is no longer safe. This page has been refreshed with the latest draft."
+
+**Cause.** `002_seed_initial_data.sql` inserts every seat with `notes = ''` (an empty string, not null). The page
+props carry that `''` into the history entry's `before` snapshot. Undo runs `restore_draft_snapshot`, which writes
+`nullif(trim(coalesce(source.notes, '')), '')` — every draft seat's notes become `null` — and returns the payload
+that `onRestored` adopts. Redo's `historyAdjacencyBroken(entry.before)` then compares `notes: ""` (snapshot) with
+`notes: null` (live) through `draftStatesEquivalent`'s canonical JSON, which strips only `created_at`/`updated_at`,
+so the states differ on all 60 seats and the fence path (`clearHistory()` + refresh) runs. Diff of the persisted
+`seat-planner:draft-history:v1` entry before and after one restore: 60/60 seats differ, field `notes` only
+(`"" → null`); employees 0/12. `update_draft_seat` already stores `nullif(trim(...))`, so an admin clearing a note
+writes `null` and does not re-arm it; CSV import and the seed are the `''` writers. Production seats came from the
+same migration, so any draft seat never rewritten by a restore may still carry `''` (owner to confirm:
+`select layer, count(*) filter (where notes = '') from public.seats group by layer` — read-only).
+
+**Not changed in 3a** — the fence is load-bearing (`lib/draftConcurrency.ts`) and the fix belongs with the
+history helper's tests, not a map-frame PR. **Tracked for 3b** (plan `phase4-pr3-map.md`, "Carried from 3a"):
+make `draftStatesEquivalent` compare the nullable text columns the RPCs normalise (`notes`, `zone`, `department`,
+employee `position` / `department` / `phone_extension` / `avatar_url`) after the same `nullif(trim())` — a pure
+`lib/draftHistory.ts` change with a `tests/draft-history.test.mjs` case pinning `'' ≡ null ≡ '  '` — and re-run
+`redo30.mjs` (scratch rig, 30 trials, expect 30/30 on a fresh seed). Rig and traces: the session scratchpad
+(`redo30.mjs`, `redo30-main-button.json`, `redo30-branch-keys.json`, `hist-fresh.json` / `hist-post.json`).
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -225,8 +346,8 @@ PHASE2UX §5 item n.
 | P3-1 | `sp-tokens.css` replaces the `--sp-*` block; `carbon-tokens.css` beside it minus `@import`; `tailwind.config.ts` re-pointed; retired names swept | `app/globals.css`, `app/layout.tsx`, `tailwind.config.ts` | 1 | done (PR 1) |
 | P3-2 | `data-carbon-theme` derived from `data-theme` (light → `white`, dark → `g100`, absent → removed) by one function, used by the boot script and the Theme radio | `app/layout.tsx`, `components/ui/ShellPanels.tsx` | 1, 2 | done (PR 1 boot; PR 2 radio calls `applyTheme` only) |
 | P3-3 | `carbon-components.css` then `sp-components.css` land verbatim; every product change is an `sp-*` override | `app/layout.tsx` (imports) | 1 | done (PR 1) |
-| P3-4 | Platform-aware shortcut hint (`Ctrl K` / `⌘ K`) decided at hydration | `SeatMap.tsx`, `ReceptionScreen.tsx` | 3, 5 | open |
-| P3-5 | `SeatMark.tsx` inlines the four symbols' paths with `data-stroke` / `data-fill` / `data-hatch`; never `<use>` | `components/seat-map/SeatMark.tsx` (new) + consumers | 3 (band, marker, inspector), 2 (Account panel), 4 (Management status), 5 (Reception rows) | open — PR 2: the Account panel's My-seat row is text, no consumer there (the mode-indicator marks are inlined in `AppTopBar.tsx`) |
+| P3-4 | Platform-aware shortcut hint (`Ctrl K` / `⌘ K`) decided at hydration | `lib/platformShortcut.ts` (new), `MapSearch.tsx`, `SeatMap.tsx`, `ViewerSeatFinder.tsx`, `ShellPanels.tsx`; `ReceptionScreen.tsx` | 3a, 5 | done for the map + Help (PR 3a); Reception in PR 5 |
+| P3-5 | `SeatMark.tsx` inlines the four symbols' paths with `data-stroke` / `data-fill` / `data-hatch`; never `<use>` | `components/seat-map/SeatMark.tsx` (new) + consumers | 3a (band legend), 3b (marker, inspector), 2 (Account panel), 4 (Management status), 5 (Reception rows) | `SeatMark.tsx` landed in PR 3a (six inlined kinds, `tests/seat-mark.test.mjs` pins no `<use>`); band legend consumes it; marker + inspector in 3b |
 | P3-6 | Tier-C zone rules repeat the asset selector's element names; every dark-panel restyle gets a light-theme render before "done" | `components/ui/ShellPanels.tsx` | 2 | done (PR 2: `span.sp-radio-mark` kept; light-theme renders of Help / History / Account / left panel / tooltip in `screenshots/pr2/`) |
 | P3-7 | Hover-surface text step on the ROW's hover (Management seat link, Ask Planner label); roster rows static; red on dark = `text-error` | `components/admin-management/*`, `AskPlannerDrawer.tsx` | 3, 4 | open |
 | P3-8 | Danger-ghost override covers Delete seat and Deactivate | `sp-components.css` (lands in PR 1), consumers | 3, 4 | open |
@@ -234,7 +355,7 @@ PHASE2UX §5 item n.
 | P3-10 | `--sp-event-pad` stays 10px in the History panel | `components/ui/ShellPanels.tsx` | 2 | done (PR 2: `.sp-event` consumed as landed) |
 | P3-11 | Seat code via the tier-C tooltip on hover / focus only; inspector eyebrow on selection; never inline in the pill | `components/seat-map/SeatMarker.tsx` | 3 | open |
 | P3-12 | Pill width from the label; the nudge reasons about height 28; never a width on a pill | `SeatMarker.tsx`, `lib/` nudge helper | 3 | open |
-| P3-13 | Legend follows the Names toggle (mini pill on, ● off) | `components/seat-map/MapStatusBand.tsx` | 3 | open |
+| P3-13 | Legend follows the Names toggle (mini pill on, ● off) | `components/seat-map/MapStatusBand.tsx` | 3a | done (PR 3a: `namesVisible` prop; `map-status-band.test.mjs`) |
 | P3-14 | "Changed in draft" and the ◇ badge derive from the publish diff | `lib/publishSummary.ts`, `SeatMarker.tsx`, inspector | 3 | open |
 | P3-15 | Sticky tab strip offsets by `--sp-shell-header-h`, paints `--sp-tabs-bg`; primary follows `?tab=` | `app/(shell)/admin/management/page.tsx` | 4 | open |
 | P3-16 | File trigger = labelled button forwarding to a hidden input (`tabindex=-1`, `aria-hidden`); unhappy paths inline before the tearsheet | `app/(shell)/admin/settings/page.tsx`, `DataUtilitiesPanel.tsx` | 4 | open |
@@ -242,10 +363,10 @@ PHASE2UX §5 item n.
 | P3-18 | Reception keyboard: ↑ ↓ move `[data-highlight]`, ↵ locks (`aria-selected`), Esc unlocks then clears; readout `aria-live` | `components/reception/ReceptionScreen.tsx` | 5 | open |
 | P3-19 | Contrast regression rerun after every token change (192/192 or better), summary line in the PR | `docs/redesign-v2/phase3/contrast/` | 1 (+ any later token change) | done (PR 1: 192/192) |
 | P3-20 | Specimens and screenshots do not ship; only the four CSS files and the generator move | — | 1 | done (PR 1) |
-| P2-1 | Undo / Redo keyboard shortcuts (tooltips promise them) | `SeatMap.tsx` | 3 | open |
+| P2-1 | Undo / Redo keyboard shortcuts (tooltips promise them) | `SeatMap.tsx`, `lib/platformShortcut.ts` | 3a | done (PR 3a: Ctrl/⌘ Z, Ctrl/⌘ Shift Z, Ctrl Y on Windows; never while typing or inside a dialog; the same gate as the buttons) |
 | P2-2 | History "last edit N min ago" from max draft `updated_at` | `ShellPanels.tsx` (History) | 2 | done (PR 2: `lib/shellMode.ts` `relativeMinutes`; live from SeatMap, fetched on sub-pages) |
 | P2-3 | Roving tabindex + arrow keys across markers; Esc cancel ladder | `SeatMap.tsx`, `SeatMarker.tsx` | 3 | open |
-| P2-4 | `?q=` on `/`, `/admin`, `/reception`; `?dept=` / `?zone=` / `?status=` / `?position=`; `?names=` | map surfaces, `LeftPanel.tsx`, `ReceptionScreen.tsx` | 2 (filters), 3, 5 | filter params done (PR 2, `lib/deepLink.ts`); `?q=` / `?names=` open |
+| P2-4 | `?q=` on `/`, `/admin`, `/reception`; `?dept=` / `?zone=` / `?status=` / `?position=`; `?names=` | map surfaces, `LeftPanel.tsx`, `ReceptionScreen.tsx` | 2 (filters), 3a, 5 | filter params done (PR 2); `?q=` / `?names=on` done on `/` and `/admin` (PR 3a, `lib/mapUrlState.ts`); `/reception` `?q=` in PR 5 |
 | P2-5 | Reception `error.tsx` in its own voice; loading skeleton on the real layout | `app/(shell)/reception/error.tsx` (new), `loading.tsx` | 5 | open |
 | P2-6 | 5 MB client guard on CSV and snapshot files; labelled file triggers | `DataUtilitiesPanel.tsx` | 4 | open |
 | P2-7 | Management: real tablist; 403 card gains its action; tiles removed | `app/(shell)/admin/management/page.tsx`, `AdminManagementPanel.tsx` | 4 | open |
@@ -266,6 +387,7 @@ allowlisted `/`; `nav-shell.spec.ts` walks `/` through the History switch.
 |---|---|---|---|---|
 | 0 | — | — | — | `tests/phase4-token-layer-source.test.mjs` added (5 tests, green with the PR 0 ledger) |
 | 2 | `app-rail` (its three navigation contracts — veto with modifier bypass, deploy-skew full load, 4s watchdog disarmed on route commit — moved verbatim into `app-top-bar` before deletion) | `app-shell`, `app-top-bar`, `accessibility-source` (shell half: header id, skip-link config, guard wiring, Account panel, viewer header gone), `auth-session-source` (Account panel form; viewer under the shell), `role-fitted-tabs-source` (role-fitted `shellNavConfig`), `shell-viewport-height-source` (flex pane contract), `theme` (radio writes only through `applyTheme`), `touch-target-source` / `type-floor-source` (deleted-file rows), `nav-shell.spec.ts` (header persistence, `/` via the switch) | `full-navigation` (importer = `useShellNavigation.ts`), `published-employee-snapshot` / `viewer-seat-columns` / `desktop-seat-marker-system-source` / `accessibility-source` (page path), `browser/seat-map.spec.ts` (guarded exit = History switch), `viewer-seat-finder` (two header tests retired), `pending-state-source` (loading sentences), `phase4-token-layer-source` (`SWEPT` = {1, 2}), `deep-link` (+ filter params) | added `shell-mode`, `shell-state`, `viewer-filter-groups`, `shell-panels` (ct), `left-panel` (ct), `viewer-shell` (ct, one bundle via `tests/helpers/viewerShellEntry.ts`), `e2e/viewport-matrix.spec.ts` (owner addition); 1414 pass · 0 fail; ct 280; browser 27; build clean |
+| 3a | `office-room-wash`, `zone-wash`, `seat-clusters` (D1-h / D1-i, with their modules) | `filter-feedback-source` (the control row's live count), `seat-map-components` (FloorMenuButton replaces FloorSelector; DeptChipRow + nameplate blocks gone), `map-status-band` (`.sp-band`, marks, Names), `viewer-seat-finder` (filters via URL state; D1-d scope; the row's toggle), `viewer-shell` (control row seam; Filters · N), `app-shell` (left-panel + state hooks in place of slots), `accessibility-source` (map half: control row, palette, canvas status, roster Copy link; none loosened), `browser/seat-map.spec.ts` (wash tests gone; palette; More actions), `browser/draft-history.spec.ts` (row names), `e2e-auth` accessibility / draft-dialogs (More actions menu) | `status-label-source` (Status group from `lib/viewerFilterGroups`), `touch-target-source` + `type-floor-source` (deleted-file rows; the row's 40px controls are on the ladder), `pending-state-source` (flows 12 / 13 → the row's busy Undo / Redo), `seat-creation-ui-source`, `floors` (Add seat Hidden on the roster), `focus-handoff-source`, `viewer-keyboard-parity-source` (the shared field), `ask-planner-ai-source`, `virtualized-directory`, `desktop-seat-marker-system-source`, `session-expiry-source` (the notice's sign-in action), `viewer-find-palette-source` | added `platform-shortcut`, `map-search-scope`, `map-url-state`, `seat-mark` (ct), `map-control-row` (ct); `deep-link` + `floor-roster` extended (Copy link); unit 1407 · ct 289 · browser 25 |
 | 1 | `elevation-shadow-tokens-source`, `color-twin-drift-source`, `e2e/publish-ready-badge-contrast.spec.ts`, `marker-contrast.test.mjs` + `scripts/marker-contrast.mjs` (missed by the PR 0 survey: measured the old `--sp-marker-*` values from the deleted block; the obligation — marker contrast in both themes, non-hue pair distinction — is carried by the generated 192-pair suite and Phase 3's two-signal marks) | `auth-theme-source` (both-themes resolution against `sp-tokens.css` + `carbon-tokens.css`; class bans and ledger kept), `focus-brand-contrast-source` (one `--sp-focus` aliasing `$focus`, defined light + system-dark + forced-dark; tier-C panel focus; raw brand orange banned in code, not comments), `theme.test` (derivation function ↔ boot string; three states; toggle writes only through `applyTheme`) | `accessibility-source` (two kind-tag token pins: `pending-surface` → `draft-surface`, `--admin-diff-vacated-text` → `--sp-status-error-text`), `ask-planner-ai-source` (dim rules read from `globals.css` + the bridge), `phase4-token-layer-source` (`SWEPT` = {1}; ledger 4 rows; font-bridge, asset-identity, import-order and bridge-alias assertions added) | 1390 pass · 0 fail; `npm run gate` clean; `npm run build` clean |
 
 ---
@@ -316,6 +438,27 @@ product-pairs.json: 193 pairs · surface-pairs-not-gated.json: 13 pairs
 Shell states (`audit/shell-states.mjs`, local Docker stack, seed data): see `screenshots/pr2/README.md` for the
 utilities' rest / hover / pressed / open measurements against the terracotta current bar and the panel link on gray 100.
 
+PR 3a (2026-09-04, no token change — the `.sp-kbd` hint moved from `text-helper` to `text-secondary` in the component
+sheet, §1.21; its light + dark pairs added):
+
+```
+product-pairs.json: 195 pairs · surface-pairs-not-gated.json: 13 pairs
+195/195 pass
+```
+
+PR 3a pre-merge smoke (2026-09-04, one brand-layer token change — the light tertiary role, §1.22; its three pairs
+added, plus the not-gated tertiary-on-layer-01 4.14 record):
+
+```
+product-pairs.json: 198 pairs · surface-pairs-not-gated.json: 14 pairs
+198/198 pass
+```
+
+Marker states (`audit/marker-contrast.mjs`, local Docker stack, seed data): unchanged table — the shipped pill is 3b's;
+`28 measurements, 2 under 4.5:1, 0 outside the ledger` (the two are `filtered-out`; `invalid-target` and
+`planner-highlight` are not driven until 3b). Runtime audit: 0 undefined `var()` on 6 routes × 2 themes
+(`screenshots/pr3a/README.md`).
+
 ---
 
 ## 5. What Phase 4 learned
@@ -331,10 +474,11 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | 0 | #512 | `docs/phase4-triage` | v1.74.0 | `TEST-TRIAGE.md`; this scaffold; `tests/phase4-token-layer-source.test.mjs` | merged |
 | 1 | #513 | `feat/phase4-tokens` | v1.74.1 | tokens + CSS landing (P3-1, 2 boot half, 3, 19, 20); `app/styles/` ×4 + `phase4-bridge.css`; group-1 sweep 297 sites / 29 files; theme three-state; `tailwind.config.ts`; DECISIONS D4 confirmation + D1-h / D1-i; `screenshots/pr1/`; preview-walk fix (§1.6) + `audit/marker-contrast.mjs` | merged |
 | 1b | #514 | `feat/brand-terracotta` | v1.74.2 | brand layer: `app/styles/brand/megeredchian-law-tokens.css` (+ `.json`), `public/Logo-Megeredchian-Law.jpg`, `docs/brand/`, CLAUDE.md "Brand System", DECISIONS §6 no. 16, token test brand rules | merged |
-| 2 | #515 | `feat/phase4-shell` | — | shell (P3-2 radio, 6, 9, 10; P2-2; route-group move of `/` confirmed 2026-09-03; Position kept as the fourth filter group, owner ruling 2026-09-04; group-2 sweep; provisional tenant row = PR 2/PR 3 seam) | open |
-| 3 | — | — | — | map (P3-4, 5, 7, 11–14; P2-1, 3, 4, 9); **remove the provisional tenant row** (PR 2 seam — SeatMap's bar tenants + viewer search move into the map control row, PHASE2UX §1M.3); retire `FilterPanel` / `ActiveFilterChips`; split 3a / 3b if the diff passes ~1,500 lines | not started |
+| 2 | #515 | `feat/phase4-shell` | v1.74.3 | shell (P3-2 radio, 6, 9, 10; P2-2; route-group move of `/` confirmed 2026-09-03; Position kept as the fourth filter group, owner ruling 2026-09-04; group-2 sweep; provisional tenant row = PR 2/PR 3 seam; two preview rulings — indicator in the free run, no hover fill on the current link) | merged |
+| 3a | #516 | `feat/phase4-map-frame` | — | map frame (P3-4, 5 band half, 13; P2-1, 4 `?q=` `?names=`): control row on both surfaces, **provisional tenant row removed** (PR 2 seam closed — SeatMap's bar tenants + the viewer search move into the map control row, PHASE2UX §1M.3), one search + palette on `/admin` too, Filters split control, Find me, band + `SeatMark` + legend follows Names, canvas status region, roster Copy link; washes + clusters (D1-h/D1-i), `FilterPanel` / `ActiveFilterChips` / `DeptChipRow` / `AiHighlightChip` / `FloorSelector` / `ResultsPanel` / `adminChrome.ts` retired; owner rulings O1 O5 O6 O7 (2026-09-04) | open |
+| 3b | — | — | — | map markers + slot (P3-5 marker half, 7, 8, 11, 12, 14; P2-3, 9): `.sp-pill` rewrite, seat-code tooltip, ◇ from the publish diff, quiet pill replaces the dim (ledger row closed), invalid target wired (O4), 400 slot (inspector · mode card · Ask Planner), publish tearsheet, group-3 sweep, marker rig + Draft-mark crops; owner rulings O2 O3 (brand-layer tokens) | planned — re-confirmed against 3a before start |
 | 4 | — | — | — | Management + Settings (P3-15, 16, 17; P2-6, 7, 8) | not started |
 | 5 | — | — | — | Reception, route surfaces, `/login` + `/my-seat` confirmed unchanged (P3-18; P2-5) | not started |
 | 6 | — | — | v2.0.0 | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
 
-Next: PR 2 plan — shell; route-group proposal for `/` confirmed by the owner 2026-09-03; Position filter ruled in 2026-09-04.
+Next: PR 3a open — the owner walks the preview, then "merge" → tag v1.74.4; 3b's plan is re-confirmed against what 3a landed before it starts.

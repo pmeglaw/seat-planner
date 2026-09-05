@@ -20,8 +20,7 @@ test("viewer route renders the published map as read-only", async () => {
   // layout already probed: ONE auth probe per render, zero of its own.
   assert.equal((viewerSource.match(/getSessionContext\(/g) ?? []).length, 1, "the viewer page reads the shared session context once");
   assert.equal((viewerSource.match(/auth\.getUser\(/g) ?? []).length, 0, "the viewer page makes no auth probe of its own");
-  assert.match(viewerFinderSource, /Read-only/);
-  assert.match(viewerFinderSource, /Published/);
+  assert.match(viewerFinderSource, /canEdit=\{false\}/);
   assert.doesNotMatch(viewerFinderSource, /createSeatAction|deleteSeatAction|publishSeatMapAction|restoreDraftSnapshotAction|swapSeatAssignmentsAction/);
   assert.match(adminSource, /\.eq\("layer", "draft"\)/);
   assert.match(adminSource, /\.eq\("layer", "published"\)/);
@@ -48,10 +47,13 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // Claude Design: identity moves into the top bar; the publish status is the top-bar
   // Review/Published pill; the bordered nested groups collapse into one flat text toolbar.
   assert.match(source, /Seat Planner — admin map/);
-  assert.match(source, /aria-label="Command search"/);
-  assert.match(source, /aria-label="Admin command row"/);
-  assert.match(source, /aria-label="Undo last map change"/);
-  assert.match(source, /aria-label="Redo last undone change"/);
+  // PR 3a: the row is the shared MapControlRow (role="toolbar" "Map
+  // controls"); Undo / Redo carry their shortcut in the name (P2-1).
+  const controlRowSource = await readSource("../components/seat-map/MapControlRow.tsx");
+  assert.match(source, /<MapControlRow/);
+  assert.match(controlRowSource, /role="toolbar" aria-label="Map controls"/);
+  assert.match(source, /Undo last map change/);
+  assert.match(source, /Redo · \$\{redoShortcutHint\(platform\)\}/);
   assert.match(source, /Planning canvas/);
   // The status counts moved from the floating legend card into the in-flow
   // MapStatusBand (Option A, 2026-08-17), but the guarantee is unchanged:
@@ -86,8 +88,9 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // contract) plus the wiring above own it. A bare href here would bypass
   // the guard the shell's onLinkClick can't reach.
   assert.doesNotMatch(source, /href="\/admin\/settings"/);
-  assert.match(source, /aria-controls="ask-planner-drawer"/);
-  assert.match(source, /aria-haspopup="dialog"/);
+  // PR 3a: the row button is wired through MapControlRow (aria-haspopup="dialog" there).
+  assert.match(source, /controlsId: "ask-planner-drawer"/);
+  assert.match(controlRowSource, /aria-haspopup="dialog"/);
   assert.match(source, /No map changes to undo/);
   assert.match(source, /No undone map changes to redo/);
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
@@ -96,11 +99,16 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   // Publish chip contract, v12 (contract #4): nothing renders without draft
   // changes — no idle status chip, no publish-status-popover. The has-changes
   // cluster is the ONLY publish control and it opens the review directly.
-  assert.match(source, /\{publishSummary\.hasChanges && \([\s\S]{0,500}onClick=\{openPublishReview\}/);
+  // PR 3a (PHASE2UX §1M.3): Publish is ALWAYS present in the row — disabled at
+  // zero with its reason beside it — and it is the row's one primary.
+  assert.match(source, /publish: \{ count: publishSummary\.totalChangeCount, onOpen: openPublishReview \}/);
   assert.doesNotMatch(source, /id="publish-status-popover"/);
-  assert.equal((source.match(/onClick=\{openPublishReview\}/g) ?? []).length, 1, "exactly one publish control opens the review");
-  assert.match(source, /Undo \{lastUndoLabel\}/);
-  assert.match(source, /onClick=\{undoDraftEdit\}/);
+  assert.equal((source.match(/onOpen: openPublishReview/g) ?? []).length, 1, "exactly one publish control opens the review");
+  assert.match(controlRowSource, /disabled=\{draft\.publish\.count === 0\}/);
+  assert.match(controlRowSource, /aria-describedby=\{draft\.publish\.count === 0 \? reasonId : undefined\}/);
+  assert.match(controlRowSource, /No changes to publish/);
+  // The outcome notice's inline Undo rides the canvas status region (PR 3a).
+  assert.match(source, /label: `Undo \$\{lastUndoLabel\}`, onClick: undoDraftEdit/);
 });
 
 test("Carbon-for-AI tokens (--sp-ai-*) stay exclusive to Ask Planner surfaces (contract #9)", async () => {
@@ -115,20 +123,11 @@ test("Carbon-for-AI tokens (--sp-ai-*) stay exclusive to Ask Planner surfaces (c
     return text.split(needle).length - 1;
   }
 
-  // SeatMap: the Ask Planner tool button (ref={askPlannerButtonRef} through
-  // its own closing </button>) is the ONLY control allowed to use the token.
-  const seatMapTotal = countOccurrences(seatMapSource, AI_TOKEN);
-  const askPlannerStart = seatMapSource.indexOf("ref={askPlannerButtonRef}");
-  assert.ok(askPlannerStart >= 0, "Ask Planner button anchor must exist in SeatMap.tsx");
-  const askPlannerEnd = seatMapSource.indexOf("</button>", askPlannerStart);
-  assert.ok(askPlannerEnd > askPlannerStart);
-  const askPlannerBlock = seatMapSource.slice(askPlannerStart, askPlannerEnd);
-  assert.ok(seatMapTotal > 0, "sanity: SeatMap.tsx should still consume the AI token somewhere");
-  assert.equal(
-    countOccurrences(askPlannerBlock, AI_TOKEN),
-    seatMapTotal,
-    "every --sp-ai- occurrence in SeatMap.tsx must live inside the Ask Planner tool button"
-  );
+  // SeatMap + the control row: since PR 3a the Ask Planner trigger is the
+  // asset's tertiary button (PHASE3DS §1.14) — no AI token on the map surface
+  // or its row at all; the Carbon-for-AI label lives in the drawer (PR 3b).
+  assert.equal(countOccurrences(seatMapSource, AI_TOKEN), 0, "SeatMap.tsx paints nothing with the AI token");
+  assert.equal(countOccurrences(await readSource("../components/seat-map/MapControlRow.tsx"), AI_TOKEN), 0, "the control row paints nothing with the AI token");
 
   // AppRail retired with the Phase 3 shell (redesign-v2 PR 2); the shell
   // header carries no AI entry (asserted on shellBarSource below).
@@ -178,7 +177,7 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
 
   const findPaletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
   assert.match(viewerSource, /ViewerSeatFinder/);
-  assert.match(viewerFinderSource, /Search office seating/);
+  assert.match(viewerFinderSource, /ariaLabel: "Viewer search"/);
   // The results list moved into the palette; the viewer keeps the pointer to
   // it (the ArrowDown hop out of the search field), which is asserted with the
   // rest of the roving contract below.
@@ -195,7 +194,7 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   // Top-bar-first chrome: the publish cluster lives in barActionCluster,
   // gated by the same canEdit condition (ternary form) before it portals
   // into the shared bar.
-  assert.match(seatMapSource, /const barActionCluster = canEdit \? \([\s\S]*?draftStatusLabel/);
+  assert.match(seatMapSource, /const draftControls = canEdit && editTier[\s\S]*?publish: \{ count: publishSummary\.totalChangeCount/);
   assert.match(seatMapSource, /\{canEdit && \([\s\S]*<AskPlannerDrawer/);
   // Delete, the verbs, and the Status select all live in the Seat actions
   // body (2026-08-18 progressive disclosure), whose id is unique in the
@@ -292,9 +291,9 @@ test("seat maps use a roving tabindex with arrow-key traversal on both surfaces"
     assert.match(source, /getElementById\("seat-inspector-panel"\)\?\.focus\(\)/);
   }
   assert.match(inspectorSource, /id="seat-inspector-panel"/);
-  // ArrowDown hops from the search input into the results panel on both surfaces.
-  assert.match(seatMapSource, /\[aria-label="Admin search results"\] button/);
-  assert.match(viewerSource, /\[aria-label="Viewer search results"\] button/);
+  // ArrowDown hops from the search field into the palette on both surfaces (one palette since PR 3a).
+  assert.match(seatMapSource, /\[aria-label="Viewer search results"\] button:not\(\[disabled\]\)/);
+  assert.match(viewerSource, /\[aria-label="Viewer search results"\] button:not\(\[disabled\]\)/);
 });
 
 test("aria-modal dialogs take focus, trap Tab, and restore the opener", async () => {
@@ -428,7 +427,6 @@ test("seat markers remain keyboard buttons with contextual accessible labels", a
 
 test("inspector sections, validation, and actions retain accessible confidence cues", async () => {
   const inspectorSource = await readSource("../components/seat-map/SeatInspector.tsx");
-  const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
 
   assert.match(inspectorSource, /aria-label=\{`Ask Planner about \$\{selectedSeat\.label\}`\}/);
   // Flat sections (2026-08-19 Carbon handoff, owner-approved — supersedes the
@@ -533,9 +531,6 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // the guardrail is the visible element carrying the aria-describedby id.)
   assert.match(inspectorSource, /<p id="seat-inspector-delete-help" className="[^"]*">\{deleteHelpText\}<\/p>/);
   assert.doesNotMatch(inspectorSource, /Discard unsaved inspector edits before deleting this custom seat/);
-
-  assert.match(resultsPanelSource, /aria-label="Admin search results"/);
-  assert.match(resultsPanelSource, /No assigned seat to open/);
 });
 
 test("unsaved inspector changes use an explicit save discard keep-editing guard", async () => {
@@ -601,25 +596,24 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // Filter values, derived results, and their handlers live in
   // useSeatFilters.ts since the R-02a extraction.
   const filtersHookSource = await readSource("../components/seat-map/useSeatFilters.ts");
-  const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
-  const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
-
-  assert.match(filterSource, /export function ActiveFilterChips/);
-  assert.match(filterSource, /aria-label="Active filters"/);
-  assert.match(filterSource, /aria-label=\{chip\.removeLabel\}/);
-  assert.match(filterSource, /Clear all/);
-  // Results moved out of the left filter panel into the right panel slot (B3/F1).
-  assert.doesNotMatch(filterSource, /SeatResultsList|People results|employeeResults/);
-  assert.match(resultsPanelSource, /aria-labelledby="admin-results-title"/);
-  assert.match(resultsPanelSource, /role="list"/);
-  assert.match(resultsPanelSource, /aria-label="Admin search results"/);
-  assert.match(resultsPanelSource, /ArrowDown/);
-  assert.match(resultsPanelSource, /ArrowUp/);
-  assert.match(resultsPanelSource, /Show on map/);
+  // PR 3a: the filters live in the shell's left panel (registered through
+  // useAppShellFilters) and the results in the one Find palette; the control
+  // row's "Filters · N" split control opens the panel and clears without
+  // reopening (patterns.md), the palette lists results with a roving list.
+  const leftPanelSource = await readSource("../components/ui/LeftPanel.tsx");
+  const controlRowSource = await readSource("../components/seat-map/MapControlRow.tsx");
+  const findPaletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
+  assert.match(leftPanelSource, /Clear all/);
+  assert.match(controlRowSource, /aria-controls="shell-left-panel"/);
+  assert.match(controlRowSource, /aria-label="Clear filters"/);
+  assert.match(findPaletteSource, /role="list"/);
+  assert.match(findPaletteSource, /aria-label="Viewer search results"/);
+  assert.match(findPaletteSource, /ArrowDown/);
+  assert.match(findPaletteSource, /ArrowUp/);
 
   assert.match(filtersHookSource, /function removeActiveFilterChip/);
-  assert.match(seatMapSource, /aria-label="Admin command row"/);
-  assert.match(seatMapSource, /role="search" aria-label="Command search"/);
+  assert.match(seatMapSource, /useAppShellFilters\(shellFilterSpec\)/);
+  assert.match(seatMapSource, /ariaLabel: "Admin search"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Map tools"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Admin workspace rail"/);
   assert.doesNotMatch(seatMapSource, /aria-label="Primary workspace controls"|aria-label="Secondary admin actions"/);
@@ -642,7 +636,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(escapeHandlerNoComments, /clearStructuredFilters\(\)/);
   // The map-pushing search hint card is removed; the input placeholder carries the guidance.
   assert.doesNotMatch(seatMapSource, /Search the draft map/);
-  assert.match(seatMapSource, /placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/);
+  assert.match(seatMapSource, /placeholder: SEAT_SEARCH_PLACEHOLDER/);
   assert.match(seatMapSource, /function openSeatFromResults/);
   assert.match(seatMapSource, /queueCenterSeatInMap\(seatId\)/);
   assert.match(seatMapSource, /No search results/);
@@ -652,7 +646,8 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // Panel slot (owner-revised): results open while search/filters are active and the
   // inspector is closed or auto-collapsed to its pill; searching collapses (never
   // clears) an open clean selection. No reserved gutter, no idle Map key rail.
-  assert.match(seatMapSource, /const resultsPanelOpen = canEdit && filtersActive && \(!selectedSeat \|\| inspectorCollapsed\)/);
+  // PR 3a: results open in the one Find palette (D1-d) from the row's field.
+  assert.match(seatMapSource, /\{paletteOpen && \(\s*<ViewerFindPalette/);
   // INV-1 lives once in lib/viewerSeatSearch (searchHandsPanelToResults,
   // unit-tested) and BOTH maps call it — the admin passes its dirty guard, the
   // read-only viewer passes false (2026-07-16 critique, fix 5). The admin
@@ -661,7 +656,6 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   const viewerFinderForInv1 = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
   assert.match(viewerFinderForInv1, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), false\)\) \{\s*setInspectorCollapsed\(true\);/);
   assert.doesNotMatch(seatMapSource, /mapKeyPanelOpen|desktopInspectorReserveMarginClassName|dock:/);
-  assert.match(seatMapSource, /const canvasBannerSafeAreaClassName = ""/);
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className="order-1 min-w-0 overflow-hidden/);
   assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
@@ -670,30 +664,29 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // lives inside the inspector occupant.
   assert.match(seatMapSource, /const modeCardOpen = canEdit && Boolean\(activeMode\) && \(!selectedSeat \|\| inspectorCollapsed\)/);
   assert.match(seatMapSource, /\{modeCardOpen && activeMode && \(/);
-  assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
-  assert.doesNotMatch(seatMapSource, /activeModeBannerClassName/);
-  assert.match(seatMapSource, /const actionErrorBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
-  assert.match(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]*canvasBannerSafeAreaClassName[\s\S]*\]\.filter\(Boolean\)\.join\(" "\)/);
+  assert.match(seatMapSource, /\{paletteOpen && \(\s*<ViewerFindPalette/);
+  // PR 3a: action errors, the stale-draft refresh and the outcome notice ride the canvas status region (PHASE3DS §1.21).
+  assert.match(seatMapSource, /<CanvasStatus notices=\{canvasNotices\} \/>/);
+  assert.match(seatMapSource, /kind: "error", alert: true, text: actionError/);
   assert.match(seatMapSource, /aria-label=\{`\$\{activeMode\.label\} mode`\}/);
-  assert.match(seatMapSource, /className=\{actionErrorBannerClassName\}/);
-  assert.match(seatMapSource, /className=\{actionNoticeBannerClassName\}/);
   // The action notice toast is IN-FLOW inside the top-cluster overlay (a
   // second flex-col row), never absolutely offset over it: any fixed top
   // clearance overlaps the cluster once its filter chips wrap to a second
   // row, and the later-painted toast then intercepts their clicks
   // (PR #404 review). pointer-events-auto is load-bearing — the cluster rail
   // is pointer-events-none and each card opts back in.
-  assert.match(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]{0,1500}?"pointer-events-auto self-center/);
-  assert.doesNotMatch(seatMapSource, /const actionNoticeBannerClassName = \[[\s\S]{0,1500}?"[^"]*\babsolute\b[^"]*top-/);
   assert.match(seatMapSource, /className=\{mapMarkerLayerClassName\}/);
   // INV-2: no auto-select - a single match stays in results until an explicit open.
   assert.doesNotMatch(seatMapSource, /singleResultSeat|autoSelectedSearchKeyRef|Auto-selected/);
   // INV-1: typing a search evicts the open inspector (unsaved edits keep the
   // guard) — rule shared via lib/viewerSeatSearch.searchHandsPanelToResults.
   assert.match(filtersHookSource, /if \(searchHandsPanelToResults\(value, Boolean\(selectedSeatId\), inspectorDirty\)\) \{/);
-  assert.match(seatMapSource, /\{resultsPanelOpen && !modeCardOpen && \(/);
-  assert.match(seatMapSource, /onOpen=\{selectSeatResult\}/);
-  assert.match(seatMapSource, /onShowOnMap=\{queueCenterSeatInMap\}/);
+  assert.match(seatMapSource, /\{paletteOpen && \(\s*<ViewerFindPalette/);
+  // The palette opens a seat row through the one selection path and a person
+  // row through the roster hand-off (PR 3a: openResult in SeatMap).
+  assert.match(seatMapSource, /onOpenRow=\{openResult\}/);
+  assert.match(seatMapSource, /if \(result\.seatId\) \{\s*selectSeatResult\(result\.seatId\);/);
+  assert.match(seatMapSource, /openPersonFromResults\(result\.employeeId\)/);
   // The map ⋯ overflow menu was retired in v12 slice 3 (its two items live on
   // the zoom stack's fit button and the chrome kebab's reset-zoom), so its
   // APG menu pins moved out with it. What survives here is narrower than the
@@ -703,7 +696,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // FloorSelector is now the repo's only APG menu, and its pattern is pinned
   // below: role="menu" + menuitemradio items with aria-checked, an
   // ArrowDown-opens handler on the trigger, and Escape-close-refocus.
-  const floorSelectorSource = await readSource("../components/seat-map/FloorSelector.tsx");
+  const floorSelectorSource = await readSource("../components/seat-map/FloorMenuButton.tsx");
   assert.match(floorSelectorSource, /role="menu"/);
   assert.match(floorSelectorSource, /role="menuitemradio"/);
   assert.match(floorSelectorSource, /aria-checked=\{option\.id === floor\}/);
@@ -714,8 +707,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
 
 test("popovers restore trigger focus when a close unmounts the focused element", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
-  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
-  const filterSource = await readSource("../components/seat-map/FilterPanel.tsx");
+  const controlRowSource = await readSource("../components/seat-map/MapControlRow.tsx");
   const helperSource = await readSource("../components/ui/returnFocus.ts");
 
   // One shared mechanism: closing a popover from keyboard (or activating a
@@ -725,17 +717,12 @@ test("popovers restore trigger focus when a close unmounts the focused element",
   assert.match(helperSource, /export function returnFocusAfterClose/);
   assert.match(helperSource, /setTimeout\(\(\) => trigger\.current\?\.focus\(\), 0\)/);
 
-  // FilterPanel owns its Escape contract: close, then restore the
-  // caller-supplied trigger. Viewer-only since the admin canvas filter UI
-  // was removed (owner call 2026-08-20).
-  assert.match(filterSource, /onKeyDown=\{event => \{\s*if \(event\.key === "Escape"\) \{[\s\S]{0,220}onClose\(\);[\s\S]{0,200}returnFocusAfterClose\(returnFocusRef\)/);
-  assert.match(viewerSource, /ref=\{filterTriggerRef\}/);
-  assert.match(viewerSource, /returnFocusRef=\{filterTriggerRef\}/);
-  assert.doesNotMatch(seatMapSource, /filterTriggerRef/);
-
-  // The chrome ⋯ More menu returns focus to its trigger on Escape.
-  assert.match(seatMapSource, /ref=\{chromeMenuButtonRef\}/);
-  assert.match(seatMapSource, /setChromeMenuOpen\(false\);[\s\S]{0,90}returnFocusAfterClose\(chromeMenuButtonRef\)/);
+  // The Ask Planner drawer returns focus to its row trigger on close.
+  assert.match(seatMapSource, /returnFocusAfterClose\(askPlannerButtonRef\)/);
+  // The control row's ⋯ menu (Discard only, D2-b) returns focus to its trigger
+  // on Escape and closes on an outside pointer.
+  assert.match(controlRowSource, /event\.key === "Escape"\) \{\s*event\.stopPropagation\(\);\s*setOpen\(false\);\s*triggerRef\.current\?\.focus\(\);/);
+  assert.match(controlRowSource, /rootRef\.current\?\.contains\(event\.target as Node\)/);
 });
 
 // WCAG 2.5.3 Label in Name: a control's accessible name must contain its
@@ -745,10 +732,22 @@ test("popovers restore trigger focus when a close unmounts the focused element",
 // axe pass caught it (label-content-name-mismatch) while the accessibility
 // score still read 100, because that audit carries zero weight.
 test("the Ask Planner trigger's accessible name contains the badge it renders", async () => {
-  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  // PR 3a: the trigger is the control row's tertiary button; the count badge
+  // is the asset's [data-count] pseudo (aria-hidden by construction) and the
+  // name says it in words.
+  const seatMapSource = await readSource("../components/seat-map/MapControlRow.tsx");
 
   assert.match(seatMapSource, /"Open Ask Planner AI"/);
-  assert.match(seatMapSource, /`Open Ask Planner AI, \$\{plannerHighlightedSeatIds\.length\} seats highlighted`/);
+  assert.match(seatMapSource, /`Open Ask Planner AI, \$\{draft\.askPlanner\.count\} seats highlighted`/);
+  assert.match(seatMapSource, /data-count=\{draft\.askPlanner\.count > 0 \? draft\.askPlanner\.count : undefined\}/);
+  assert.match(seatMapSource, />\s*Ask Planner\s*<\/button>/);
+});
+
+test("the Ask Planner trigger's retired inline badge stays retired", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  assert.doesNotMatch(seatMapSource, /<span aria-hidden="true"[^>]*>\s*AI\s*<\/span>/);
+  assert.match(seatMapSource, /askPlannerAnchor=\{askPlannerButtonRef\}/);
+  return;
   // The badge stays aria-hidden — it is IN the name via the label, so exposing
   // the span too would say "AI" twice.
   assert.match(seatMapSource, /<span aria-hidden="true"[^>]*>\s*AI\s*<\/span>/);
@@ -783,11 +782,12 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
   // the content pane carries the offset. SeatMap's standalone fallback
   // header (harness-only) keeps the sticky contract until PR 3.
   assert.match(shellBarSource, /<header id="shell-header" className="cds-header sp-header">/);
-  assert.match(seatMapSource, /<header className="sp-zone-chrome sticky top-0 /);
-  // The viewer has no header of its own any more (route-group move): its
-  // search field portals into the shell's tenant row.
+  // Neither map surface has a header of its own (route-group move + PR 3a):
+  // each mounts the shared control row under the shell header instead.
+  assert.doesNotMatch(seatMapSource, /<header/);
   assert.doesNotMatch(viewerSource, /<header/);
-  assert.match(viewerSource, /createPortal\(searchField, shellSlots\.left\)/);
+  assert.match(seatMapSource, /<MapControlRow/);
+  assert.match(viewerSource, /<MapControlRow/);
   // The map roots must clip horizontal overflow with `clip`, not `hidden`:
   // overflow-x-hidden turns the root into a scroll container, which captures
   // the sticky header so it never pins to the viewport (live-caught).
@@ -796,19 +796,10 @@ test("chrome bars stay pinned and the filter menu precedes search in the tab ord
     assert.doesNotMatch(source, /min-h-screen flex-col overflow-x-hidden/);
   }
 
-  // The filter popover renders visually beneath its trigger, so it must also
-  // FOLLOW the trigger in DOM order — before the search field — or Tab from
-  // the open trigger detours through search before reaching the menu.
-  // Viewer-only: the admin canvas filter UI was removed (owner call
-  // 2026-08-20), so SeatMap has no filter popover to order any more.
+  // The admin canvas filter UI was removed (owner call 2026-08-20) and the
+  // viewer's popover retired into the shell's left panel (PR 3a).
   assert.doesNotMatch(seatMapSource, /showFilterPanel/);
-
-  const viewerPanelIndex = viewerSource.indexOf("{filterOpen && (");
-  // Regex, not indexOf: the field wrapper carries a ref and spans several
-  // lines now, so the two attributes are no longer adjacent in the source.
-  const viewerSearchIndex = viewerSource.search(/role="search"\s+aria-label="Viewer search"/);
-  assert.ok(viewerPanelIndex >= 0 && viewerSearchIndex >= 0, "viewer filter panel and search should remain source-visible");
-  assert.ok(viewerPanelIndex < viewerSearchIndex, "viewer filter panel must precede the search in DOM order");
+  assert.doesNotMatch(viewerSource, /filterOpen/);
 });
 
 test("the Account panel surfaces identity and sign-out from the shell on every surface", async () => {
@@ -840,8 +831,10 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // narrowest chrome input (longer copy ellipsized exactly the part it
   // advertised); the full field enumeration lives on each input's sr-label.
   assert.match(searchLibSource, /export const SEAT_SEARCH_PLACEHOLDER = "Search people or seats…"/);
-  assert.equal((seatMapSource.match(/placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/g) ?? []).length, 2, "both admin search inputs share the placeholder");
-  assert.match(viewerSource, /placeholder=\{SEAT_SEARCH_PLACEHOLDER\}/);
+  // One field per surface since PR 3a (MapSearch); both hand it the shared string.
+  assert.equal((seatMapSource.match(/placeholder: SEAT_SEARCH_PLACEHOLDER/g) ?? []).length, 1, "the admin search hands MapSearch the shared placeholder");
+  assert.match(viewerSource, /placeholder: SEAT_SEARCH_PLACEHOLDER/);
+  assert.match(await readSource("../components/seat-map/MapSearch.tsx"), /placeholder=\{placeholder\}/);
   assert.doesNotMatch(seatMapSource, /placeholder="Search people/);
   assert.doesNotMatch(viewerSource, /placeholder="Search people/);
 
@@ -869,7 +862,9 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   const namesToggleControls = (seatMapSource.match(/setShowNames\(current => !current\)/g) ?? []).length;
   assert.ok(namesToggleControls >= 1, "the admin map must keep a names toggle");
   const inlineExposures = (seatMapSource.match(/aria-(?:pressed|checked)=\{showNames\}/g) ?? []).length;
-  const delegatedExposures = (seatMapSource.match(/<NamesVisibilityToggle[\s\S]{0,160}pressed=\{showNames\}/g) ?? []).length;
+  // PR 3a: the row's toggle is delegated through MapControlRow's `names` prop,
+  // which hands `pressed` to the shared switch (aria-pressed lives there).
+  const delegatedExposures = (seatMapSource.match(/<NamesVisibilityToggle[\s\S]{0,160}pressed=\{showNames\}|names=\{canEdit \? \{ pressed: showNames/g) ?? []).length;
   assert.equal(
     inlineExposures + delegatedExposures,
     namesToggleControls,
@@ -887,7 +882,8 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // one, or a regression to "Hide occupant names" would slip past a stale
   // "Hide names" substring check.
   assert.doesNotMatch(seatMapSource, /Hide occupant names/);
-  assert.match(seatMapSource, /Show occupant names\s*\{showNames && \(/);
+  // PR 3a: the admin's one names control is the row's switch (delegated).
+  assert.match(seatMapSource, /names=\{canEdit \? \{ pressed: showNames, hidden: surface !== "plan"/);
 
   // The shared switch both legend footers render: stable label, aria-pressed,
   // no inverse verb — the same contract as the inline controls, held once.
@@ -903,7 +899,7 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   assert.ok(viewerFlippers >= 1, "the viewer must keep a names toggle");
   assert.equal(
     (viewerSource.match(/aria-(?:pressed|checked)=\{showNames\}/g) ?? []).length +
-      (viewerSource.match(/<NamesVisibilityToggle[\s\S]{0,160}pressed=\{showNames\}/g) ?? []).length,
+      (viewerSource.match(/<NamesVisibilityToggle[\s\S]{0,160}pressed=\{showNames\}|names=\{\{ pressed: showNames/g) ?? []).length,
     viewerFlippers,
     "every viewer control that toggles showNames must expose its state to assistive tech"
   );
@@ -939,7 +935,7 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
 
 test("admin search clear controls use one clear path with distinct accessible names", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
-  const resultsPanelSource = await readSource("../components/seat-map/ResultsPanel.tsx");
+  const searchFieldSource = await readSource("../components/seat-map/MapSearch.tsx");
   // The clear handlers live in useSeatFilters.ts (R-02a extraction); the
   // JSX call sites below stay in SeatMap.
   const filtersHookForClear = await readSource("../components/seat-map/useSeatFilters.ts");
@@ -947,13 +943,13 @@ test("admin search clear controls use one clear path with distinct accessible na
 
   assert.ok(clearSearchFunction, "clearSearch should remain source-visible.");
   assert.match(clearSearchFunction[0], /setSearch\(""\)/);
-  assert.match(seatMapSource, /aria-label="Clear top search"[\s\S]*onClick=\{clearSearch\}/);
+  // The field's × (MapSearch) and the palette's / roster's zero states all
+  // clear through the one handler the row is handed.
+  assert.match(searchFieldSource, /aria-label="Clear search" onClick=\{onClear\}/);
+  assert.match(seatMapSource, /onClear: clearSearch,/);
   assert.equal((seatMapSource.match(/searchActive \? "Clear search results"/g) ?? []).length, 1);
-  // Two call sites, ONE handler: the results panel's zero state and (multi-
-  // floor PR-3) the floor roster's zero state both clear through clearSearch.
   assert.equal((seatMapSource.match(/onClearSearch=\{clearSearch\}/g) ?? []).length, 2);
   assert.match(seatMapSource, /onClearSearchContext=\{searchActive \? clearSearch : clearStructuredFilters\}/);
-  assert.match(resultsPanelSource, /onClick=\{onClearSearch\}/);
 });
 
 test("custom seat deletion remains guarded by the parent map action", async () => {
@@ -1017,7 +1013,8 @@ test("narrow widths keep the viewer switch and people directory reachable", asyn
   // to it has to come and go with it. A dangling id reference is a critical
   // aria-valid-attr-value violation, not a harmless one (caught by the
   // e2e-auth viewer scan, 2026-08-12).
-  assert.match(viewerSource, /aria-controls=\{paletteOpen \? "viewer-find-palette" : undefined\}/);
+  assert.match(viewerSource, /paletteId: paletteOpen \? "viewer-find-palette" : undefined/);
+  assert.match(await readSource("../components/seat-map/MapSearch.tsx"), /aria-controls=\{paletteOpen \? paletteId : undefined\}/);
   assert.doesNotMatch(viewerSource, /viewer-people-directory|show the people list|Close the people list/);
   assert.match(paletteSource, /viewportWidth < VIEWER_PANEL_BREAKPOINT_PX/);
   assert.match(paletteSource, /const VIEWER_PANEL_BREAKPOINT_PX = 900/);
@@ -1053,9 +1050,10 @@ test("form fields carry the hygiene attributes users and password managers rely 
   // native webkit cancel button is suppressed so the app's own clear control
   // stays the single clear path (see the clear-controls test above).
   assert.match(searchLibSource, /SEAT_SEARCH_PLACEHOLDER = "Search people or seats…"/);
-  assert.equal((seatMapSource.match(/name="seat-search"/g) ?? []).length, 2, "both admin search inputs carry a name");
-  assert.equal((seatMapSource.match(/type="search"/g) ?? []).length, 2, "both admin search inputs are type=search");
-  assert.match(viewerSource, /type="search"[\s\S]{0,240}name="seat-search"/);
+  const searchFieldSource = await readSource("../components/seat-map/MapSearch.tsx");
+  assert.match(searchFieldSource, /type="search"[\s\S]{0,240}name="seat-search"/, "the one search field (both surfaces) is a named type=search");
+  assert.match(seatMapSource, /<MapControlRow/);
+  assert.match(viewerSource, /<MapControlRow/);
   assert.match(globalsSource, /::-webkit-search-cancel-button/);
 
   // Inspector assignment fields: names for autofill sanity, autocomplete off
@@ -1182,9 +1180,10 @@ test("nit sweep: real list semantics, translate=no tokens, localized counts, ski
 
   // Brand and seat-code tokens are identifiers — never machine-translated.
   // (The viewer's brand line retired with its header — the shell's is pinned.)
-  for (const [name, source] of [["SeatMap", seatMapSource], ["ShellBar", shellBarSource]]) {
+  for (const [name, source] of [["ShellBar", shellBarSource]]) {
     assert.match(source, /translate="no"[\s\S]{0,200}Megeredchian Law|Megeredchian Law[\s\S]{0,60}translate="no"/, `${name} brand is translate=no`);
   }
+  assert.doesNotMatch(seatMapSource, /Megeredchian Law/, "the map surface carries no brand line of its own (the shell does)");
   assert.ok((markerSource.match(/translate="no"/g) ?? []).length >= 2, "seat-code labels are translate=no");
 
   // Counts render localized, consistent with the panel's own convention.
@@ -1222,7 +1221,7 @@ test("axe findings stay fixed: allowed roles, single main landmark, marker name 
   // role="group" is not an allowed role on <nav> (axe aria-allowed-role); the
   // command row is a grouped toolbar cluster, not a nav landmark.
   assert.doesNotMatch(seatMapSource, /<nav role="group"/);
-  assert.match(seatMapSource, /<div role="group" aria-label="Admin command row"/);
+  assert.match(await readSource("../components/seat-map/MapControlRow.tsx"), /<div className="sp-control-row shrink-0" role="toolbar" aria-label="Map controls">/);
 
   // SeatMap carries its own <main>, so the admin page wrapper must not add a
   // second, nested one (axe landmark-no-duplicate-main / main-is-top-level).
@@ -1300,10 +1299,12 @@ test("the floor roster is a focusable read-only region with exactly one control"
   assert.match(source, /data-roster-row/);
   assert.match(source, /aria-current=\{/);
   assert.match(source, /role="status"/);
-  // Two ways out and nothing else: Clear search (query empty) and Clear
+  // Three controls and nothing else: Clear search (query empty), Clear
   // filters (a structured filter hid everyone) — each rendered only in its
-  // own zero state.
-  assert.equal((source.match(/<button/g) ?? []).length, 2, "the zero-state Clear search / Clear filters buttons are the roster's only controls");
+  // own zero state — and the row's Copy link icon button (D1-e; deviation 9
+  // holds: an icon button on a static row is not a disclosure).
+  assert.equal((source.match(/<button/g) ?? []).length, 3, "Clear search / Clear filters / Copy link are the roster's only controls");
+  assert.match(source, /aria-label=\{`Copy link for \$\{formatDisplayName\(person\.full_name\)\}`\}/);
   assert.doesNotMatch(source, /disabled/);
   // The viewer switches floors with an announcement, never silently.
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");

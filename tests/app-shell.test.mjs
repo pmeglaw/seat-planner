@@ -1,6 +1,5 @@
 import test, { before, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { createPortal } from "react-dom";
 import {
   loadComponent,
   renderElement,
@@ -29,10 +28,11 @@ import {
 
 let AppShell;
 let useAppShellNavigation;
-let useAppShellSlots;
+let useAppShellLeftPanel;
+let useAppShellState;
 let useAppShellFilters;
 before(async () => {
-  ({ AppShell, useAppShellNavigation, useAppShellSlots, useAppShellFilters } = await loadComponent("@/components/ui/AppShell"));
+  ({ AppShell, useAppShellNavigation, useAppShellLeftPanel, useAppShellState, useAppShellFilters } = await loadComponent("@/components/ui/AppShell"));
 });
 
 let pushed;
@@ -69,7 +69,6 @@ function shellElement({ pathname, children = null, skewDetector = quietDetector,
 }
 
 const header = () => screen.getByRole("banner");
-const slot = name => document.querySelector(`[data-topbar-slot="${name}"]`);
 const leftHost = () => document.getElementById("shell-left-panel");
 const panelsHost = () => document.getElementById("shell-panels");
 
@@ -79,7 +78,7 @@ test("every shell route mounts ONE header with the section links, indicator and 
   assert.equal(header().id, "shell-header");
   assert.equal(screen.getByRole("link", { name: "Seat map" }).getAttribute("aria-current"), "page");
   assert.ok(screen.getByRole("button", { name: "Help" }) && screen.getByRole("button", { name: "History" }) && screen.getByRole("button", { name: "Account" }));
-  assert.ok(slot("left") && slot("center") && slot("right"), "the tenant row exposes all three slots");
+  assert.equal(document.querySelector("[data-shell-tenants]"), null, "no tenant row under the header (PR 3a closed the PR 2 seam)");
   assert.equal(screen.getByRole("link", { name: "Skip to seat map" }).getAttribute("href"), "#planning-canvas");
   cleanup();
   await renderElement(shellElement({ pathname: "/", isAdmin: false }));
@@ -95,7 +94,6 @@ test("sub-pages: skip target, aria-current, reserved hamburger slot, draft count
   assert.equal(screen.getByRole("link", { name: "Skip to content" }).getAttribute("href"), "#admin-subpage-main");
   assert.equal(screen.queryByRole("button", { name: "Filters" }), null, "no filters registered → reserved slot (D0-h at lg+)");
   assert.ok(header().querySelector(".sp-header-slot--reserved"));
-  assert.ok(slot("center"), "the center slot element must exist on every route");
   await waitFor(() => screen.getByRole("button", { name: /Draft — 7 changes/ }));
   assert.equal(draftStatusCalls, 1, "the shell asks once per mount on an admin sub-page");
 });
@@ -113,16 +111,15 @@ test("reception maps to its own active item and skip target; viewers never fetch
 // new pathname, it must NOT remount it. Node identity is the strongest
 // observable — a remounted header is a NEW element, which is exactly the
 // blank-flash bug this guards against.
-test("header, left host, panels host and tenant slots persist across /admin → /admin/management → /reception → / — same DOM nodes", async () => {
+test("header, left host and panels host persist across /admin → /admin/management → /reception → / — same DOM nodes", async () => {
   const utils = await renderElement(shellElement({ pathname: "/admin" }));
-  const before = { header: header(), left: leftHost(), panels: panelsHost(), center: slot("center") };
+  const before = { header: header(), left: leftHost(), panels: panelsHost() };
   for (const pathname of ["/admin/management", "/reception", "/"]) {
     setPathname(pathname);
     await act(async () => utils.rerender(shellElement({})));
     assert.equal(header(), before.header, `${pathname}: the header must be the same mounted node`);
     assert.equal(leftHost(), before.left, `${pathname}: the left panel host must persist`);
     assert.equal(panelsHost(), before.panels, `${pathname}: the panels host must persist`);
-    assert.equal(slot("center"), before.center, `${pathname}: the center slot must be the SAME element — stable containers keep portal teardown safe`);
   }
   assert.equal(screen.getByRole("link", { name: "Seat map" }).getAttribute("aria-current"), "page");
 });
@@ -172,26 +169,29 @@ test("a registered live draftStatus drives the indicator and suppresses the fetc
   assert.equal(draftStatusCalls, 0, "a live value means no round-trip");
 });
 
-// Slots contract: a surface portals tenant content into the tenant row's
-// slot elements — SeatMap's undo/redo, floor, publish cluster and the viewer
-// search reach the persistent row this way until PR 3 builds the control row.
-function SlotSurface({ label, into = "right" }) {
-  const slots = useAppShellSlots();
-  if (!slots?.[into]) return null;
-  return createPortal(React.createElement("button", { type: "button" }, label), slots[into]);
+// Left-panel contract (PR 3a): the control row's "Filters · N" button opens
+// the same panel the hamburger does, through useAppShellLeftPanel; "Find me"
+// reads the person's published seat through useAppShellState.
+function LeftPanelSurface() {
+  const leftPanel = useAppShellLeftPanel();
+  const state = useAppShellState();
+  return React.createElement(
+    "div",
+    null,
+    React.createElement("button", { type: "button", onClick: () => leftPanel?.open() }, `Open filters (${leftPanel?.isOpen ? "open" : "closed"})`),
+    React.createElement("span", null, state?.mySeat ? `Seat ${state.mySeat.label} · ${state.email}` : "no seat")
+  );
 }
 
-test("a surface portals into the tenant row; the row hides while empty and the content leaves with its surface", async () => {
-  const utils = await renderElement(shellElement({ pathname: "/admin", children: React.createElement(SlotSurface, { label: "Portaled action" }) }));
-  const row = document.querySelector("[data-shell-tenants]");
-  await waitFor(() => assert.equal(row.hidden, false, "the row shows once a tenant lands"));
-  assert.ok(row.contains(screen.getByRole("button", { name: "Portaled action" })));
-  assert.ok(!header().contains(screen.getByRole("button", { name: "Portaled action" })), "tenants live BELOW the header, not in it");
-  setPathname("/admin/management");
-  await act(async () => utils.rerender(shellElement({})));
-  assert.equal(screen.queryByRole("button", { name: "Portaled action" }), null);
-  await waitFor(() => assert.equal(row.hidden, true, "no tenants → the row hides"));
-  assert.ok(slot("center"), "the slots survive the transition (portal-teardown contract)");
+test("a surface opens the left panel through useAppShellLeftPanel and reads the shell state", async () => {
+  await renderElement(shellElement({ pathname: "/", isAdmin: false, children: React.createElement(React.Fragment, null, React.createElement(FilterSurface, { spec: FILTERS }), React.createElement(LeftPanelSurface)) }));
+  assert.ok(screen.getByText("Seat L02 · jane@example.com"));
+  const opener = await waitFor(() => screen.getByRole("button", { name: "Open filters (closed)" }));
+  await act(async () => fireEvent.click(opener));
+  await flushFrames();
+  assert.ok(leftHost().hasAttribute("data-open"), "the left panel host opens");
+  assert.ok(screen.getByRole("button", { name: "Open filters (open)" }), "isOpen mirrors the host");
+  assert.equal(document.querySelector("[data-shell-tenants]"), null);
 });
 
 // --- Right panels ------------------------------------------------------------
@@ -296,9 +296,10 @@ test("below the header-nav breakpoint the hamburger exists everywhere and the pa
   await waitFor(() => screen.getByRole("button", { name: "Draft · 7" }), "the indicator compacts below the breakpoint");
 });
 
-test("useAppShellNavigation, useAppShellSlots and useAppShellFilters are safe no-ops without a shell ancestor", async () => {
+test("useAppShellNavigation, useAppShellLeftPanel, useAppShellState and useAppShellFilters are safe no-ops without a shell ancestor", async () => {
   function Standalone() {
-    assert.equal(useAppShellSlots(), null);
+    assert.equal(useAppShellLeftPanel(), null);
+    assert.equal(useAppShellState(), null);
     return null;
   }
   await renderElement(

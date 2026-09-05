@@ -35,6 +35,13 @@
   --cds-button-primary: #B85C2E;
   --cds-button-primary-hover: #8F4521;
   --cds-button-primary-active: #7A3A1C;
+  /* Tertiary (outlined) buttons — Carbon's light tertiary is blue 60; the first tertiary
+     controls in the app are PR 3a's control row (Filters · N, Clear filters, Ask Planner).
+     Label + 1px outline #B85C2E on the white row = 4.56:1; hover fill = the primary's.
+     The dark themes keep Carbon's white tertiary (no blue there). PHASE4BUILD §1.22. */
+  --cds-button-tertiary: #B85C2E;
+  --cds-button-tertiary-hover: #8F4521;
+  --cds-button-tertiary-active: #7A3A1C;
   --cds-border-interactive: #B85C2E;
   --cds-interactive: #B85C2E;
   --cds-link-primary: #8F4521;

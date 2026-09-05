@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, RefObject } from "react";
 import { cx } from "@/components/ui/design-system";
+import type { SearchScope } from "@/lib/mapSearchScope";
 import { DEFAULT_FLOOR, type FloorId } from "@/lib/floorIds";
 import { FLOORS } from "@/lib/floors";
 import { buildInitials } from "@/lib/validators";
@@ -117,7 +118,8 @@ export type ViewerFindPaletteProps = {
   selectedSeatId: string | null;
   /** The pinned zone filter, or "all". */
   pinnedZone: string;
-  onZoneHoverChange: (zone: string | null) => void;
+  /** Zone-chip hover preview — optional since the washes retired (D1-h, PR 3a). */
+  onZoneHoverChange?: (zone: string | null) => void;
   onZonePin: (zone: string) => void;
   onRowHoverChange: (seatId: string | null) => void;
   onOpenRow: (row: ViewerSearchResult) => void;
@@ -125,6 +127,12 @@ export type ViewerFindPaletteProps = {
   /** The floor on the canvas (multi-floor PR-2): rows on any OTHER floor
    *  carry a "Floor N" tag so a find never lands somewhere unannounced. */
   currentFloor?: FloorId;
+  /** Focused-search scope (D1-d, PR 3a): both counts always show; "This
+   *  floor" lists this floor's rows and the zero state offers Widen when the
+   *  building has hits. Optional so the standalone harness keeps working. */
+  scope?: SearchScope;
+  scopeCounts?: { onFloor: number; inBuilding: number };
+  onWiden?: () => void;
 };
 
 export function ViewerFindPalette({
@@ -144,7 +152,10 @@ export function ViewerFindPalette({
   onRowHoverChange,
   onOpenRow,
   onClearSearch,
-  currentFloor = DEFAULT_FLOOR
+  currentFloor = DEFAULT_FLOOR,
+  scope = "building",
+  scopeCounts,
+  onWiden
 }: ViewerFindPaletteProps) {
   const queryActive = Boolean(query);
   const [frame, setFrame] = useState<PaletteFrame | null>(null);
@@ -276,7 +287,7 @@ export function ViewerFindPalette({
       className={cx(
         // Floats (contract #2): fixed, above the floating map cards, and it
         // reserves no stage width — the map behind it never reflows.
-        "fixed z-[70] flex flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp",
+        "sp-palette fixed z-[70] flex flex-col overflow-hidden",
         // Below the panel tier the measured width is null and these own the box.
         frame?.width === null ? "right-3" : "",
         "motion-safe:animate-[sp-panel-in_150ms_ease-out]"
@@ -284,10 +295,14 @@ export function ViewerFindPalette({
     >
       {queryActive ? (
         <>
-          <div className="flex items-baseline justify-between gap-3 border-b border-[var(--sp-border-subtle)] px-4 pb-2.5 pt-3">
-            <h2 id="viewer-results-title" className={eyebrowClassName}>Results</h2>
-            <span aria-live="polite" className="text-xs font-medium text-[var(--sp-text-helper)]">
-              {resultCountLabel} · {mappedSeatCount} mapped
+          {/* The header always carries BOTH scope counts, zero included — the
+              building count is the widen affordance (D1-d, PHASE3DS §1.15). */}
+          <div className="sp-palette-header">
+            <h2 id="viewer-results-title" className="sr-only">Results</h2>
+            <span aria-live="polite">
+              {scopeCounts
+                ? <>Results · <strong>{scopeCounts.onFloor}</strong> on this floor · <strong>{scopeCounts.inBuilding}</strong> in building</>
+                : <>{resultCountLabel} · {mappedSeatCount} mapped</>}
             </span>
           </div>
 
@@ -352,24 +367,21 @@ export function ViewerFindPalette({
               })}
             </div>
           ) : (
-            <div role="status" aria-live="polite" className="p-4">
-              <div className="text-sm font-semibold text-[var(--sp-text-primary)]">No results for “{query}”</div>
-              <p className="mt-1 text-xs font-medium leading-5 text-[var(--sp-text-helper)]">
-                No matching people, seats, departments, or zones.
-              </p>
-              <button
-                type="button"
-                // Wrapped, not passed bare: a bare handler hands React's
-                // synthetic event to the parent as onClearSearch's first
-                // argument, which is both a leaked DOM reference and an
-                // argument the prop's type never promised.
-                onClick={() => onClearSearch()}
-                // ≈30px content-sized; the 7px vertical expansion reaches 44
-                // (only the <p> above it is adjacent — touch-target-source pin).
-                className="relative mt-3 border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] px-3 py-1.5 text-xs font-semibold text-[var(--sp-text-secondary)] transition after:absolute after:-inset-y-[7px] after:inset-x-0 hover:border-[var(--sp-border-interactive)] hover:text-[var(--sp-link)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
-              >
-                Clear search
-              </button>
+            <div role="status" aria-live="polite" className="sp-palette-empty">
+              {/* Zero is published, with both counts; Widen when the other
+                  scope has hits, Clear search otherwise (D1-d). */}
+              <strong>No results for “{query}”{scope === "floor" ? " on this floor" : ""}</strong>
+              {scopeCounts ? <span>{scopeCounts.onFloor} on this floor · {scopeCounts.inBuilding} in building</span> : <span>No matching people, seats, departments, or zones.</span>}
+              <div className="mt-3 flex gap-2">
+                {scope === "floor" && scopeCounts && scopeCounts.inBuilding > 0 && onWiden ? (
+                  <button type="button" className="cds-btn cds-btn--tertiary cds-btn--sm" onClick={() => onWiden()}>Widen to the whole building</button>
+                ) : null}
+                {/* Wrapped, not passed bare: a bare handler hands React's
+                    synthetic event to the parent as onClearSearch's first
+                    argument, which is both a leaked DOM reference and an
+                    argument the prop's type never promised. */}
+                <button type="button" className="cds-btn cds-btn--ghost cds-btn--sm" onClick={() => onClearSearch()}>Clear search</button>
+              </div>
             </div>
           )}
         </>
@@ -394,7 +406,7 @@ export function ViewerFindPalette({
             <div
               role="group"
               aria-label="Zones"
-              onMouseLeave={() => onZoneHoverChange(null)}
+              onMouseLeave={() => onZoneHoverChange?.(null)}
               className="border-b border-[var(--sp-border-subtle)] px-4 pb-2.5 pt-3"
             >
               {/* Copy is scoped per modality (P5, same ruling as the read-path
@@ -414,10 +426,10 @@ export function ViewerFindPalette({
                       type="button"
                       aria-pressed={pinned}
                       onClick={() => onZonePin(pinned ? "all" : chip.name)}
-                      onMouseEnter={() => onZoneHoverChange(chip.name)}
-                      onMouseLeave={() => onZoneHoverChange(null)}
-                      onFocus={() => onZoneHoverChange(chip.name)}
-                      onBlur={() => onZoneHoverChange(null)}
+                      onMouseEnter={() => onZoneHoverChange?.(chip.name)}
+                      onMouseLeave={() => onZoneHoverChange?.(null)}
+                      onFocus={() => onZoneHoverChange?.(chip.name)}
+                      onBlur={() => onZoneHoverChange?.(null)}
                       className={cx(
                         "relative inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition after:absolute after:-inset-x-[3px] after:-inset-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
                         pinned
@@ -549,12 +561,7 @@ export function ViewerFindPalette({
           footer, so the whole strip goes with it rather than leaving a bare
           border. whitespace-nowrap + truncate keep the strip to one line at
           narrow fine-pointer widths (the 375px two-line wrap). */}
-      <div
-        className={cx(
-          "flex items-center justify-between gap-3 border-t border-[var(--sp-border-subtle)] px-4 py-2 text-xs font-medium text-[var(--sp-text-helper)]",
-          queryActive && "[@media(pointer:coarse)]:hidden"
-        )}
-      >
+      <div className={cx("sp-palette-footer", queryActive && "[@media(pointer:coarse)]:hidden")}>
         <span className="whitespace-nowrap [@media(pointer:coarse)]:hidden">
           {queryActive ? "↑↓ to move · Enter opens · Esc closes" : "↑↓ to move · Esc closes"}
         </span>

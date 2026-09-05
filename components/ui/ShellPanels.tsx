@@ -6,6 +6,7 @@ import { getPublishHistoryAction } from "@/app/actions";
 import { formatPublishChangeSummary, type PublishHistoryEvent } from "@/lib/publishHistory";
 import { formatPublishDate, historyStatusLine, routeModeFor, type ShellModeStatus, type ShellRouteMode } from "@/lib/shellMode";
 import type { ShellServerState } from "@/lib/shellState";
+import { modifierKeyLabel } from "@/lib/platformShortcut";
 import { THEME_DARK, THEME_LIGHT, applyTheme, type ThemeChoice } from "@/lib/theme";
 
 // The three dark right panels of the Phase 3 shell — Help · History · Account
@@ -113,9 +114,10 @@ export function ShellPanels({ open, onClose, email, roleLabel, isAdmin, pathname
 
 /** "⌘" on Apple platforms, "Ctrl" elsewhere. Exported so PR 3's control-row
  *  shortcut hint (P3-4) reuses the one detection. */
-export function modifierKeyLabel(platform: string | undefined): "⌘" | "Ctrl" {
-  return /mac|iphone|ipad|ipod/i.test(platform ?? "") ? "⌘" : "Ctrl";
-}
+// The modifier detector lives in lib/platformShortcut (P3-4, one module for
+// Help, the map search hint and the Undo / Redo tooltips); re-exported so the
+// PR 2 import path keeps working.
+export { modifierKeyLabel };
 
 function HelpBody() {
   // Server renders "Ctrl"; the effect swaps to "⌘" after hydration on Apple

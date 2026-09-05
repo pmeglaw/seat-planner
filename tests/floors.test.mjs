@@ -100,7 +100,7 @@ test("floor 3's plan references the shipped raster constants by value", async ()
 test("the module layering is cycle-free: every geometry module and the registry load", async () => {
   // Load order matters for an ESM value cycle (TDZ throws on first import), so
   // enter through each module in a FRESH instance.
-  for (const entry of ["lib/floorGeometry/floor2.ts", "lib/mapLayoutTransform.ts", "lib/seatZones.ts", "lib/officeRoomWash.ts", "lib/floors.ts"]) {
+  for (const entry of ["lib/floorGeometry/floor2.ts", "lib/mapLayoutTransform.ts", "lib/seatZones.ts", "lib/floors.ts"]) {
     await importTsModule(entry, { fresh: true });
   }
   // floor2.ts may import ONLY the two leaves — anything else is the cycle.
@@ -314,19 +314,6 @@ test("floorDepartmentSummary offers the other floor only when the DEPARTMENT has
   assert.equal(summary.switchTo, null);
 });
 
-// The viewer's office-room wash must dispatch on the canvas floor: once slice
-// B publishes a floor-2 seat the floor-2 canvas would otherwise wash Floor 3's
-// rooms at Floor 3 coordinates (review finding, 2026-09-01).
-test("both map surfaces pass the canvas floor to buildOfficeRoomWashes", async () => {
-  const { readFile } = await import("node:fs/promises");
-  const source = await readFile(new URL("../components/seat-map/ViewerSeatFinder.tsx", import.meta.url), "utf8");
-  assert.match(source, /buildOfficeRoomWashes\(\{\s*floor,/);
-  // The admin editor too (multi-floor PR-3) — its call site carries a comment
-  // line between the brace and `floor`, hence the looser match.
-  const adminSource = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
-  assert.match(adminSource, /buildOfficeRoomWashes\(\{[^}]*?\n\s*floor,/);
-});
-
 // ---- grouping (multi-floor PR-3: the publish review's floor eyebrows)
 
 test("groupByFloor buckets items in registry order, keeps item order, omits empty floors", () => {
@@ -353,7 +340,8 @@ test("the admin editor mounts the roster from the live working set and gates Add
   const source = await readFile(new URL("../components/seat-map/SeatMap.tsx", import.meta.url), "utf8");
   assert.match(source, /floorIsMapped\(floor\) \? "plan" : "roster"/);
   assert.match(source, /peopleOnFloor\(floor, localSeats, localEmployees\)/);
-  assert.match(source, /canEdit && surface === "plan" && \(\s*<button/);
+  // PR 3a: Add seat is the control row's ghost, Hidden on a roster floor (never disabled).
+  assert.match(source, /addSeat: \{ active: addSeatMode, hidden: surface !== "plan"/);
   assert.match(source, /<FloorRoster/);
   assert.doesNotMatch(source, /FloorPlaceholder/);
   assert.doesNotMatch(source, /floor === "3"|floor === "2"/, "the canvas dispatches on the registry, never on a floor literal");

@@ -348,16 +348,16 @@ test.describe("admin map editor has no WCAG A/AA violations", () => {
     // item-name probe reads "open" while the menu is still closed — the
     // open/close click pairing then inverts and the close-click opens it.
     await retryUntilVisible(
-      () => page.getByRole("button", { name: "More tools", exact: true }).click({ timeout: 2_000 }),
-      page.getByRole("group", { name: "More tools" })
+      () => page.getByRole("button", { name: "More actions", exact: true }).click({ timeout: 2_000 }),
+      page.getByRole("menu", { name: "More actions" })
     );
     await expectNoAxeViolations(page);
-    await page.getByRole("button", { name: "More tools", exact: true }).click();
+    await page.getByRole("button", { name: "More actions", exact: true }).click();
     // The toggle-close is a React state flip; clicking the floor trigger
     // before the kebab unmounts can be swallowed by the still-open menu's
     // dismissal handling instead of opening the floor menu. (The group IS the
     // menu container — the trigger button shares the label but not the role.)
-    await expect(page.getByRole("group", { name: "More tools" })).toBeHidden();
+    await expect(page.getByRole("menu", { name: "More actions" })).toBeHidden();
 
     await page.getByRole("button", { name: /^Change floor\./ }).click();
     await expect(page.getByRole("menu", { name: "Floors" })).toBeVisible();

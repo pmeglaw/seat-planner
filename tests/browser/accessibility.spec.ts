@@ -111,8 +111,8 @@ test("the discard-confirm dialog has no structural WCAG A/AA violations", async 
   // v12: the trigger lives in the header kebab now, not the publish review
   // dialog — open the kebab, then its "Discard draft changes" item (enabled
   // here since `custom` has no published counterpart, so hasChanges is true).
-  await page.getByRole("button", { name: "More tools" }).dispatchEvent("click");
-  await page.getByRole("button", { name: "Discard draft changes" }).dispatchEvent("click");
+  await page.getByRole("button", { name: "More actions" }).dispatchEvent("click");
+  await page.getByRole("menuitem", { name: "Discard draft changes" }).dispatchEvent("click");
   await expect(page.getByRole("dialog", { name: /Discard all draft changes/ })).toBeAttached();
 
   const { violations } = await scan(page);

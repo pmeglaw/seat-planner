@@ -194,7 +194,8 @@ for (const theme of ["light", "dark"]) {
     await open("/admin", theme);
     await selectOrigin();
   } else console.log(`skip ${theme} move-origin (no Move action on ${originCode})`);
-  await page.getByRole("button", { name: `Swap ${originCode}` }).click();
+  // exact: the row's Undo ("Undo Swap CW01 · Ctrl Z", PR 3a) also contains the phrase once a swap is in the history.
+  await page.getByRole("button", { name: `Swap ${originCode}`, exact: true }).click();
   await page.waitForTimeout(400);
   await record("swap-origin", theme, origin);
   await target.hover(); await page.waitForTimeout(250);

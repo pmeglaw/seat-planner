@@ -71,7 +71,14 @@ add(gated, "light · AI label hover text blue-70 on layer-hover-01", P.b70, P.ho
 add(gated, "light · AI border start blue-60 on field #f4f4f4", P.b60, P.g10, "graphic");
 add(gated, "light · helper-on-row gray-70 on layer-hover-01", P.g70, P.hoverWhite, "text");
 add(gated, "light · quiet pill text gray-70 on layer-01 / hover", P.g70, P.hoverWhite, "text");
+add(gated, "light · kbd shortcut hint text-secondary gray-70 on field-01 #f4f4f4 (PR 3a: was text-helper gray-60, 4.36)", P.g70, P.g10, "text");
 add(gated, "light · text-on-color white on primary blue-60", P.white, P.b60, "text");
+// Brand layer, PR 3a smoke (PHASE4BUILD §1.22): tertiary buttons (Filters · N, Clear, Ask Planner) sit on the
+// WHITE control row. Terracotta text on layer-01 #f4f4f4 is 4.14:1 — a tertiary must not land on layer-01.
+add(gated, "light · tertiary label terracotta on the white control row (was blue 60)", BRAND.terracotta, P.white, "text");
+add(gated, "light · tertiary 1px outline terracotta on white", BRAND.terracotta, P.white, "graphic");
+add(gated, "light · text-on-color white on tertiary hover #8F4521", P.white, "#8f4521", "text");
+add(notGated, "light · tertiary label terracotta on layer-01 #f4f4f4 (NOT a sanctioned surface for a tertiary — 4.14)", BRAND.terracotta, P.g10, "text");
 add(notGated, "light · AI border end blue-40 on white (gradient's low stop; the label carries meaning)", P.b40, P.white, "graphic");
 add(notGated, "light · left panel rule gray-30 vs layer-01 (divider)", P.g30, P.g10, "graphic");
 add(notGated, "light · quiet pill edge gray-30 on layer-01 (quiet is the intent)", P.g30, P.g10, "graphic");
@@ -90,6 +97,7 @@ add(gated, "dark · text-primary gray-10 on error-subtle / success-subtle #26262
 marks(gated, "dark", { name: "warning mark yellow-30", hex: P.y30 }, "graphic", [D.bg, D.l1, D.hover]);
 marks(gated, "dark", { name: "AI label text blue-40", hex: P.b40 }, "text", [D.bg, D.l1, D.hover]);
 add(gated, "dark · AI border start blue-50 on field #262626", P.b50, P.g90, "graphic");
+add(gated, "dark · kbd shortcut hint text-secondary gray-30 on field-01 #262626", P.g30, P.g90, "text");
 add(gated, "dark · text-on-color white on primary blue-60", P.white, P.b60, "text");
 add(notGated, "dark · AI border end blue-40 on layer-01 #262626 (gradient's low stop)", P.b40, P.g90, "graphic");
 

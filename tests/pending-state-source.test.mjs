@@ -128,17 +128,19 @@ const FLOW_REGISTRY = [
     id: "12-undo",
     file: SEAT_MAP,
     patterns: [
-      /historyOpInFlight === "Undo" \?[\s\S]{0,200}?animate-spin/,
-      // Accessible name unchanged (ruled): spinner replaces the glyph only.
-      /aria-label="Undo last map change"/
+      // PR 3a: the row's Undo carries the in-flight flag; the spinner and
+      // aria-busy render in MapControlRow (pinned separately below). The
+      // accessible name keeps its words (ruled) and gains the shortcut (P2-1).
+      /busy: historyOpInFlight === "Undo"/,
+      /Undo last map change/
     ]
   },
   {
     id: "13-redo",
     file: SEAT_MAP,
     patterns: [
-      /historyOpInFlight === "Redo" \?[\s\S]{0,200}?animate-spin/,
-      /aria-label="Redo last undone change"/
+      /busy: historyOpInFlight === "Redo"/,
+      /Redo · \$\{redoShortcutHint\(platform\)\}/
     ]
   },
   {
@@ -300,4 +302,13 @@ test("/my-seat and /login have their own loading.tsx sentences", () => {
   // and streams its own pane skeleton; the root segment serves the rest.
   assert.match(read("app/(shell)/loading.tsx"), /Loading the seat map…/);
   assert.match(read("app/loading.tsx"), /Loading…/);
+});
+
+// PR 3a: the Undo / Redo buttons live in the shared control row — the
+// spinner replaces the glyph and the button says aria-busy while the draft
+// history round-trips (flows 12 / 13 above pin the wiring in SeatMap).
+test("the control row's Undo / Redo show their in-flight state on the confirming control", () => {
+  const source = read("components/seat-map/MapControlRow.tsx");
+  assert.match(source, /aria-busy=\{busy \? "true" : undefined\}/);
+  assert.match(source, /busy \? \([\s\S]{0,200}?motion-safe:animate-spin/);
 });

@@ -93,19 +93,6 @@ test("selecting another seat swaps the inspector content", async ({ page }) => {
   await expect(page.getByText("Alice Smith")).toHaveCount(0);
 });
 
-test("an assigned office seat washes its room; an open one does not", async ({ page }) => {
-  await mountSeatMap(page, { seats: [officeAssigned, n02], employees: [alice], canEdit: false });
-  await expect(page.locator('[data-office-wash="south-office-1"]')).toBeAttached();
-  await expect(page.locator('[data-office-wash="south-office-2"]')).toHaveCount(0);
-});
-
-test("an open office seat leaves the room unwashed", async ({ page }) => {
-  const officeOpen = { ...officeAssigned, status: "available", employee_id: null, employee: null };
-  await mountSeatMap(page, { seats: [officeOpen], employees: [], canEdit: false });
-  await expect(marker(page, "S02")).toBeAttached();
-  await expect(page.locator("[data-office-wash]")).toHaveCount(0);
-});
-
 test("closing the inspector clears the selection", async ({ page }) => {
   await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: false });
   await clickMarker(page, "N01");
@@ -227,6 +214,10 @@ async function dirtyInspectorNotes(page: Page) {
     setter.call(field, "unsaved note");
     field.dispatchEvent(new Event("input", { bubbles: true }));
   });
+  // The dirty flag reaches SeatMap through the inspector's effect (a second
+  // passive-effect pass): wait for the visible cue — the commit bar — before
+  // asserting anything that hangs off inspectorDirty.
+  await expect(page.locator("#seat-inspector-commit-bar")).toBeAttached();
 }
 
 test("a dirty inspector intercepts the viewer link with the unsaved-edits dialog", async ({ page }) => {
@@ -292,8 +283,9 @@ test("a failed discard surfaces its error inside the discard dialog (002)", asyn
   // review dialog. custom has no published counterpart, so it reads as an
   // "added" draft change (hasChanges true) and the kebab's "Discard draft
   // changes" item is enabled.
-  await page.getByRole("button", { name: "More tools" }).dispatchEvent("click");
-  await page.getByRole("button", { name: "Discard draft changes" }).dispatchEvent("click");
+  // PR 3a: the ⋯ overflow in the control row holds Discard only (D2-b).
+  await page.getByRole("button", { name: "More actions" }).dispatchEvent("click");
+  await page.getByRole("menuitem", { name: "Discard draft changes" }).dispatchEvent("click");
   await page.getByRole("button", { name: "Discard everything" }).dispatchEvent("click");
 
   const dialog = page.getByRole("dialog", { name: /Discard all draft changes/ });
@@ -316,7 +308,7 @@ test("a failed discard surfaces its error inside the discard dialog (002)", asyn
 test("the publish review lists per-seat diff rows with change tags", async ({ page }) => {
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true, publishedSeats: [] });
 
-  await page.getByRole("button", { name: /unpublished change/ }).dispatchEvent("click");
+  await page.getByRole("button", { name: /^Publish \d+ change/ }).dispatchEvent("click");
 
   const dialog = page.getByRole("dialog", { name: "Review draft before publishing" });
   await expect(dialog).toBeAttached();
@@ -411,10 +403,16 @@ test("a result on the other floor switches the canvas, then selects; a person ro
   await expect(marker(page, "N01")).toBeAttached();
   await expect(marker(page, "L01")).toHaveCount(0);
 
+  // PR 3a: one Find palette on both surfaces (D1-d). L01 is on the other
+  // floor, so the "This floor" scope publishes a zero with the building count;
+  // widen, then the row carries its floor tag.
   await page.locator('input[name="seat-search"]').first().fill("L01");
-  const results = page.locator('[aria-label="Admin search results"]');
+  await expect(page.getByRole("status").filter({ hasText: "0 on this floor · 1 in building" })).toBeAttached();
+  await page.getByRole("button", { name: "Search scope: This floor" }).dispatchEvent("click");
+  await page.getByRole("menuitemradio", { name: "Whole building" }).dispatchEvent("click");
+  const results = page.locator('[aria-label="Viewer search results"]');
   await expect(results.getByText("Floor 2", { exact: true })).toBeAttached();
-  await results.locator("[data-result-card]").first().dispatchEvent("click");
+  await results.getByRole("button").first().dispatchEvent("click");
   // The canvas switched (Floor 2 is unmapped, so the roster renders) and the
   // seat is selected — the inspector opens on it.
   await expect(page.locator("#admin-floor-roster")).toBeAttached();
@@ -425,7 +423,7 @@ test("a result on the other floor switches the canvas, then selects; a person ro
   await page.locator('button[aria-label^="Change floor"]').first().dispatchEvent("click");
   await page.getByRole("menuitemradio", { name: /Floor 3/ }).first().dispatchEvent("click");
   await page.locator('input[name="seat-search"]').first().fill("Bob");
-  const bobCard = results.locator("[data-result-card]", { hasText: "Bob Ito" }).first();
+  const bobCard = results.getByRole("button", { name: /Bob Ito/ }).first();
   await expect(bobCard).toBeEnabled();
   await bobCard.dispatchEvent("click");
   await expect(page.locator('#admin-floor-roster [data-roster-row][aria-current="true"]')).toContainText("Bob Ito");
@@ -435,7 +433,7 @@ test("a result on the other floor switches the canvas, then selects; a person ro
 test("the publish review groups diff rows under floor eyebrows in registry order", async ({ page }) => {
   const customDownstairs = seat({ id: "s-c2", seat_key: "l02", label: "L02", x: 0.5, y: 0.5, zone: "Litigation Pod", floor: "2", is_custom: true });
   await mountSeatMap(page, { seats: [customDownstairs, custom], employees: [], canEdit: true, publishedSeats: [] });
-  await page.getByRole("button", { name: /unpublished change/ }).dispatchEvent("click");
+  await page.getByRole("button", { name: /^Publish \d+ change/ }).dispatchEvent("click");
 
   const dialog = page.getByRole("dialog", { name: "Review draft before publishing" });
   await expect(dialog.getByText("Floor 3 · Pre-Litigation · 1 change", { exact: true })).toBeAttached();

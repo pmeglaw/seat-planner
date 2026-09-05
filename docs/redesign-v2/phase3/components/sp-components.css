@@ -446,7 +446,7 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-search-clear svg { width: var(--sp-icon-01); height: var(--sp-icon-01); }
 .sp-search-clear:is(:hover, [data-state="hover"]) { background: var(--sp-layer-hover); }
 .sp-kbd { display: inline-flex; align-items: center; height: var(--sp-kbd-h); padding: 0 var(--sp-space-02); margin-right: var(--sp-space-02); align-self: center;
-  box-shadow: inset 0 0 0 1px var(--sp-border-subtle); color: var(--sp-text-helper); font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); }
+  box-shadow: inset 0 0 0 1px var(--sp-border-subtle); color: var(--sp-text-secondary); font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); }   /* text-secondary, not text-helper: gray 60 on field-01 is 4.36:1 (axe, PR 3a) */
 
 /* Filters split control: "Filters · 3" opens the left panel; a separate 40×40 "Clear filters" icon button.
    One interactive element per control (owner ruling); Hidden while N = 0. */

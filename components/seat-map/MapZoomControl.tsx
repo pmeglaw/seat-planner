@@ -1,13 +1,16 @@
 "use client";
 
-// Bottom-right map zoom cluster (redesign spec §4). Zoom is a presentation
-// transform on the map container only — it never writes to or recomputes
-// stored seat coordinates or the calibration transform.
+// The map's zoom cluster. Zoom is a presentation transform on the map
+// container only — it never writes to or recomputes stored seat coordinates
+// or the calibration transform.
 //
-// Two orientations, one behavior: "vertical" is the floating stack (admin map
-// at every width; viewer phones), "horizontal" is the row the viewer's status
-// band embeds from the sm tier up. Group role, labels and disabled semantics
-// are identical in both — orientation only changes layout classes.
+// Two orientations, one behaviour: "horizontal" is the band's 32px cluster
+// (PHASE3DS §1.21: − · Fit · +, the asset's small icon / ghost buttons —
+// Reset zoom lives here, never in an overflow menu, D2-b); "vertical" is the
+// phone-only floating stack below the band tier. Group role, names and
+// disabled semantics are identical in both.
+import { FitIcon, MinusIcon, PlusIcon } from "@/components/seat-map/mapIcons";
+
 type MapZoomControlProps = {
   label: string;
   onZoomIn: () => void;
@@ -17,9 +20,6 @@ type MapZoomControlProps = {
   zoomOutDisabled?: boolean;
   orientation?: "vertical" | "horizontal";
 };
-
-const zoomButtonBaseClass =
-  "flex items-center justify-center bg-[var(--sp-layer-01)] text-[15px] leading-none text-[var(--sp-text-primary)] transition hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] disabled:cursor-not-allowed disabled:text-[var(--sp-text-helper)] disabled:hover:bg-[var(--sp-layer-01)]";
 
 export function MapZoomControl({
   label,
@@ -31,44 +31,25 @@ export function MapZoomControl({
   orientation = "vertical"
 }: MapZoomControlProps) {
   const horizontal = orientation === "horizontal";
-  // 44px touch reach (PR-2 / F-SP-4) under the no-overlap rule: the stack is
-  // zero-gap, so the cross axis expands fully and the stack axis expands on
-  // OUTWARD faces only (first/last button) — reach between siblings stays the
-  // visual 28/32 (adjacency-capped; see tests/touch-target-source.test.mjs).
-  const zoomButtonClass = horizontal
-    ? `${zoomButtonBaseClass} relative after:absolute after:-inset-y-2 h-7 w-7 border-r border-[var(--sp-border-subtle)] last:border-r-0`
-    : `${zoomButtonBaseClass} relative after:absolute after:-inset-x-1.5 h-8 w-8 border-b border-[var(--sp-border-subtle)] last:border-b-0`;
-  const zoomEdgeFirst = horizontal ? "after:-left-2 after:right-0" : "after:-top-1.5 after:bottom-0";
-  const zoomEdgeMiddle = horizontal ? "after:left-0 after:right-0" : "after:top-0 after:bottom-0";
-  const zoomEdgeLast = horizontal ? "after:left-0 after:-right-2" : "after:top-0 after:-bottom-1.5";
-
   return (
     <div
       role="group"
       aria-label="Map zoom"
       className={horizontal
-        // In-band row: flat border, no elevation — the band is layer-00 chrome.
-        ? "pointer-events-auto flex items-center border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)]"
-        : "pointer-events-auto flex flex-col border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp"}
+        ? "flex items-center"
+        : "pointer-events-auto flex flex-col bg-[var(--sp-layer-01)] shadow-[inset_0_0_0_1px_var(--sp-border-subtle)]"}
     >
-      <span
-        aria-live="polite"
-        className={horizontal
-          ? "min-w-[36px] border-r border-[var(--sp-border-subtle)] px-2 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--sp-text-secondary)]"
-          : "border-b border-[var(--sp-border-subtle)] px-1 py-1 text-center font-mono text-[10.5px] tabular-nums text-[var(--sp-text-secondary)]"}
-      >
-        {label}
-      </span>
-      <button type="button" onClick={onZoomIn} disabled={zoomInDisabled} aria-label="Zoom in" title="Zoom in" className={`${zoomButtonClass} ${zoomEdgeFirst}`}>
-        +
+      {/* The zoom level is announced, not shown — the band has no room for a
+          readout and Fit is the reset (owner: reset zoom stays on the canvas). */}
+      <span aria-live="polite" className="sr-only">{label}</span>
+      <button type="button" onClick={onZoomOut} disabled={zoomOutDisabled} aria-label="Zoom out" className="cds-btn cds-btn--icon cds-btn--sm">
+        <MinusIcon />
       </button>
-      <button type="button" onClick={onZoomOut} disabled={zoomOutDisabled} aria-label="Zoom out" title="Zoom out" className={`${zoomButtonClass} ${zoomEdgeMiddle}`}>
-        −
+      <button type="button" onClick={onFit} aria-label="Fit map to view" className="cds-btn cds-btn--ghost cds-btn--sm">
+        {horizontal ? "Fit" : <FitIcon />}
       </button>
-      <button type="button" onClick={onFit} aria-label="Fit map to view" title="Fit to view" className={`${zoomButtonClass} ${zoomEdgeLast}`}>
-        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
-          <path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      <button type="button" onClick={onZoomIn} disabled={zoomInDisabled} aria-label="Zoom in" className="cds-btn cds-btn--icon cds-btn--sm">
+        <PlusIcon />
       </button>
     </div>
   );
