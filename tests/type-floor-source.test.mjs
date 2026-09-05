@@ -49,10 +49,10 @@ const SUB12_LEDGER = new Map(Object.entries({
   // P3 ruling 2026-08-25: the palette is the sanctioned FIND surface, so its
   // eight word sites (header count, kind badge — the 9px floor-breaker — result
   // meta, Clear search, zone chip labels, row subtitles, "No seat", footer)
-  // were raised to the 12px floor. Remaining 4 are EXEMPT marks by the same
-  // ruling: the mono seat-code pill, the two mono seat counts (chip + result
-  // row), and the aria-hidden initials monogram.
-  "components/seat-map/ViewerFindPalette.tsx": 4,
+  // were raised to the 12px floor. Phase 4 PR 3b moved the rows to the Phase 3
+  // `.sp-palette-row` (code-02 code cell, label-01 sub line, no avatar), so the
+  // one remaining EXEMPT mark is the zone chip's mono seat count.
+  "components/seat-map/ViewerFindPalette.tsx": 1,
   // SeatSheet (owner rulings 2026-08-24): info-pane CSS promoted to the 12px
   // floor at all widths; SVG plan text raised to fontSize 13 viewBox units and
   // hidden below 1133px viewports where it would render sub-12 (legible-or-

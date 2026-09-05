@@ -6,7 +6,6 @@ import { cx } from "@/components/ui/design-system";
 import type { SearchScope } from "@/lib/mapSearchScope";
 import { DEFAULT_FLOOR, type FloorId } from "@/lib/floorIds";
 import { FLOORS } from "@/lib/floors";
-import { buildInitials } from "@/lib/validators";
 import { useVirtualListWindow } from "@/components/seat-map/useVirtualListWindow";
 import { stepFocusIndex } from "@/lib/virtualizedList";
 import type { ViewerPaletteBrowse } from "@/lib/viewerFindPalette";
@@ -56,11 +55,14 @@ const KIND_LABELS: Record<ViewerSearchResultKind, string> = {
   zone: "Zone"
 };
 
-function resultKindClass(kind: ViewerSearchResultKind) {
-  if (kind === "person") return "bg-[var(--sp-status-neutral-surface)] text-[var(--sp-status-neutral-mark)] ring-[color-mix(in_srgb,var(--sp-status-neutral-mark)_30%,transparent)]";
-  if (kind === "seat") return "sp-zone-chrome bg-[var(--sp-background)] text-white ring-[var(--sp-background)]";
-  if (kind === "department") return "bg-[var(--sp-status-success-surface)] text-[var(--sp-status-success-mark)] ring-[color-mix(in_srgb,var(--sp-status-success-mark)_30%,transparent)]";
-  return "bg-[var(--sp-status-draft-surface)] text-[var(--sp-status-draft-text)] ring-[color-mix(in_srgb,var(--sp-status-draft-text)_30%,transparent)]";
+// The row's trailing cell (specimen 02-map.html#search, Phase 4 PR 3b): a
+// person's seat code, a department's / zone's seat count; a seat row's code is
+// its title, so its cell stays empty. An off-floor row shows the Floor tag
+// there instead (drawn AND spoken — the aria-label carries it too).
+function resultTrailing(result: ViewerSearchResult): string {
+  if (result.kind === "person") return result.seatId ? result.subtitle.split(" · ")[0] : "";
+  if (result.kind === "seat") return "";
+  return String(result.seatIds.length);
 }
 
 // Eyebrow rows. The mock draws these at #8E8276, which measures 3.75:1 on
@@ -314,7 +316,7 @@ export function ViewerFindPalette({
               aria-label="Viewer search results"
               tabIndex={0}
               onKeyDown={handleResultsKeyDown}
-              className={cx(listClassName, "space-y-1 p-2")}
+              className={listClassName}
             >
               {results.map(result => {
                 const selected = result.id === activeResultId || Boolean(result.seatId && result.seatId === selectedSeatId);
@@ -332,35 +334,23 @@ export function ViewerFindPalette({
                       // from the people list" while the reason was a search
                       // row, and the two causes are kept separately
                       // announceable on purpose (accessibility-source).
-                      className={cx(
-                        "grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border p-2.5 text-left transition hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]",
-                        selected ? "border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)]" : "border-transparent"
-                      )}
+                      // Phase 3 row (48px, `.sp-palette-row`): title · kind tag ·
+                      // code-or-Floor-tag; the sub line joins subtitle and meta.
+                      // Selection is aria-current on a real <button> (the
+                      // sheet's `[aria-current="true"]` twin of the specimen's
+                      // aria-selected option), focus is the sheet's inset ring.
+                      className="sp-palette-row w-full text-left"
                     >
                       <span className="min-w-0">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-[var(--sp-text-primary)]">{result.title}</span>
-                          {/* 12px per the P3 ruling (2026-08-25) — this was the
-                              9px floor-breaker, and it is a WORD (the kind
-                              half of the badge's color+word signal pair), so
-                              F6's words-off-canvas logic applies. */}
-                          <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide ring-1", resultKindClass(result.kind))}>
-                            {KIND_LABELS[result.kind]}
-                          </span>
-                        </span>
-                        <span className="mt-1 block truncate text-xs font-medium text-[var(--sp-text-secondary)]">{result.subtitle}</span>
-                        <span className="mt-0.5 block truncate text-xs text-[var(--sp-text-helper)]">{result.meta}</span>
+                        <span className="sp-palette-title block">{result.title}</span>
+                        <span className="sp-palette-sub block">{result.subtitle} · {result.meta}</span>
                       </span>
-                      <span className="flex shrink-0 flex-col items-end gap-1">
-                        <span className="rounded-full bg-[var(--sp-background)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--sp-text-helper)] ring-1 ring-[var(--sp-border-subtle)]">
-                          {result.seatIds.length || "-"}
-                        </span>
-                        {/* Off-floor tag — a separate 12px word, never inside
-                            the 10px mono count pill (type floor: words ≥12). */}
-                        {result.floor && result.floor !== currentFloor ? (
-                          <span className="text-xs font-medium text-[var(--sp-text-helper)]">{FLOORS[result.floor].tag}</span>
-                        ) : null}
-                      </span>
+                      <span className="cds-tag cds-tag--outline">{KIND_LABELS[result.kind]}</span>
+                      {result.floor && result.floor !== currentFloor ? (
+                        <span className="cds-tag">{FLOORS[result.floor].tag}</span>
+                      ) : (
+                        <span className="sp-palette-code">{resultTrailing(result)}</span>
+                      )}
                     </button>
                   </div>
                 );
@@ -473,7 +463,7 @@ export function ViewerFindPalette({
             aria-label="People directory"
             tabIndex={0}
             onKeyDown={handleBrowseKeyDown}
-            className={cx(listClassName, "px-2 pb-2")}
+            className={listClassName}
           >
             {browseSegments.map((segment, segmentPosition) => {
               if (segment.kind === "spacer") {
@@ -487,7 +477,6 @@ export function ViewerFindPalette({
                   key={row.id}
                   data-vindex={segment.index}
                   data-vpinned={segment.pinned ? "" : undefined}
-                  className="border-b border-[var(--sp-background)] last:border-b-0"
                 >
                   {/* Unseated people are listed, honest, and OPENABLE
                       (contract #9, amended 2026-09-01 for multi-floor): the
@@ -508,38 +497,28 @@ export function ViewerFindPalette({
                     onClick={() => onOpenRow(row)}
                     onPointerEnter={() => onRowHoverChange(row.seatId)}
                     onPointerLeave={() => onRowHoverChange(null)}
-                    // Compact rows (contract #3). The two text lines need an
-                    // explicit leading to get there: at the inherited body
-                    // line-height the pair alone is 37px, which pushed the row
-                    // to 54 and cost a launch-scale directory a third of its
-                    // visible names. The P3 ruling (2026-08-25) raised the
-                    // subtitle to the 12px floor, growing the row ~40→44px —
-                    // an accepted cost (~10% fewer names per screen), chosen
-                    // over tightening leading to hold 40.
-                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-transparent px-2 py-1.5 text-left transition hover:border-[var(--sp-border-interactive)] hover:bg-[var(--sp-layer-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)]"
+                    // Phase 3 row (`.sp-palette-row`, 48px — the virtual window
+                    // measures this uniform stride): name · seat code · zone
+                    // (or the floor label) and the trailing code / Floor tag.
+                    // No avatar (owner ruling, PR 4: decoration + a radius the
+                    // system lacks). The sub line is the SHARED row's own
+                    // subtitle — lib/viewerSeatSearch is the single formatting
+                    // point; tests/viewer-directory.test.mjs pins browse and
+                    // search rows byte-identical.
+                    className="sp-palette-row w-full text-left"
                   >
-                    <span aria-hidden="true" className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--sp-background)] text-[10px] font-bold text-[var(--sp-text-secondary)]">
-                      {buildInitials(row.title) || "?"}
-                    </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-[13px] font-semibold leading-[1.25] text-[var(--sp-text-primary)]">{row.title}</span>
-                      <span className="block truncate text-xs font-medium leading-[1.25] text-[var(--sp-text-helper)]">{row.subtitle}</span>
+                      <span className="sp-palette-title block">{row.title}</span>
+                      <span className="sp-palette-sub block">{row.subtitle}</span>
                     </span>
                     {row.seatId ? (
-                      <span className="flex shrink-0 items-center gap-1.5">
-                        {/* Off-floor tag beside the code — a separate 12px
-                            word, never inside the 10px mono pill. */}
-                        {row.floor && row.floor !== currentFloor ? (
-                          <span className="text-xs font-medium text-[var(--sp-text-helper)]">{FLOORS[row.floor].tag}</span>
-                        ) : null}
-                        <span className="rounded-full border border-[var(--sp-border-subtle)] bg-[var(--sp-background)] px-2 py-0.5 font-mono text-[10px] font-semibold text-[var(--sp-text-secondary)]">
-                          {row.subtitle.split(" · ")[0]}
-                        </span>
-                      </span>
+                      row.floor && row.floor !== currentFloor ? (
+                        <span className="cds-tag">{FLOORS[row.floor].tag}</span>
+                      ) : (
+                        <span className="sp-palette-code">{row.subtitle.split(" · ")[0]}</span>
+                      )
                     ) : (
-                      <span className="shrink-0 text-xs font-medium text-[var(--sp-text-helper)]">
-                        {row.floor ? FLOORS[row.floor].tag : "No seat"}
-                      </span>
+                      <span className="sp-palette-sub">{row.floor ? FLOORS[row.floor].tag : "No seat"}</span>
                     )}
                   </button>
                 </div>

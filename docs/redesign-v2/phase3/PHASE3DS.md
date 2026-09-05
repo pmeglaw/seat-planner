@@ -282,6 +282,11 @@ code in `code-02` or a Floor tag; selected row = `layer-selected` + 3px bar; foo
 States: browse (zones, then people seated-first) · results · zero with Widen · zero nowhere · loading
 (only past 300ms) · error. **Platform-aware hint:** Ctrl K on Windows (the firm's machines), ⌘ K on Mac
 — both rendered; detection is a Phase 4 obligation (§5). **Would change if** search gains a third scope.
+**Phase 4 PR 3b amendment (2026-09-05).** The palette rows landed on `.sp-palette-row` (PR 3a had left them on the
+shipped Tailwind row styling — PHASE4BUILD §1.20). The app's rows are real `<button>`s inside `listitem`s, not
+listbox options, so the sheet gained `[aria-current="true"]` as the twin of the specimen's `[aria-selected="true"]`
+and a `:focus-visible` inset ring for the roving row focus. The initials avatar on the browse rows is gone (the PR 4
+"no avatar anywhere" ruling); the trailing cell is the code, the count, or the Floor tag as drawn. Both CSS copies.
 
 ### 1.16 Seat pill — Map → `.sp-pill` (§3 "Status marks"; DECISIONS §3.2.1, deviations 3, 7, 8)
 
@@ -556,7 +561,7 @@ changes on purpose. Zone-scoped dark variants are overrides too (they live under
 | Control row (toolbar) · divider · result count · disabled-Publish reason | hand-built | `.sp-control-row`, `.sp-control-divider`, `.sp-control-count`, `.sp-control-reason` | `02-map.html#row` | 3 | |
 | Floor selector (menu button + menu) | hand-built | `.sp-menu-button` (+`.sp-chevron`, `-label`), `.sp-menu` (+`.sp-menu-meta`) | `02-map.html#row` | 3 | |
 | Search field with scope segment · keyboard hint · clear | hand-built | `.sp-search`, `.sp-search-scope`, `.sp-search-clear`, `.sp-kbd` | `02-map.html#search` | 3 | |
-| Search palette (560) | hand-built | `.sp-palette`, `-header`, `-group`, `-list` > `.sp-palette-row` (`-title`, `-sub`, `-code`), `-footer`, `-empty`, `-loading` | `02-map.html#search` | 3 | |
+| Search palette (560) | hand-built | `.sp-palette`, `-header`, `-group`, `-list` > `.sp-palette-row` (`-title`, `-sub`, `-code`; Phase 4 PR 3b: `[aria-current="true"]`, `:focus-visible` — §1.15 amendment), `-footer`, `-empty`, `-loading` | `02-map.html#search` | 3 | |
 | Filters split control "Filters · N" + Clear filters | hand-built | `.sp-filters` > `.cds-btn--tertiary` + `.cds-btn--icon` | `02-map.html#row` | 3 | |
 | Ghost / tertiary / primary / icon buttons in the row · Ask Planner count badge | asset | asset `.cds-btn` set; `.cds-btn--tertiary[data-count]` | `02-map.html#row` | 3 | |
 | Toggle (Names) | hand-built | `.sp-toggle` (+`.sp-toggle-track`, `-state`) | `02-map.html#row` | 3 | |
