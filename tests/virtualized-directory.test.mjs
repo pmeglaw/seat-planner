@@ -171,7 +171,11 @@ test("stepFocusIndex stays safe on empty and degenerate inputs", () => {
 });
 
 test("management directory is windowed with an indexed seat lookup, look unchanged", async () => {
-  const source = await readFile(new URL("../components/admin-management/AdminManagementPanel.tsx", import.meta.url), "utf8");
+  // PR 4: the windowed table is EmployeesTable; the seat index stays in the host.
+  const source = [
+    await readFile(new URL("../components/admin-management/AdminManagementPanel.tsx", import.meta.url), "utf8"),
+    await readFile(new URL("../components/admin-management/EmployeesTable.tsx", import.meta.url), "utf8")
+  ].join("\n");
 
   assert.match(source, /from "@\/lib\/virtualizedList"/);
   assert.match(source, /computeVirtualWindow\(\{/);
@@ -209,12 +213,13 @@ test("management directory is windowed with an indexed seat lookup, look unchang
   assert.match(source, /<tbody ref=\{employeeGridRef\}>/);
   // Sortable column headers expose sort state to assistive tech.
   assert.match(source, /aria-sort=\{isSorted \?/);
-  assert.match(source, /onClick=\{\(\) => toggleSort\(column\.key\)\}/);
+  assert.match(source, /onClick=\{\(\) => onToggleSort\(column\.key\)\}/);
   // O(seats) index replaces the per-employee seat scan.
   assert.match(source, /const seatLabelByEmployeeId = useMemo/);
   assert.doesNotMatch(source, /localSeats\.find\(seat => seat\.employee_id/);
-  // Results stay countable at scale (Figma: "results capped with counts").
-  assert.match(source, /of \{activeEmployees\.length\.toLocaleString\(\)\} shown/);
+  // Results stay countable at scale (Figma: "results capped with counts") —
+  // PR 4: the toolbar count (lib/managementCounts) reports matches of total.
+  assert.match(source, /toolbarCount\(\{ total: totalActive, assigned: assignedCount, matching: sortedEmployees\.length, searching \}\)/);
 });
 
 test("the Find palette (both surfaces) windows its directory through the shared hook", async () => {

@@ -2,16 +2,19 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
-// v12 slice 8, contract #13. The directory grew two distinct affordances where
-// it used to have one: the NAME shows the person on the map, the kebab opens
-// the edit form. These pin that split and the dialog that replaced the side
-// panel — behavior and a11y only, no colors, spacing, or class names.
+// v12 slice 8, contract #13, re-pointed in Phase 4 PR 4 (PHASE2UX §1G.3): the
+// directory keeps two distinct affordances — the SEAT code shows the person
+// on the map, the one ghost Edit action opens the 480 side panel. These pin
+// that split and the panel that replaced the modal — behavior and a11y only,
+// no colors, spacing, or class names.
 
-const panelUrl = new URL("../components/admin-management/AdminManagementPanel.tsx", import.meta.url);
-const readPanel = () => readFile(panelUrl, "utf8");
+const read = relative => readFile(new URL(relative, import.meta.url), "utf8");
+const readTable = () => read("../components/admin-management/EmployeesTable.tsx");
+const readHost = () => read("../components/admin-management/AdminManagementPanel.tsx");
+const readPanel = () => read("../components/admin-management/EmployeePanel.tsx");
 
-test("the directory name cell deep-links to the map through the shared seat param", async () => {
-  const source = await readPanel();
+test("the directory seat cell deep-links to the map through the shared seat param", async () => {
+  const source = await readTable();
 
   // One URL contract with SeatMap/ViewerSeatFinder — never a hand-built query.
   assert.match(source, /from "@\/lib\/deepLink"/);
@@ -19,43 +22,53 @@ test("the directory name cell deep-links to the map through the shared seat para
   assert.doesNotMatch(source, /href=\{`\/admin\?seat=/);
 
   // Unseated people have nothing to show, so only assigned rows get the link.
-  assert.match(source, /isAssigned \? \([\s\S]{0,200}<Link/);
+  assert.match(source, /isAssigned \? \([\s\S]{0,300}<Link/);
 
-  // The row itself still opens the edit form, so the link must not bubble into
-  // it — clicking a name would otherwise navigate AND open the dialog.
+  // The row itself still opens the panel, so the link must not bubble into
+  // it — clicking a seat code would otherwise navigate AND open the panel.
   assert.match(source, /<Link[\s\S]{0,300}onClick=\{event => event\.stopPropagation\(\)\}/);
 });
 
-test("the edit path stays reachable and keeps handing focus to the name field", async () => {
-  const source = await readPanel();
+test("the edit path is one labelled ghost action per row and keeps handing focus to the name field", async () => {
+  const table = await readTable();
+  const host = await readHost();
 
-  // The kebab is the explicit edit affordance now that the name navigates.
-  assert.match(source, /aria-label=\{`Edit \$\{displayName\}`\}/);
-  assert.match(source, /event\.stopPropagation\(\);\s*editEmployee\(employee\);/);
-  // Clicking the row still opens the same form. It is a mouse shortcut only —
-  // the keyboard path is the kebab, see the tab-stop test in
-  // accessibility-source (v12 slice 9).
-  assert.match(source, /onClick=\{\(\) => editEmployee\(employee\)\}/);
-  assert.match(source, /employeeNameInputRef\.current\?\.focus\(\)/);
+  // The ghost Edit icon button is the explicit edit affordance (no kebab — an
+  // overflow holding one item is a tell, PHASE3DS §1.23); it carries the name.
+  assert.match(table, /aria-label=\{`Edit \$\{displayName\}`\}/);
+  assert.match(table, /className="cds-btn cds-btn--ghost cds-btn--icon"/);
+  assert.doesNotMatch(table, /aria-haspopup="menu"/);
+  assert.match(table, /event\.stopPropagation\(\);\s*onEdit\(employee\);/);
+  // Clicking the row still opens the same panel. It is a mouse shortcut only —
+  // the keyboard path is the Edit button, see the tab-stop test in
+  // accessibility-source.
+  assert.match(table, /onClick=\{\(\) => onEdit\(employee\)\}/);
+  assert.match(host, /employeeNameInputRef\.current\?\.focus\(\)/);
 });
 
-test("the add/edit form is a real modal dialog with managed focus", async () => {
-  const source = await readPanel();
+test("the add/edit form is a focus-trapped side panel with one dirty-close check", async () => {
+  const panel = await readPanel();
+  const host = await readHost();
 
-  assert.match(source, /aria-labelledby="management-employee-title"/);
-  assert.match(source, /ref=\{employeeDialogFocusRef\}/);
-  assert.match(source, /const employeeDialogFocusRef = useDialogFocus/);
-  // Escape closes it, and never mid-flight while a transition is pending.
-  assert.match(source, /event\.key === "Escape" && !pending[\s\S]{0,120}closeEmployeeDialog\(\)/);
-  // Both entry points open the same dialog rather than two copies of the form.
-  assert.equal((source.match(/setEmployeeDialogOpen\(true\)/g) ?? []).length, 2);
-  assert.match(source, /onClick=\{openAddEmployee\}/);
+  assert.match(panel, /aria-labelledby="management-employee-title"/);
+  assert.match(panel, /ref=\{employeeDialogFocusRef\}/);
+  assert.match(panel, /const employeeDialogFocusRef = useDialogFocus/);
+  // Esc, the scrim and Cancel all route through the host's ONE dirty check
+  // (P3-17), never mid-flight while a transition is pending.
+  assert.match(panel, /event\.key === "Escape" && !pending[\s\S]{0,120}onRequestClose\(\)/);
+  assert.match(panel, /className="cds-side-panel-catch" onClick=\{\(\) => \{ if \(!pending\) onRequestClose\(\); \}\}/);
+  assert.match(host, /function requestCloseEmployeePanel\(\) \{[\s\S]{0,200}isFormDirty\(employeeForm, initialEmployeeForm\)/);
+  // No ×: leaving is a decision (PHASE3DS §1.24).
+  assert.doesNotMatch(panel, /aria-label="Close employee form"/);
+  // Both entry points open the same panel rather than two copies of the form.
+  assert.equal((host.match(/setEmployeeDialogOpen\(true\)/g) ?? []).length, 2);
+  assert.match(host, /if \(activeTab === "employees"\) openAddEmployee\(\);/);
 });
 
 test("opening the add form mutates nothing on its own", async () => {
-  const source = await readPanel();
+  const source = await readHost();
 
-  // Review-before-mutate: the toolbar CTA only opens the form. Every write
+  // Review-before-mutate: the header primary only opens the panel. Every write
   // still goes through saveEmployee/confirmManagementDestructiveAction.
   const openAddEmployee = source.match(/function openAddEmployee\(\) \{[\s\S]*?\n  \}/);
   assert.ok(openAddEmployee, "openAddEmployee should be source-visible");

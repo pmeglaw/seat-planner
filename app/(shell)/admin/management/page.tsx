@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AdminManagementPanel } from "@/components/admin-management/AdminManagementPanel";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
@@ -6,7 +7,9 @@ import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const managementTabIds = ["employees", "departments", "zones", "publishHistory"] as const;
+// D5: Publish History left this page for the History panel (PR 2); a legacy
+// ?tab=publishHistory link lands on Employees.
+const managementTabIds = ["employees", "departments", "zones"] as const;
 type ManagementTabId = (typeof managementTabIds)[number];
 
 function parseTabParam(value: string | string[] | undefined): ManagementTabId | undefined {
@@ -23,13 +26,20 @@ export default async function AdminManagementPage({
   const initialTab = parseTabParam((await searchParams)?.tab);
 
   if (!isAdmin) {
+    // The shared 403 card (DECISIONS D5-d): the asset empty state on the
+    // route card, and the action the body-only variant lacked. Its tertiary
+    // sits on the white card (layer-02), never layer-01 — 4.14:1 there is
+    // recorded not-gated (PHASE4BUILD §1.22).
     return (
-      <main className="flex min-h-0 flex-1 items-center justify-center bg-[var(--sp-background)] p-6">
-        <section className="max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-6 shadow-sp">
-          <h1 className="text-lg font-semibold text-[var(--sp-text-primary)]">Admin access required</h1>
-          <p className="mt-2 text-sm text-[var(--sp-text-secondary)]">
-            You are signed in, but your profile does not have admin permissions.
-          </p>
+      <main className="flex min-h-0 flex-1 items-start justify-center bg-[var(--sp-background)] p-8">
+        <section className="sp-route-card w-full bg-[var(--sp-layer-02)]">
+          <div className="cds-empty">
+            <h2>Admin access required</h2>
+            <p>You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to manage people, departments or zones.</p>
+            <div className="cds-empty-actions">
+              <Link href="/" className="cds-btn cds-btn--tertiary cds-btn--md">Back to seat map</Link>
+            </div>
+          </div>
         </section>
       </main>
     );

@@ -63,7 +63,12 @@ test("settings data utilities review JSON restores in-app before calling the res
 });
 
 test("management destructive actions use one in-app confirmation path", async () => {
-  const source = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  // PR 4: the request paths and the confirm mutation stay in the host; the
+  // confirmation surface is the narrow tearsheet (ManagementConfirmSheet,
+  // owner ruling 2026-09-05) — the copy anchors are read from both.
+  const hostSource = await readSource("../components/admin-management/AdminManagementPanel.tsx");
+  const sheetSource = await readSource("../components/admin-management/ManagementConfirmSheet.tsx");
+  const source = `${hostSource}\n${sheetSource}`;
   const deleteEmployeeFunction = source.match(/function deleteEmployee\(\) \{[\s\S]*?function createDepartment/);
   const deleteDepartmentFunction = source.match(/function deleteDepartment\(name: string\) \{[\s\S]*?function createZone/);
   const deleteZoneFunction = source.match(/function deleteZone\(name: string\) \{[\s\S]*?function closeManagementConfirm/);

@@ -267,9 +267,14 @@ test("the management panel handles every returned option failure", async () => {
     "Could not delete zone."
   ];
   for (const fallback of fallbacks) {
+    // PR 4: three sinks, one rule — the page banner (showError), the field
+    // helper under an inline rename / the create modal (inlineError), the
+    // panel's danger zone for a refused deactivation (showDangerError).
     assert.ok(
       panel.includes(`showError(result.message, "${fallback}")`) ||
-        panel.includes(`showError(zoneResult.message, "${fallback}")`),
+        panel.includes(`showError(zoneResult.message, "${fallback}")`) ||
+        panel.includes(`inlineError(result.message, "${fallback}")`) ||
+        panel.includes(`showDangerError(result.message, "${fallback}")`),
       `${fallback} should be surfaced from a returned failure`
     );
   }

@@ -35,6 +35,10 @@ const SEAT_MAP = "components/seat-map/SeatMap.tsx";
 const DIALOGS = "components/seat-map/SeatMapDialogs.tsx";
 const INSPECTOR = "components/seat-map/SeatInspector.tsx";
 const MANAGEMENT = "components/admin-management/AdminManagementPanel.tsx";
+// PR 4: the confirming controls moved into the Management siblings.
+const CONFIRM_SHEET = "components/admin-management/ManagementConfirmSheet.tsx";
+const OPTION_LIST = "components/admin-management/OptionList.tsx";
+const OPTION_CREATE = "components/admin-management/OptionCreateModal.tsx";
 const SETTINGS = "components/admin-settings/DataUtilitiesPanel.tsx";
 const BUTTON = "components/ui/Button.tsx";
 
@@ -153,36 +157,34 @@ const FLOW_REGISTRY = [
   },
   {
     id: "15-deactivate-employee",
-    file: MANAGEMENT,
+    file: CONFIRM_SHEET,
     patterns: [
-      // Pending treatment while the confirm is up; the finally-close on both
-      // outcomes is by design (dialog-error-placement ledger) — unchanged.
-      /busyOp === "management-confirm"[\s\S]{0,200}?"Deactivating…"/
+      // Pending treatment while the confirm sheet is up; the finally-close on
+      // both outcomes is by design (dialog-error-placement ledger). The host
+      // passes `busy = pending && busyOp === "management-confirm"`.
+      /busy\s*\? \(view\.kind === "employee" \? "Deactivating…" : "Deleting…"\)/,
+      /aria-busy=\{busy \|\| undefined\}/
     ]
   },
   {
     id: "16-department-create-and-adopt",
-    file: MANAGEMENT,
-    patterns: [
-      /busyOp === "dept-create" \? "Adding…" : "Add"/,
-      /busyOp === `adopt-department:\$\{row\.name\}` \? "Adding…" : "Add to list"/
-    ]
+    file: OPTION_CREATE,
+    patterns: [/busy \? "Adding…" : title/, /aria-busy=\{busy \|\| undefined\}/]
+  },
+  {
+    id: "16b-department-adopt",
+    file: OPTION_LIST,
+    patterns: [/busyOp === `adopt-\$\{kind\}:\$\{row\.name\}` \? "Adding…" : "Add to list"/]
   },
   {
     id: "17-department-rename-delete",
-    file: MANAGEMENT,
-    patterns: [
-      /busyOp === "dept-rename" \? "Renaming…" : "Save"/,
-      /"Deleting…"/
-    ]
+    file: OPTION_LIST,
+    patterns: [/busyOp === `\$\{kind\}-rename` \? "Renaming…" : "Save"/]
   },
   {
     id: "18-zone-create-rename-delete",
     file: MANAGEMENT,
-    patterns: [
-      /busyOp === "zone-create" \? "Adding…" : "Add"/,
-      /busyOp === "zone-rename" \? "Renaming…" : "Save"/
-    ]
+    patterns: [/runManagementOp\("zone-create"/, /runManagementOp\("zone-rename"/, /busyOp === \(createModal === "department" \? "dept-create" : "zone-create"\)/]
   },
   {
     id: "19-csv-apply",
