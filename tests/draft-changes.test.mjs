@@ -29,12 +29,20 @@ test("every seat the publish review lists as changed is badged; unchanged and re
   assert.ok(!labels.has("N05"), "a removed seat has no draft marker to badge");
 });
 
-test("an unchanged draft badges nothing; people-only edits badge no seat", () => {
-  const published = [seat("N01", { status: "assigned", employee_id: "emp-1", employee: alice })];
+test("an unchanged draft badges nothing; a person's pending detail edit badges the seat they sit in", () => {
+  const published = [seat("N01", { status: "assigned", employee_id: "emp-1", employee: alice }), seat("N02")];
   const same = buildPublishChangeSummary(published, published, { employees: [alice], publishedEmployees: [alice] });
-  assert.equal(draftChangedSeatLabels(same).size, 0);
+  assert.equal(draftChangedSeatLabels(same, published).size, 0);
   const renamed = { ...alice, position: "Senior Analyst" };
   const peopleOnly = buildPublishChangeSummary(published, published, { employees: [renamed], publishedEmployees: [alice] });
-  assert.equal(draftChangedSeatLabels(peopleOnly).size, 0, "employee-detail changes have no seat label");
-  assert.ok(peopleOnly.hasChanges, "…but the review still lists them");
+  assert.ok(peopleOnly.hasChanges, "the review lists the people edit");
+  assert.equal(peopleOnly.employeeDetailChanges[0].employeeId, "emp-1", "the item names the person by id, not by name");
+  // PR 3b smoke step 3 (2026-09-05): the inspector edits a PERSON, the header
+  // says "Draft — 1 change" — the seat that shows the edit carries the ◇.
+  assert.deepEqual([...draftChangedSeatLabels(peopleOnly, published)], ["N01"]);
+  assert.equal(draftChangedSeatLabels(peopleOnly).size, 0, "without the draft seats there is no pill to badge");
+  // The person is unseated in the draft: nothing to badge, the review still lists them.
+  const unseated = [seat("N01"), seat("N02")];
+  const summary = buildPublishChangeSummary(unseated, published, { employees: [renamed], publishedEmployees: [alice] });
+  assert.deepEqual([...draftChangedSeatLabels(summary, unseated)], ["N01"], "N01 is badged for the vacate, not for the person");
 });

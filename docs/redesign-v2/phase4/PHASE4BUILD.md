@@ -483,6 +483,41 @@ live Phase 3 geometry token (deviation 8) — exempted from the retired-name reg
 - `AskPlannerDrawer` left `tests/accessibility-source`'s aria-modal file list and `dialog-error-placement`'s dialog
   census (it is a side panel now); the Ask Planner error test asserts the fallback as a STATUS inside the drawer.
 
+### 1.36 PR 3b — the pre-merge smoke: a person's pending edit counted in the header but badged no seat (2026-09-05)
+
+**Screen** `/admin` · **Problem** the owner's thirteen-step pre-merge smoke of #518 (local Docker stack, `next start`,
+real Chrome 1920×1080, both themes; captures in `screenshots/pr3b-smoke/`) changed a seated person's department in
+the inspector and saved. The header said **Draft — 1 change**, the review sheet listed the person under People
+details, and no pill carried the ◇ and the inspector showed no "Changed in draft": `lib/draftChanges` badged only
+the seat-row families of the publish diff (added · assigned · vacated · status · other) and read the people items as
+"not seat changes". The one place that shows the changed detail — that person's pill and the inspector for that seat
+— was the one place unmarked. · **Fix** the people items carry `employeeId` (`lib/publishSummary`), and
+`draftChangedSeatLabels(summary, draftSeats)` adds the label of the draft seat each changed person sits in; a person
+with no draft seat badges nothing (the sheet still lists them). One source still: the ◇, the inspector note and the
+legend's count all read the same set. Verified live: the pill ◇ purple 60 / purple 40, the inspector "Changed in
+draft", the legend "Changed in draft 1". · **Pinned** `tests/draft-changes.test.mjs` (the item carries the id; the
+seated person's seat is badged; the unseated person is not; without seats nothing is badged).
+
+**Recorded, not changed (the smoke's other readings):**
+- The invalid-target tooltip shows the seat code; the refusal reason is the canvas status notice ("NE07 is reserved —
+  choose another seat.") and the accessible name ("Not a valid target") — `lib/seatTargets` was written that way
+  (the reason is named in the status region, never colour only). The owner's step 4 expected the reason in the
+  tooltip; ruling wanted before changing the tier-C tooltip's contract (one line, the code — PHASE3DS §1.8).
+- Discard draft changes keeps a people edit made in the inspector (the dialog says so: "People edits in Management
+  are kept") — after a department change the header stays "Draft — 1 change" and the ◇ stays. The smoke's step 10
+  uses a seat change (a move); the people rule is Management's and predates 3b.
+- The admin draft route's header is always the draft indicator (`lib/shellMode` `modeStatusFor`): after a publish
+  it reads "Draft — no changes" with the ◇; "Published · <date>" with the filled square is the published surfaces'
+  text (`/`, Reception) and the History panel's fact line. The smoke's step 9 reads both.
+- Clicking a pill while Ask Planner owns the slot selects the seat and keeps the drawer (INV-4 owner order mode
+  card > ask > inspector — the drawer's own "Select <seat>" buttons rely on it); nothing stacks; closing the drawer
+  hands the slot to the inspector for the selected seat.
+- The per-seat fence (MLS02) fires on the row the RPC writes — a move fences on the DESTINATION row. A people-only
+  edit in another tab does not advance a seat row, so it does not trip the fence; the smoke's step 11 has the second
+  tab fill the seat the first tab then targets.
+- 1024 is `lg`: editing stays, the row wraps to 96, the inspector keeps its 400 (canvas 624); the "Editing needs a
+  wider window." line is the 1000 frame (O6, §1.19).
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -671,5 +706,10 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | 4 | — | — | — | Management + Settings (P3-15, 16, 17; P2-6, 7, 8) | not started |
 | 5 | — | — | — | Reception, route surfaces, `/login` + `/my-seat` confirmed unchanged (P3-18; P2-5) | not started |
 | 6 | — | — | v2.0.0 | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
+
+PR 3b pre-merge smoke (2026-09-05, owner-ordered, thirteen steps, local Docker stack, real Chrome 1920×1080, both themes):
+**18/18 PASS** after one fix (§1.36); captures + `results.json` in `screenshots/pr3b-smoke/`; e2e-auth 32/32 on the
+same build; marker rig 58 measurements, 0 under floor, ledger empty (both planner-highlight passes SKIPPED on a
+broad answer this run — a model outcome, not a marker).
 
 Next: PR 3b open (#518) — the owner walks the preview (checklist in the PR), then "merge" → squash, tag v1.74.6, prune, pull; then the PR 4 plan (Management + Settings) waits for "go".

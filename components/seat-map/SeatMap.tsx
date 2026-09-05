@@ -1129,7 +1129,7 @@ export function SeatMap({
   }), [floorSeats]);
   // ONE source for "changed in draft" (P3-14): the ◇ badge, the inspector
   // note and the legend count all read this set, derived from the publish diff.
-  const draftChangedSeatLabelSet = useMemo(() => draftChangedSeatLabels(publishSummary), [publishSummary]);
+  const draftChangedSeatLabelSet = useMemo(() => draftChangedSeatLabels(publishSummary, localSeats), [publishSummary, localSeats]);
   // Legend counts follow the active constraints — the number row must not
   // contradict a filtered map (2026-07-16 regrade, review 4). matchesFilters
   // covers search + structured filters, exactly what the map dims by, and

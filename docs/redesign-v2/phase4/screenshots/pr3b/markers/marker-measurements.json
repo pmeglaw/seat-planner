@@ -301,18 +301,6 @@
       "ok": true
     },
     {
-      "state": "planner-highlight",
-      "theme": "light",
-      "kind": "graphic",
-      "what": "status mark",
-      "fg": "#525252",
-      "bg": "#ffffff",
-      "ratio": 7.81,
-      "min": 3,
-      "fill": "#ffffff",
-      "ok": true
-    },
-    {
       "state": "rest-assigned",
       "theme": "dark",
       "kind": "text",
