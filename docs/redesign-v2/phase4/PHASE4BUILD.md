@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 4: code
 
-**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 merged (v1.74.1). 1b #514 merged (v1.74.2). PR 2 #515 merged (v1.74.3). PR 3a #516 merged (v1.74.5 — v1.74.4 went to chore #517). PR 3b markers + slot in progress (`feat/phase4-map-markers`). PR 4–6 not started.** Inputs, in reading order:
+**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 merged (v1.74.1). 1b #514 merged (v1.74.2). PR 2 #515 merged (v1.74.3). PR 3a #516 merged (v1.74.5 — v1.74.4 went to chore #517). PR 3b #518 merged (v1.74.6, 2026-09-05). PR 4 (Management + Settings) planned, waiting for go; PR 5–6 not started.** Inputs, in reading order:
 `CLAUDE.md` / `AGENTS.md`; `phase3/PHASE3DS.md` §5 (20 obligations with landing files, landing files by PR, retired
 names) and §7 (what Phase 3 learned); `PHASE2UX.md` §3 (component checklist), §5 (nine obligations), the per-screen
 decision logs and the wireframes under `wireframes/`; `PHASE1IA.md` §B–§C; `DECISIONS.md` D0–D6 + §6 (deviations
