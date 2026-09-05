@@ -341,6 +341,17 @@ test("each row exposes exactly two tab stops — the seat code link and the ghos
   assert.match(bobRow.textContent, /Unassigned/);
 });
 
+test("only the last row's Edit tooltip flips above its button — every other row hangs below (PHASE3DS §1.23 amendment D)", async () => {
+  // jsdom has no layout, so the hit test that proves the tooltip paints lives in
+  // the e2e-auth page-frames spec; this pins the placement attribute that drives it.
+  await renderPanel();
+  const hosts = [...document.querySelectorAll("[data-directory-row] .sp-has-tooltip")];
+  assert.equal(hosts.length, 2);
+  assert.equal(hosts[0].getAttribute("data-tooltip-placement"), null, "the first row keeps the below placement");
+  assert.equal(hosts[1].getAttribute("data-tooltip-placement"), "above", "the last row flips above");
+  assert.equal(hosts[1].querySelector(".sp-tooltip")?.textContent, "Edit");
+});
+
 test("closing the panel is one dirty check: clean Esc closes; dirty Esc asks on top, Keep editing returns, Discard closes", async () => {
   await renderPanel();
   await openEditJane();

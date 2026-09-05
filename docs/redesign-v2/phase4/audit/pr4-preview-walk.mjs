@@ -89,6 +89,15 @@ const blueScan = () => page.evaluate(blues => {
   return out;
 }, IBM_BLUES);
 const panel = () => page.getByRole("dialog", { name: /employee$/ });
+// "Visible" for a tooltip is a hit test — a clipped box still reports visibility: visible (the first walk).
+const tip = row => row.locator(".sp-has-tooltip").evaluate(host => {
+  const el = host.querySelector(".sp-tooltip"); const button = host.querySelector("button");
+  const r = el.getBoundingClientRect(); const b = button.getBoundingClientRect();
+  const prev = el.style.pointerEvents; el.style.pointerEvents = "auto"; // the tooltip is pointer-events: none
+  const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  el.style.pointerEvents = prev;
+  return { text: el.textContent, painted: !!hit && (hit === el || el.contains(hit)), inViewport: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, above: r.bottom <= b.top, below: r.top >= b.bottom, right: Math.round(r.right), placement: host.getAttribute("data-tooltip-placement") };
+});
 const step = async (name, frame, fn) => {
   try { await fn(); } catch (e) {
     const file = await shot(`${name.split(" ")[0]}-crash-${frame}`).catch(() => null);
@@ -160,9 +169,24 @@ for (const F of FRAMES) {
     await page.keyboard.press("Shift+Tab");
     await page.keyboard.press("Tab");
     await page.waitForTimeout(300);
-    const tipFocus = await seatRow.locator(".sp-tooltip").evaluate(el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return { visible: s.visibility !== "hidden" && s.opacity !== "0" && r.width > 0, text: el.textContent, right: Math.round(r.right) }; });
+    const tipFocus = await tip(seatRow);
     files.push(await shot(`01-edit-tooltip-focus-${T}`, await clipOf(edit, 8, { left: 300, top: 40, bottom: 40 })));
     const focusOnEdit = await active();
+    // The last row (amendment D): scroll the pane to the end, focus its Edit — the tooltip flips above.
+    await page.evaluate(() => { const r = document.querySelector('[role="region"][aria-label="Management"]'); if (r) r.scrollTop = r.scrollHeight; else window.scrollTo(0, document.body.scrollHeight); });
+    await page.waitForTimeout(600);
+    const lastRow = page.locator("[data-directory-row]").last();
+    await lastRow.scrollIntoViewIfNeeded();
+    const lastVindex = await lastRow.getAttribute("data-vindex");
+    const lastEdit = lastRow.locator('button[aria-label^="Edit "]');
+    await lastEdit.focus();
+    await page.keyboard.press("Shift+Tab");
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(300);
+    const tipLast = await tip(lastRow);
+    files.push(await shot(`01-edit-tooltip-focus-last-${T}`, await clipOf(lastEdit, 8, { left: 300, top: 40, bottom: 40 })));
+    await page.evaluate(() => { document.activeElement?.blur(); const r = document.querySelector('[role="region"][aria-label="Management"]'); if (r) r.scrollTop = 0; else window.scrollTo(0, 0); });
+    await page.waitForTimeout(400);
     // Employees tab focused.
     await page.getByRole("tab", { name: "Employees" }).focus();
     await page.waitForTimeout(200);
@@ -170,8 +194,8 @@ for (const F of FRAMES) {
     files.push(await shot(`01-tab-focus-${T}`, await clipOf(page.locator(".sp-tabs"), 8)));
     await page.evaluate(() => document.activeElement?.blur());
     const blues = await blueScan();
-    const ok = primaryCount === 1 && primaryText === "Add employee" && primaryBg === "rgb(184, 92, 46)" && primaryHover === "rgb(143, 69, 33)" && tabs.join("·") === "Employees·Departments·Zones" && selectedBar.includes("rgb(184, 92, 46)") && /inset/.test(selectedBar) && stripH === 40 && /^Draft — /.test(ind || "") && rowHoverBg !== rowRestBg && linkHover !== linkRest && tipFocus.visible && tipFocus.text === "Edit" && tipFocus.right <= F.w && focusOnEdit?.label === editLabel && ring.startsWith("solid 2px rgb(184, 92, 46)") && blues.length === 0;
-    rec("1 Management at rest", T, ok, { theme, indicator: ind, primaryBg, primaryHover, tabs, selectedBar, stripH, rows, count, seatLabel, linkRest, linkHover, rowRestBg, rowHoverBg, tipFocus, focusOnEdit, ring, blues }, "", files);
+    const ok = primaryCount === 1 && primaryText === "Add employee" && primaryBg === "rgb(184, 92, 46)" && primaryHover === "rgb(143, 69, 33)" && tabs.join("·") === "Employees·Departments·Zones" && selectedBar.includes("rgb(184, 92, 46)") && /inset/.test(selectedBar) && stripH === 40 && /^Draft — /.test(ind || "") && rowHoverBg !== rowRestBg && linkHover !== linkRest && tipFocus.painted && tipFocus.inViewport && tipFocus.below && tipFocus.text === "Edit" && focusOnEdit?.label === editLabel && tipLast.painted && tipLast.inViewport && tipLast.above && tipLast.placement === "above" && ring.startsWith("solid 2px rgb(184, 92, 46)") && blues.length === 0;
+    rec("1 Management at rest", T, ok, { theme, indicator: ind, primaryBg, primaryHover, tabs, selectedBar, stripH, rows, count, seatLabel, linkRest, linkHover, rowRestBg, rowHoverBg, tipFocus, tipLast, lastVindex, focusOnEdit, ring, blues }, "", files);
   });
 
   // ---------------------------------------------------------------- 2 Edit panel + combobox list, closed by Esc

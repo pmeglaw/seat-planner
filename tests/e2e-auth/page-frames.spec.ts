@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 import { SEEDED_ADMIN_EMAIL, signIn } from "./auth-helpers";
 
 // Page frames across the width ladder (Phase 4 PR 4; PHASE2UX §1G / §1S,
@@ -130,6 +130,65 @@ test.describe("Settings frame", () => {
       await page.keyboard.press("Tab");
       await page.keyboard.press("Enter");
       await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? "")).toBe("admin-subpage-main");
+    });
+  }
+});
+
+// The one row action's tier-C tooltip must actually paint (PHASE3DS §1.23 +
+// amendment D, 2026-09-05): the asset clips every table cell, which swallowed
+// the below-cell tooltip until the actions cell stopped clipping, and the last
+// row — whose tooltip would leave `.sp-table-scroll`, a clipping box in both
+// axes — flips its tooltip above the button. "Visible" here is a hit test at
+// the tooltip's centre plus the box inside the viewport, never a `visibility`
+// read (a clipped box still passes that — the smoke's original assertion).
+async function tooltipState(edit: Locator) {
+  return edit.evaluate(button => {
+    const tip = button.parentElement!.querySelector<HTMLElement>(".sp-tooltip")!;
+    const r = tip.getBoundingClientRect();
+    const b = button.getBoundingClientRect();
+    // The tooltip is pointer-events: none (it never intercepts the pointer), so the hit test lifts that for one call.
+    const prev = tip.style.pointerEvents;
+    tip.style.pointerEvents = "auto";
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    tip.style.pointerEvents = prev;
+    return {
+      text: tip.textContent,
+      painted: !!hit && (hit === tip || tip.contains(hit)),
+      inViewport: r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight,
+      above: r.bottom <= b.top,
+      below: r.top >= b.bottom
+    };
+  });
+}
+
+test.describe("Edit tooltip", () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page, SEEDED_ADMIN_EMAIL);
+  });
+
+  for (const [width, height] of WIDTHS) {
+    test(`${width}×${height}: the tooltip paints below on the first row and above on the last, on hover and on focus`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto("/admin/management");
+      const rows = page.locator("[data-directory-row]");
+      await expect(rows.first()).toBeVisible();
+
+      const firstEdit = rows.first().locator('button[aria-label^="Edit "]');
+      await firstEdit.hover();
+      expect(await tooltipState(firstEdit)).toMatchObject({ text: "Edit", painted: true, inViewport: true, below: true });
+      await page.mouse.move(0, 0);
+      await firstEdit.focus();
+      expect(await tooltipState(firstEdit)).toMatchObject({ text: "Edit", painted: true, inViewport: true, below: true });
+
+      const lastRow = rows.last();
+      await lastRow.scrollIntoViewIfNeeded();
+      await expect(lastRow.locator(".sp-has-tooltip")).toHaveAttribute("data-tooltip-placement", "above");
+      const lastEdit = lastRow.locator('button[aria-label^="Edit "]');
+      await lastEdit.hover();
+      expect(await tooltipState(lastEdit)).toMatchObject({ text: "Edit", painted: true, inViewport: true, above: true });
+      await page.mouse.move(0, 0);
+      await lastEdit.focus();
+      expect(await tooltipState(lastEdit)).toMatchObject({ text: "Edit", painted: true, inViewport: true, above: true });
     });
   }
 });

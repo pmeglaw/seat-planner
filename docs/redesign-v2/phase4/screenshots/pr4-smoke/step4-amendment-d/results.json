@@ -1,0 +1,220 @@
+[
+  {
+    "step": "1 Frame",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "primaryBg": "rgb(184, 92, 46)",
+      "primaryHover": "rgb(143, 69, 33)",
+      "tabs": [
+        "Employees",
+        "Departments",
+        "Zones"
+      ],
+      "selectedBar": "rgb(184, 92, 46) 0px -2px 0px 0px inset",
+      "stripH": 40,
+      "historyTab": 0,
+      "countCards": 0
+    },
+    "note": "",
+    "files": [
+      "01-frame-light.png"
+    ]
+  },
+  {
+    "step": "4 Table anatomy",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "headerH": 40,
+      "rowH": 32.5,
+      "cols": [
+        "Name",
+        "Department",
+        "Position",
+        "Extension",
+        "Seat",
+        "Status",
+        "Row actions"
+      ],
+      "extAlign": "right",
+      "extNumeric": "tabular-nums",
+      "marks": {
+        "assigned": 1,
+        "unassigned": 1
+      },
+      "statusText": {
+        "assigned": "Assigned",
+        "unassigned": "Unassigned"
+      },
+      "deptColor": "rgb(82, 82, 82)",
+      "linkRestColor": "rgb(143, 69, 33)",
+      "editSize": [
+        40,
+        32
+      ],
+      "editClass": "cds-btn cds-btn--ghost cds-btn--icon",
+      "overflowInRows": 0,
+      "stops": [
+        "a",
+        "button"
+      ],
+      "rowHoverBg": "rgb(232, 232, 232)",
+      "layerHover": "#e8e8e8",
+      "linkHoverColor": "rgb(122, 58, 28)",
+      "tokenHover": "#7a3a1c",
+      "tipHover": {
+        "text": "Edit",
+        "painted": true,
+        "inViewport": true,
+        "above": false,
+        "below": true,
+        "right": 1720,
+        "placement": null
+      },
+      "tipFocus": {
+        "text": "Edit",
+        "painted": true,
+        "inViewport": true,
+        "above": false,
+        "below": true,
+        "right": 1720,
+        "placement": null
+      },
+      "tipLastHover": {
+        "text": "Edit",
+        "painted": true,
+        "inViewport": true,
+        "above": true,
+        "below": false,
+        "right": 1720,
+        "placement": "above"
+      },
+      "tipLastFocus": {
+        "text": "Edit",
+        "painted": true,
+        "inViewport": true,
+        "above": true,
+        "below": false,
+        "right": 1720,
+        "placement": "above"
+      }
+    },
+    "note": "row height 32.5 = 32 + the collapsed border share; hover step rest→hover = rgb(143, 69, 33) → rgb(122, 58, 28) (the --sp-table-link-on-hover-row contract = link-primary-hover; the brief quotes the rest link colour rgb(143, 69, 33))",
+    "files": [
+      "04-row-hover-light.png",
+      "04-edit-tooltip-hover-light.png",
+      "04-edit-tooltip-focus-light.png",
+      "04-edit-tooltip-last-row-light.png"
+    ]
+  },
+  {
+    "step": "1 Frame",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "primaryBg": "rgb(184, 92, 46)",
+      "primaryHover": "rgb(143, 69, 33)",
+      "tabs": [
+        "Employees",
+        "Departments",
+        "Zones"
+      ],
+      "selectedBar": "rgb(184, 92, 46) 0px -2px 0px 0px inset",
+      "stripH": 40,
+      "historyTab": 0,
+      "countCards": 0
+    },
+    "note": "",
+    "files": [
+      "01-frame-dark.png"
+    ]
+  },
+  {
+    "step": "4 Table anatomy",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "headerH": 40,
+      "rowH": 32.5,
+      "cols": [
+        "Name",
+        "Department",
+        "Position",
+        "Extension",
+        "Seat",
+        "Status",
+        "Row actions"
+      ],
+      "extAlign": "right",
+      "extNumeric": "tabular-nums",
+      "marks": {
+        "assigned": 1,
+        "unassigned": 1
+      },
+      "statusText": {
+        "assigned": "Assigned",
+        "unassigned": "Unassigned"
+      },
+      "deptColor": "rgb(198, 198, 198)",
+      "linkRestColor": "rgb(232, 160, 122)",
+      "editSize": [
+        40,
+        32
+      ],
+      "editClass": "cds-btn cds-btn--ghost cds-btn--icon",
+      "overflowInRows": 0,
+      "stops": [
+        "a",
+        "button"
+      ],
+      "rowHoverBg": "rgb(51, 51, 51)",
+      "layerHover": "#333",
+      "linkHoverColor": "rgb(245, 221, 209)",
+      "tokenHover": "#f5ddd1",
+      "tipHover": {
+        "text": "Edit",
+        "painted": true,
+        "inViewport": true,
+        "above": false,
+        "below": true,
+        "right": 1720,
+        "placement": null
+      },
+      "tipFocus": {
+        "text": "Edit",
+        "painted": true,
+        "inViewport": true,
+        "above": false,
+        "below": true,
+        "right": 1720,
+        "placement": null
+      },
+      "tipLastHover": {
+        "text": "Edit",
+        "painted": true,
+        "inViewport": true,
+        "above": true,
+        "below": false,
+        "right": 1720,
+        "placement": "above"
+      },
+      "tipLastFocus": {
+        "text": "Edit",
+        "painted": true,
+        "inViewport": true,
+        "above": true,
+        "below": false,
+        "right": 1720,
+        "placement": "above"
+      }
+    },
+    "note": "row height 32.5 = 32 + the collapsed border share; hover step rest→hover = rgb(232, 160, 122) → rgb(245, 221, 209) (the --sp-table-link-on-hover-row contract = link-primary-hover; the brief quotes the rest link colour rgb(232, 160, 122))",
+    "files": [
+      "04-row-hover-dark.png",
+      "04-edit-tooltip-hover-dark.png",
+      "04-edit-tooltip-focus-dark.png",
+      "04-edit-tooltip-last-row-dark.png"
+    ]
+  }
+]

@@ -89,17 +89,18 @@ nothing.
 - **The department list** was opened by focus, so it shows the one department matching the field's value;
   the smoke typed "Liti" / "Marketing" to show matches and the create row.
 
-## Finding — the Edit tooltip never paints (both here and in the smoke)
+## Finding — the Edit tooltip never painted (fixed on the branch: PHASE3DS §1.23 amendment D)
 
 Step 1's "Edit tooltip on focus" measured `display: flex`, `visibility: visible`, width 38 — and the capture
-shows no tooltip. A hit test at the tooltip's centre (`document.elementFromPoint`) returns the next row's
-pencil icon: the tooltip is **clipped by its cell**. The vendored asset rule `.cds-table th, .cds-table td {
-overflow: hidden; text-overflow: ellipsis; white-space: nowrap }` (`carbon-components.css`, the ellipsis for
-long cells) clips everything positioned outside the cell box, and `.sp-table .cds-col-actions .sp-tooltip`
-places the tooltip below the cell (`top: calc(100% + offset)`). The smoke's step 4 asserted visibility /
-opacity / width, which a clipped box still passes — its `04-edit-tooltip-*` captures show the same absence.
-The map, inspector, roster, top-bar and ⋯ tooltips sit outside table cells and are unaffected; only the
-Management Edit tooltip is. Not changed here (the walk is read-only); the fix is one lockstep rule on the
-actions cell (`overflow: visible` — it holds a single icon button, so the ellipsis has nothing to do) as a
-dated PHASE3DS §1.23 amendment, and the smoke rig's assertion should hit-test rather than read `visibility`.
-Owner's call: fix on this branch before merge, or carry to PR 5.
+(`01-edit-tooltip-focus-*` of the first walk, superseded below) showed no tooltip. The vendored asset rule
+`.cds-table th, .cds-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }`
+(`carbon-components.css`, the ellipsis for long cells) clips everything positioned outside the cell, and
+`.sp-table .cds-col-actions .sp-tooltip` places the tooltip below the cell. The Docker smoke's step 4 asserted
+visibility / opacity / width, which a clipped box still passes — its `04-edit-tooltip-*` captures show the same
+absence. Only the Management Edit tooltip was affected. **Owner ruling 2026-09-05:** required by §1.23, a defect.
+**Fix** (amendment D, both sheet copies): `.sp-table td.cds-col-actions { overflow: visible }`; the last row's
+tooltip, which would leave `.sp-table-scroll` (a clipping box in both axes — never `overflow: visible` there,
+§1G.5), flips above the button through `data-tooltip-placement="above"`. "Tooltip visible" is now a hit test —
+`document.elementFromPoint` at the tooltip's centre is the tooltip (lifting its `pointer-events: none` for the
+call) and the box lies inside the viewport — in this rig, the smoke's step 4 and the e2e-auth `page-frames` spec;
+jsdom has no layout, so the ct tier pins only the placement attribute.

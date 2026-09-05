@@ -15,6 +15,9 @@ if (!email || !password || !viewerEmail) {
   process.exit(1);
 }
 mkdirSync(outDir, { recursive: true });
+// SMOKE_ONLY=4,13 runs only the named steps inside each theme loop (step 1 and the sign-in always run; the
+// step-20 block is skipped) — for re-running one step after a fix without the full twenty.
+const ONLY = process.env.SMOKE_ONLY ? new Set(process.env.SMOKE_ONLY.split(",").map(x => x.trim())) : null;
 const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "../../../..");
 
 const results = [];
@@ -39,6 +42,7 @@ const recover = async () => {
   }
 };
 const step = async (name, theme, fn) => {
+  if (ONLY && !ONLY.has(name.split(" ")[0])) return;
   try {
     await fn();
   } catch (e) {
@@ -187,24 +191,48 @@ for (const theme of ["light", "dark"]) {
     const layerHover = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sp-layer-hover").trim());
     const linkHoverColor = await css(assignedRow.locator("a.sp-seat-link"), "color");
     const files = [await shot(`04-row-hover-${T}`, { x: box.x - 4, y: box.y - 4, width: box.width + 8, height: box.height + 8 })];
-    // Tooltip on hover and on focus, inside the viewport.
+    // Tooltip on hover and on focus: PAINTED (a hit test at its centre lands on the tooltip — a clipped box
+    // still reports visibility: visible, which is how the first pass missed amendment D) and inside the
+    // viewport; below the button on the first rows, above on the last row (PHASE3DS §1.23 amendment D).
+    const tip = row => row.locator(".sp-has-tooltip").evaluate(host => {
+      const el = host.querySelector(".sp-tooltip"); const button = host.querySelector("button");
+      const r = el.getBoundingClientRect(); const b = button.getBoundingClientRect();
+      const prev = el.style.pointerEvents; el.style.pointerEvents = "auto"; // the tooltip is pointer-events: none
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      el.style.pointerEvents = prev;
+      return { text: el.textContent, painted: !!hit && (hit === el || el.contains(hit)), inViewport: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, above: r.bottom <= b.top, below: r.top >= b.bottom, right: Math.round(r.right), placement: host.getAttribute("data-tooltip-placement") };
+    });
     const edit = assignedRow.locator('button[aria-label^="Edit "]');
     await edit.hover();
     await page.waitForTimeout(300);
-    const tipHover = await assignedRow.locator(".sp-tooltip").evaluate(el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return { visible: s.visibility !== "hidden" && s.opacity !== "0" && r.width > 0, text: el.textContent, right: r.right, left: r.left }; });
+    const tipHover = await tip(assignedRow);
     files.push(await shot(`04-edit-tooltip-hover-${T}`, { x: box.x + box.width - 320, y: box.y - 48, width: 340, height: box.height + 96 }));
     await page.mouse.move(960, 950);
     await edit.focus();
     await page.keyboard.press("Shift+Tab");
     await page.keyboard.press("Tab");
     await page.waitForTimeout(300);
-    const tipFocus = await assignedRow.locator(".sp-tooltip").evaluate(el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return { visible: s.visibility !== "hidden" && s.opacity !== "0" && r.width > 0, right: r.right }; });
+    const tipFocus = await tip(assignedRow);
     files.push(await shot(`04-edit-tooltip-focus-${T}`, { x: box.x + box.width - 320, y: box.y - 48, width: 340, height: box.height + 96 }));
     await page.mouse.move(960, 950);
     await page.keyboard.press("Escape");
+    const lastRow = page.locator("[data-directory-row]").last();
+    await lastRow.scrollIntoViewIfNeeded();
+    const lastEdit = lastRow.locator('button[aria-label^="Edit "]');
+    await lastEdit.hover();
+    await page.waitForTimeout(300);
+    const tipLastHover = await tip(lastRow);
+    await page.mouse.move(960, 950);
+    await lastEdit.focus();
+    await page.waitForTimeout(300);
+    const tipLastFocus = await tip(lastRow);
+    const lastBox = await lastRow.boundingBox();
+    files.push(await shot(`04-edit-tooltip-last-row-${T}`, { x: lastBox.x + lastBox.width - 320, y: lastBox.y - 48, width: 340, height: lastBox.height + 96 }));
+    await page.mouse.move(960, 950);
+    await page.keyboard.press("Escape");
     const tokenHover = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--sp-table-link-on-hover-row").trim());
-    const ok = Math.round(headerH) === 40 && Math.floor(rowH) === 32 && cols.slice(0, 6).join("·") === "Name·Department·Position·Extension·Seat·Status" && extAlign === "right" && marks.assigned === 1 && marks.unassigned === 1 && statusText.assigned === "Assigned" && statusText.unassigned === "Unassigned" && deptColor !== linkRestColor && editButtons === rows && editSize[0] === 40 && editSize[1] === 32 && /cds-btn--ghost/.test(editClass) && overflowInRows === 0 && stops.join(",") === "a,button" && linkHoverColor !== linkRestColor && tipHover.visible && tipHover.text === "Edit" && tipHover.right <= 1920 && tipFocus.visible && tipFocus.right <= 1920;
-    rec("4 Table anatomy", T, ok, { headerH, rowH, cols, extAlign, extNumeric, marks, statusText, deptColor, linkRestColor, editSize, editClass, overflowInRows, stops, rowHoverBg, layerHover, linkHoverColor, tokenHover, tipHover, tipFocus }, `row height ${rowH} = 32 + the collapsed border share; hover step rest→hover = ${linkRestColor} → ${linkHoverColor} (the --sp-table-link-on-hover-row contract = link-primary-hover; the brief quotes the rest link colour ${hoverLink[T]})`, files);
+    const ok = Math.round(headerH) === 40 && Math.floor(rowH) === 32 && cols.slice(0, 6).join("·") === "Name·Department·Position·Extension·Seat·Status" && extAlign === "right" && marks.assigned === 1 && marks.unassigned === 1 && statusText.assigned === "Assigned" && statusText.unassigned === "Unassigned" && deptColor !== linkRestColor && editButtons === rows && editSize[0] === 40 && editSize[1] === 32 && /cds-btn--ghost/.test(editClass) && overflowInRows === 0 && stops.join(",") === "a,button" && linkHoverColor !== linkRestColor && tipHover.painted && tipHover.inViewport && tipHover.below && tipHover.text === "Edit" && tipFocus.painted && tipFocus.inViewport && tipFocus.below && tipLastHover.painted && tipLastHover.inViewport && tipLastHover.above && tipLastFocus.painted && tipLastFocus.inViewport && tipLastFocus.above && tipLastFocus.placement === "above";
+    rec("4 Table anatomy", T, ok, { headerH, rowH, cols, extAlign, extNumeric, marks, statusText, deptColor, linkRestColor, editSize, editClass, overflowInRows, stops, rowHoverBg, layerHover, linkHoverColor, tokenHover, tipHover, tipFocus, tipLastHover, tipLastFocus }, `row height ${rowH} = 32 + the collapsed border share; hover step rest→hover = ${linkRestColor} → ${linkHoverColor} (the --sp-table-link-on-hover-row contract = link-primary-hover; the brief quotes the rest link colour ${hoverLink[T]})`, files);
   });
 
   // ---------------------------------------------------------------- 5 Toolbar count and search
@@ -751,6 +779,7 @@ for (const theme of ["light", "dark"]) {
 }
 
 // ---------------------------------------------------------------- 20 Widths, themes, routes (fresh seed)
+if (!ONLY) {
 resetStack();
 await newSession(email);
 {
@@ -830,6 +859,7 @@ await newSession(email);
   }
   const realErrors = consoleErrors.filter(e => !/speed-insights|404 \(Not Found\)|Failed to load resource/.test(e));
   rec("20 Console", "both", realErrors.length === 0, { errors: realErrors.slice(0, 10), speedInsightsNoise: consoleErrors.length - realErrors.length }, "", []);
+}
 }
 
 writeFileSync(path.join(outDir, "results.json"), JSON.stringify(results, null, 2) + "\n");

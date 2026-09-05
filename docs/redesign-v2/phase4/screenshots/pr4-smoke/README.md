@@ -96,3 +96,13 @@ through the inspector (Maria Lopez N03 → an open seat); the review held with t
 4, 6, 13, 16, 17 failed on rig assertions (the collapsed border share, `isVisible` not waiting, the indicator refetch
 counted as a second action, the sr-only live region before the callout, preflight's zero-width `border-style: solid`)
 and were corrected in the rig. **Final pass: 47/47.**
+
+**Step 4 re-run (2026-09-05, PHASE3DS §1.23 amendment D — `step4-amendment-d/`).** The read-only preview walk found
+that the Edit tooltip never painted: the asset's cell `overflow: hidden` clipped it, and this smoke's step 4 had
+asserted `visibility` / width, which a clipped box still passes — the `04-edit-tooltip-*` captures above show no
+tooltip. The rig's step 4 now hit-tests (`document.elementFromPoint` at the tooltip's centre is the tooltip, lifting
+its `pointer-events: none` for the call) and requires the box inside the viewport, on the first row (below) and the
+last row (above, `data-tooltip-placement="above"`), hover and focus. Re-run with `SMOKE_ONLY=4` on the reseeded
+stack, real Chrome 1920×1080, both themes: **4/4** (`step4-amendment-d/results.json`, captures
+`04-edit-tooltip-hover-*`, `04-edit-tooltip-focus-*`, `04-edit-tooltip-last-row-*`). The e2e-auth `page-frames` spec
+carries the same assertion at 1920 / 1280 / 1024 and was shown to fail (3 of 9) with the cell rule reverted.

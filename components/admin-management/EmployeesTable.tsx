@@ -318,7 +318,12 @@ export function EmployeesTable({
                         </span>
                       </td>
                       <td className="cds-col-actions">
-                        <span className="sp-has-tooltip">
+                        {/* The last row's tooltip would leave `.sp-table-scroll` (a clipping box),
+                            so it flips above the button — PHASE3DS §1.23 amendment D. */}
+                        <span
+                          className="sp-has-tooltip"
+                          data-tooltip-placement={segment.index === sortedEmployees.length - 1 ? "above" : undefined}
+                        >
                           <button
                             type="button"
                             className="cds-btn cds-btn--ghost cds-btn--icon"

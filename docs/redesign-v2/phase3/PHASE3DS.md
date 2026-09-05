@@ -180,6 +180,10 @@ target leaves no ambiguity about the anchor, and a caret adds a shape nothing el
 tooltip; while its menu is open the tooltip would sit over the menu's first item on hover, so
 `.cds-overflow[data-open] .sp-tooltip { display: none }` — moved from `globals.css` into this sheet in PR 3b (Q1).
 
+**Phase 4 PR 4 amendment D (2026-09-05).** `.sp-has-tooltip[data-tooltip-placement="above"] .sp-tooltip` — the
+above placement at the same 8px offset, for a host that would push its tooltip out of a clipping ancestor (§1.23:
+the table's last row over `.sp-table-scroll`). Still no caret.
+
 ### 1.9 Right panel — Shell → `.sp-panel` (§3 "Right panel (dark, 320, floats) · hand-built" + dark variants)
 
 **Problem.** Help / History / Account share one 320 panel on Gray 100 that floats over content in both
@@ -448,6 +452,20 @@ there are none (owner ruling). Toolbar: the asset's, search 320, count `aria-liv
 saved-status banner is an inline `role="status"` notification under the toolbar. Narrow: the table scrolls
 inside `.sp-table-scroll`, never the page.
 **Trade-off.** The tooltip on the last column would leave the table on the right; it is right-anchored there.
+
+**Phase 4 PR 4 amendment D (the read-only preview walk, 2026-09-05).** The Edit tooltip never painted — on the
+preview and in the Docker smoke alike, whose step 4 read `visibility` / width, which a clipped box still passes.
+**Cause:** the asset's cell rule `.cds-table th, .cds-table td { overflow: hidden; text-overflow: ellipsis;
+white-space: nowrap }` (the ellipsis for long text) clips everything positioned outside the cell, and the tier-C
+tooltip hangs 8px below its host. **Fix**, both copies byte-identical, no asset edit: `.sp-table td.cds-col-actions
+{ overflow: visible }` — the actions cell holds one icon button and nothing to truncate. `.sp-table-scroll` stays a
+clipping box in both axes (`overflow-x: auto` clips vertically too, and §1G.5 needs it for the narrow frame's sideways
+scroll), so the **last row's** tooltip flips above the button (`data-tooltip-placement="above"`, minted in §1.8 —
+the sheet had only the below placement). Verified by hit test (`document.elementFromPoint` at the tooltip's centre is
+the tooltip — the probe lifts the tooltip's `pointer-events: none` for that one call) with the box inside the viewport, first and last row, hover and focus, light and dark, 1920 / 1280 /
+1024; the smoke rig, the preview walk and the e2e-auth `page-frames` spec assert exactly that from now on (jsdom has
+no layout — the ct tier pins the placement attribute on the last row only). Owner ruling: §1.23's tooltip is
+required; a clipped tooltip is a defect, not a look choice.
 
 ### 1.24 Side panel 480 slide-over — `.sp-side-panel-host` on the asset `.cds-side-panel` (§3 "Side panel 480, slide-over (focus-trapped) · partial")
 

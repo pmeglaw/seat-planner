@@ -618,6 +618,15 @@ fixed on the branch and re-run:
 - Step 3: the seed directory is short, so the strip pins (top 48, opaque `--sp-tabs-bg`) only once the pane scrolls —
   the smoke used a 1920×420 viewport to force it.
 
+**Preview-walk finding (2026-09-05, after the smoke) — the Edit tooltip never painted.** The read-only preview walk
+(`audit/pr4-preview-walk.mjs`, `screenshots/pr4-preview/`) captured the tooltip on focus and saw nothing: the asset's
+cell `overflow: hidden` clipped it, on the preview and in the smoke alike (step 4 read `visibility`, which a clipped
+box passes). **Fix** PHASE3DS §1.23 **amendment D** (both copies): `.sp-table td.cds-col-actions { overflow: visible }`
+— the actions cell stops clipping; the last row's tooltip, which would leave `.sp-table-scroll`, flips above through
+`data-tooltip-placement="above"` (the above placement minted in §1.8). The smoke's step 4, the walk and the e2e-auth
+`page-frames` spec now hit-test the tooltip on the first and last row (painted + inside the viewport); ct pins the
+placement attribute. Owner ruling: required by §1.23 — a defect, not a look choice. No token change.
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
