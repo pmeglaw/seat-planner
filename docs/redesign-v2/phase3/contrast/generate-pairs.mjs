@@ -74,6 +74,9 @@ add(gated, "light · AI label hover text blue-70 on layer-hover-01", P.b70, P.ho
 add(gated, "light · AI border start blue-60 on field #f4f4f4", P.b60, P.g10, "graphic");
 add(gated, "light · helper-on-row gray-70 on layer-hover-01", P.g70, P.hoverWhite, "text");
 add(gated, "light · quiet pill text gray-70 on layer-01 / hover", P.g70, P.hoverWhite, "text");
+// PR 3b marker rig: the names-off footprint states — quiet fill on the mat (was the quiet edge gray-30, 1.71), the ◇ on the filled square (was purple 60, 3.62 / purple 40, 2.14 on dark).
+add(gated, "light · names-off quiet footprint gray-70 on the mat (background white)", P.g70, P.white, "graphic");
+add(gated, "light · names-off ◇ stroke = pill fill white on the gray-100 footprint", P.white, P.g100, "graphic");
 add(gated, "light · kbd shortcut hint text-secondary gray-70 on field-01 #f4f4f4 (PR 3a: was text-helper gray-60, 4.36)", P.g70, P.g10, "text");
 add(gated, "light · text-on-color white on primary blue-60", P.white, P.b60, "text");
 // Brand layer, PR 3a smoke (PHASE4BUILD §1.22): tertiary buttons (Filters · N, Clear, Ask Planner) sit on the
@@ -101,6 +104,8 @@ marks(gated, "dark", { name: "warning mark yellow-30", hex: P.y30 }, "graphic", 
 marks(gated, "dark", { name: "AI label text blue-40", hex: P.b40 }, "text", [D.bg, D.l1, D.hover]);
 add(gated, "dark · AI border start blue-50 on field #262626", P.b50, P.g90, "graphic");
 add(gated, "dark · kbd shortcut hint text-secondary gray-30 on field-01 #262626", P.g30, P.g90, "text");
+add(gated, "dark · names-off quiet footprint gray-30 on the mat (background #161616)", P.g30, P.g100, "graphic");
+add(gated, "dark · names-off ◇ stroke = pill fill #393939 on the gray-10 footprint", P.g80, P.g10, "graphic");
 add(gated, "dark · text-on-color white on primary blue-60", P.white, P.b60, "text");
 add(notGated, "dark · AI border end blue-40 on layer-01 #262626 (gradient's low stop)", P.b40, P.g90, "graphic");
 

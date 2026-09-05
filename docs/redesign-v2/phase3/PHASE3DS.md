@@ -176,6 +176,9 @@ on `:hover` and `:focus-within`, Esc dismisses (behaviour), suppressed under `(h
 the control's `aria-label`, never interactive content. **No caret** (owner ruling on PR 2): 8px below a 48px
 target leaves no ambiguity about the anchor, and a caret adds a shape nothing else in the system uses.
 **Would change if** a tooltip is needed on a theme surface (then a theme-following variant, not this one).
+**Phase 4 PR 3a/3b amendment.** An overflow trigger (the control row's ⋯, PHASE4BUILD §1.24) carries the tier-C
+tooltip; while its menu is open the tooltip would sit over the menu's first item on hover, so
+`.cds-overflow[data-open] .sp-tooltip { display: none }` — moved from `globals.css` into this sheet in PR 3b (Q1).
 
 ### 1.9 Right panel — Shell → `.sp-panel` (§3 "Right panel (dark, 320, floats) · hand-built" + dark variants)
 
@@ -269,6 +272,14 @@ tertiary "Filters · N" that opens the left panel (the hamburger's target) plus 
 filters icon button; one interactive element per control; Hidden at N = 0. `patterns.md`: a collapsed
 filter shows its count and a way to clear without reopening. Not a deviation. **Would change if** the
 row gains a second section that needs its own primary (then it is two toolbars).
+**Phase 4 PR 3a/3b amendment (owner rulings O6 2026-09-04, Q1/Q2 2026-09-05).** The row WRAPS when its content does
+not fit (1024, or 1920 with the left panel open — 1664px pane): content-driven, not a viewport query; a single line is
+exactly 48px (4 + 40 + 4), a wrapped row 96px, the stage above lg absorbs the extra line. The search keeps its token
+width, shrinks to 240px before the row wraps and never grows into the slack; its scope menu stacks above the Find
+palette (`z-index: 80` — the palette is fixed at z 70 and the sheet's z 20 menu rendered behind it, PHASE4BUILD §1.23).
+PR 3a landed these in `app/globals.css` behind a `[role="toolbar"]` specificity hook; PR 3b folded them into
+`.sp-control-row` itself in this sheet (both copies) — `globals.css` is Tailwind base + resets only, and the token
+test now asserts it holds no `.sp-` / `.cds-` selector.
 
 ### 1.15 Search field and palette — Map → `.sp-search`, `.sp-palette` (§3 "Search field with scope segment", "Search palette (560)")
 
@@ -325,7 +336,11 @@ empty seat shows its code — so the origin, the valid targets and the invalid t
 search-hit pill; no AI token reaches the map (§1.18). (4) The Draft family is purple 60 / 40 by owner ruling
 (DECISIONS §6 no. 17) — this section's "orange" reads through the brand layer; `sp-tokens.css` still aliases
 Carbon's caution role. (5) The collision nudge (±14 = half the pill height, D1) is an inline transform on the
-marker wrapper, computed per pill at its estimated fit width (`lib/seatCrowding.ts`).
+marker wrapper, computed per pill at its estimated fit width (`lib/seatCrowding.ts`). (6) *Found in the marker rig:*
+the ◇ on the NAMES-OFF footprint was never measured — purple 40 on the gray-10 square is 2.14 (light 3.62) — so on
+the filled footprint the badge inverts (stroke = the pill fill, fill = the square; the shape carries, the legend's
+count and the inspector text keep the colour), and the names-off + quiet fill is the quiet TEXT colour (gray 70 /
+gray 30 — 5.7 / 10 on the mat; the quiet edge was 1.7). Pairs added to `generate-pairs.mjs`.
 
 ### 1.17 Right slot and inspector — Map → `.sp-slot`, commit bar, combobox, text area (§3 rows "Seat inspector side panel, 400", "Combobox", "text area", "Danger button")
 
@@ -544,7 +559,7 @@ changes on purpose. Zone-scoped dark variants are overrides too (they live under
 | Current section link — no hover fill | asset-overridden | `.sp-header .cds-header-nav a[aria-current="page"]:hover` | `01-shell.html#header` | 2 | owner ruling 2026-09-04 (Phase 4 PR 2): the current link is not a destination, so it keeps the shell background on hover and the terracotta bar stays 3.97:1 on gray 100 (2.77:1 on the asset's gray-90-hover) — the fifth hover-surface instance (§3) |
 | Hamburger / reserved slot | hand-built | `.sp-header-slot`, `.sp-header-slot--reserved`, `.sp-glyph-menu` / `.sp-glyph-close` | `01-shell.html#hamburger` | 2 | |
 | Utility icon button, outlined when open | asset-overridden | `.sp-header .cds-header-utils button[aria-expanded="true"]` | `01-shell.html#utilities` | 2 | |
-| Tooltip on icon buttons | hand-built | `.sp-has-tooltip` > `.sp-tooltip[role=tooltip]` | `01-shell.html#utilities` | 2 | |
+| Tooltip on icon buttons | hand-built | `.sp-has-tooltip` > `.sp-tooltip[role=tooltip]` (+ Phase 4 PR 3b: `.cds-overflow[data-open] .sp-tooltip` yields to an open menu — §1.8 amendment) | `01-shell.html#utilities` | 2 | |
 | Right panel (dark, 320, floats) | hand-built | `.sp-panel`, `.sp-panel-host[data-open]`, `.sp-panel-body`, `.sp-panel-status`, `.sp-panel-caption`, `.sp-panel-fact`, `.sp-panel-divider`, `.sp-panel-row` (+`--static`), `.sp-panel-email`, `.sp-panel-dl` | `01-shell.html#panels` | 2 | |
 | Two-segment mode switch | hand-built | `.sp-switch` > `button[aria-pressed]` | `01-shell.html#switch` | 2 | |
 | Event list (static rows) | hand-built | `.sp-event-list` > `.sp-event` (`-what` / `-when` / `-who`) | `01-shell.html#panels` | 2 | |
@@ -558,7 +573,7 @@ changes on purpose. Zone-scoped dark variants are overrides too (they live under
 | Left filter panel | hand-built | `.sp-left-panel`, `.sp-left-panel-host[data-open]`, `-header`, `-body`, `.sp-filter-group` / `-row`, `.sp-filter-item` (`-name`, `-count`), `.sp-left-nav`, `.sp-left-divider`, `.sp-left-panel-note` | `01-shell.html#left` | 2 | |
 | Checkbox group with per-group Clear + counts | hand-built | `.sp-filter-group` + `.cds-checkbox` + `.cds-btn--ghost.cds-btn--sm` | `01-shell.html#left` | 2 | |
 | Narrow fallback (1024) | composition | composition of the above | `01-shell.html#narrow` | 2 | |
-| Control row (toolbar) · divider · result count · disabled-Publish reason | hand-built | `.sp-control-row`, `.sp-control-divider`, `.sp-control-count`, `.sp-control-reason` | `02-map.html#row` | 3 | |
+| Control row (toolbar) · divider · result count · disabled-Publish reason | hand-built | `.sp-control-row` (Phase 4 PR 3b: content-driven wrap, 48 → 96; `.sp-control-row .sp-search` flex basis / 240 min; `.sp-control-row .sp-search .sp-menu` z 80 — §1.14 amendment), `.sp-control-divider`, `.sp-control-count`, `.sp-control-reason` | `02-map.html#row` | 3 | |
 | Floor selector (menu button + menu) | hand-built | `.sp-menu-button` (+`.sp-chevron`, `-label`), `.sp-menu` (+`.sp-menu-meta`) | `02-map.html#row` | 3 | |
 | Search field with scope segment · keyboard hint · clear | hand-built | `.sp-search`, `.sp-search-scope`, `.sp-search-clear`, `.sp-kbd` | `02-map.html#search` | 3 | |
 | Search palette (560) | hand-built | `.sp-palette`, `-header`, `-group`, `-list` > `.sp-palette-row` (`-title`, `-sub`, `-code`; Phase 4 PR 3b: `[aria-current="true"]`, `:focus-visible` — §1.15 amendment), `-footer`, `-empty`, `-loading` | `02-map.html#search` | 3 | |

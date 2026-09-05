@@ -226,19 +226,21 @@ function ContactFacts({ rows, canEdit, personName }: { rows: ContactFactRow[]; c
           No contact details on file.{canEdit ? " Add them from the Management page." : ""}
         </p>
       )}
+      {/* axe definition-list: a <dl> group holds only <dt> / <dd> — the copy
+          action lives INSIDE the <dd>, at its end (the row grid's third column
+          stays empty). */}
       <dl className="m-0">
         {rows.map(row => (
           <div key={row.label} className="sp-contact-row">
             <dt>{row.label}</dt>
-            <dd>
+            <dd className="flex min-w-0 items-center justify-between gap-3">
               {row.label === "Email" ? (
-                <a href={`mailto:${row.value}`} className="text-[var(--sp-link)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--sp-focus)]">
+                <a href={`mailto:${row.value}`} className="min-w-0 truncate text-[var(--sp-link)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--sp-focus)]">
                   {row.value}
                 </a>
-              ) : row.value}
-            </dd>
+              ) : <span className="min-w-0 truncate">{row.value}</span>}
             {row.label === "Extension" ? (
-              <span className="sp-has-tooltip">
+              <span className="sp-has-tooltip shrink-0">
                 <button
                   type="button"
                   onClick={() => void copyText(`extension:${row.value}`, row.value)}
@@ -253,14 +255,16 @@ function ContactFacts({ rows, canEdit, personName }: { rows: ContactFactRow[]; c
                 </button>
                 <span className="sp-tooltip" role="tooltip">Copy extension</span>
               </span>
-            ) : <span />}
+            ) : null}
+            </dd>
           </div>
         ))}
         {personLink && (
           <div className="sp-contact-row">
             <dt>Link</dt>
-            <dd className="sp-person-role m-0">Link to this person</dd>
-            <span className="sp-has-tooltip">
+            <dd className="sp-person-role m-0 flex min-w-0 items-center justify-between gap-3">
+            <span className="min-w-0 truncate">Link to this person</span>
+            <span className="sp-has-tooltip shrink-0">
               <button
                 type="button"
                 onClick={() => void copyText("person-link", personLink)}
@@ -273,6 +277,7 @@ function ContactFacts({ rows, canEdit, personName }: { rows: ContactFactRow[]; c
               </button>
               <span className="sp-tooltip" role="tooltip">Copy link to this person</span>
             </span>
+            </dd>
           </div>
         )}
       </dl>

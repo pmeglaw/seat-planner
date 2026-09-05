@@ -211,6 +211,9 @@
 }
 .sp-has-tooltip:is(:hover, :focus-within, [data-state="hover"], [data-state="focus"]) .sp-tooltip { display: flex; }
 @media (hover: none) { .sp-has-tooltip:hover .sp-tooltip { display: none; } }
+/* Phase 4 PR 3a/3b (PHASE3DS §1.8 amendment): an overflow trigger carries the tier-C tooltip; while its
+   menu is open the tooltip would sit over the menu's first item on hover, so it yields to the menu. */
+.cds-overflow[data-open] .sp-tooltip { display: none; }
 
 /* -----------------------------------------------------------------------------
    5. RIGHT PANEL (dark, 320, floats) — §3 "Right panel · hand-built" + the
@@ -406,8 +409,17 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
        the editor's controls; ONE primary (Publish); disabled Publish states
        its reason beside it in label-01 (aria-describedby), never only a tooltip.
    -------------------------------------------------------------------------- */
-.sp-control-row { display: flex; align-items: center; gap: var(--sp-control-gap); height: var(--sp-control-row-h); padding: 0 var(--sp-space-03);
+/* Phase 4 PR 3a/3b (owner rulings O6 + Q1/Q2, PHASE3DS §1.14 amendment): the row WRAPS when its content
+   does not fit — at 1024, and at 1920 with the left panel open (1664px pane). Content-driven, no viewport
+   query: a single line is exactly 48px (4 + 40 + 4), a wrapped row 96px; the stage above lg absorbs the
+   extra line. white-space stays nowrap — the ROW wraps between controls, the floor label and the ⌘K key
+   never wrap inside their 40px boxes. The search keeps its token width, shrinks to 240px before the row
+   wraps, never grows into the slack; its scope menu stacks above the Find palette (fixed, z-70). */
+.sp-control-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-control-gap); row-gap: var(--sp-control-gap);
+  height: auto; min-height: var(--sp-control-row-h); padding: var(--sp-space-02) var(--sp-space-03);
   background: var(--sp-background); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); white-space: nowrap; }
+.sp-control-row .sp-search { flex: 0 1 var(--sp-search-w); min-width: 240px; }
+.sp-control-row .sp-search .sp-menu { z-index: 80; }
 .sp-control-row .cds-btn { height: var(--sp-control-h); }
 .sp-control-row .cds-btn--icon { width: var(--sp-control-h); }
 .sp-control-divider { width: 1px; height: var(--sp-control-divider-h); background: var(--sp-control-divider); margin: 0 var(--sp-space-03); flex: none; }
@@ -536,14 +548,15 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-pill-badge { position: absolute; top: calc(-1 * var(--sp-space-02)); right: calc(-1 * var(--sp-space-02)); width: var(--sp-pill-badge-size); height: var(--sp-pill-badge-size); overflow: visible;
   color: var(--sp-pill-badge); fill: var(--sp-pill-fill); stroke: currentColor; stroke-width: var(--sp-pill-badge-stroke); stroke-linejoin: miter; }
 .sp-pill--search .sp-pill-badge { fill: var(--sp-pill-search-fill); }
-.sp-pill--names-off .sp-pill-badge { fill: var(--sp-pill-names-off); }
+.sp-pill--names-off .sp-pill-badge { fill: var(--sp-pill-names-off); color: var(--sp-pill-fill); }   /* PR 3b rig: purple 40 on the gray-10 square is 2.14 — the ◇ inverts on the filled footprint (§1.16 amendment) */
 /* names off: assigned collapses to the filled 28 footprint; empty seats keep their symbols */
 .sp-pill--names-off { width: var(--sp-seat-footprint); padding: 0; justify-content: center; background: var(--sp-pill-names-off); box-shadow: none; color: transparent; overflow: hidden; }
 .sp-pill--names-off:is(:hover, [data-state="hover"]) { background: var(--sp-pill-names-off); }
-/* names off + quiet (filtered out): the filled footprint steps to the quiet edge colour — still
-   filled (= assigned), lighter than a match; no opacity (PHASE3DS §1.16 amendment, PR 3b) */
-.sp-pill--names-off.sp-pill--quiet { background: var(--sp-pill-quiet-edge); }
-.sp-pill--names-off.sp-pill--quiet:is(:hover, [data-state="hover"]) { background: var(--sp-pill-quiet-edge); }
+/* names off + quiet (filtered out): the filled footprint steps to the quiet TEXT colour (gray 70 / gray 30)
+   — still filled (= assigned), lighter than a match, 5.7 / 10 on the mat (the quiet EDGE was 1.7); no opacity
+   (PHASE3DS §1.16 amendment, PR 3b) */
+.sp-pill--names-off.sp-pill--quiet { background: var(--sp-pill-quiet-text); }
+.sp-pill--names-off.sp-pill--quiet:is(:hover, [data-state="hover"]) { background: var(--sp-pill-quiet-text); }
 /* 44px hit region (deviation 7): the asset's touch-target pseudo, on every marker */
 .sp-pill.cds-touch-target::after, .sp-seat-footprint.cds-touch-target::after { content: ""; }
 .sp-seat-footprint.cds-touch-target { position: relative; }

@@ -339,6 +339,16 @@ test("no shadow-[var( arbitrary class (Tailwind v3 drops it silently)", () => {
 // the primary-action colour in every theme state; IBM blue is never the
 // primary; the logo orange never appears as a UI colour.
 // ---------------------------------------------------------------------------
+// Owner ruling 2026-09-05 (PR 3b, Q1): `app/globals.css` is Tailwind base + resets
+// (and the font bridge / raster filter app rules) — never a product component
+// rule. The PR 3a row rules that lived here for specificity moved into
+// sp-components.css (both copies) as PHASE3DS §1.14 / §1.8 amendments.
+test("globals.css holds no .sp- or .cds- selector (component rules live in the sheet)", () => {
+  const css = stripCssComments(read("app/globals.css"));
+  const selectors = [...css.matchAll(/(^|[\s,}>])\.(sp|cds)-[a-z][\w-]*/g)].map(m => m[0].trim());
+  assert.deepEqual(selectors, [], `globals.css must not style .sp-* / .cds-* — move the rule into sp-components.css (both copies): ${selectors.join(", ")}`);
+});
+
 test("brand layer: terracotta is the primary in all three theme states, blue is not", () => {
   const css = stripCssComments(read(BRAND_FILE));
   const blocks = [

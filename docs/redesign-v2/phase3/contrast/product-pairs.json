@@ -708,6 +708,18 @@
   "kind": "text"
  },
  {
+  "name": "light · names-off quiet footprint gray-70 on the mat (background white)",
+  "fg": "#525252",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · names-off ◇ stroke = pill fill white on the gray-100 footprint",
+  "fg": "#ffffff",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
   "name": "light · kbd shortcut hint text-secondary gray-70 on field-01 #f4f4f4 (PR 3a: was text-helper gray-60, 4.36)",
   "fg": "#525252",
   "bg": "#f4f4f4",
@@ -1048,6 +1060,18 @@
   "fg": "#c6c6c6",
   "bg": "#262626",
   "kind": "text"
+ },
+ {
+  "name": "dark · names-off quiet footprint gray-30 on the mat (background #161616)",
+  "fg": "#c6c6c6",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · names-off ◇ stroke = pill fill #393939 on the gray-10 footprint",
+  "fg": "#393939",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
  },
  {
   "name": "dark · text-on-color white on primary blue-60",

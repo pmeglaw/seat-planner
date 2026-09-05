@@ -858,7 +858,7 @@ not taken.)
 Field in the control row (320px, never labelled, magnifier + placeholder, Ctrl/⌘ K). Results open in the existing 560px palette anchored to the field's left edge — a disclosure, results in place. A trailing scope segment **"This floor ▾ / Whole building"** sits inside the field; the results header always carries both counts ("7 on this floor · 11 in building"), zero included. Typing never changes the floor; opening a result on the other floor does (status-role announcement, D1′). `?q=` landing: field pre-filled and results open; a unique match auto-selects (seat → inspector; unseated person → roster row) and auto-switches floor; several matches stay a list; zero shows the zero state with the query kept. (Ruling 17; closes E2.4 for good.)
 
 #### D1-e · Copy link
-*Roster rows built 2026-09-04 (PR 3a: `?q=<name>`, in-place "Copied", announced); inspector header + person block in PR 3b.*
+*Roster rows built 2026-09-04 (PR 3a: `?q=<name>`, in-place "Copied", announced); inspector header (`?seat=`) + person block (`?q=`) built 2026-09-05 (PR 3b).*
 
 Copy icon with a "Copied" confirmation (patterns: Copy) on the inspector header → `?seat=<label>`; on the person block inside the inspector and on roster rows → `?q=<name>`. Roster rows stay non-opening (deviation 9 holds — an icon button on a static row is not a disclosure). Closes backlog DIR-1 (D1-a).
 
@@ -1052,6 +1052,7 @@ canvas; its band clearance follows the band, not the floor it left.
 ### D2 — Phase 2 amendments (2026-09-02, map PR; owner rulings Q1–Q2 the same day)
 
 #### D2-a · Seat inspector side panel is 400px — D2's own conclusion, now ruled
+*Built 2026-09-05 (PR 3b): `RightSlot` over the canvas column, the column pushed by `--sp-slot-w`; the inspector, the mode card and Ask Planner share it, one owner at a time (INV-4); the band below is never covered.*
 D2's measured paragraph is the evidence: at a 480 push the tightest marker gap on the 1440px canvas falls to 42.3px and two 44px hit regions overlap; the floor holds to a 420 panel; the measured content (22-character longest name, 17-character department, 4-character label, notes on 1 of 68 seats) does not need 480. **Ruled 400** (owner, 2026-09-02); the alternative — 480 with hit regions held at unpushed size — is **not** taken. The inspector's overflow state must carry the ≤ 22-character name constraint so Phase 3 sizes the type for it. Slide-in, pushes; below the control row (top 96), full remaining height. Recorded as **deviation 15** (§6).
 
 #### D2-b · Draft-mode control row order (owner ruling Q2)
