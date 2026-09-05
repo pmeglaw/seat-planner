@@ -472,6 +472,16 @@ light, red 40 g100); the asset lacks the name, so `--sp-button-danger-ghost-text
 the product overrides the asset class (and the overflow menu's danger item) globally. Hover stays the
 filled danger surface. 4.87 / 6.38 dark, 5.00 / 4.55 light (§3).
 
+**Phase 4 PR 4 amendment (owner ruling 2026-09-05; PHASE4BUILD §1.38).** The DESTRUCTIVE confirmation (Deactivate…)
+is the narrow tearsheet (§1.28) opening over the still-open panel, not the confirm modal this entry drew — the modal
+sentence above is superseded for that case; "a modal over a side panel is allowed" still governs the **dirty-close
+ask**, which stays the asset modal. On that modal the specimen disagrees with itself: the anatomy text (line 177)
+says "the dirty-close ask uses the same container with a plain primary", its markup (line 201) paints Discard changes
+as `.cds-btn--danger`. **The anatomy text is built** — Keep editing (secondary) · Discard changes (plain primary): a
+discard of unsaved edits is not destruction of data. Panel as built: `EmployeePanel.tsx` (layer-02, 50/50 footer, no
+×, one dirty check for Cancel / Esc / scrim; Department on the 3b combobox with the create row; the refused
+deactivation inline in the danger zone with the seat link).
+
 ### 1.25 Structured list with inline rename — `.sp-list` (§3 "Structured list with inline rename · none needed")
 
 48px rows: name · count (text-secondary, tabular, 96) · ghost Rename · ⋯ overflow holding Delete (danger) —
@@ -511,6 +521,13 @@ edge and tint, and the primary is disabled with its reason in a line above the f
 a done-state** ("Export the current draft first" → "✓ Exported 14:02") swaps its label for the outcome,
 takes text-secondary with a success-mark check, and stays a button — never disabled. Applying: primary
 `aria-busy`, Cancel disabled for the transaction.
+
+**Phase 4 PR 4 amendment B (owner ruling 2026-09-05; PHASE4BUILD §1.38).** The narrow sheet now also hosts the
+three Management confirmations (Deactivate employee · Delete department · Delete zone), whose primary is the DANGER
+button: `.sp-tearsheet--narrow .sp-tearsheet-footer .cds-btn--danger { min-width: 224px }` joins the primary's rule so
+the sheets read alike — the one component-sheet change of PR 4 (both copies, byte-identical). The specimen's modal
+versions of those confirmations (`03-panels-and-sheets.html` lines 194, 204) are superseded. White on red 60 (5.00 /
+5.00) was already in the gated pairs.
 
 ### 1.29 Reception — `.sp-recep` family (§3 "Search input lg with clear ×", "Listbox rows", "Readout tile with display numeral", "Row-buttons", "Error boundary card"); route cards
 
@@ -817,9 +834,10 @@ the file Phase 4 touches. The specimens' HTML is reference; the CSS files are th
 16. **File trigger** — the labelled button forwards its click to a hidden `<input type=file>` with the same `name`
     (`tabindex=-1`, `aria-hidden`), so focus stays on the button (`app/(shell)/admin/settings/page.tsx`); every unhappy
     path renders inline under the section before the tearsheet opens.
-17. **Side panel behaviour** — focus trap, Esc-asks-when-dirty, scrim click = Cancel, confirm modal on top (employee
-    editor in `components/admin-management/`); the tearsheets never open a modal from inside (the review dialogs in
-    `components/admin-settings/`).
+17. **Side panel behaviour** — focus trap, Esc-asks-when-dirty (the confirm modal on top), scrim click = Cancel
+    (employee editor in `components/admin-management/`); **destructive confirmations are the narrow tearsheet over the
+    panel** (owner ruling 2026-09-05, PHASE4BUILD §1.38 — amended from "confirm modal on top"); the tearsheets never
+    open a modal from inside (the review dialogs in `components/admin-settings/`).
 18. **Reception keyboard** — ↑ ↓ move `[data-highlight]`, ↵ sets `aria-selected` (lock), Esc unlocks then clears; the
     readout region is `aria-live` (`components/reception/ReceptionScreen.tsx`).
 19. **Contrast regression** — after every token change, rerun the two commands in §3; a Phase 4 `tests/*.test.mjs` may

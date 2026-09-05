@@ -1229,10 +1229,18 @@ on top of the side panel with the consequences spelled out (a side panel may ope
 not); the published-map refusal becomes an inline error in the panel with a link to the seat. No reactivate,
 bulk actions or delete are added.
 
+*Phase 4 PR 4 amendment (owner ruling 2026-09-05; PHASE4BUILD §1.38).* The Deactivate confirmation is the **narrow
+tearsheet** (`.sp-tearsheet--narrow`, right-aligned Cancel · danger primary, no ×) opening OVER the still-open panel —
+not a confirm modal on top. The dirty-close ask stays the modal (PHASE3DS §1.24). Nothing else in D5-b changes.
+
 **D5-c · Departments and Zones are structured lists with visible actions.** Row: name · count · ghost Rename
 (inline) · overflow ⋯ with Delete (danger). The hover-revealed trash goes — hidden-until-hover actions are
 keyboard-undiscoverable and a taste tell. Create = the header primary opening a one-field modal. Delete keeps
 the shipped confirm copy (moderate impact, no typed confirmation). Names only; zone geometry stays on the map.
+
+*Phase 4 PR 4 amendment (owner ruling 2026-09-05; PHASE4BUILD §1.38).* Delete department / zone confirm in the
+**narrow tearsheet** with the shipped copy, not a modal. Rename keeps its Save · Cancel (blur validates, never commits;
+the duplicate helper quotes the name and names the next step). Create keeps the one-field modal.
 
 **D5-d · Route boundaries.** Not-admin uses the same 403 card as `/admin`, gaining the "Back to seat map"
 action the shipped body-only variant lacks; the route error keeps its own admin voice; loading is skeleton
@@ -1271,6 +1279,10 @@ with the refreshed-draft note.
 **D6-d · Reset draft gone from Settings** (ruling 22; Q7 keeps the map's Discard). The snapshots section loses
 its danger styling — nothing destructive remains on the page. Not-admin uses the shared 403 card with the
 action; the route error keeps the admin voice; loading is section skeletons.
+
+*Built PR 4 (2026-09-05).* The Settings Reset-draft concept is **superseded** by Discard draft changes in the map's
+publish flow (PR 3b); `resetDraftToPublishedAction` has one call site (`usePublishReview.ts`), pinned by
+`bulk-destructive-action-safety-source`. Nothing on Settings is destructive; the page reads the draft layer only.
 
 **D6-e · "Export the current draft first" inside the restore review** (owner ruling 2026-09-03). A **ghost
 button** (an action, not a link) in the review body: downloads the current draft snapshot, does **not** close
