@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DataUtilitiesPanel } from "@/components/admin-settings/DataUtilitiesPanel";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { getAdminPageContext } from "@/lib/adminPageGuard";
@@ -10,13 +11,20 @@ export default async function AdminSettingsPage() {
   const { supabase, isAdmin } = await getAdminPageContext("/admin/settings");
 
   if (!isAdmin) {
+    // The shared 403 card (DECISIONS D6-d): the asset empty state on the
+    // route card with the action. Its tertiary sits on the white card
+    // (layer-02), never layer-01 — 4.14:1 there is recorded not-gated
+    // (PHASE4BUILD §1.22).
     return (
-      <main className="flex min-h-0 flex-1 items-center justify-center bg-[var(--sp-background)] p-6 text-[var(--sp-text-primary)]">
-        <section className="max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-6 shadow-sp">
-          <h1 className="text-lg font-semibold text-[var(--sp-text-primary)]">Admin access required</h1>
-          <p className="mt-2 text-sm text-[var(--sp-text-secondary)]">
-            You are signed in, but your profile does not have admin permissions.
-          </p>
+      <main className="flex min-h-0 flex-1 items-start justify-center bg-[var(--sp-background)] p-8 text-[var(--sp-text-primary)]">
+        <section className="sp-route-card w-full bg-[var(--sp-layer-02)]">
+          <div className="cds-empty">
+            <h2>Admin access required</h2>
+            <p>You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to import or restore draft data.</p>
+            <div className="cds-empty-actions">
+              <Link href="/" className="cds-btn cds-btn--tertiary cds-btn--md">Back to seat map</Link>
+            </div>
+          </div>
         </section>
       </main>
     );
@@ -25,12 +33,12 @@ export default async function AdminSettingsPage() {
   // Paged: an unbounded select is silently truncated at the project row cap.
   // This page feeds CSV export and the JSON snapshot, so a short read would
   // write an incomplete backup that still looks like a complete one.
-  // Two explicit queries, not one parameterised helper: which layer a surface
-  // reads is the invariant this codebase is built on, and it is verified by
-  // grepping these files. A `layer` variable would hide it.
+  // This surface reads the DRAFT layer only — the invariant this codebase is
+  // built on, verified by grepping this file. (Reset draft, the one thing
+  // here that compared against the published layer, retired with ruling 22.)
   // Independent queries fire together — serial awaits stacked round-trips
   // into this force-dynamic render (seconds of dead time after a rail click).
-  const [seats, publishedSeats, employees] = await Promise.all([
+  const [seats, employees] = await Promise.all([
     fetchAllRows<SeatWithEmployee>(
       (from, to) =>
         supabase
@@ -40,16 +48,6 @@ export default async function AdminSettingsPage() {
           .order("label")
           .range(from, to),
       { label: "draft seats" }
-    ),
-    fetchAllRows<SeatWithEmployee>(
-      (from, to) =>
-        supabase
-          .from("seats")
-          .select("*, employee:employees(*)", { count: "exact" })
-          .eq("layer", "published")
-          .order("label")
-          .range(from, to),
-      { label: "published seats" }
     ),
     fetchAllRows<Employee>(
       (from, to) =>
@@ -83,19 +81,17 @@ export default async function AdminSettingsPage() {
         tabIndex={0}
         className="flex-1 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)] lg:min-h-0 lg:overflow-y-auto"
       >
-        <div className="mx-auto w-full max-w-[760px] px-6 pb-12 pt-6">
-        <header className="mb-4">
-          <h1 className="text-[22px] font-semibold leading-tight text-[var(--sp-text-primary)]">Settings</h1>
-          <p className="mt-1 text-[13.5px] leading-5 text-[var(--sp-text-secondary)]">
-            Import, export, and recovery tools. Everything here changes the draft only.
-          </p>
-        </header>
-
-        <DataUtilitiesPanel
-          seats={seats}
-          publishedSeats={publishedSeats}
-          employees={employees}
-        />
+        {/* The Settings archetype (PHASE3DS §1.22 / §1.27): the page frame with
+            the asset page header — title, subtitle, NO primary (D6-a: each
+            section carries its own) — and the 776 content column. */}
+        <div className="sp-page mx-auto w-full">
+          <div className="cds-page-header">
+            <div>
+              <h1 className="cds-page-title">Settings</h1>
+              <p className="cds-page-subtitle">Import, export and recovery. Everything here changes the draft only.</p>
+            </div>
+          </div>
+          <DataUtilitiesPanel seats={seats} employees={employees} />
         </div>
       </div>
     </main>

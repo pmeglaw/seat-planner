@@ -247,24 +247,8 @@ test("move-conflict dialog when assigning an already-seated employee", async ({ 
   await expect(page.getByRole("dialog")).toBeHidden();
 });
 
-test("reset-draft review dialog on Settings", async ({ page }) => {
-  test.setTimeout(60_000);
-  await page.goto("/admin/settings");
-
-  // openResetReview() early-returns with "The draft already matches the
-  // published map — nothing to reset." when there is no delta; the N01 nudge
-  // from beforeAll guarantees one. Open is synchronous and OUTSIDE the shared
-  // useTransition, so the buttons mount enabled — no palette animation to
-  // out-wait, unlike the file-input reviews.
-  await retryUntilVisible(
-    () => page.getByRole("button", { name: /^Reset draft to published\./ }).click({ timeout: 2_000 }),
-    page.getByRole("heading", { name: "Reset draft to published?" })
-  );
-  await expect(page.getByRole("button", { name: "Keep draft changes" })).toBeEnabled();
-  await expectNoAxeViolations(page);
-  await page.getByRole("button", { name: "Keep draft changes" }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
-});
+// (PR 4: the Settings Reset-draft review retired with ruling 22 — the map's
+// Discard confirm above is the one reset surface.)
 
 // LAST in the file on purpose: a CI retry of any test in this file spawns a
 // fresh worker whose beforeAll re-creates X99, and only this test deletes it.

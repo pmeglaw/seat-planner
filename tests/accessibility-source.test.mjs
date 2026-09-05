@@ -261,7 +261,11 @@ test("a highlighted viewer seat announces which of the two causes lit it up", as
 
 test("ask planner drawer and settings review dialogs keep dialog semantics and focus targets", async () => {
   const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
-  const settingsPanelSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+  // PR 4: the two reviews are the narrow tearsheets.
+  const settingsPanelSource = [
+    await readSource("../components/admin-settings/CsvImportSheet.tsx"),
+    await readSource("../components/admin-settings/SnapshotRestoreSheet.tsx")
+  ].join("\n");
 
   assert.match(askPlannerSource, /id="ask-planner-drawer"/);
   assert.match(askPlannerSource, /aria-labelledby="ask-planner-title"/);
@@ -320,7 +324,8 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
     "../components/seat-map/PublishReviewSheet.tsx",
     "../components/seat-map/SeatInspector.tsx",
     // (AskPlannerDrawer left this list in PR 3b: it is the right slot, a side panel.)
-    "../components/admin-settings/DataUtilitiesPanel.tsx",
+    "../components/admin-settings/CsvImportSheet.tsx",
+    "../components/admin-settings/SnapshotRestoreSheet.tsx",
     // PR 4: Management's dialogs are the 480 panel, the narrow confirm sheet
     // and the shared asset modal (dirty-close ask, one-field create).
     "../components/admin-management/EmployeePanel.tsx",
@@ -1137,7 +1142,10 @@ test("touch devices get visible destructive affordances, contained modals, and s
   // PR 4: the panel body is the Management scroll region; the lists' Delete
   // is a menu item behind ⋯ (always in the tree), never hover-revealed.
   const managementSource = await readSource("../components/admin-management/EmployeePanel.tsx");
-  const dataUtilitiesSource = await readSource("../components/admin-settings/DataUtilitiesPanel.tsx");
+  const dataUtilitiesSource = [
+    await readSource("../components/admin-settings/CsvImportSheet.tsx"),
+    await readSource("../components/admin-settings/SnapshotRestoreSheet.tsx")
+  ].join("\n");
   const askPlannerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
@@ -1155,7 +1163,9 @@ test("touch devices get visible destructive affordances, contained modals, and s
   // chain to the page behind (#198).
   // PR 3b: the drawer's scroll region is the slot body (`.sp-slot-body`, overflow: auto in the sheet).
   assert.match(askPlannerSource, /<div className="sp-slot-body">/);
-  assert.equal((dataUtilitiesSource.match(/min-h-0 overflow-y-auto overscroll-contain/g) ?? []).length, 2);
+  // PR 4: the two Settings reviews are narrow tearsheets — their scroll
+  // region is `.sp-tearsheet-body` (overflow: auto in the sheet), one each.
+  assert.equal((dataUtilitiesSource.match(/className="sp-tearsheet-body"/g) ?? []).length, 2);
   // PR 3b: the publish review is the wide tearsheet — its scroll region is
   // `.sp-tearsheet-main` (overflow: auto in the sheet); the body grid is min-height 0.
   assert.match(await readSource("../components/seat-map/PublishReviewSheet.tsx"), /className="sp-tearsheet-main"/);

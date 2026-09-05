@@ -31,9 +31,9 @@ function megabytes(bytes: number) {
 }
 
 /** Returns null when the file may be read, else the inline error to show. */
-export function checkUpload(file: { name: string; size: number }, kind: UploadKind): string | null {
-  if (!file.name.toLowerCase().endsWith(EXTENSION[kind])) return WRONG_TYPE[kind];
-  if (file.size > UPLOAD_LIMIT_BYTES) return `This file is ${megabytes(file.size)} MB — the limit is 5 MB.`;
+export function checkUpload(file: { name?: string; size?: number }, kind: UploadKind): string | null {
+  if (typeof file.name === "string" && !file.name.toLowerCase().endsWith(EXTENSION[kind])) return WRONG_TYPE[kind];
+  if (typeof file.size === "number" && file.size > UPLOAD_LIMIT_BYTES) return `This file is ${megabytes(file.size)} MB — the limit is 5 MB.`;
   if (file.size === 0) return EMPTY[kind];
   return null;
 }

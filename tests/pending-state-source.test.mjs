@@ -39,6 +39,8 @@ const MANAGEMENT = "components/admin-management/AdminManagementPanel.tsx";
 const CONFIRM_SHEET = "components/admin-management/ManagementConfirmSheet.tsx";
 const OPTION_LIST = "components/admin-management/OptionList.tsx";
 const OPTION_CREATE = "components/admin-management/OptionCreateModal.tsx";
+const CSV_SHEET = "components/admin-settings/CsvImportSheet.tsx";
+const SNAPSHOT_SHEET = "components/admin-settings/SnapshotRestoreSheet.tsx";
 const SETTINGS = "components/admin-settings/DataUtilitiesPanel.tsx";
 const BUTTON = "components/ui/Button.tsx";
 
@@ -188,13 +190,14 @@ const FLOW_REGISTRY = [
   },
   {
     id: "19-csv-apply",
-    file: SETTINGS,
-    patterns: [/busy \? "Applying…"/, /loading=\{busy\}/]
+    file: CSV_SHEET,
+    patterns: [/busy \? "Applying…" : blocked \? "Fix CSV first" : "Apply import"/, /aria-busy=\{busy \|\| undefined\}/]
   },
   {
-    id: "20-json-restore-and-reset",
-    file: SETTINGS,
-    patterns: [/busy \? "Restoring…" : "Restore draft snapshot"/, /busy \? "Resetting…" : "Reset to published"/]
+    // PR 4: Reset draft left Settings (ruling 22) — the restore is the flow.
+    id: "20-json-restore",
+    file: SNAPSHOT_SHEET,
+    patterns: [/busy \? "Restoring…" : "Restore draft snapshot"/, /aria-busy=\{busy \|\| undefined\}/]
   }
 ];
 

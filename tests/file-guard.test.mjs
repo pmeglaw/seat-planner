@@ -36,6 +36,10 @@ test("too large names the actual size and the limit", () => {
   assert.equal(checkUpload(file("roster.csv", UPLOAD_LIMIT_BYTES + 1, "text/csv"), "csv"), "This file is 5.0 MB — the limit is 5 MB.");
 });
 
+test("a File-like without name or size (a test double) is not refused on those grounds", () => {
+  assert.equal(checkUpload({}, "csv"), null);
+});
+
 test("an empty file is refused before parsing", () => {
   assert.equal(checkUpload(file("roster.csv", 0, "text/csv"), "csv"), "The CSV is empty.");
   assert.equal(checkUpload(file("export.json", 0, ""), "json"), "Cannot restore an empty snapshot.");

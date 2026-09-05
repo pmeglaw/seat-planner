@@ -1,21 +1,38 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+// Settings — import, export and recovery (PHASE2UX §1S; DECISIONS D6;
+// PHASE3DS §1.26–§1.28; Phase 4 PR 4). The Settings archetype on the 776
+// column: the callout first (guidance read BEFORE acting — loads with the
+// page, never dismissed, no status), then two sections each with its own one
+// primary: CSV assignments — Import CSV (primary, labelled trigger stating
+// type + limit) · Export CSV (tertiary) · Download CSV template (ghost) and
+// the columns + example line; Draft working-copy snapshots — Export draft
+// snapshot (primary) · Restore draft snapshot… (tertiary, labelled trigger).
+// Reset draft is GONE (ruling 22; D6-d): Discard draft changes in the map's
+// publish flow owns that need; nothing on this page is destructive.
+//
+// Review-before-mutate: choosing a file only opens a review sheet; the
+// mutations run from the sheets' primaries with the concurrency fences
+// captured at parse time. Every unhappy path (wrong type, too large, empty,
+// missing columns, bad snapshot shape) is an inline error under its section
+// BEFORE any sheet opens (P2-6 / P3-16).
+
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { clientActionErrorMessage } from "@/lib/clientActionError";
 import { listActiveEmployeeExpectations, listDraftSeatExpectations, type DraftSeatExpectation, type EmployeeExpectation } from "@/lib/draftConcurrency";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
-import { importAssignmentsCsvAction, resetDraftToPublishedAction, restoreDraftSnapshotAction } from "@/app/actions";
-import { buildPublishChangeSummary } from "@/lib/publishSummary";
-import { Button } from "@/components/ui/Button";
-import { CloseIcon } from "@/components/ui/CloseIcon";
-import { useDialogFocus } from "@/components/ui/useDialogFocus";
+import { checkUpload, describeUploadLimit } from "@/lib/fileGuard";
+import { importAssignmentsCsvAction, restoreDraftSnapshotAction } from "@/app/actions";
+import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
+import { CsvImportSheet } from "@/components/admin-settings/CsvImportSheet";
+import { FileTrigger } from "@/components/admin-settings/FileTrigger";
+import { SnapshotRestoreSheet } from "@/components/admin-settings/SnapshotRestoreSheet";
 
 type DataUtilitiesPanelProps = {
   seats: SeatWithEmployee[];
-  publishedSeats: SeatWithEmployee[];
   employees: Employee[];
 };
 
@@ -35,6 +52,7 @@ function downloadJson(filename: string, payload: unknown) {
 
 type CsvImportReview = {
   text: string;
+  fileName: string;
   /**
    * Concurrency fence: the draft as this page held it when the CSV was parsed
    * for review — the state the admin is actually looking at while confirming.
@@ -56,6 +74,8 @@ type CsvImportReview = {
 
 type JsonRestoreReview = {
   snapshot: DraftSnapshot;
+  fileName: string;
+  exportedAt: string | null;
   seatCount: number;
   employeeCount: number;
 };
@@ -66,92 +86,65 @@ function isDraftSnapshot(value: unknown): value is DraftSnapshot {
   return Array.isArray(candidate.seats) && Array.isArray(candidate.employees);
 }
 
-function ReviewCountCard({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "warn" }) {
-  return (
-    <div className={["border p-3", tone === "warn" ? "border-[var(--sp-status-draft-mark)] bg-[var(--sp-status-draft-surface)]" : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)]"].join(" ")}>
-      <div className={["text-xs font-medium", tone === "warn" ? "text-[var(--sp-status-draft-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>
-        {label}
-      </div>
-      <div className="mt-1 text-xl font-semibold text-[var(--sp-text-primary)]">{value.toLocaleString()}</div>
-    </div>
-  );
+function readExportedAt(value: unknown): string | null {
+  const stamp = (value as { exportedAt?: unknown } | null)?.exportedAt;
+  if (typeof stamp !== "string") return null;
+  const date = new Date(stamp);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-// v12 (#14): the utility rows became tiles. The affordance mark still carries
-// the honesty rule from the 2026-07-16 critique — a download arrow means the
-// file lands immediately, the ↗ means a review dialog opens first.
-function UtilityTile({ label, description, tone = "default", affordance = "review", wide = false, disabled, onClick }: { label: string; description: string; tone?: "default" | "danger"; affordance?: "download" | "review"; wide?: boolean; disabled?: boolean; onClick: () => void }) {
-  const isDanger = tone === "danger";
-
-  return (
-    <button
-      type="button"
-      aria-label={`${label}. ${description}`}
-      title={description}
-      onClick={onClick}
-      disabled={disabled}
-      className={[
-        "relative min-h-[96px] p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)] disabled:cursor-not-allowed disabled:opacity-50",
-        wide ? "sm:col-span-full" : "",
-        isDanger
-          ? "bg-[var(--sp-status-error-surface)] hover:bg-[var(--sp-status-error-surface)]"
-          : "bg-[var(--sp-layer-01)] hover:bg-[var(--sp-layer-hover)]"
-      ].join(" ")}
-    >
-      <span className={["block text-[13.5px] font-semibold", isDanger ? "text-[var(--sp-status-error-mark)]" : "text-[var(--sp-text-primary)]"].join(" ")}>{label}</span>
-      <span className={["mt-1 block max-w-[38ch] pr-6 text-[12.5px] leading-5", isDanger ? "text-[var(--sp-status-error-text)]" : "text-[var(--sp-text-helper)]"].join(" ")}>{description}</span>
-      <span aria-hidden="true" className={["absolute bottom-3 right-3", isDanger ? "text-[var(--sp-status-error-mark)]" : "text-[var(--sp-status-neutral-mark)]"].join(" ")}>
-        {affordance === "download" ? (
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-            <path d="M10 3v9M6.5 9 10 12.5 13.5 9M4 16.5h12" />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-            <path d="M6 14 14 6M8 6h6v6" />
-          </svg>
-        )}
-      </span>
-    </button>
-  );
+function clockLabel(date: Date) {
+  return new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(date);
 }
 
-export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUtilitiesPanelProps) {
+const CSV_COLUMNS = "seat_label, employee_name, employee_email, position, department, zone, status, notes";
+const CSV_EXAMPLE = "A-12, Jane Doe, , Associate, Litigation, North Wing, assigned, Window seat";
+
+export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const jsonInputRef = useRef<HTMLInputElement | null>(null);
-  const csvReviewDialogFocusRef = useDialogFocus<HTMLElement>();
-  const jsonReviewDialogFocusRef = useDialogFocus<HTMLElement>();
-  const resetReviewDialogFocusRef = useDialogFocus<HTMLElement>();
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [csvError, setCsvError] = useState<string | null>(null);
+  const [csvNotice, setCsvNotice] = useState<string | null>(null);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
+  const [snapshotNotice, setSnapshotNotice] = useState<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [csvReview, setCsvReview] = useState<CsvImportReview | null>(null);
   const [jsonReview, setJsonReview] = useState<JsonRestoreReview | null>(null);
-  const [resetReviewOpen, setResetReviewOpen] = useState(false);
-  // Seat-only diff for the reset review: employees deliberately excluded —
-  // reset never touches the directory (owner-confirmed people contract).
-  const resetSummary = buildPublishChangeSummary(seats, publishedSeats);
+  const [exportedAtLabel, setExportedAtLabel] = useState<string | null>(null);
+  const [busyOp, setBusyOp] = useState<"csv-parse" | "csv-apply" | "json-parse" | "json-restore" | null>(null);
 
   const busy = pending;
 
-  function reportError(caught: unknown, fallback: string) {
-    setNotice(null);
-    setError(clientActionErrorMessage(caught, fallback));
+  function run(op: NonNullable<typeof busyOp>, work: () => Promise<void>) {
+    setBusyOp(op);
+    startTransition(async () => {
+      try {
+        await work();
+      } finally {
+        setBusyOp(null);
+      }
+    });
   }
 
-  function resetMessages() {
-    setError(null);
-    setNotice(null);
+  function reportCsvError(caught: unknown, fallback: string) {
+    setCsvNotice(null);
+    setCsvError(clientActionErrorMessage(caught, fallback));
+  }
+
+  function reportSnapshotError(caught: unknown, fallback: string) {
+    setSnapshotNotice(null);
+    setSnapshotError(clientActionErrorMessage(caught, fallback));
   }
 
   function closeCsvReview() {
     setCsvReview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function closeJsonReview() {
     setJsonReview(null);
-    if (jsonInputRef.current) jsonInputRef.current.value = "";
+    setRestoreError(null);
+    setExportedAtLabel(null);
   }
 
   function exportCsv() {
@@ -166,12 +159,26 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
     downloadJson("seat-map-export.json", { exportedAt: new Date().toISOString(), seats, employees });
   }
 
+  // D6-e: the export inside the review — same download, the review stays,
+  // the button shows its done-state in place.
+  function exportCurrentDraftFromReview() {
+    exportDraftSnapshot();
+    setExportedAtLabel(clockLabel(new Date()));
+  }
+
   function importCsv(file: File | undefined) {
     if (!file) return;
+    setCsvNotice(null);
+    // Type, size and emptiness are refused HERE, inline, before any sheet.
+    const refusal = checkUpload(file, "csv");
+    if (refusal) {
+      setCsvError(refusal);
+      return;
+    }
 
-    startTransition(async () => {
+    run("csv-parse", async () => {
       try {
-        resetMessages();
+        setCsvError(null);
         const text = await file.text();
         const parsed = parseAssignmentCsv(text);
 
@@ -180,8 +187,18 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
         const unavailableCount = parsed.rows.filter(row => row.status === "unavailable").length;
         const clearCount = parsed.rows.length - assignedCount;
 
+        // Structural refusals (an empty file, missing columns — the parser
+        // reports them on row 1) stay inline under the section; only
+        // row-level issues reach the blocked review.
+        const structural = parsed.issues.filter(issue => issue.row === 1);
+        if (structural.length > 0) {
+          setCsvError(structural.map(issue => issue.message).join(" "));
+          return;
+        }
+
         setCsvReview({
           text,
+          fileName: file.name,
           // Fences captured at parse time: confirming applies the CSV against
           // the draft AND the employee directory the admin reviewed, not
           // whatever either becomes while the review sits open.
@@ -194,10 +211,8 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
           unavailableCount,
           issues: parsed.issues
         });
-
-        if (fileInputRef.current) fileInputRef.current.value = "";
       } catch (caught) {
-        reportError(caught, "Could not import CSV.");
+        reportCsvError(caught, "Could not import CSV.");
       }
     });
   }
@@ -206,32 +221,39 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
     if (!csvReview || csvReview.issues.length > 0) return;
     const review = csvReview;
 
-    startTransition(async () => {
+    run("csv-apply", async () => {
       try {
-        resetMessages();
+        setCsvError(null);
         const payload = await importAssignmentsCsvAction(review.text, review.expectedSeats, review.expectedEmployees);
         setCsvReview(null);
         if (!payload.ok) {
-          setNotice(null);
-          setError(`${payload.message} This page has been refreshed with the latest draft — review it and try the import again if it is still what you want.`);
+          // MLS02 (PHASE2UX §1S.3): the reviewed rows went stale — close, refresh, re-review.
+          setCsvNotice(null);
+          setCsvError(`${payload.message} This page has been refreshed with the latest directory — review it and import the file again if it is still what you want.`);
           router.refresh();
           return;
         }
-        setNotice(`CSV import applied. ${payload.count.toLocaleString()} rows updated in the draft.`);
+        setCsvNotice(`CSV import applied — ${payload.count.toLocaleString()} ${payload.count === 1 ? "row" : "rows"} updated in the draft.`);
         router.refresh();
       } catch (caught) {
         setCsvReview(null);
-        reportError(caught, "Could not import CSV.");
+        reportCsvError(caught, "Could not import CSV.");
       }
     });
   }
 
   function importJson(file: File | undefined) {
     if (!file) return;
+    setSnapshotNotice(null);
+    const refusal = checkUpload(file, "json");
+    if (refusal) {
+      setSnapshotError(refusal);
+      return;
+    }
 
-    startTransition(async () => {
+    run("json-parse", async () => {
       try {
-        resetMessages();
+        setSnapshotError(null);
         const text = await file.text();
         const parsed = JSON.parse(text) as unknown;
 
@@ -239,53 +261,25 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
         // copy — routing it through the catch would let the digest-safe
         // fallback (clientActionErrorMessage) swallow the specific message.
         if (!isDraftSnapshot(parsed)) {
-          setNotice(null);
-          setError("Draft snapshot must include seats and employees arrays.");
+          setSnapshotError("The snapshot must include seats and employees arrays — choose a file exported from this page.");
+          return;
+        }
+        if (parsed.seats.length === 0 && parsed.employees.length === 0) {
+          setSnapshotError("Cannot restore an empty snapshot.");
           return;
         }
 
+        setRestoreError(null);
+        setExportedAtLabel(null);
         setJsonReview({
           snapshot: parsed,
+          fileName: file.name,
+          exportedAt: readExportedAt(parsed),
           seatCount: parsed.seats.length,
           employeeCount: parsed.employees.length
         });
-
-        if (jsonInputRef.current) jsonInputRef.current.value = "";
       } catch (caught) {
-        reportError(caught, "Could not import the draft snapshot.");
-      }
-    });
-  }
-
-  function openResetReview() {
-    resetMessages();
-    if (!resetSummary.hasChanges) {
-      setNotice("The draft already matches the published map — nothing to reset.");
-      return;
-    }
-    setResetReviewOpen(true);
-  }
-
-  function confirmResetToPublished() {
-    startTransition(async () => {
-      try {
-        resetMessages();
-        // Fence on the draft this page loaded, same as JSON restore: a reset
-        // confirmed against stale data cannot silently erase another admin's
-        // newer edits.
-        const result = await resetDraftToPublishedAction(listDraftSeatExpectations(seats));
-        setResetReviewOpen(false);
-        if (!result.ok) {
-          setNotice(null);
-          setError(`${result.message} This page has been refreshed with the latest draft — review it and try the reset again if it is still what you want.`);
-          router.refresh();
-          return;
-        }
-        setNotice("Draft reset to the published map. Seat changes were discarded; people edits in Management were kept.");
-        router.refresh();
-      } catch (caught) {
-        setResetReviewOpen(false);
-        reportError(caught, "Could not reset the draft to the published map.");
+        reportSnapshotError(caught, "Could not read the draft snapshot.");
       }
     });
   }
@@ -294,285 +288,143 @@ export function DataUtilitiesPanel({ seats, publishedSeats, employees }: DataUti
     if (!jsonReview) return;
     const review = jsonReview;
 
-    startTransition(async () => {
+    run("json-restore", async () => {
       try {
-        resetMessages();
+        setSnapshotError(null);
+        setRestoreError(null);
         // Fence on the draft this page loaded (the `seats` prop), so a restore
         // confirmed against stale data cannot silently revert edits another
         // admin committed since the page rendered.
         const result = await restoreDraftSnapshotAction(review.snapshot, listDraftSeatExpectations(seats));
-        setJsonReview(null);
         if (!result.ok) {
-          setNotice(null);
-          setError(`${result.message} This page has been refreshed with the latest draft — review it and try the restore again if it is still what you want.`);
+          // MLS02 (PHASE2UX §1S.4): the review STAYS with the server text; the
+          // page refreshes underneath so the next confirm fences on the latest draft.
+          setRestoreError(result.message);
           router.refresh();
           return;
         }
-        setNotice("Draft backup restored. The draft layer now matches the imported snapshot.");
+        setJsonReview(null);
+        setExportedAtLabel(null);
+        setSnapshotNotice(`Draft restored from ${review.fileName} — the draft now matches the snapshot.`);
         router.refresh();
       } catch (caught) {
-        setJsonReview(null);
-        reportError(caught, "Could not import the draft snapshot.");
+        setRestoreError(clientActionErrorMessage(caught, "Could not restore the draft snapshot."));
       }
     });
   }
 
   return (
-    <div className="space-y-4">
-      {/* PR-5 (§8.1): the surface's shared in-flight region — always mounted
-          (a region that mounts WITH its content is not reliably announced),
-          sr-only sibling of the visible outcome banners below, which keep
-          owning outcomes. */}
+    <div className="sp-settings">
+      {/* The surface's shared in-flight region — always mounted (a region that
+          mounts WITH its content is not reliably announced), sr-only sibling of
+          the visible outcome notifications below, which own outcomes. */}
       <div role="status" aria-live="polite" className="sr-only">
         {busy ? "Working…" : ""}
       </div>
-      {error && (
-        <div role="alert" className="whitespace-pre-wrap border border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] p-3 text-sm font-medium text-[var(--sp-status-error-text)]">
-          {error}
-        </div>
-      )}
 
-      {notice && (
-        <div role="status" className="border border-[var(--sp-status-neutral-mark)] bg-[var(--sp-status-neutral-surface)] p-3 text-sm font-semibold text-[var(--sp-status-neutral-text)]">
-          {notice}
-        </div>
-      )}
-
-      {/* White fill, not an amber wash: this is standing guidance, and a tinted
-          banner would read as an active warning every time the page loads. */}
-      <div className="flex items-start gap-2.5 border-l-[3px] border-[var(--sp-status-draft-mark)] bg-[var(--sp-layer-01)] px-3.5 py-3 shadow-[0_1px_2px_rgba(22,22,22,0.06)]">
-        <span aria-hidden="true" className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--sp-status-draft-mark)] text-xs font-bold leading-none text-[var(--sp-text-primary)]">!</span>
-        <p className="text-[12.5px] leading-5 text-[var(--sp-text-primary)]">
-          <strong className="font-semibold">The published map is never touched until you publish.</strong>{" "}
+      {/* Callout (PHASE3DS §1.26): guidance read before acting — loads with
+          the page, never dismissed, no icon, no status colour. */}
+      <div className="sp-callout">
+        <p>
+          <strong>The published map is never touched until you publish.</strong>{" "}
           Restores replace the entire draft — review before confirming.
         </p>
       </div>
 
-      <section>
-        {/* Uppercased in CSS, not in the string: the source keeps the honest
-            scope names the INFRA-02 guardrail (#277) pinned. */}
-        <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--sp-text-secondary)]">CSV assignments</h2>
-        <p className="mb-2 mt-1 text-xs leading-5 text-[var(--sp-text-helper)]">
-          Imports update draft assignments; seat positions don&apos;t move.
-        </p>
-        <div className="grid gap-px border border-[var(--sp-border-subtle)] bg-[var(--sp-border-subtle)] [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
-          <UtilityTile label="Download CSV template" description="A blank assignment sheet to fill in" affordance="download" onClick={downloadTemplate} disabled={busy} />
-          <UtilityTile label="Export CSV" description="Download draft assignments" affordance="download" onClick={exportCsv} disabled={busy} />
-          <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={event => importCsv(event.target.files?.[0])} />
-          <UtilityTile label="Import CSV" description="Review parsed rows before applying — nothing writes until you confirm" wide onClick={() => fileInputRef.current?.click()} disabled={busy} />
+      <section className="sp-section" aria-labelledby="settings-csv-heading">
+        <h2 id="settings-csv-heading">CSV assignments</h2>
+        <p className="sp-section-helper">Imports update draft assignments; seat positions don&apos;t move.</p>
+        <div className="sp-action-row">
+          <FileTrigger
+            label={`Import CSV · ${describeUploadLimit("csv")}`}
+            name="csv"
+            accept=".csv,text/csv"
+            variant="primary"
+            busy={busy && busyOp === "csv-parse"}
+            disabled={busy && busyOp !== "csv-parse"}
+            onFile={importCsv}
+          />
+          <button type="button" className="cds-btn cds-btn--tertiary cds-btn--md" onClick={exportCsv} disabled={busy}>Export CSV</button>
+          <button type="button" className="cds-btn cds-btn--ghost cds-btn--md" onClick={downloadTemplate} disabled={busy}>Download CSV template</button>
         </div>
+        {busy && busyOp === "csv-parse" ? (
+          <p className="sp-progress-line"><span className="sp-skeleton" aria-hidden="true" />Reading the file…</p>
+        ) : (
+          <p className="sp-file-line">
+            Columns: <code translate="no">{CSV_COLUMNS}</code> — e.g. <code translate="no">{CSV_EXAMPLE}</code>
+          </p>
+        )}
+        {csvError && (
+          <div role="alert" className="cds-notification cds-notification--error">
+            <NotificationGlyph kind="error" />
+            <div className="cds-notification-text">{csvError}</div>
+          </div>
+        )}
+        {csvNotice && (
+          <div role="status" className="cds-notification cds-notification--success">
+            <NotificationGlyph kind="success" />
+            <div className="cds-notification-text">{csvNotice}</div>
+          </div>
+        )}
       </section>
 
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--sp-status-error-mark)]">Draft working-copy snapshots</h2>
-        <p className="mb-2 mt-1 text-xs leading-5 text-[var(--sp-text-helper)]">
-          Draft seats and employees only. Restoring replaces the entire draft map, so review carefully before confirming.
-          These snapshots are not a database backup: they do not include the published map, publish history, or user accounts.
+      <section className="sp-section" aria-labelledby="settings-snapshots-heading">
+        {/* INFRA-02 (#277): this panel is a draft working copy, not a backup —
+            the honest scope name and the disclaimer stay on screen. */}
+        <h2 id="settings-snapshots-heading">Draft working-copy snapshots</h2>
+        <p className="sp-section-helper">
+          Draft seats and employees only. This is not a database backup: these snapshots do not include the published map, publish history, or user accounts.
         </p>
-        <div className="grid gap-px border border-[var(--sp-border-subtle)] bg-[var(--sp-border-subtle)] [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
-          <UtilityTile label="Export draft snapshot" description="Download draft seats and employees as JSON" affordance="download" onClick={exportDraftSnapshot} disabled={busy} />
-          <input ref={jsonInputRef} type="file" accept=".json,application/json" className="hidden" onChange={event => importJson(event.target.files?.[0])} />
-          <UtilityTile label="Restore draft snapshot" description="Review a draft snapshot before restoring" onClick={() => jsonInputRef.current?.click()} disabled={busy} />
-          <UtilityTile label="Reset draft to published" description="Discard every draft seat change; people edits are kept" tone="danger" wide onClick={openResetReview} disabled={busy} />
+        <div className="sp-action-row">
+          <button type="button" className="cds-btn cds-btn--primary cds-btn--md" onClick={exportDraftSnapshot}>Export draft snapshot</button>
+          <FileTrigger
+            label="Restore draft snapshot…"
+            name="snapshot"
+            accept=".json,application/json"
+            variant="tertiary"
+            busy={busy && busyOp === "json-parse"}
+            disabled={busy && busyOp !== "json-parse"}
+            onFile={importJson}
+          />
         </div>
+        {busy && busyOp === "json-parse" ? (
+          <p className="sp-progress-line"><span className="sp-skeleton" aria-hidden="true" />Reading the file…</p>
+        ) : (
+          <p className="sp-file-line">{describeUploadLimit("json")} — a file exported from this page.</p>
+        )}
+        {snapshotError && (
+          <div role="alert" className="cds-notification cds-notification--error">
+            <NotificationGlyph kind="error" />
+            <div className="cds-notification-text">{snapshotError}</div>
+          </div>
+        )}
+        {snapshotNotice && (
+          <div role="status" className="cds-notification cds-notification--success">
+            <NotificationGlyph kind="success" />
+            <div className="cds-notification-text">{snapshotNotice}</div>
+          </div>
+        )}
       </section>
-
-      {resetReviewOpen && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
-          <section
-            ref={resetReviewDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="reset-review-title"
-            aria-describedby="reset-review-description"
-            onKeyDown={event => {
-              if (event.key === "Escape" && !busy) {
-                event.stopPropagation();
-                setResetReviewOpen(false);
-              }
-            }}
-            className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 id="reset-review-title" className="text-base font-semibold">Reset draft to published?</h2>
-                <p id="reset-review-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-secondary)]">
-                  Every draft seat change is erased and the draft goes back to exactly what viewers see today.
-                  People edits in Management are kept. This cannot be undone.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setResetReviewOpen(false)}
-                disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-status-neutral-surface)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
-                aria-label="Close reset review"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <ReviewCountCard label="Added seats erased" value={resetSummary.addedSeats.length} tone={resetSummary.addedSeats.length > 0 ? "warn" : "default"} />
-              <ReviewCountCard label="Updated seats reverted" value={resetSummary.updatedSeatCount} tone={resetSummary.updatedSeatCount > 0 ? "warn" : "default"} />
-              <ReviewCountCard label="Removed seats restored" value={resetSummary.removedSeats.length} tone={resetSummary.removedSeats.length > 0 ? "warn" : "default"} />
-              <ReviewCountCard label="Total changes discarded" value={resetSummary.totalChangeCount} tone="warn" />
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button type="button" onClick={() => setResetReviewOpen(false)} disabled={busy} className="w-full">
-                Keep draft changes
-              </Button>
-              <Button type="button" variant="danger" onClick={confirmResetToPublished} loading={busy} className="w-full">
-                {busy ? "Resetting…" : "Reset to published"}
-              </Button>
-            </div>
-          </section>
-        </div>
-      )}
 
       {csvReview && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
-          <section
-            ref={csvReviewDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="csv-import-review-title"
-            aria-describedby="csv-import-review-description"
-            onKeyDown={event => {
-              if (event.key === "Escape" && !busy) {
-                event.stopPropagation();
-                closeCsvReview();
-              }
-            }}
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp"
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-[var(--sp-border-subtle)] pb-3">
-              <div>
-                <h2 id="csv-import-review-title" className="text-base font-semibold">
-                  {csvReview.issues.length > 0 ? "CSV import has blocking errors" : "Review CSV import"}
-                </h2>
-                <p id="csv-import-review-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
-                  CSV imports update saved draft assignments only. Marker positions and the published viewer map will not change until you publish.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeCsvReview}
-                disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-status-neutral-surface)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
-                aria-label="Close CSV import review"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="min-h-0 overflow-y-auto overscroll-contain py-4">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                <ReviewCountCard label="Rows" value={csvReview.rowCount} tone={csvReview.rowCount > 0 ? "warn" : "default"} />
-                <ReviewCountCard label="Assignments" value={csvReview.assignedCount} tone={csvReview.assignedCount > 0 ? "warn" : "default"} />
-                <ReviewCountCard label="Cleared" value={csvReview.clearCount} tone={csvReview.clearCount > 0 ? "warn" : "default"} />
-                <ReviewCountCard label="Reserved" value={csvReview.reservedCount} tone={csvReview.reservedCount > 0 ? "warn" : "default"} />
-                <ReviewCountCard label="Unavailable" value={csvReview.unavailableCount} tone={csvReview.unavailableCount > 0 ? "warn" : "default"} />
-              </div>
-
-              {csvReview.issues.length > 0 ? (
-                <div className="mt-3 border border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] p-3 text-sm text-[var(--sp-status-error-text)]">
-                  <div className="font-semibold">Blocking validation errors</div>
-                  <p className="mt-1 leading-5">
-                    Fix these rows in the CSV, then import the file again. No draft data has changed.
-                  </p>
-                  <ul className="mt-2 max-h-56 space-y-1 overflow-y-auto text-xs font-semibold leading-5">
-                    {csvReview.issues.map((issue, index) => (
-                      <li key={`${issue.row}-${issue.message}-${index}`}>
-                        Row {issue.row}: {issue.message}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div className="mt-3 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] p-3 text-sm font-semibold leading-5 text-[var(--sp-link-hover)]">
-                  This applies the CSV to the draft map only. Viewers will not see these changes until you publish.
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 border-t border-[var(--sp-border-subtle)] pt-3">
-              <Button type="button" onClick={closeCsvReview} disabled={busy} className="w-full">
-                {csvReview.issues.length > 0 ? "Close" : "Cancel"}
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={confirmCsvImport}
-                disabled={csvReview.issues.length > 0}
-                loading={busy}
-                title={csvReview.issues.length > 0 ? "Fix blocking validation errors before importing" : "Apply CSV updates to the draft map"}
-                className="w-full"
-              >
-                {busy ? "Applying…" : csvReview.issues.length > 0 ? "Fix CSV first" : "Apply import"}
-              </Button>
-            </div>
-          </section>
-        </div>
+        <CsvImportSheet
+          review={csvReview}
+          busy={busy && busyOp === "csv-apply"}
+          onCancel={closeCsvReview}
+          onConfirm={confirmCsvImport}
+        />
       )}
 
       {jsonReview && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:items-center">
-          <section
-            ref={jsonReviewDialogFocusRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="json-restore-review-title"
-            aria-describedby="json-restore-review-description"
-            onKeyDown={event => {
-              if (event.key === "Escape" && !busy) {
-                event.stopPropagation();
-                closeJsonReview();
-              }
-            }}
-            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp"
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-[var(--sp-border-subtle)] pb-3">
-              <div>
-                <h2 id="json-restore-review-title" className="text-base font-semibold">Review draft snapshot restore</h2>
-                <p id="json-restore-review-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
-                  A draft snapshot covers draft seats and employees only. The published viewer map will not change until you publish.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeJsonReview}
-                disabled={busy}
-                className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-status-neutral-surface)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
-                aria-label="Close draft snapshot restore review"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="min-h-0 overflow-y-auto overscroll-contain py-4">
-              <div className="grid grid-cols-2 gap-2">
-                <ReviewCountCard label="Draft seats" value={jsonReview.seatCount} tone="warn" />
-                <ReviewCountCard label="Employees" value={jsonReview.employeeCount} tone="warn" />
-              </div>
-
-              <div className="mt-3 border border-[var(--sp-border-interactive)] bg-[var(--sp-layer-hover)] p-3 text-sm font-semibold leading-5 text-[var(--sp-link-hover)]">
-                This can replace draft assignments, custom seats, notes, and employee details in the draft. Viewers will not see restored data until publish.
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 border-t border-[var(--sp-border-subtle)] pt-3">
-              <Button type="button" onClick={closeJsonReview} disabled={busy} className="w-full">
-                Cancel
-              </Button>
-              <Button type="button" variant="danger" onClick={confirmJsonRestore} loading={busy} className="w-full">
-                {busy ? "Restoring…" : "Restore draft snapshot"}
-              </Button>
-            </div>
-          </section>
-        </div>
+        <SnapshotRestoreSheet
+          review={jsonReview}
+          busy={busy && busyOp === "json-restore"}
+          error={restoreError}
+          exportedAtLabel={exportedAtLabel}
+          onExportCurrent={exportCurrentDraftFromReview}
+          onCancel={closeJsonReview}
+          onConfirm={confirmJsonRestore}
+        />
       )}
     </div>
   );

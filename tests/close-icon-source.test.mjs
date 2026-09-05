@@ -33,8 +33,8 @@ test("dialog closes use the shared icon — no literal 'x' text glyphs remain", 
     assert.match(source, /from "@\/components\/ui\/CloseIcon"/, `${name} imports the shared CloseIcon`);
   }
   // The settings review dialogs had two inline copies of the same path —
-  // consolidated onto the shared component.
-  assert.match(settings, /from "@\/components\/ui\/CloseIcon"/);
+  // consolidated onto the shared component, and gone with PR 4: the reviews
+  // are tearsheets (no ×, Cancel is the exit) — no inline copy may return.
   assert.doesNotMatch(settings, /<svg[^>]*><path d="m5\.5 5\.5 9 9m0-9-9 9"/);
   // The inspector's private definition moves to the shared module.
   assert.match(inspector, /from "@\/components\/ui\/CloseIcon"/);
