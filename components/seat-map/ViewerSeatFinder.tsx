@@ -42,7 +42,7 @@ import {
   clampZoom,
   fitMapWidth as computeFitMapWidth
 } from "@/lib/mapViewport";
-import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
+import { arrowKeyToDirection, edgeKeyToPosition, findNearestSeatInDirection, resolveRovingSeatId, seatAtReadingEdge } from "@/lib/seatKeyboardNav";
 import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { buildViewerPaletteBrowse, getSeatZone, zoneKey } from "@/lib/viewerFindPalette";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
@@ -1004,9 +1004,20 @@ export function ViewerSeatFinder({
       const nextSeatId = findNearestSeatInDirection(seatNavPoints, seatId, direction);
       if (nextSeatId) {
         setRovingSeatId(nextSeatId);
-        window.requestAnimationFrame(() => {
-          document.querySelector<HTMLButtonElement>(`[data-seat-id="${nextSeatId}"]`)?.focus();
-        });
+        focusViewerSeatMarker(nextSeatId);
+      }
+      return;
+    }
+
+    // Home / End: the reading-order edges (PHASE2UX §1M.11, parity with /admin).
+    const edge = edgeKeyToPosition(event.key);
+    if (edge) {
+      event.preventDefault();
+      event.stopPropagation();
+      const edgeSeatId = seatAtReadingEdge(seatNavPoints, edge);
+      if (edgeSeatId) {
+        setRovingSeatId(edgeSeatId);
+        focusViewerSeatMarker(edgeSeatId);
       }
       return;
     }

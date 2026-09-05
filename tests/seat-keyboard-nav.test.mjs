@@ -62,3 +62,17 @@ test("arrowKeyToDirection maps only arrow keys", () => {
   assert.equal(nav.arrowKeyToDirection("Enter"), null);
   assert.equal(nav.arrowKeyToDirection("a"), null);
 });
+
+// Home / End (Phase 4 PR 3b, PHASE2UX §1M.11): the reading-order edges.
+test("Home and End land on the first and last seat in reading order", () => {
+  assert.equal(nav.seatAtReadingEdge(GRID, "first"), "A");
+  assert.equal(nav.seatAtReadingEdge(GRID, "last"), "F");
+  // Input order never matters; ties on a row resolve by x.
+  const shuffled = [...GRID].reverse();
+  assert.equal(nav.seatAtReadingEdge(shuffled, "first"), "A");
+  assert.equal(nav.seatAtReadingEdge(shuffled, "last"), "F");
+  assert.equal(nav.seatAtReadingEdge([], "first"), null);
+  assert.equal(nav.edgeKeyToPosition("Home"), "first");
+  assert.equal(nav.edgeKeyToPosition("End"), "last");
+  assert.equal(nav.edgeKeyToPosition("ArrowUp"), null);
+});

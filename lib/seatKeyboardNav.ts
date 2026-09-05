@@ -49,6 +49,32 @@ export function resolveRovingSeatId(seats: SeatNavPoint[], preferredId: string |
   return best?.id ?? null;
 }
 
+// Home / End (PHASE2UX §1M.11, Phase 4 PR 3b): the first / last seat in
+// reading order — top row first, left to right, the same order
+// resolveRovingSeatId starts from.
+export type SeatNavEdge = "first" | "last";
+
+export function seatAtReadingEdge(seats: SeatNavPoint[], edge: SeatNavEdge): string | null {
+  let best: SeatNavPoint | null = null;
+  for (const seat of seats) {
+    if (!best) {
+      best = seat;
+      continue;
+    }
+    const rowDelta = seat.y - best.y;
+    const before =
+      rowDelta < -FORWARD_EPSILON || (Math.abs(rowDelta) <= FORWARD_EPSILON && seat.x < best.x);
+    const after =
+      rowDelta > FORWARD_EPSILON || (Math.abs(rowDelta) <= FORWARD_EPSILON && seat.x > best.x);
+    if (edge === "first" ? before : after) best = seat;
+  }
+  return best?.id ?? null;
+}
+
+export function edgeKeyToPosition(key: string): SeatNavEdge | null {
+  return key === "Home" ? "first" : key === "End" ? "last" : null;
+}
+
 export function arrowKeyToDirection(key: string): SeatNavDirection | null {
   switch (key) {
     case "ArrowUp":

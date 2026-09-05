@@ -38,7 +38,7 @@ import {
 } from "@/lib/mapViewport";
 import { clientPointToNormalized } from "@/lib/seatMath";
 import { normalizeSeat, normalizeSeats } from "@/lib/seatNormalize";
-import { arrowKeyToDirection, findNearestSeatInDirection, resolveRovingSeatId } from "@/lib/seatKeyboardNav";
+import { arrowKeyToDirection, edgeKeyToPosition, findNearestSeatInDirection, resolveRovingSeatId, seatAtReadingEdge } from "@/lib/seatKeyboardNav";
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { canVacateSeat } from "@/lib/seatDraftActions";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
@@ -68,6 +68,7 @@ import { usePublishReview } from "@/components/seat-map/usePublishReview";
 import { getSeatZone, useSeatFilters } from "@/components/seat-map/useSeatFilters";
 import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
 import { SeatMarker, seatPillLabel } from "@/components/seat-map/SeatMarker";
+import { invalidTargetReason, targetValidity, type TargetMode } from "@/lib/seatTargets";
 import {
   DeleteSeatConfirmDialog,
   DiscardDraftDialog,
@@ -394,6 +395,9 @@ export function SeatMap({
   const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
   const [moveEmployeeSourceSeatId, setMoveEmployeeSourceSeatId] = useState<string | null>(null);
   const [moveEmployeeConfirm, setMoveEmployeeConfirm] = useState<MoveEmployeeConfirmState>(null);
+  // The reason the last refused destination gave (lib/seatTargets, O4) — shown
+  // in the canvas status region only while the mode that refused it runs.
+  const [invalidTargetNotice, setInvalidTargetNotice] = useState<string | null>(null);
   const [deleteSeatConfirm, setDeleteSeatConfirm] = useState<DeleteSeatConfirmState>(null);
   const [vacateConfirm, setVacateConfirm] = useState<VacateConfirmState>(null);
   // Last keyboard-visited seat (roving tabindex anchor). The derived tab stop
@@ -1248,6 +1252,19 @@ export function SeatMap({
       return;
     }
 
+    // Home / End: the reading-order edges (PHASE2UX §1M.11, parity with the viewer).
+    const edge = edgeKeyToPosition(event.key);
+    if (edge) {
+      event.preventDefault();
+      event.stopPropagation();
+      const edgeSeatId = seatAtReadingEdge(seatNavPoints, edge);
+      if (edgeSeatId) {
+        setRovingSeatId(edgeSeatId);
+        focusSeatMarker(edgeSeatId);
+      }
+      return;
+    }
+
     if ((event.key === "Enter" || event.key === " ") && seatId !== selectedSeatId) {
       focusInspectorAfterSelectRef.current = true;
     }
@@ -1904,6 +1921,25 @@ export function SeatMap({
     return true;
   }
 
+  // Move / swap destination validity (lib/seatTargets, owner ruling O4): the
+  // running mode and its source seat, or null. The marker layer marks every
+  // invalid destination from the same predicate the click consults below.
+  const targetMode: { mode: TargetMode; source: SeatWithEmployee } | null = (() => {
+    if (!canEdit) return null;
+    if (moveEmployeeSourceSeatId) {
+      const source = localSeats.find(seat => seat.id === moveEmployeeSourceSeatId);
+      return source ? { mode: "move", source } : null;
+    }
+    if (swapSourceSeatId) {
+      const source = localSeats.find(seat => seat.id === swapSourceSeatId);
+      return source ? { mode: "swap", source } : null;
+    }
+    return null;
+  })();
+  function isInvalidTarget(seat: SeatWithEmployee): boolean {
+    return targetMode !== null && targetValidity(targetMode.mode, targetMode.source, seat) === "invalid";
+  }
+
   function commitSeatSelection(seatId: string) {
     // The find spans the building (D2′): a result row, a deep link, an Ask
     // Planner highlight or a Move/Swap target can name a seat on the other
@@ -1912,6 +1948,14 @@ export function SeatMap({
     if (targetSeat && floorOf(targetSeat) !== floor) switchFloor(floorOf(targetSeat), { announce: false });
     setAnnouncedFloor(null);
     setRosterHighlightedPersonId(null);
+    setInvalidTargetNotice(null);
+
+    // An invalid destination refuses the click: no dialog, the reason in the
+    // canvas status region (names WHICH rule — never colour only, O4).
+    if (targetMode && targetSeat && targetValidity(targetMode.mode, targetMode.source, targetSeat) === "invalid") {
+      setInvalidTargetNotice(invalidTargetReason(targetMode.mode, targetMode.source, targetSeat));
+      return true;
+    }
 
     if (canEdit && moveEmployeeSourceSeatId) {
       return requestMoveEmployeeTarget(seatId);
@@ -2849,6 +2893,9 @@ export function SeatMap({
   if (actionError && !sessionExpired && !swapConfirm && !vacateConfirm && !deleteSeatConfirm && !moveEmployeeConfirm) {
     canvasNotices.push({ id: "action-error", kind: "error", alert: true, text: actionError });
   }
+  if (invalidTargetNotice && targetMode) {
+    canvasNotices.push({ id: "invalid-target", kind: "info", text: invalidTargetNotice, onDismiss: () => setInvalidTargetNotice(null) });
+  }
   if (actionNotice && !swapSourceSeatId && !moveEmployeeSourceSeatId) {
     canvasNotices.push({
       id: "action-notice",
@@ -3121,6 +3168,7 @@ export function SeatMap({
                         swapSource={seat.id === swapSourceSeatId}
                         swapTarget={seat.id === swapConfirm?.targetSeatId}
                         moveEmployeeSource={seat.id === moveEmployeeSourceSeatId}
+                        invalidTarget={isInvalidTarget(seat)}
                         highlighted={plannerHighlightedSeatIdSet.has(seat.id)}
                         addSeatMode={addSeatMode}
                         viewportEdge={viewportPlacement.edge}

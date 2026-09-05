@@ -286,6 +286,9 @@ test("seat maps use a roving tabindex with arrow-key traversal on both surfaces"
   for (const source of [seatMapSource, viewerSource]) {
     assert.match(source, /findNearestSeatInDirection/);
     assert.match(source, /resolveRovingSeatId/);
+    // Home / End land on the reading-order edges on both surfaces (PHASE2UX §1M.11, PR 3b).
+    assert.match(source, /const edge = edgeKeyToPosition\(event\.key\);/);
+    assert.match(source, /seatAtReadingEdge\(seatNavPoints, edge\)/);
     assert.match(source, /tabIndex=\{seat\.id === mapRovingSeatId \? 0 : -1\}/);
     assert.match(source, /onKeyDown=\{handleMarkerLayerKeyDown\}/);
     assert.match(source, /getElementById\("seat-inspector-panel"\)\?\.focus\(\)/);

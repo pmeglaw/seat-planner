@@ -72,6 +72,33 @@ test("renders a marker for every seat", async ({ page }) => {
   await expect(marker(page, "N02")).toBeAttached();
 });
 
+// Phase 4 PR 3b, owner ruling O4: while a move runs, an empty reserved /
+// unavailable seat is an invalid destination — marked on the pill
+// (aria-disabled + "Not a valid target."), and its click opens no dialog; the
+// reason lands in the canvas status region. An open seat stays a valid
+// destination and opens the move confirmation.
+test("in move mode a reserved empty seat is an invalid target that refuses the click", async ({ page }) => {
+  const reserved = seat({ id: "s5", seat_key: "ne09", label: "NE09", x: 0.7, y: 0.3, status: "reserved" });
+  await mountSeatMap(page, { seats: [n01, n02, reserved], employees: [alice], canEdit: true });
+  await clickMarker(page, "N01");
+  await page.locator('#seat-inspector-panel button[aria-label^="Move "]').dispatchEvent("click");
+
+  await expect(marker(page, "NE09")).toHaveAttribute("aria-disabled", "true");
+  await expect(marker(page, "NE09")).toHaveAttribute("aria-label", /Not a valid target\./);
+  await expect(marker(page, "NE09")).toHaveClass(/sp-pill--invalid/);
+  await expect(marker(page, "N02")).toHaveAttribute("aria-label", /Valid destination seat\./);
+  await expect(marker(page, "N02")).toHaveClass(/sp-pill--target/);
+  await expect(marker(page, "N01")).toHaveClass(/sp-pill--origin/);
+
+  await clickMarker(page, "NE09");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".sp-canvas-status")).toContainText("NE09 is reserved — choose another seat.");
+  await expect(marker(page, "N01")).toHaveClass(/sp-pill--origin/, { timeout: 1000 });
+
+  await clickMarker(page, "N02");
+  await expect(page.getByRole("dialog", { name: /^Move Alice Smith to N02/ })).toBeVisible();
+});
+
 test("clicking a seat selects it and opens the inspector with the occupant's details", async ({ page }) => {
   await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: false });
   await clickMarker(page, "N01");
