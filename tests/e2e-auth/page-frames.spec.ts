@@ -51,20 +51,38 @@ test.describe("Management frame", () => {
       const bar = await page.getByRole("tab", { name: "Employees" }).evaluate(el => getComputedStyle(el).boxShadow);
       expect(bar, "the selected tab bar is #B85C2E").toContain("rgb(184, 92, 46)");
 
-      // Scroll the pane (lg) or the document (below lg); the strip must still
-      // sit at the top of the visible content, never 48px below it.
+      // Scroll the pane (lg) or the document (below lg); once anything has
+      // scrolled, the strip must sit at the top of the visible content, never
+      // 48px below it (the sheet's offset assumes a scrolling document). The
+      // seed directory may be too short to scroll at the tallest frames — then
+      // the strip simply sits in its natural place under the page header.
       const strip = page.locator(".sp-tabs-host");
-      await page.evaluate(() => {
+      const naturalY = Math.round((await strip.boundingBox())!.y);
+      const scrolled = await page.evaluate(() => {
         const region = document.querySelector<HTMLElement>('[role="region"][aria-label="Management"]');
-        if (region && getComputedStyle(region).overflowY === "auto") region.scrollTop = 600;
-        else window.scrollTo(0, 600);
+        if (region && getComputedStyle(region).overflowY === "auto") {
+          region.scrollTop = 600;
+          return region.scrollTop;
+        }
+        window.scrollTo(0, 600);
+        return window.scrollY;
       });
       await page.waitForTimeout(250);
       const stripBox = await strip.boundingBox();
       const headerBox = await page.locator("#shell-header").boundingBox();
       expect(stripBox, "tab strip present").not.toBeNull();
       expect(headerBox, "shell header present").not.toBeNull();
-      expect(Math.round(stripBox!.y), `${width}: the strip is pinned directly under the header`).toBe(Math.round(headerBox!.y + headerBox!.height));
+      const headerBottom = Math.round(headerBox!.y + headerBox!.height);
+      if (scrolled > 0) {
+        // Sticky: the strip travels with the content until it meets the header, then pins there.
+        const expected = Math.max(headerBottom, naturalY - scrolled);
+        expect(Math.round(stripBox!.y), `${width}: the strip is sticky under the header after scrolling ${scrolled}px (natural ${naturalY})`).toBe(expected);
+        if (expected === headerBottom) console.log(`page-frames management ${width}px: pin reached after ${scrolled}px`);
+        else console.log(`page-frames management ${width}px: scrolled ${scrolled}px, pin not yet reached (content barely overflows the seed)`);
+      } else {
+        expect(Math.round(stripBox!.y), `${width}: nothing to scroll — the strip sits under the page header`).toBeGreaterThan(headerBottom);
+        console.log(`page-frames management ${width}px: content shorter than the pane — pin not exercised at this frame`);
+      }
 
       // The skip link lands on the page's own marker.
       await page.evaluate(() => window.scrollTo(0, 0));

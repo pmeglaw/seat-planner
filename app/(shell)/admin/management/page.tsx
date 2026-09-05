@@ -28,11 +28,13 @@ export default async function AdminManagementPage({
   if (!isAdmin) {
     // The shared 403 card (DECISIONS D5-d): the asset empty state on the
     // route card, and the action the body-only variant lacked. Its tertiary
-    // sits on the white card (layer-02), never layer-01 — 4.14:1 there is
-    // recorded not-gated (PHASE4BUILD §1.22).
+    // sits on the WHITE card (layer-02), never layer-01 — 4.14:1 there is
+    // recorded not-gated (PHASE4BUILD §1.22). The sheet paints `.sp-route-card`
+    // layer-01 (PHASE3DS §1.29); this card carries a tertiary, so the surface
+    // is set inline (a utility class loses to the sheet's later rule).
     return (
       <main className="flex min-h-0 flex-1 items-start justify-center bg-[var(--sp-background)] p-8">
-        <section className="sp-route-card w-full bg-[var(--sp-layer-02)]">
+        <section className="sp-route-card w-full" style={{ background: "var(--sp-layer-02)" }}>
           <div className="cds-empty">
             <h2>Admin access required</h2>
             <p>You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to manage people, departments or zones.</p>

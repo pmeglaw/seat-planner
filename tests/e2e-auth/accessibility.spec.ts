@@ -199,8 +199,9 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
     await page.goto("/admin/settings");
     await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
 
-    // Shape-only validation at open: any {seats: [], employees: []} object
-    // reaches the review. Deep row validation is the server action's job and
+    // Shape-only validation at open: a {seats, employees} object with at
+    // least one row reaches the review (PR 4 refuses an EMPTY snapshot inline,
+    // PHASE2UX §1S.4). Deep row validation is the server action's job and
     // only runs on the confirm this test never clicks.
     await expect(async () => {
       await page
@@ -208,7 +209,7 @@ test.describe("admin surfaces have no WCAG A/AA violations", () => {
         .setInputFiles({
           name: "snapshot.json",
           mimeType: "application/json",
-          buffer: Buffer.from(JSON.stringify({ seats: [], employees: [] }))
+          buffer: Buffer.from(JSON.stringify({ seats: [{ label: "N01" }], employees: [] }))
         });
       await expect(page.getByRole("heading", { name: "Review draft snapshot restore" })).toBeVisible({ timeout: 2_000 });
     }).toPass({ timeout: 20_000 });

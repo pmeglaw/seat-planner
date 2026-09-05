@@ -121,22 +121,25 @@ for (const theme of ["light", "dark"]) {
     await page.waitForTimeout(300);
     await shot(`management-rename-editing-${theme}-1920`);
     const names = await page.locator(".sp-list-row .sp-list-name").allTextContents();
-    const other = names.map(n => n.replace("Not in list", "").trim()).find(n => n && n !== (await page.getByLabel("Department name").inputValue()));
+    const editingName = await page.getByLabel("Department name").inputValue();
+    const other = names.map(n => n.replace("Not in list", "").trim()).find(n => n && n !== editingName);
     if (other) {
       await page.getByLabel("Department name").fill(other.toLowerCase());
       await page.getByLabel("Department name").blur();
       await page.waitForTimeout(300);
       await shot(`management-rename-duplicate-${theme}-1920`);
     }
-    await escape();
+    // Leave the row through its own Cancel ghost (the field was blurred, so Esc would land on the body).
+    await page.locator(".sp-list-row--editing").getByRole("button", { name: "Cancel" }).click();
+    await page.waitForTimeout(200);
   }
-  await page.getByRole("button", { name: "More actions for" .concat(" ", (await page.locator(".sp-list-row .sp-list-name").first().textContent()).replace("Not in list", "").trim()) }).click().catch(() => {});
+  await page.getByRole("button", { name: /^More actions for / }).first().click().catch(() => {});
   if (await page.getByRole("menuitem").count()) {
     await shot(`management-list-overflow-${theme}-1920`);
     await page.getByRole("menuitem", { name: /^Delete / }).click();
     await page.getByRole("dialog", { name: /^Delete department/ }).waitFor();
     await shot(`management-sheet-delete-department-${theme}-1920`);
-    await page.getByRole("button", { name: "Cancel" }).click();
+    await page.getByRole("dialog", { name: /^Delete department/ }).getByRole("button", { name: "Cancel" }).click();
     await page.waitForTimeout(300);
   }
   await page.getByRole("button", { name: "Add department" }).click();
@@ -152,7 +155,7 @@ for (const theme of ["light", "dark"]) {
   await page.getByRole("menuitem", { name: /^Delete / }).click();
   await page.getByRole("dialog", { name: /^Delete zone/ }).waitFor();
   await shot(`management-sheet-delete-zone-${theme}-1920`);
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("dialog", { name: /^Delete zone/ }).getByRole("button", { name: "Cancel" }).click();
 
   // ---------------------------------------------------------------- Settings
   await open("/admin/settings", theme);
@@ -166,11 +169,11 @@ for (const theme of ["light", "dark"]) {
   await page.locator('input[accept=".csv,text/csv"]').setInputFiles({ name: "assignments.csv", mimeType: "text/csv", buffer: Buffer.from(`${CSV_HEADER}N01,Sample Person,,Analyst,Litigation,North Pod,assigned,\n`) });
   await page.getByRole("heading", { name: "Review CSV import" }).waitFor();
   await shot(`settings-csv-review-${theme}-1920`);
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
   await page.locator('input[accept=".csv,text/csv"]').setInputFiles({ name: "broken.csv", mimeType: "text/csv", buffer: Buffer.from(`${CSV_HEADER},Sample Person,,,,,assigned,\n`) });
   await page.getByRole("heading", { name: "CSV import has blocking errors" }).waitFor();
   await shot(`settings-csv-review-blocked-${theme}-1920`);
-  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
   // The restore review with the export-first done-state.
   await page.locator('input[accept=".json,application/json"]').setInputFiles({ name: "seat-map-export.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify({ exportedAt: new Date().toISOString(), seats: [{ label: "N01" }], employees: [] })) });
   await page.getByRole("heading", { name: "Review draft snapshot restore" }).waitFor();
@@ -182,7 +185,7 @@ for (const theme of ["light", "dark"]) {
   await download.delete().catch(() => {});
   await page.waitForTimeout(300);
   await shot(`settings-restore-review-exported-${theme}-1920`);
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
 }
 
 // Laptop + narrow frames (light).
@@ -192,6 +195,19 @@ for (const [route, name] of [["/admin/management", "management"], ["/admin/setti
   await open(route, "light", 1024, 768);
   await shot(`${name}-light-1024`);
 }
+
+// The sticky tab strip pinned under the header (PHASE4BUILD §1.37): the seed directory is short, so a
+// squat viewport forces the pane to scroll at lg; the strip must sit directly under the 48px header.
+await open("/admin/management", "light", 1920, 420);
+await page.locator("[data-directory-row]").first().waitFor();
+await page.evaluate(() => {
+  const region = document.querySelector('[role="region"][aria-label="Management"]');
+  if (region) region.scrollTop = 400;
+});
+await page.waitForTimeout(300);
+const stripY = await page.locator(".sp-tabs-host").evaluate(el => Math.round(el.getBoundingClientRect().y));
+console.log(`strip pinned at y=${stripY} (expected 48)`);
+await shot("management-strip-pinned-light-1920x420");
 
 // The 403 card (a signed-in viewer on the admin pages), both themes.
 if (viewerEmail) {
