@@ -1,0 +1,1479 @@
+[
+  {
+    "step": "1 Frame",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "primaryBg": "rgb(184, 92, 46)",
+      "primaryHover": "rgb(143, 69, 33)",
+      "tabs": [
+        "Employees",
+        "Departments",
+        "Zones"
+      ],
+      "selectedBar": "rgb(184, 92, 46) 0px -2px 0px 0px inset",
+      "stripH": 40,
+      "historyTab": 0,
+      "countCards": 0
+    },
+    "note": "",
+    "files": [
+      "01-frame-light.png"
+    ]
+  },
+  {
+    "step": "2 Tabs by keyboard",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "ring": "solid 2px rgb(184, 92, 46) -2px",
+      "url1": "?tab=departments",
+      "navEntries": 1,
+      "primary1": "Add department",
+      "primaryEnd": "Add zone",
+      "afterTab": {
+        "tag": "input",
+        "label": "Search employees",
+        "id": "",
+        "inPanel": false,
+        "inSheet": false,
+        "inModal": false
+      },
+      "restored": "true"
+    },
+    "note": "",
+    "files": [
+      "02-tab-focus-light.png"
+    ]
+  },
+  {
+    "step": "3 Sticky strip",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "top": 48,
+      "bg": "rgb(255, 255, 255)"
+    },
+    "note": "",
+    "files": [
+      "03-sticky-strip-light.png"
+    ]
+  },
+  {
+    "step": "4 Table anatomy",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "headerH": 40,
+      "rowH": 32.5,
+      "cols": [
+        "Name",
+        "Department",
+        "Position",
+        "Extension",
+        "Seat",
+        "Status",
+        "Row actions"
+      ],
+      "extAlign": "right",
+      "extNumeric": "tabular-nums",
+      "marks": {
+        "assigned": 1,
+        "unassigned": 1
+      },
+      "statusText": {
+        "assigned": "Assigned",
+        "unassigned": "Unassigned"
+      },
+      "deptColor": "rgb(82, 82, 82)",
+      "linkRestColor": "rgb(143, 69, 33)",
+      "editSize": [
+        40,
+        32
+      ],
+      "editClass": "cds-btn cds-btn--ghost cds-btn--icon",
+      "overflowInRows": 0,
+      "stops": [
+        "a",
+        "button"
+      ],
+      "rowHoverBg": "rgb(232, 232, 232)",
+      "layerHover": "#e8e8e8",
+      "linkHoverColor": "rgb(122, 58, 28)",
+      "tokenHover": "#7a3a1c",
+      "tipHover": {
+        "visible": true,
+        "text": "Edit",
+        "right": 1720,
+        "left": 1681.671875
+      },
+      "tipFocus": {
+        "visible": true,
+        "right": 1720
+      }
+    },
+    "note": "row height 32.5 = 32 + the collapsed border share; hover step rest→hover = rgb(143, 69, 33) → rgb(122, 58, 28) (the --sp-table-link-on-hover-row contract = link-primary-hover; the brief quotes the rest link colour rgb(143, 69, 33))",
+    "files": [
+      "04-row-hover-light.png",
+      "04-edit-tooltip-hover-light.png",
+      "04-edit-tooltip-focus-light.png"
+    ]
+  },
+  {
+    "step": "5 Toolbar count and search",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "live": "polite",
+      "rest": "12 employees · 4 assigned · 8 unassigned",
+      "zero": "0 of 12 match",
+      "one": "1 of 12 match",
+      "restored": "12 employees · 4 assigned · 8 unassigned",
+      "clearClass": "cds-btn cds-btn--ghost cds-btn--md"
+    },
+    "note": "",
+    "files": [
+      "05-zero-search-light.png"
+    ]
+  },
+  {
+    "step": "6 Seat link",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "label": "CW01",
+      "href": "/admin?seat=CW01",
+      "landed": "/admin?seat=CW01",
+      "inspector": true,
+      "backUrl": "/admin/management",
+      "tabBack": "true"
+    },
+    "note": "",
+    "files": [
+      "06-seat-link-inspector-light.png"
+    ]
+  },
+  {
+    "step": "7 Edit panel",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "width": 480,
+      "bg": "rgb(255, 255, 255)",
+      "role": "dialog",
+      "modal": "true",
+      "titleText": "Edit employee",
+      "helper": true,
+      "closeX": 0,
+      "focus": {
+        "tag": "input",
+        "label": "",
+        "id": "management-employee-name",
+        "inPanel": true,
+        "inSheet": false,
+        "inModal": false
+      },
+      "requiredMarks": 1,
+      "scrim": "rgba(22, 22, 22, 0.5)",
+      "listRows": [
+        "Litigation2 people",
+        "Pre-Litigation2 people",
+        "Add “Liti” as a new department"
+      ],
+      "createRow": "Add “Marketing” as a new department",
+      "fact": "Draft seatCW01· Floor 3Open on the map",
+      "openMapH": 32,
+      "dangerClass": "cds-btn cds-btn--danger-ghost",
+      "footer": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "w": 240,
+          "h": 64,
+          "x": 1440
+        },
+        {
+          "text": "Save employee",
+          "cls": "cds-btn cds-btn--primary",
+          "w": 240,
+          "h": 64,
+          "x": 1680
+        }
+      ],
+      "insideAll": true
+    },
+    "note": "",
+    "files": [
+      "07-panel-combobox-create-light.png",
+      "07-panel-edit-light.png"
+    ]
+  },
+  {
+    "step": "8 Dirty close",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "esc": {
+        "present": 1,
+        "buttons": [
+          {
+            "text": "Keep editing",
+            "cls": "cds-btn cds-btn--secondary"
+          },
+          {
+            "text": "Discard changes",
+            "cls": "cds-btn cds-btn--primary"
+          }
+        ]
+      },
+      "keepFocus": {
+        "tag": "input",
+        "label": "",
+        "id": "management-employee-name",
+        "inPanel": true,
+        "inSheet": false,
+        "inModal": false
+      },
+      "kept": "Changed position",
+      "closedAll": true,
+      "tablePos": "Intake Coordinator",
+      "scrim": 1,
+      "cancel": 1,
+      "cleanClosed": true,
+      "focusBack": {
+        "tag": "button",
+        "label": "Edit Alex Shabazian",
+        "id": "",
+        "inPanel": false,
+        "inSheet": false,
+        "inModal": false
+      }
+    },
+    "note": "",
+    "files": [
+      "08-dirty-ask-light.png"
+    ]
+  },
+  {
+    "step": "9 Save + Add",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "busyLabel": "",
+      "busyAttr": null,
+      "readOnly": null,
+      "banner": {
+        "text": "Alex Shabazian saved.",
+        "cls": "cds-notification cds-notification--success"
+      },
+      "panelClosed": true,
+      "rowPos": "Senior Intake Coordinator",
+      "indicatorLive": "Draft — 1 change",
+      "indicatorAfterReload": "Draft — 1 change",
+      "newRowStatus": "Unassigned",
+      "count": "13 employees · 4 assigned · 9 unassigned"
+    },
+    "note": "",
+    "files": [
+      "09-saved-light.png",
+      "09-added-light.png"
+    ]
+  },
+  {
+    "step": "10 Deactivate (the ruling)",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "box": {
+        "top": 160,
+        "bottom": 490,
+        "width": 720
+      },
+      "role": "dialog",
+      "heading": "Deactivation impact",
+      "publishLine": true,
+      "footer": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "minWidth": "160px",
+          "x": 928,
+          "right": 1088
+        },
+        {
+          "text": "Deactivate employee",
+          "cls": "cds-btn cds-btn--danger",
+          "minWidth": "224px",
+          "x": 1096,
+          "right": 1320
+        }
+      ],
+      "closeX": 0,
+      "overlay": {
+        "bg": "rgba(22, 22, 22, 0.5)",
+        "z": "8000"
+      },
+      "panelZ": "7001",
+      "stillOpen": true,
+      "focusAfterOverlayClick": {
+        "tag": "button",
+        "label": "Cancel",
+        "id": "",
+        "inPanel": false,
+        "inSheet": true,
+        "inModal": false
+      },
+      "inSheet": true,
+      "sheetGone": true,
+      "panelStill": true,
+      "nameIntact": "Smoke Test",
+      "dialogsAfterEsc": [
+        "dialog:Edit employee"
+      ],
+      "busy": "",
+      "cancelDisabled": null,
+      "bannerText": "Smoke Test deactivated.",
+      "allClosed": true,
+      "rowGone": true,
+      "count": "12 employees · 4 assigned · 8 unassigned"
+    },
+    "note": "",
+    "files": [
+      "10-sheet-over-panel-light.png",
+      "10-deactivated-light.png"
+    ]
+  },
+  {
+    "step": "12 Tearsheet geometry",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "top": 160,
+      "bottom": 490,
+      "viewportBottom": 1080
+    },
+    "note": "observation: the sheet's bottom edge sits at content height, not the viewport bottom (Phase 3 sheet as landed)",
+    "files": []
+  },
+  {
+    "step": "11 Deactivate refused",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "alertText": "Couldn’t deactivate Alex Shabazian. This employee is still on the published map at CW01. Remove them from draft and publish before deleting.Open CW01 on the map",
+      "mapGhost": 1,
+      "sheetsOpen": 0,
+      "panelOpen": true,
+      "nameIntact": "Alex Shabazian"
+    },
+    "note": "",
+    "files": [
+      "11-deactivate-refused-light.png"
+    ]
+  },
+  {
+    "step": "13 Departments list",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "rowH": 48,
+      "rowParts": [
+        "sp-list-name",
+        "sp-list-count",
+        "flex",
+        "cds-overflow"
+      ],
+      "items": [
+        {
+          "text": "Delete",
+          "label": "Delete Intake",
+          "color": "rgb(218, 30, 40)",
+          "cls": "cds-danger"
+        }
+      ],
+      "selected": true,
+      "value0": "Intake",
+      "editRowBtns": [
+        {
+          "text": "Save",
+          "cls": "cds-btn cds-btn--primary",
+          "h": 40
+        },
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--ghost",
+          "h": 40
+        }
+      ],
+      "helper": "A department named “Litigation” already exists. Rename it from the list instead.",
+      "saveDisabled": true,
+      "restored": 1,
+      "actionPosts": 1,
+      "indicator13": "Draft — 2 changes",
+      "followed": 2,
+      "stale": 0,
+      "tag": "Not in list",
+      "addClass": "cds-btn cds-btn--tertiary",
+      "tagAfter": 0
+    },
+    "note": "",
+    "files": [
+      "13-overflow-light.png",
+      "13-rename-duplicate-light.png",
+      "13-not-in-list-light.png"
+    ]
+  },
+  {
+    "step": "14 Create modal",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "footer": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "w": 240
+        },
+        {
+          "text": "Add department",
+          "cls": "cds-btn cds-btn--primary",
+          "w": 240
+        }
+      ],
+      "helper": "A department named “Litigation” already exists. Rename it from the list instead.",
+      "disabled": true,
+      "banner": "Department Compliance added.",
+      "row": 1,
+      "modalGone": true,
+      "escClean": true
+    },
+    "note": "",
+    "files": [
+      "14-create-duplicate-light.png"
+    ]
+  },
+  {
+    "step": "15 Delete department + zone shape",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "heading": "Department delete impact",
+      "footer": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "minWidth": "160px"
+        },
+        {
+          "text": "Delete department",
+          "cls": "cds-btn cds-btn--danger",
+          "minWidth": "224px"
+        }
+      ],
+      "gone": true,
+      "zoneName": "Center Desks",
+      "zHeading": "Zone delete impact",
+      "zImpact": "Clears this physical zone from 8 draft seats. Seat markers and employees remain in place.",
+      "zoneStill": true
+    },
+    "note": "",
+    "files": [
+      "15-delete-department-light.png",
+      "15-delete-zone-light.png"
+    ]
+  },
+  {
+    "step": "16 Settings frame",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "sub": "Import, export and recovery. Everything here changes the draft only.",
+      "headerBtns": 0,
+      "calloutFirst": "sp-callout",
+      "calloutW": 776,
+      "calloutEdge": "rgb(141, 141, 141) 3px 0px 0px 0px inset",
+      "calloutInner": 0,
+      "calloutTab": null,
+      "csvRow": [
+        {
+          "text": "Import CSV · .csv up to 5 MB",
+          "cls": "primary"
+        },
+        {
+          "text": "Export CSV",
+          "cls": "tertiary"
+        },
+        {
+          "text": "Download CSV template",
+          "cls": "ghost"
+        }
+      ],
+      "csvLine": "Columns: seat_label, employee_name, employee_email, position, department, zone, status, notes — e.g. A-12, Jane Doe, , Associate, Litigation, North Wing, assigned, Window seat",
+      "snapRow": [
+        {
+          "text": "Export draft snapshot",
+          "cls": "primary"
+        },
+        {
+          "text": "Restore draft snapshot…",
+          "cls": "tertiary"
+        }
+      ],
+      "snapLine": ".json up to 5 MB — a file exported from this page.",
+      "resetInDom": false,
+      "order": [
+        "Skip to content",
+        "Megeredchian Law Seat Planner",
+        "Seat map",
+        "Reception",
+        "Management",
+        "Settings",
+        "Draft — 2 changes",
+        "Help",
+        "History",
+        "Account",
+        "Settings",
+        "Import CSV · .csv up to 5 MB",
+        "Export CSV",
+        "Download CSV template",
+        "Export draft snapshot",
+        "Restore draft snapshot…"
+      ]
+    },
+    "note": "",
+    "files": [
+      "16-settings-light.png"
+    ]
+  },
+  {
+    "step": "17 File triggers and guards",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "onButton": "Import CSV · .csv up to 5 MB",
+      "inputAttrs": {
+        "tabindex": "-1",
+        "ariaHidden": "true",
+        "hidden": true
+      },
+      "nextStop": "Export CSV",
+      "cases": [
+        {
+          "file": "notes.txt",
+          "error": "Choose a .csv file.",
+          "sheet": 0
+        },
+        {
+          "file": "big.csv (6 MB)",
+          "error": "This file is 6.0 MB — the limit is 5 MB.",
+          "sheet": 0
+        },
+        {
+          "file": "empty.csv",
+          "error": "The CSV is empty.",
+          "sheet": 0
+        },
+        {
+          "file": "missing.csv",
+          "error": "Missing required columns: zone, status.",
+          "sheet": 0
+        }
+      ],
+      "cards": [
+        {
+          "label": "Rows",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        },
+        {
+          "label": "Assignments",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        },
+        {
+          "label": "Cleared",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        },
+        {
+          "label": "Reserved",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        },
+        {
+          "label": "Unavailable",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        }
+      ],
+      "consequence": "Applies to the draft only. Marker positions and the published map do not change until you publish.",
+      "reviewFooter": [
+        "Cancel",
+        "Apply import"
+      ],
+      "reviewX": 0,
+      "cancelClosed": true,
+      "alertAboveList": 4,
+      "rowText": "Row 2Invalid status 'away'.blocked",
+      "rowEdge": "rgb(218, 30, 40) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset",
+      "applyDisabled": true,
+      "reason": "Apply is disabled until the rows above are fixed — no draft data has changed."
+    },
+    "note": "",
+    "files": [
+      "17-guard-inline-light.png",
+      "17-csv-review-light.png",
+      "17-csv-blocked-light.png"
+    ]
+  },
+  {
+    "step": "18 Restore review + D6-e",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "enabledBefore": true,
+      "fileName": "seat-map-export.json",
+      "cards": [
+        "Draft seats",
+        "Employees"
+      ],
+      "desc": "seat-map-export.json · exported Sep 5, 2026, 1:03 PM. A draft snapshot covers draft seats and employees only. The published viewer map will not change until you publish.",
+      "consequences": 5,
+      "ghostClass": "cds-btn cds-btn--ghost",
+      "doneText": "Exported 1:03 PM",
+      "doneEnabled": true,
+      "reviewStill": true,
+      "indicatorBefore": "Draft — 2 changes",
+      "indicatorAfterCancel": "Draft — 2 changes",
+      "busy": "",
+      "cancelDisabled": null,
+      "status": "Draft restored from seat-map-export.json — the draft now matches the snapshot."
+    },
+    "note": "",
+    "files": [
+      "18-restore-review-exported-light.png",
+      "18-restored-light.png"
+    ]
+  },
+  {
+    "step": "19 MLS02 on restore",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "moved": true,
+      "alert": "Restore did not complete.The draft map changed in another session after this page loaded it. Reload to pick up the latest draft, then try again. This page has been refreshed with the latest draft — review it and try the restore again if it is still what you want.Retry restore",
+      "stillOpen": true,
+      "closed": true
+    },
+    "note": "",
+    "files": [
+      "19-mls02-restore-light.png"
+    ]
+  },
+  {
+    "step": "1 Frame",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "primaryBg": "rgb(184, 92, 46)",
+      "primaryHover": "rgb(143, 69, 33)",
+      "tabs": [
+        "Employees",
+        "Departments",
+        "Zones"
+      ],
+      "selectedBar": "rgb(184, 92, 46) 0px -2px 0px 0px inset",
+      "stripH": 40,
+      "historyTab": 0,
+      "countCards": 0
+    },
+    "note": "",
+    "files": [
+      "01-frame-dark.png"
+    ]
+  },
+  {
+    "step": "2 Tabs by keyboard",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "ring": "solid 2px rgb(184, 92, 46) -2px",
+      "url1": "?tab=departments",
+      "navEntries": 1,
+      "primary1": "Add department",
+      "primaryEnd": "Add zone",
+      "afterTab": {
+        "tag": "input",
+        "label": "Search employees",
+        "id": "",
+        "inPanel": false,
+        "inSheet": false,
+        "inModal": false
+      },
+      "restored": "true"
+    },
+    "note": "",
+    "files": [
+      "02-tab-focus-dark.png"
+    ]
+  },
+  {
+    "step": "3 Sticky strip",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "top": 48,
+      "bg": "rgb(22, 22, 22)"
+    },
+    "note": "",
+    "files": [
+      "03-sticky-strip-dark.png"
+    ]
+  },
+  {
+    "step": "4 Table anatomy",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "headerH": 40,
+      "rowH": 32.5,
+      "cols": [
+        "Name",
+        "Department",
+        "Position",
+        "Extension",
+        "Seat",
+        "Status",
+        "Row actions"
+      ],
+      "extAlign": "right",
+      "extNumeric": "tabular-nums",
+      "marks": {
+        "assigned": 1,
+        "unassigned": 1
+      },
+      "statusText": {
+        "assigned": "Assigned",
+        "unassigned": "Unassigned"
+      },
+      "deptColor": "rgb(198, 198, 198)",
+      "linkRestColor": "rgb(232, 160, 122)",
+      "editSize": [
+        40,
+        32
+      ],
+      "editClass": "cds-btn cds-btn--ghost cds-btn--icon",
+      "overflowInRows": 0,
+      "stops": [
+        "a",
+        "button"
+      ],
+      "rowHoverBg": "rgb(51, 51, 51)",
+      "layerHover": "#333",
+      "linkHoverColor": "rgb(245, 221, 209)",
+      "tokenHover": "#f5ddd1",
+      "tipHover": {
+        "visible": true,
+        "text": "Edit",
+        "right": 1720,
+        "left": 1681.671875
+      },
+      "tipFocus": {
+        "visible": true,
+        "right": 1720
+      }
+    },
+    "note": "row height 32.5 = 32 + the collapsed border share; hover step rest→hover = rgb(232, 160, 122) → rgb(245, 221, 209) (the --sp-table-link-on-hover-row contract = link-primary-hover; the brief quotes the rest link colour rgb(232, 160, 122))",
+    "files": [
+      "04-row-hover-dark.png",
+      "04-edit-tooltip-hover-dark.png",
+      "04-edit-tooltip-focus-dark.png"
+    ]
+  },
+  {
+    "step": "5 Toolbar count and search",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "live": "polite",
+      "rest": "12 employees · 4 assigned · 8 unassigned",
+      "zero": "0 of 12 match",
+      "one": "1 of 12 match",
+      "restored": "12 employees · 4 assigned · 8 unassigned",
+      "clearClass": "cds-btn cds-btn--ghost cds-btn--md"
+    },
+    "note": "",
+    "files": [
+      "05-zero-search-dark.png"
+    ]
+  },
+  {
+    "step": "6 Seat link",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "label": "CW01",
+      "href": "/admin?seat=CW01",
+      "landed": "/admin?seat=CW01",
+      "inspector": true,
+      "backUrl": "/admin/management",
+      "tabBack": "true"
+    },
+    "note": "",
+    "files": [
+      "06-seat-link-inspector-dark.png"
+    ]
+  },
+  {
+    "step": "7 Edit panel",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "width": 480,
+      "bg": "rgb(57, 57, 57)",
+      "role": "dialog",
+      "modal": "true",
+      "titleText": "Edit employee",
+      "helper": true,
+      "closeX": 0,
+      "focus": {
+        "tag": "input",
+        "label": "",
+        "id": "management-employee-name",
+        "inPanel": true,
+        "inSheet": false,
+        "inModal": false
+      },
+      "requiredMarks": 1,
+      "scrim": "rgba(0, 0, 0, 0.65)",
+      "listRows": [
+        "Litigation2 people",
+        "Pre-Litigation2 people",
+        "Add “Liti” as a new department"
+      ],
+      "createRow": "Add “Marketing” as a new department",
+      "fact": "Draft seatCW01· Floor 3Open on the map",
+      "openMapH": 32,
+      "dangerClass": "cds-btn cds-btn--danger-ghost",
+      "footer": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "w": 240,
+          "h": 64,
+          "x": 1440
+        },
+        {
+          "text": "Save employee",
+          "cls": "cds-btn cds-btn--primary",
+          "w": 240,
+          "h": 64,
+          "x": 1680
+        }
+      ],
+      "insideAll": true
+    },
+    "note": "",
+    "files": [
+      "07-panel-combobox-create-dark.png",
+      "07-panel-edit-dark.png"
+    ]
+  },
+  {
+    "step": "8 Dirty close",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "esc": {
+        "present": 1,
+        "buttons": [
+          {
+            "text": "Keep editing",
+            "cls": "cds-btn cds-btn--secondary"
+          },
+          {
+            "text": "Discard changes",
+            "cls": "cds-btn cds-btn--primary"
+          }
+        ]
+      },
+      "keepFocus": {
+        "tag": "input",
+        "label": "",
+        "id": "management-employee-name",
+        "inPanel": true,
+        "inSheet": false,
+        "inModal": false
+      },
+      "kept": "Changed position",
+      "closedAll": true,
+      "tablePos": "Intake Coordinator",
+      "scrim": 1,
+      "cancel": 1,
+      "cleanClosed": true,
+      "focusBack": {
+        "tag": "button",
+        "label": "Edit Alex Shabazian",
+        "id": "",
+        "inPanel": false,
+        "inSheet": false,
+        "inModal": false
+      }
+    },
+    "note": "",
+    "files": [
+      "08-dirty-ask-dark.png"
+    ]
+  },
+  {
+    "step": "9 Save + Add",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "busyLabel": "",
+      "busyAttr": null,
+      "readOnly": null,
+      "banner": {
+        "text": "Alex Shabazian saved.",
+        "cls": "cds-notification cds-notification--success"
+      },
+      "panelClosed": true,
+      "rowPos": "Senior Intake Coordinator",
+      "indicatorLive": "Draft — 1 change",
+      "indicatorAfterReload": "Draft — 1 change",
+      "newRowStatus": "Unassigned",
+      "count": "13 employees · 4 assigned · 9 unassigned"
+    },
+    "note": "",
+    "files": [
+      "09-saved-dark.png",
+      "09-added-dark.png"
+    ]
+  },
+  {
+    "step": "10 Deactivate (the ruling)",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "box": {
+        "top": 160,
+        "bottom": 490,
+        "width": 720
+      },
+      "role": "dialog",
+      "heading": "Deactivation impact",
+      "publishLine": true,
+      "footer": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "minWidth": "160px",
+          "x": 928,
+          "right": 1088
+        },
+        {
+          "text": "Deactivate employee",
+          "cls": "cds-btn cds-btn--danger",
+          "minWidth": "224px",
+          "x": 1096,
+          "right": 1320
+        }
+      ],
+      "closeX": 0,
+      "overlay": {
+        "bg": "rgba(0, 0, 0, 0.65)",
+        "z": "8000"
+      },
+      "panelZ": "7001",
+      "stillOpen": true,
+      "focusAfterOverlayClick": {
+        "tag": "button",
+        "label": "Cancel",
+        "id": "",
+        "inPanel": false,
+        "inSheet": true,
+        "inModal": false
+      },
+      "inSheet": true,
+      "sheetGone": true,
+      "panelStill": true,
+      "nameIntact": "Smoke Test",
+      "dialogsAfterEsc": [
+        "dialog:Edit employee"
+      ],
+      "busy": "",
+      "cancelDisabled": null,
+      "bannerText": "Smoke Test deactivated.",
+      "allClosed": true,
+      "rowGone": true,
+      "count": "12 employees · 4 assigned · 8 unassigned"
+    },
+    "note": "",
+    "files": [
+      "10-sheet-over-panel-dark.png",
+      "10-deactivated-dark.png"
+    ]
+  },
+  {
+    "step": "12 Tearsheet geometry",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "top": 160,
+      "bottom": 490,
+      "viewportBottom": 1080
+    },
+    "note": "observation: the sheet's bottom edge sits at content height, not the viewport bottom (Phase 3 sheet as landed)",
+    "files": []
+  },
+  {
+    "step": "11 Deactivate refused",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "alertText": "Couldn’t deactivate Alex Shabazian. This employee is still on the published map at CW01. Remove them from draft and publish before deleting.Open CW01 on the map",
+      "mapGhost": 1,
+      "sheetsOpen": 0,
+      "panelOpen": true,
+      "nameIntact": "Alex Shabazian"
+    },
+    "note": "",
+    "files": [
+      "11-deactivate-refused-dark.png"
+    ]
+  },
+  {
+    "step": "13 Departments list",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "rowH": 48,
+      "rowParts": [
+        "sp-list-name",
+        "sp-list-count",
+        "flex",
+        "cds-overflow"
+      ],
+      "items": [
+        {
+          "text": "Delete",
+          "label": "Delete Intake",
+          "color": "rgb(218, 30, 40)",
+          "cls": "cds-danger"
+        }
+      ],
+      "selected": true,
+      "value0": "Intake",
+      "editRowBtns": [
+        {
+          "text": "Save",
+          "cls": "cds-btn cds-btn--primary",
+          "h": 40
+        },
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--ghost",
+          "h": 40
+        }
+      ],
+      "helper": "A department named “Litigation” already exists. Rename it from the list instead.",
+      "saveDisabled": true,
+      "restored": 1,
+      "actionPosts": 1,
+      "indicator13": "Draft — 2 changes",
+      "followed": 2,
+      "stale": 0,
+      "tag": "Not in list",
+      "addClass": "cds-btn cds-btn--tertiary",
+      "tagAfter": 0
+    },
+    "note": "",
+    "files": [
+      "13-overflow-dark.png",
+      "13-rename-duplicate-dark.png",
+      "13-not-in-list-dark.png"
+    ]
+  },
+  {
+    "step": "14 Create modal",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "footer": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "w": 240
+        },
+        {
+          "text": "Add department",
+          "cls": "cds-btn cds-btn--primary",
+          "w": 240
+        }
+      ],
+      "helper": "A department named “Litigation” already exists. Rename it from the list instead.",
+      "disabled": true,
+      "banner": "Department Compliance added.",
+      "row": 1,
+      "modalGone": true,
+      "escClean": true
+    },
+    "note": "",
+    "files": [
+      "14-create-duplicate-dark.png"
+    ]
+  },
+  {
+    "step": "15 Delete department + zone shape",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "heading": "Department delete impact",
+      "footer": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "minWidth": "160px"
+        },
+        {
+          "text": "Delete department",
+          "cls": "cds-btn cds-btn--danger",
+          "minWidth": "224px"
+        }
+      ],
+      "gone": true,
+      "zoneName": "Center Desks",
+      "zHeading": "Zone delete impact",
+      "zImpact": "Clears this physical zone from 8 draft seats. Seat markers and employees remain in place.",
+      "zoneStill": true
+    },
+    "note": "",
+    "files": [
+      "15-delete-department-dark.png",
+      "15-delete-zone-dark.png"
+    ]
+  },
+  {
+    "step": "16 Settings frame",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "sub": "Import, export and recovery. Everything here changes the draft only.",
+      "headerBtns": 0,
+      "calloutFirst": "sp-callout",
+      "calloutW": 776,
+      "calloutEdge": "rgb(111, 111, 111) 3px 0px 0px 0px inset",
+      "calloutInner": 0,
+      "calloutTab": null,
+      "csvRow": [
+        {
+          "text": "Import CSV · .csv up to 5 MB",
+          "cls": "primary"
+        },
+        {
+          "text": "Export CSV",
+          "cls": "tertiary"
+        },
+        {
+          "text": "Download CSV template",
+          "cls": "ghost"
+        }
+      ],
+      "csvLine": "Columns: seat_label, employee_name, employee_email, position, department, zone, status, notes — e.g. A-12, Jane Doe, , Associate, Litigation, North Wing, assigned, Window seat",
+      "snapRow": [
+        {
+          "text": "Export draft snapshot",
+          "cls": "primary"
+        },
+        {
+          "text": "Restore draft snapshot…",
+          "cls": "tertiary"
+        }
+      ],
+      "snapLine": ".json up to 5 MB — a file exported from this page.",
+      "resetInDom": false,
+      "order": [
+        "Skip to content",
+        "Megeredchian Law Seat Planner",
+        "Seat map",
+        "Reception",
+        "Management",
+        "Settings",
+        "Draft — 2 changes",
+        "Help",
+        "History",
+        "Account",
+        "Settings",
+        "Import CSV · .csv up to 5 MB",
+        "Export CSV",
+        "Download CSV template",
+        "Export draft snapshot",
+        "Restore draft snapshot…"
+      ]
+    },
+    "note": "",
+    "files": [
+      "16-settings-dark.png"
+    ]
+  },
+  {
+    "step": "17 File triggers and guards",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "onButton": "Import CSV · .csv up to 5 MB",
+      "inputAttrs": {
+        "tabindex": "-1",
+        "ariaHidden": "true",
+        "hidden": true
+      },
+      "nextStop": "Export CSV",
+      "cases": [
+        {
+          "file": "notes.txt",
+          "error": "Choose a .csv file.",
+          "sheet": 0
+        },
+        {
+          "file": "big.csv (6 MB)",
+          "error": "This file is 6.0 MB — the limit is 5 MB.",
+          "sheet": 0
+        },
+        {
+          "file": "empty.csv",
+          "error": "The CSV is empty.",
+          "sheet": 0
+        },
+        {
+          "file": "missing.csv",
+          "error": "Missing required columns: zone, status.",
+          "sheet": 0
+        }
+      ],
+      "cards": [
+        {
+          "label": "Rows",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        },
+        {
+          "label": "Assignments",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        },
+        {
+          "label": "Cleared",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        },
+        {
+          "label": "Reserved",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        },
+        {
+          "label": "Unavailable",
+          "border": "0px",
+          "links": 0,
+          "cursor": "auto"
+        }
+      ],
+      "consequence": "Applies to the draft only. Marker positions and the published map do not change until you publish.",
+      "reviewFooter": [
+        "Cancel",
+        "Apply import"
+      ],
+      "reviewX": 0,
+      "cancelClosed": true,
+      "alertAboveList": 4,
+      "rowText": "Row 2Invalid status 'away'.blocked",
+      "rowEdge": "rgb(250, 77, 86) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset",
+      "applyDisabled": true,
+      "reason": "Apply is disabled until the rows above are fixed — no draft data has changed."
+    },
+    "note": "",
+    "files": [
+      "17-guard-inline-dark.png",
+      "17-csv-review-dark.png",
+      "17-csv-blocked-dark.png"
+    ]
+  },
+  {
+    "step": "18 Restore review + D6-e",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "enabledBefore": true,
+      "fileName": "seat-map-export.json",
+      "cards": [
+        "Draft seats",
+        "Employees"
+      ],
+      "desc": "seat-map-export.json · exported Sep 5, 2026, 1:09 PM. A draft snapshot covers draft seats and employees only. The published viewer map will not change until you publish.",
+      "consequences": 5,
+      "ghostClass": "cds-btn cds-btn--ghost",
+      "doneText": "Exported 1:09 PM",
+      "doneEnabled": true,
+      "reviewStill": true,
+      "indicatorBefore": "Draft — 2 changes",
+      "indicatorAfterCancel": "Draft — 2 changes",
+      "busy": "",
+      "cancelDisabled": null,
+      "status": "Draft restored from seat-map-export.json — the draft now matches the snapshot."
+    },
+    "note": "",
+    "files": [
+      "18-restore-review-exported-dark.png",
+      "18-restored-dark.png"
+    ]
+  },
+  {
+    "step": "20 Width 1280 /admin/management",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "route": "/admin/management",
+      "w": 1280,
+      "overflow": true
+    },
+    "note": "",
+    "files": []
+  },
+  {
+    "step": "20 Width 1024 /admin/management",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "route": "/admin/management",
+      "w": 1024,
+      "overflow": true,
+      "tableScroll": {
+        "overflowX": "auto",
+        "scrollable": false
+      },
+      "panelW": 480
+    },
+    "note": "",
+    "files": []
+  },
+  {
+    "step": "20 Width 1280 /admin/settings",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "route": "/admin/settings",
+      "w": 1280,
+      "overflow": true,
+      "columnW": 776
+    },
+    "note": "",
+    "files": []
+  },
+  {
+    "step": "20 Width 1024 /admin/settings",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "route": "/admin/settings",
+      "w": 1024,
+      "overflow": true,
+      "columnW": 960,
+      "sheetW": 992
+    },
+    "note": "",
+    "files": []
+  },
+  {
+    "step": "20 System theme /admin/management",
+    "theme": "system-dark",
+    "ok": true,
+    "values": {
+      "attrs": [
+        null,
+        null,
+        "rgb(22, 22, 22)"
+      ]
+    },
+    "note": "",
+    "files": [
+      "20-management-system-dark.png"
+    ]
+  },
+  {
+    "step": "20 System theme /admin/settings",
+    "theme": "system-dark",
+    "ok": true,
+    "values": {
+      "attrs": [
+        null,
+        null,
+        "rgb(22, 22, 22)"
+      ]
+    },
+    "note": "",
+    "files": [
+      "20-settings-system-dark.png"
+    ]
+  },
+  {
+    "step": "20 Brand check",
+    "theme": "both",
+    "ok": true,
+    "values": {
+      "blueHits": [],
+      "grepFiles": [
+        "app/styles/carbon-tokens.css"
+      ]
+    },
+    "note": "",
+    "files": []
+  },
+  {
+    "step": "20 403 /admin/management",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "heading": true,
+      "backClass": "cds-btn cds-btn--tertiary cds-btn--md",
+      "landed": "/"
+    },
+    "note": "",
+    "files": [
+      "20-management-403.png"
+    ]
+  },
+  {
+    "step": "20 403 /admin/settings",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "heading": true,
+      "backClass": "cds-btn cds-btn--tertiary cds-btn--md",
+      "landed": "/"
+    },
+    "note": "",
+    "files": [
+      "20-settings-403.png"
+    ]
+  },
+  {
+    "step": "20 Console",
+    "theme": "both",
+    "ok": true,
+    "values": {
+      "errors": [],
+      "speedInsightsNoise": 100
+    },
+    "note": "",
+    "files": []
+  }
+]

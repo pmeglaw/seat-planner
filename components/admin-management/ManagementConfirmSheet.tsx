@@ -62,7 +62,10 @@ export function ManagementConfirmSheet({
 
   return (
     <div className="sp-tearsheet-host" data-open="" data-tearsheet-host="">
-      <div className="sp-tearsheet-overlay" />
+      {/* The overlay is inert; a pointer on it must not pull focus out of the
+          trap (PR 4 smoke, step 10): mousedown is cancelled so the focused
+          control keeps focus and Esc / Tab still reach the sheet. */}
+      <div className="sp-tearsheet-overlay" onMouseDown={event => event.preventDefault()} />
       <section
         ref={managementConfirmDialogFocusRef}
         tabIndex={-1}

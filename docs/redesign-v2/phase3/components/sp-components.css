@@ -989,6 +989,13 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-tearsheet--narrow .cds-btn--ghost { align-self: flex-start; height: var(--sp-size-md); padding: 0 var(--sp-space-05); }
 .cds-btn--ghost[data-done] { color: var(--sp-text-secondary); }               /* the label now reads the outcome; still a button (re-export) */
 .cds-btn--ghost[data-done] svg { color: var(--sp-status-success-mark); }
+/* Phase 4 PR 4 amendment C (the smoke's step 20, PHASE2UX §1S.5 narrow frame): below the asset's 1055 fold the
+   Settings column runs full width and the narrow sheet is the viewport minus 32 — the 720 / 776 widths are the
+   1920-frame values, not caps for the narrow frame. */
+@media (max-width: 1055px) {
+  .sp-settings { max-width: none; }
+  .sp-tearsheet--narrow { width: calc(100vw - 2 * var(--sp-space-05)); }
+}
 
 /* -----------------------------------------------------------------------------
    27. RECEPTION — §3 "Search input lg with clear × · exists (clear hand-built)",

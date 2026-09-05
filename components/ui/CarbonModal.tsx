@@ -39,7 +39,9 @@ export function CarbonModal({
   const dialogFocusRef = useDialogFocus<HTMLElement>();
   return (
     <div data-modal="">
-      <div className="cds-modal-overlay">
+      {/* The overlay is inert; mousedown is cancelled so a pointer on it never
+          pulls focus out of the trap (PR 4 smoke, step 10). */}
+      <div className="cds-modal-overlay" onMouseDown={event => event.preventDefault()}>
         <section
           ref={dialogFocusRef}
           tabIndex={-1}

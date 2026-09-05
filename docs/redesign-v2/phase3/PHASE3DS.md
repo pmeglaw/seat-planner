@@ -508,6 +508,9 @@ the section *before* any tearsheet opens; MLS02 is a `status`; success is an inl
 link. Busy: the primary keeps its label with `aria-busy`, the tertiary beside it is disabled for the
 transaction, and a progress line with an sr-only "Working…" replaces the file line.
 
+**Phase 4 PR 4 amendment C (the smoke's step 20, 2026-09-05).** Below the asset's 1055 fold the column runs full
+width (`.sp-settings { max-width: none }`) — PHASE2UX §1S.5's narrow frame; 776 is the 1920-frame column, not a cap.
+
 ### 1.28 Narrow tearsheet 720 — `.sp-tearsheet--narrow` (§3 "Narrow tearsheet · hand-built"); count cards; consequences; ghost done-state
 
 Centred, top 112 under the header, no rail; body scrolls; **footer 64 with right-aligned buttons** (Cancel
@@ -528,6 +531,10 @@ button: `.sp-tearsheet--narrow .sp-tearsheet-footer .cds-btn--danger { min-width
 the sheets read alike — the one component-sheet change of PR 4 (both copies, byte-identical). The specimen's modal
 versions of those confirmations (`03-panels-and-sheets.html` lines 194, 204) are superseded. White on red 60 (5.00 /
 5.00) was already in the gated pairs.
+
+**Phase 4 PR 4 amendment C (the smoke's step 20, 2026-09-05).** Below the asset's 1055 fold the narrow sheet is the
+viewport minus 32 (`width: calc(100vw − 2 × 16)`) — PHASE2UX §1S.5; the 720 is the 1920-frame width. Both copies,
+byte-identical; no token change.
 
 ### 1.29 Reception — `.sp-recep` family (§3 "Search input lg with clear ×", "Listbox rows", "Readout tile with display numeral", "Row-buttons", "Error boundary card"); route cards
 

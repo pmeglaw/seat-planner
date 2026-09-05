@@ -31,6 +31,7 @@ import {
 import { buildDepartmentRoster, departmentKey } from "@/lib/departments";
 import { withTabParam } from "@/lib/deepLink";
 import { formatDisplayName } from "@/lib/formatName";
+import { notifyDraftStatusChanged } from "@/lib/draftStatusEvent";
 import { assignedCount as countAssigned } from "@/lib/managementCounts";
 import type { OptionKind } from "@/lib/inlineRename";
 import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
@@ -246,6 +247,9 @@ export function AdminManagementPanel({
   function showSuccess(nextMessage: string) {
     setError(null);
     setMessage(nextMessage);
+    // Every success here changed the draft's people data: the shell's
+    // indicator refetches its count (lib/draftStatusEvent).
+    notifyDraftStatusChanged();
   }
 
   // A plain string is a message an action *returned* (the validation path in

@@ -83,7 +83,9 @@ test("every input-parsing action shares one discriminated failure arm", () => {
 
   const unions = [
     /export type EmployeeMutationResult = \{ ok: true; employee: Employee \} \| ActionValidationFailure;/,
-    /export type EmployeeDeleteResult = \{ ok: true; employeeId: string \} \| ActionValidationFailure;/,
+    // PR 4: the deactivate refusal (the RPC's published-map guard) is a second,
+    // named failure arm — returned, never thrown (action-error-contract-source).
+    /export type EmployeeDeleteResult = \{ ok: true; employeeId: string \} \| ActionValidationFailure \| ActionRefusedFailure;/,
     /export type DepartmentMutationResult = \{ ok: true; department: DepartmentOption \} \| ActionValidationFailure;/,
     /export type DepartmentDeleteResult = \{ ok: true; department: string \} \| ActionValidationFailure;/,
     /export type ZoneMutationResult = \{ ok: true; zone: ZoneOption \} \| ActionValidationFailure;/,

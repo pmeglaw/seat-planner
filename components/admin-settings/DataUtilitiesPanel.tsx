@@ -25,6 +25,7 @@ import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { Employee, SeatWithEmployee } from "@/lib/types";
 import { createAssignmentCsvTemplate, exportSeatsToAssignmentCsv, parseAssignmentCsv } from "@/lib/csv";
 import { checkUpload, describeUploadLimit } from "@/lib/fileGuard";
+import { notifyDraftStatusChanged } from "@/lib/draftStatusEvent";
 import { importAssignmentsCsvAction, restoreDraftSnapshotAction } from "@/app/actions";
 import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
 import { CsvImportSheet } from "@/components/admin-settings/CsvImportSheet";
@@ -234,6 +235,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
           return;
         }
         setCsvNotice(`CSV import applied — ${payload.count.toLocaleString()} ${payload.count === 1 ? "row" : "rows"} updated in the draft.`);
+        notifyDraftStatusChanged();
         router.refresh();
       } catch (caught) {
         setCsvReview(null);
@@ -306,6 +308,7 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
         setJsonReview(null);
         setExportedAtLabel(null);
         setSnapshotNotice(`Draft restored from ${review.fileName} — the draft now matches the snapshot.`);
+        notifyDraftStatusChanged();
         router.refresh();
       } catch (caught) {
         setRestoreError(clientActionErrorMessage(caught, "Could not restore the draft snapshot."));

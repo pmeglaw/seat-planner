@@ -579,6 +579,45 @@ as dated amendments under D5-b, D5-c, PHASE3DS §1.24 and §5 item 17; the speci
 **Trade-off** a tearsheet is heavier than a 480 modal for a one-line consequence; accepted for one pattern across the
 product. **Would change if** a confirmation gains a second step (then the modal returns for the short one).
 
+### 1.39 PR 4 — the pre-merge smoke: four findings, two observations (2026-09-05)
+
+The owner's twenty-step smoke (`audit/pr4-smoke.mjs`, local Docker stack, real Chrome 1920×1080, both themes, the
+1280 / 1024 frames; captures + `results.json` in `screenshots/pr4-smoke/`) found four things the tiers had not, each
+fixed on the branch and re-run:
+
+- **Step 9 — the header indicator did not follow a people edit.** After "Alex Shabazian saved." the shell still read
+  "Draft — no changes" until a reload: the indicator fetches the draft status once per admin sub-page route (§1.9) and
+  nothing told it the draft changed. **Fix** `lib/draftStatusEvent.ts` — `notifyDraftStatusChanged()` dispatches a
+  window event; `AppShell` listens and drops its per-route cache (the existing `retryStatus`); Management fires it on
+  every success (`showSuccess`), Settings after an applied import or restore. Verified live: "Draft — 1 change" after
+  the save, "Draft — 2 changes" after the rename.
+- **Step 11 — the deactivate refusal never reached the panel.** `deleteEmployeeAction` threw the RPC's error, and a
+  thrown Server Action error is digest-stripped in production, so the danger zone showed the generic fallback
+  instead of "This employee is still on the published map at CW01…". **Fix** the F-ERR-1 shape the other actions
+  use: `EmployeeDeleteResult` gains `ActionRefusedFailure` (`code: "REFUSED"`, the RPC's message) and the action
+  returns it; `action-error-contract-source` pins it, `action-input-validation-source`'s union list widened. The
+  refusal now renders inline with the "Open CW01 on the map" ghost; no second sheet.
+- **Step 10 — a pointer on the inert overlay pulled focus out of the sheet.** A click on the dimmed panel's Save
+  (behind the sheet's overlay) did nothing — correct — but the mousedown moved `document.activeElement` to `body`,
+  after which Tab walked the document and Esc did nothing. `useDialogFocus` traps Tab only while focus is inside the
+  node. **Fix** the overlay cancels `mousedown` (`onMouseDown={e => e.preventDefault()}`) in `ManagementConfirmSheet`,
+  `CsvImportSheet`, `SnapshotRestoreSheet` and `CarbonModal`, so the focused control keeps focus. **Flag for the owner:**
+  `PublishReviewSheet` (PR 3b) shares the overlay and the gap; it is outside this PR and untouched.
+- **Step 20 — the narrow frame kept the 1920 widths.** At 1024 the Settings column stayed 776 and the narrow sheet 720,
+  where PHASE2UX §1S.5 says full width and viewport − 32. **Fix** sheet **amendment C** (both copies, byte-identical):
+  under the asset's 1055 fold, `.sp-settings { max-width: none }` and `.sp-tearsheet--narrow { width: calc(100vw −
+  2 × 16) }`. PHASE3DS §1.27 / §1.28 carry the paragraph. No token change.
+
+**Observations (recorded, not changed):**
+- Step 4: body rows measure 32.5 — the asset's 32px cell plus the collapsed 1px border share (block 21 as landed).
+  The seat link's hover step is the token contract — rest `link-primary` (#8F4521 light / #E8A07A dark), on the
+  ROW's hover `link-primary-hover` (#7A3A1C / #F5DDD1) — the brief's "rgb(143, 69, 33) / rgb(232, 160, 122)" are the
+  rest colours.
+- Step 12: the Deactivate sheet at 1920×1080 spans top 160 → bottom 490 (720 wide, centred); the bottom edge sits at
+  content height, not the viewport bottom — the Phase 3 narrow sheet as landed.
+- Step 3: the seed directory is short, so the strip pins (top 48, opaque `--sp-tabs-bg`) only once the pane scrolls —
+  the smoke used a 1920×420 viewport to force it.
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -773,7 +812,7 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | 2 | #515 | `feat/phase4-shell` | v1.74.3 | shell (P3-2 radio, 6, 9, 10; P2-2; route-group move of `/` confirmed 2026-09-03; Position kept as the fourth filter group, owner ruling 2026-09-04; group-2 sweep; provisional tenant row = PR 2/PR 3 seam; two preview rulings — indicator in the free run, no hover fill on the current link) | merged |
 | 3a | #516 | `feat/phase4-map-frame` | v1.74.5 | map frame (P3-4, 5 band half, 13; P2-1, 4 `?q=` `?names=`): control row on both surfaces, **provisional tenant row removed** (PR 2 seam closed — SeatMap's bar tenants + the viewer search move into the map control row, PHASE2UX §1M.3), one search + palette on `/admin` too, Filters split control, Find me, band + `SeatMark` + legend follows Names, canvas status region, roster Copy link; washes + clusters (D1-h/D1-i), `FilterPanel` / `ActiveFilterChips` / `DeptChipRow` / `AiHighlightChip` / `FloorSelector` / `ResultsPanel` / `adminChrome.ts` retired; owner rulings O1 O5 O6 O7 (2026-09-04); pre-merge smoke 24/24 (`screenshots/pr3a-smoke/`) + §1.22–§1.25 | merged |
 | 3b | #518 | `feat/phase4-map-markers` | v1.74.6 | map markers + slot (P3-5 marker half, 7, 8, 11, 12, 14; P2-3, 9): `.sp-pill` rewrite, seat-code tooltip, ◇ from the publish diff, quiet pill replaces the dim (ledger row closed), invalid target wired (O4), 400 slot (inspector · mode card · Ask Planner), publish tearsheet, group-3 sweep, marker rig + Draft-mark crops; owner rulings O2 O3 (brand-layer tokens); carry-ins C-1 (row rules out of `globals.css`, Q1/Q2), C-2 (palette rows, add-seat card), C-3 (§1.25 Redo fix, Q3 every column); Q4 seed reserved + unavailable; Q5 one PR. **Pre-merge smoke 13/13 steps pass** (18/18 records, `screenshots/pr3b-smoke/`); fix §1.36 — people edits now badge the seat; ◇ `rgb(138, 63, 252)` light / `rgb(190, 149, 255)` dark; live hit-pill contrast **15.23:1** light / **10.50:1** dark; Redo reapplies; invalid targets refused with the notice; 1024 pass; tooltip = seat code only (ruling, §1.36) | merged 2026-09-05 (squash) |
-| 4 | — | `feat/phase4-pages` | v1.75.0 | Management + Settings (P3-7 Management half, 8 Deactivate, 15, 16, 17; P2-6, 7, 8): `ManagementFrame` (line tabs in the sections landmark, the primary follows the tab), `EmployeesTable` (`.cds-table`, toolbar count, ● / ○, seat-code link, one ghost Edit), `EmployeePanel` (480 layer-02 slide-over, 50/50 footer, no ×, one dirty check → `CarbonModal` ask), `OptionList` (Save · Cancel inline rename, blur validates, ⋯ Delete), `OptionCreateModal`, `ManagementConfirmSheet` (**owner ruling §1.38**, sheet amendment B), Publish History tab gone; Settings: `.sp-callout`, sections in the record's order, `FileTrigger` + `lib/fileGuard` (5 MB / type, inline before a sheet), `CsvImportSheet` / `SnapshotRestoreSheet` (D6-e done-state ghost; MLS02 keeps the restore review), Reset draft gone (one call site pinned), draft-only page; group-4 sweep (`SWEPT` {1,2,3,4}, bridge §2 empty); `lib/managementCounts` / `inlineRename` / `fileGuard` | built 2026-09-05: unit 1428 · ct 307 · gate clean · e2e 36 · **e2e-auth 39/39** (local stack) · runtime audit 0 undefined (6 routes × 2 themes + 1280 + system state) · page-states rig 63 captures (`screenshots/pr4/`) · contrast 202/202 (no token change) · build clean; preview walk + the owner's smoke hand-off pending |
+| 4 | — | `feat/phase4-pages` | v1.75.0 | Management + Settings (P3-7 Management half, 8 Deactivate, 15, 16, 17; P2-6, 7, 8): `ManagementFrame` (line tabs in the sections landmark, the primary follows the tab), `EmployeesTable` (`.cds-table`, toolbar count, ● / ○, seat-code link, one ghost Edit), `EmployeePanel` (480 layer-02 slide-over, 50/50 footer, no ×, one dirty check → `CarbonModal` ask), `OptionList` (Save · Cancel inline rename, blur validates, ⋯ Delete), `OptionCreateModal`, `ManagementConfirmSheet` (**owner ruling §1.38**, sheet amendment B), Publish History tab gone; Settings: `.sp-callout`, sections in the record's order, `FileTrigger` + `lib/fileGuard` (5 MB / type, inline before a sheet), `CsvImportSheet` / `SnapshotRestoreSheet` (D6-e done-state ghost; MLS02 keeps the restore review), Reset draft gone (one call site pinned), draft-only page; group-4 sweep (`SWEPT` {1,2,3,4}, bridge §2 empty); `lib/managementCounts` / `inlineRename` / `fileGuard` | built 2026-09-05: unit 1428 · ct 307 · gate clean · e2e 36 · **e2e-auth 39/39** (local stack) · runtime audit 0 undefined (6 routes × 2 themes + 1280 + system state) · page-states rig 63 captures (`screenshots/pr4/`) · contrast 202/202 (no token change) · build clean. **Owner's twenty-step smoke 2026-09-05: 47/47 after four fixes (§1.39 — the indicator seam, the returned deactivate refusal, the inert overlay keeping focus, sheet amendment C for the narrow frame); captures + `results.json` in `screenshots/pr4-smoke/`**; PR + preview walk pending |
 | 5 | — | — | — | Reception, route surfaces, `/login` + `/my-seat` confirmed unchanged (P3-18; P2-5) | not started |
 | 6 | — | — | v2.0.0 | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
 
