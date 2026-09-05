@@ -13,7 +13,6 @@ const {
   hasPassedPanThreshold,
   boundingBoxCenter,
   fitMapWidth,
-  planInspectorNudge,
   MAP_ZOOM_MIN,
   MAP_ZOOM_MAX,
   MAP_ZOOM_STEP,
@@ -233,57 +232,4 @@ test("fitMapWidth still yields a renderable width when the column collapses", ()
 
   assert.ok(width >= 1, "a zero or negative width would blank the map");
   assert.ok(Number.isInteger(width), "a subpixel frame width shifts every marker off the plan");
-});
-
-// --- planInspectorNudge (v12 slice 4, interaction contract #1) ---
-// Panel left on an 800px viewport = 800 - 12 - 332 = 456.
-// Threshold = 456 - 24 = 432; target x = 456 - 48 = 408.
-
-test("planInspectorNudge returns null when the seat already clears the panel", () => {
-  // seatVisualX 0.25 → 0.25*1600 - 0 scroll = 400px on screen (< 432).
-  assert.equal(planInspectorNudge({ seatVisualX: 0.25, map: map(), viewport: viewport() }), null);
-});
-
-test("planInspectorNudge pans via scroll when scroll room covers the delta", () => {
-  // seatVisualX 0.4 → 640px on screen. delta = 640 - 408 = 232.
-  // Scroll room = 1600 - 800 - 0 = 800 ≥ 232 → all scroll, no translate.
-  const plan = planInspectorNudge({ seatVisualX: 0.4, map: map(), viewport: viewport() });
-  assert.deepEqual(plan, { scrollDelta: 232, translateDelta: 0 });
-});
-
-test("planInspectorNudge overflows into translate when scroll room runs out", () => {
-  // Fit-view shape: content no wider than the viewport → zero scroll room.
-  const fitViewport = viewport({ scrollWidth: 800, scrollHeight: 600 });
-  const fitMap = map({ offsetWidth: 800, offsetHeight: 600 });
-  // seatVisualX 0.75 → 600px on screen. delta = 600 - 408 = 192, all translate.
-  const plan = planInspectorNudge({ seatVisualX: 0.75, map: fitMap, viewport: fitViewport });
-  assert.deepEqual(plan, { scrollDelta: 0, translateDelta: 192 });
-});
-
-test("planInspectorNudge splits between remaining scroll room and translate", () => {
-  // 100px of scroll room left: scrollLeft 700 of max 800.
-  const nearEnd = viewport({ scrollLeft: 700 });
-  // seatVisualX 0.75 → 1200 - 700 = 500px on screen. delta = 500 - 408 = 92 ≤ 100 room → all scroll.
-  assert.deepEqual(planInspectorNudge({ seatVisualX: 0.75, map: map(), viewport: nearEnd }), { scrollDelta: 92, translateDelta: 0 });
-  // seatVisualX 0.85 → 1360 - 700 = 660. delta = 252 → 100 scroll + 152 translate.
-  assert.deepEqual(planInspectorNudge({ seatVisualX: 0.85, map: map(), viewport: nearEnd }), { scrollDelta: 100, translateDelta: 152 });
-});
-
-test("planInspectorNudge accounts for an existing frame translate", () => {
-  // A frame already translated -100px puts the seat 100px further left on screen.
-  const fitViewport = viewport({ scrollWidth: 800, scrollHeight: 600 });
-  const fitMap = map({ offsetWidth: 800, offsetHeight: 600 });
-  // seatVisualX 0.75 → 600 - 100 = 500 on screen. delta = 92, all translate again.
-  const plan = planInspectorNudge({ seatVisualX: 0.75, map: fitMap, viewport: fitViewport, currentTranslatePx: 100 });
-  assert.deepEqual(plan, { scrollDelta: 0, translateDelta: 92 });
-});
-
-test("planInspectorNudge respects map offsetLeft (letterboxed fit view)", () => {
-  // Frame centered with 94px letterbox: offsetLeft 94, width 612 in an 800 viewport.
-  const fitViewport = viewport({ scrollWidth: 800, scrollHeight: 600 });
-  const boxedMap = map({ offsetLeft: 94, offsetWidth: 612, offsetHeight: 600 });
-  // seatVisualX 0.9 → 94 + 550.8 = 644.8 on screen. delta = 236.8 → all translate.
-  const plan = planInspectorNudge({ seatVisualX: 0.9, map: boxedMap, viewport: fitViewport });
-  assert.equal(plan.scrollDelta, 0);
-  assert.ok(Math.abs(plan.translateDelta - 236.8) < 0.001);
 });

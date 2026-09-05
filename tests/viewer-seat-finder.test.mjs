@@ -583,19 +583,27 @@ test("below the sm tier the names toggle lives in the control row and still driv
   assert.deepEqual(actionCalls, [], "render-local — never a server action");
 });
 
-test("below the panel tier the band yields to the inspector sheet and returns on dismiss", async () => {
+// Phase 4 PR 3b: the inspector is the right slot over the canvas column
+// (PHASE3DS §1.17) — it never covers the band, so the band stays at every
+// width while the inspector is open, and the slot host keys presence.
+test("the band stays while the inspector is open at tablet widths — the slot never covers it", async () => {
   setViewportWidth(820);
   await renderViewer();
   assert.ok(statusBand(), "band renders at tablet widths while nothing is selected");
+  assert.equal(document.querySelector("[data-slot-host]").getAttribute("data-open"), null, "closed slot: no presence key");
 
   fireEvent.click(seatMarker("A-01"));
   await flushFrames();
   assert.ok(openInspector(), "selecting a seat opens the inspector");
-  assert.ok(statusBand() === null, "the sheet owns the bottom — the band must yield while it is open");
+  assert.equal(document.querySelector("[data-slot-host]").getAttribute("data-open"), "", "the slot host is open");
+  assert.ok(document.querySelector("[data-slot-host] #seat-inspector-panel"), "the inspector is the slot's child");
+  assert.ok(statusBand() !== null, "the band stays — the slot sits over the canvas column, not the band");
+  assert.ok(!document.querySelector("[data-slot-host]").contains(statusBand()), "the band is never under the slot");
 
   fireEvent.click(screen.getByRole("button", { name: "Close inspector" }));
   await flushFrames();
-  assert.ok(statusBand() !== null, "the band returns once the sheet is dismissed");
+  assert.ok(statusBand() !== null, "the band is still there once the inspector closes");
+  assert.equal(document.querySelector("[data-slot-host]").getAttribute("data-open"), null);
 });
 
 // AUDIT-2 §8.2: a never-published map rendered the bare floor plan with zero

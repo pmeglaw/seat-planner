@@ -55,15 +55,7 @@ import test from "node:test";
 //     expansion live in different template chunks, so the sweep cannot join
 //     them; the pins below hold the per-face classes.
 
-const LEDGER = [
-  {
-    file: "components/seat-map/SeatInspector.tsx",
-    token: "h-8 w-8 shrink-0 items-center justify-center bg-[var(--sp-background)]",
-    reason: "adjacency-capped",
-    reach: "44×42 — contact rows are space-y-2.5 and the email row above holds a mailto link; vertical cap 5px per side",
-    minReach: { w: 44, h: 42 }
-  },
-];
+const LEDGER = [];
 
 // <input>/<select> literals whose 44px reach is delivered by the wrapping
 // <label> (::after cannot render on replaced form controls). Each entry has a
@@ -84,10 +76,12 @@ const PINS = {
     "after:absolute after:-inset-y-1.5",
     "after:absolute after:-inset-y-1.5"
   ],
+  // Phase 4 PR 3b: the inspector's icon buttons are the asset's 40px
+  // `.cds-btn--icon` with the `.cds-touch-target` pseudo (44); the move-
+  // conflict dialog's close keeps its Tailwind expansion.
   "components/seat-map/SeatInspector.tsx": [
-    "after:absolute after:-inset-2",
-    "after:absolute after:-inset-x-1.5 after:-inset-y-[5px]",
-    "after:absolute after:-inset-y-0.5",
+    "cds-btn cds-btn--icon cds-btn--md cds-touch-target",
+    "cds-btn cds-btn--icon cds-touch-target",
     "after:absolute after:-inset-1.5"
   ],
   "components/seat-map/SeatMapDialogs.tsx": ["after:absolute after:-inset-1.5"],

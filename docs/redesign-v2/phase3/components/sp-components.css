@@ -608,6 +608,10 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-slot .cds-notification { max-width: none; margin: var(--sp-space-03) 0 var(--sp-space-05); }
 .sp-slot .cds-form-item[data-invalid] .cds-helper { color: var(--sp-text-error); }
 
+/* Phase 4 PR 3b (asset override, PHASE3DS §2): native <select> popups ignore the control's classes —
+   without explicit option colours Windows dark mode paints OS-coloured options against the layer (#200) */
+.cds-select option { background: var(--sp-layer-01); color: var(--sp-text-primary); }
+
 /* -----------------------------------------------------------------------------
    14. MODE CARD — §3 "Mode card · hand-built". PHASE3DS §1.18. Owns the slot
        while a mode runs: eyebrow · message body-01 · ghost exit · Esc note.

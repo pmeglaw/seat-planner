@@ -205,7 +205,7 @@ test("a successful save hands focus to the re-mounted primary CTA", async ({ pag
   // Fill the employee name through React's controlled-input path (native
   // setter + bubbling input, per the harness's no-CSS rules).
   await page.evaluate(() => {
-    const field = [...document.querySelectorAll("input")].find(input => input.closest("label")?.textContent?.includes("Employee name"));
+    const field = document.querySelector<HTMLInputElement>('#seat-inspector-form input[name="employeeName"]');
     if (!field) throw new Error("employee input not found");
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
     setter.call(field, "Alice Smith");
@@ -366,12 +366,15 @@ test("the status band is the admin map's one zoom home and yields to the sheet",
   await expect(page.locator('button[aria-label="Zoom in"]')).toHaveCount(1);
   await expect(band.locator('button[aria-label="Zoom in"]')).toBeAttached();
 
-  // Below the panel tier the inspector is a bottom sheet and the band yields.
+  // Phase 4 PR 3b: the inspector is the right slot over the canvas column —
+  // the band below it stays, at every width.
   await page.setViewportSize({ width: 820, height: 900 });
   await clickMarker(page, "N01");
   await expect(page.locator("#seat-inspector-panel")).toBeAttached();
-  await expect(band).not.toBeAttached();
+  await expect(page.locator("[data-slot-host][data-open]")).toBeAttached();
+  await expect(band).toBeAttached();
   await page.locator('button[aria-label="Close inspector"]').dispatchEvent("click");
+  await expect(page.locator("[data-slot-host][data-open]")).toHaveCount(0);
   await expect(band).toBeAttached();
 
   // Phones: no band, the floating zoom stack returns (owner call 2026-08-17).
@@ -380,21 +383,26 @@ test("the status band is the admin map's one zoom home and yields to the sheet",
   await expect(page.locator('button[aria-label="Zoom in"]')).toHaveCount(1);
 });
 
-test("the inspector's panel-tier band clearance follows the band, not the floor it left", async ({ page }) => {
+test("the slot never covers the band: the inspector sits over the canvas column and the band stays in flow", async ({ page }) => {
   await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: true });
   await clickMarker(page, "N01");
   const inspector = page.locator("#seat-inspector-panel");
-  // Floor 3: the band renders, so the docked panel clears it (52px).
-  await expect(inspector).toHaveClass(/panel:bottom-\[52px\]/);
+  await expect(inspector).toHaveClass(/sp-slot/);
+  // The slot host lives INSIDE the canvas column, the band is that column's
+  // sibling below — so the band is never under the slot (PHASE3DS §1.17).
+  const host = page.locator("[data-slot-host][data-open]");
+  await expect(host).toBeAttached();
+  await expect(page.locator("[data-map-status-band]")).toBeAttached();
+  const hostInsideColumn = await host.evaluate(el => Boolean(el.parentElement?.querySelector("[id='admin-seat-map']") || el.parentElement?.querySelector("[aria-label^='Admin seat map viewport']")));
+  expect(hostInsideColumn).toBe(true);
+  const bandUnderHost = await page.locator("[data-map-status-band]").evaluate((band, hostEl) => hostEl!.contains(band), await host.elementHandle());
+  expect(bandUnderHost).toBe(false);
 
-  // Switch to Floor 2: the selection survives, the band does not — the
-  // clearance must fall back to the stock 12px gutter, not hold a 52px gap
-  // above nothing.
-  // Two FloorSelector variants mount (chrome bar + canvas) — either menu works.
+  // Switch to Floor 2: the selection survives, the band does not, the slot stays.
   await page.locator('button[aria-label^="Change floor"]').first().dispatchEvent("click");
   await page.getByRole("menuitemradio", { name: /Floor 2/ }).first().dispatchEvent("click");
   await expect(page.locator("[data-map-status-band]")).not.toBeAttached();
-  await expect(inspector).toHaveClass(/panel:bottom-3/);
+  await expect(inspector).toBeAttached();
 });
 
 // --- Multi-floor PR-3 (DECISIONS.md D2′) --------------------------------------

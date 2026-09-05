@@ -102,7 +102,7 @@ const FLOW_REGISTRY = [
     file: INSPECTOR,
     patterns: [
       /pending \? "Saving…" : primaryActionLabel/,
-      /loading=\{pending\}/,
+      /aria-busy=\{pending \|\| undefined\}/,
       // The inspector's own sr region keeps announcing the flight.
       /"Saving draft…"/
     ]

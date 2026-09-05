@@ -94,7 +94,8 @@ test("admin planning shell exposes status, panel relationships, and undo redo ex
   assert.match(source, /No map changes to undo/);
   assert.match(source, /No undone map changes to redo/);
   assert.match(source, /unpublished \$\{publishSummary\.totalChangeCount === 1 \? "change" : "changes"\}/);
-  assert.match(source, /Esc exits/);
+  // PR 3b: the mode card lives in the right slot (ModeCard.tsx) and teaches Esc there.
+  assert.match(await readSource("../components/seat-map/ModeCard.tsx"), /Esc also exits\./);
   assert.match(source, /Exit add seat/);
   // Publish chip contract, v12 (contract #4): nothing renders without draft
   // changes — no idle status chip, no publish-status-popover. The has-changes
@@ -451,7 +452,10 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.doesNotMatch(inspectorSource, /role="tablist"|role="tabpanel"/);
   assert.doesNotMatch(inspectorSource, /VIEW DETAILS/);
   assert.doesNotMatch(inspectorSource, /Collapse inspector/);
-  assert.match(inspectorSource, /z-\[80\][\s\S]*panel:z-40/);
+  // Phase 4 PR 3b: the inspector IS the right slot (`.sp-slot` inside
+  // RightSlot's host) — no z-index of its own; the move-conflict dialog keeps
+  // its own stacking above everything.
+  assert.match(inspectorSource, /className="sp-slot max-w-full"/);
   assert.match(inspectorSource, /z-\[90\][\s\S]*sm:z-\[70\]/);
   assert.match(inspectorSource, /hasCurrentAssignment \? "Assignment" : "Assign this seat"/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"/);
@@ -484,7 +488,7 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // not appear disabled — so the render gate is canDeleteSeat (draft +
   // custom + unassigned + available + not a protected-original label, which
   // keeps the gate immune to is_custom data drift on original seats).
-  assert.match(inspectorSource, /\{selectedSeatCanDelete && \(/);
+  assert.match(inspectorSource, /\{selectedSeatCanDelete \? \(/);
   assert.match(inspectorSource, /const selectedSeatCanDelete = canDeleteSeat\(selectedSeat\);/);
   // An open seat has no occupant — the Contact section exists only when
   // someone is assigned (admin and viewer variants alike). Department stays
@@ -503,13 +507,13 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // dirty-notes helper and the e2e-auth guard spec reach for.
   assert.match(inspectorSource, /title="Workspace notes"/);
   assert.match(inspectorSource, /<div id="seat-inspector-notes"/);
-  // Status chips are SOFT PAIRS (2026-08-19 Carbon handoff): every arm pulls
-  // bg and text from the same --sp-editor-* family, whose light AND dark
-  // values are measured AA together in globals.css. Solid status fills with
-  // hardcoded text partners are banned here — white on the dark-theme
-  // --sp-status-success-mark (#42be65) fails AA at ~2.2:1, which is how the old
-  // solid tag broke silently when dark mode landed.
-  assert.match(inspectorSource, /bg-\[var\(--sp-editor-clean-bg\)\] text-\[var\(--sp-editor-clean-text\)\]/);
+  // Status is the seat-mark legend row (shape + label, PHASE3DS §1.4) and the
+  // saved confirmation is the one notification component's success kind —
+  // never a solid status fill with a hardcoded text partner (white on the
+  // dark-theme --sp-status-success-mark #42be65 fails AA at ~2.2:1, which is
+  // how the old solid tag broke silently when dark mode landed).
+  assert.match(inspectorSource, /<SeatMark kind=\{legendKind\} \/>\{currentStatusLabel\}/);
+  assert.match(inspectorSource, /cds-notification cds-notification--success/);
   assert.doesNotMatch(inspectorSource, /bg-\[var\(--sp-status-success-mark\)\] text-white/);
   assert.doesNotMatch(inspectorSource, /bg-\[var\(--sp-status-success-mark\)\] text-\[var\(--sp-text-primary\)\]/);
   assert.doesNotMatch(inspectorSource, /sticky bottom-0/);
@@ -522,7 +526,9 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // (person via formatDisplayName, seat code via formatSeatCode) — raw stored
   // values must not surface here (2026-07-16 critique, fix 2 follow-up).
   assert.match(inspectorSource, /Move \{formatDisplayName\(moveConflict\.employeeName\)\} to \{formatSeatCode\(selectedSeat\.label\)\}\?/);
-  assert.match(inspectorSource, /Review inspector fields/);
+  // PR 3b: the error summary is the one notification component (error kind), titled for the seat.
+  assert.match(inspectorSource, /cds-notification cds-notification--error/);
+  assert.match(inspectorSource, /Couldn&apos;t save this seat/);
   assert.match(inspectorSource, /errorSummaryRef\.current\?\.focus\(\)/);
   assert.match(inspectorSource, /focusInspectorField\(error\.field\)/);
   assert.match(inspectorSource, /aria-invalid=\{Boolean\(fieldErrorMap\.employeeName\)\}/);
@@ -531,12 +537,9 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.match(inspectorSource, /getSeatDeleteBlockReason/);
   assert.match(inspectorSource, /Delete seat/);
   assert.match(inspectorSource, /aria-describedby="seat-inspector-delete-help"/);
-  // Corner radius is free to evolve (v12 slice 4 flattened it to 0; the
-  // 2026-08-19 reference-image pass rounded the inspector again via
-  // arbitrary rounded-[Npx] values, since the theme radius scale stays
-  // zeroed); the layout guarantee (no-wrap-collapse of the helper line) is
-  // what this pin protects, not the corner radius.
-  assert.match(inspectorSource, /whitespace-normal leading-tight/);
+  // PR 3b: Delete is the asset's danger ghost (P3-8) — the one destructive
+  // treatment, never a filled danger button inside the slot.
+  assert.match(inspectorSource, /className="cds-btn cds-btn--danger-ghost"/);
   // Figma delete treatment: the block reason is a visible helper line, not sr-only.
   // (Class content deliberately unpinned — type-scale values are free to evolve;
   // the guardrail is the visible element carrying the aria-describedby id.)
@@ -674,12 +677,15 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   // 3b MODE CARD: modes own the panel slot (no canvas banner); move-mode copy
   // lives inside the inspector occupant.
   assert.match(seatMapSource, /const modeCardOpen = canEdit && Boolean\(activeMode\) && \(!selectedSeat \|\| inspectorCollapsed\)/);
-  assert.match(seatMapSource, /\{modeCardOpen && activeMode && \(/);
+  // PR 3b: the mode card owns the right slot until the mode ends (INV-4).
+  assert.match(seatMapSource, /const slotOwner: RightSlotOwner = modeCardOpen \? "mode" : selectedSeat && !inspectorCollapsed \? "inspector" : null;/);
+  assert.match(seatMapSource, /\{slotOwner === "mode" && activeMode && \(/);
   assert.match(seatMapSource, /\{paletteOpen && \(\s*<ViewerFindPalette/);
   // PR 3a: action errors, the stale-draft refresh and the outcome notice ride the canvas status region (PHASE3DS §1.21).
   assert.match(seatMapSource, /<CanvasStatus notices=\{canvasNotices\} \/>/);
   assert.match(seatMapSource, /kind: "error", alert: true, text: actionError/);
-  assert.match(seatMapSource, /aria-label=\{`\$\{activeMode\.label\} mode`\}/);
+  // The card itself (ModeCard.tsx) is the polite live region named "<label> mode".
+  assert.match(await readSource("../components/seat-map/ModeCard.tsx"), /role="status" aria-live="polite" aria-label=\{`\$\{label\} mode`\}/);
   // The action notice toast is IN-FLOW inside the top-cluster overlay (a
   // second flex-col row), never absolutely offset over it: any fixed top
   // clearance overlaps the cluster once its filter chips wrap to a second
@@ -1037,10 +1043,12 @@ test("dark-panel selects style their options and the app declares a theme color"
 
   // Native <select> popups ignore the control's classes: without explicit
   // option colors, Windows dark mode renders OS-colored options against the
-  // inspector's dark panel (#200). FilterPanel already does this — the
-  // inspector's shared field class must too. Token VALUES are free to evolve;
-  // the invariant is that option bg+text are explicitly set.
-  assert.match(inspectorSource, /fieldClassName = "[^"]*\[&>option\]:bg-\[[^\]]+\][^"]*\[&>option\]:text-\[[^\]]+\]/);
+  // inspector's dark panel (#200). PR 3b: the inspector's selects are the
+  // asset's `.cds-select`, so the option colours live in the CSS deliverable
+  // (sp-components.css asset override). Token VALUES are free to evolve; the
+  // invariant is that option bg+text are explicitly set.
+  assert.match(inspectorSource, /className="cds-select"/);
+  assert.match(await readSource("../app/styles/sp-components.css"), /\.cds-select option \{ background: var\(--sp-layer-01\); color: var\(--sp-text-primary\); \}/);
 
   // Browser chrome should match the app's dark top bar on mobile (#200).
   assert.match(layoutSource, /themeColor/);
@@ -1135,7 +1143,9 @@ test("touch devices get visible destructive affordances, contained modals, and s
   assert.match(managementSource, /role="dialog"[\s\S]{0,600}overscroll-contain/);
 
   // Viewport-fixed bottom sheets respect the home-indicator inset (#198).
-  assert.match(seatMapSource, /env\(safe-area-inset-bottom\)/);
+  // PR 3b: the admin map has no bottom sheet left — the inspector and the
+  // mode card are the right slot — so nothing there is viewport-fixed.
+  assert.doesNotMatch(seatMapSource, /fixed inset-x-3 bottom-/);
   // The viewer used to need three: two bottom sheets and the PEOPLE pill. All
   // three are retired, and the palette hangs off the TOP of the screen — so
   // what has to clear the home indicator now is the bottom-anchored zoom

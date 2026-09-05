@@ -56,7 +56,7 @@ import { SeatInspector } from "@/components/seat-map/SeatInspector";
 import { SeatMarker, seatPillLabel } from "@/components/seat-map/SeatMarker";
 import { ViewerFindPalette } from "@/components/seat-map/ViewerFindPalette";
 import { MapStatusBand } from "@/components/seat-map/MapStatusBand";
-import { useInspectorNudge } from "@/components/seat-map/useInspectorNudge";
+import { RightSlot } from "@/components/seat-map/RightSlot";
 import { PILL_CLEARANCE_PX, PILL_HEIGHT_PX, clearanceFromScale, computeNameLabelNudges, estimatePillWidthPx } from "@/lib/seatCrowding";
 
 type ViewerSeatFinderProps = {
@@ -265,21 +265,6 @@ export function ViewerSeatFinder({
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
 
-  // v12 slice 4 nudge (interaction contract #1): keeps the selected seat clear
-  // of the floating inspector at the panel tier. Pan/zoom/wheel/programmatic
-  // scroll paths below call cancelNudge() so a user- or code-initiated
-  // scroll-position change always wins over an in-flight nudge tween. The
-  // resolver reads visualSeatById via closure — safe even though that const is
-  // declared further down, because the hook only ever invokes it from a
-  // deferred rAF callback, well after this render has finished.
-  const { cancelNudge, skipNextNudge } = useInspectorNudge({
-    viewportRef: mapViewportRef,
-    frameRef: mapRef,
-    selectedSeatId,
-    inspectorHidden: inspectorCollapsed,
-    panelBreakpointPx: VIEWER_PANEL_BREAKPOINT_PX,
-    resolveSeatVisualX: seatId => visualSeatById.get(seatId)?.x ?? null
-  });
   const panStateRef = useRef<ViewerPanState>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   // The field WRAPPER, not the input: the palette aligns its left edge to the
@@ -699,8 +684,6 @@ export function ViewerSeatFinder({
   }, [floor]);
 
   const scrollMapToPoint = useCallback((x: number, y: number, behavior: ScrollBehavior = "smooth") => {
-    // A programmatic center supersedes any in-flight inspector nudge.
-    cancelNudge();
     const viewport = mapViewportRef.current;
     const map = mapRef.current;
     if (!viewport || !map) return;
@@ -709,7 +692,7 @@ export function ViewerSeatFinder({
     const left = clampScrollPosition((x * map.offsetWidth) - (viewport.clientWidth / 2), viewport.scrollWidth - viewport.clientWidth);
     const top = clampScrollPosition((y * map.offsetHeight) - (viewport.clientHeight / 2), viewport.scrollHeight - viewport.clientHeight);
     viewport.scrollTo({ left, top, behavior });
-  }, [cancelNudge]);
+  }, []);
 
   const centerSeatInMap = useCallback((seatId: string, behavior: ScrollBehavior = "smooth") => {
     const visualSeat = visualSeatById.get(seatId);
@@ -744,7 +727,6 @@ export function ViewerSeatFinder({
   // announce something more specific (a selected seat, a highlighted person).
   const switchFloor = useCallback((next: FloorId, options: { announce?: boolean } = {}) => {
     if (next === floor) return;
-    cancelNudge();
     setFloorState(next);
     setSelectedSeatId(null);
     setInspectorCollapsed(false);
@@ -765,7 +747,7 @@ export function ViewerSeatFinder({
     window.requestAnimationFrame(() => {
       mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
     });
-  }, [cancelNudge, floor]);
+  }, [floor]);
   const summarySwitchTo = departmentSummary.switchTo;
   const departmentSummaryAction = summarySwitchTo
     ? {
@@ -775,12 +757,10 @@ export function ViewerSeatFinder({
     : undefined;
 
   function applyMapZoom(nextZoom: number) {
-    cancelNudge();
     setZoomFactor(clampZoom(nextZoom));
   }
 
   function fitMapToView() {
-    cancelNudge();
     setZoomFactor(null);
     window.requestAnimationFrame(() => {
       mapViewportRef.current?.scrollTo({ left: 0, top: 0, behavior: "auto" });
@@ -792,7 +772,6 @@ export function ViewerSeatFinder({
   }
 
   function handleViewportPointerDown(event: PointerEvent<HTMLDivElement>) {
-    cancelNudge();
     if (surface !== "plan" || event.button !== 0) return;
     if (isPanBlockedTarget(event.target)) return;
     const viewport = mapViewportRef.current;
@@ -936,7 +915,6 @@ export function ViewerSeatFinder({
     // This selection also queues a programmatic center below — arm the skip
     // in the same commit so the nudge trigger effect never races the
     // center's native smooth scrollTo.
-    if (isNewSelection) skipNextNudge();
     centerSeatInMap(seatId);
   }
 
@@ -1056,7 +1034,6 @@ export function ViewerSeatFinder({
       setSelectedSeatId(result.seatId);
       setInspectorCollapsed(false);
       if (isNewSelection) {
-        skipNextNudge();
         // The row button unmounts with the palette, so focus falls to <body>
         // unless it is placed — the same drop the Escape handler above already
         // guards. Hand it to the panel this find just opened: the handoff the
@@ -1242,8 +1219,9 @@ export function ViewerSeatFinder({
   // (52px = 40px band + the 12px gutter every floating card keeps), so the
   // band keeps rendering. The palette is not part of this: it hangs off the
   // TOP of the screen under the bar and never contends for the bottom.
-  const bottomSheetOwnsBottom = Boolean(selectedSeat);
-  const statusBandVisible = bandTier && (panelTier || !bottomSheetOwnsBottom);
+  // Phase 4 PR 3b: the inspector is the right slot over the canvas column —
+  // the band never yields to a sheet.
+  const statusBandVisible = bandTier;
 
   // `inspectorCollapsed` is purely the INV-1 auto-yield flag. An active query
   // owns the transient surface; once the query clears, the inspector returns
@@ -1326,6 +1304,10 @@ export function ViewerSeatFinder({
   // stack vertically, and at lg flex-1 + min-h-0 keep the pair filling the
   // screen column exactly as the lone viewport used to.
   const mapStageClassName = "relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1";
+  // The 400 right slot (C9): the inspector while a seat is selected. The
+  // canvas column is pushed while it is open; the band below never reflows.
+  const slotOpen = Boolean(selectedSeat) && !inspectorCollapsed;
+  const canvasColumnClassName = ["relative flex min-w-0 flex-col lg:min-h-0 lg:flex-1", slotOpen ? "lg:pr-[var(--sp-slot-w)]" : ""].filter(Boolean).join(" ");
 
   return (
     /* overflow-x-CLIP, not -hidden: hidden makes this div a scroll container,
@@ -1383,6 +1365,7 @@ export function ViewerSeatFinder({
           <h1 className="sr-only">Seat Planner — office map</h1>
 
           <div className={mapStageClassName}>
+          <div className={canvasColumnClassName}>
             {/* Inline notices over the canvas (PHASE3DS §1.21): Find me's
                 not-in-directory line lands here, in the region being read. */}
             <CanvasStatus notices={canvasNotices} />
@@ -1398,10 +1381,6 @@ export function ViewerSeatFinder({
               onPointerMove={handleViewportPointerMove}
               onPointerUp={handleViewportPointerEnd}
               onPointerCancel={handleViewportPointerEnd}
-              onWheel={cancelNudge}
-              onKeyDown={event => {
-                if (VIEWPORT_NATIVE_SCROLL_KEYS.has(event.key)) cancelNudge();
-              }}
             >
               {surface === "roster" && (
                 <FloorRoster
@@ -1511,6 +1490,26 @@ export function ViewerSeatFinder({
                 />
               </div>
             )}
+            </div>
+            {/* The right slot (PHASE3DS §1.17): the published inspector, over
+                the canvas column only — the band below stays uncovered. */}
+            <RightSlot open={slotOpen}>
+              {slotOpen && (
+              <SeatInspector
+                seat={selectedSeat}
+                seats={publishedSeats}
+                employees={employees}
+                departmentOptions={departmentOptions}
+                canEdit={false}
+                collapsed={inspectorCollapsed}
+                onClose={() => {
+                  focusViewerSeatMarker(selectedSeatId);
+                  setSelectedSeatId(null);
+                  setInspectorCollapsed(false);
+                }}
+              />
+              )}
+            </RightSlot>
             {/* The status band (Option A): the in-flow bottom row that
                 replaced the floating legend card + floating zoom stack from
                 sm up. Counts still come from statusCountSeats, which follows
@@ -1603,23 +1602,6 @@ export function ViewerSeatFinder({
         />
       )}
 
-      <SeatInspector
-        seat={selectedSeat}
-        seats={publishedSeats}
-        employees={employees}
-        departmentOptions={departmentOptions}
-        canEdit={false}
-        // No panelBottomClassName: the viewer card is top-anchored and
-        // content-height, so it never reaches the status band (the old
-        // conditional panel:bottom-[52px] clearance died with the
-        // full-column pin, 2026-08-20).
-        collapsed={inspectorCollapsed}
-        onClose={() => {
-          focusViewerSeatMarker(selectedSeatId);
-          setSelectedSeatId(null);
-          setInspectorCollapsed(false);
-        }}
-      />
     </div>
   );
 }
