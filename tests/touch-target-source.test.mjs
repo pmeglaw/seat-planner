@@ -43,8 +43,12 @@ import test from "node:test";
 //
 // Zero-expansion adjacency captures (no explicit size, so the sweep cannot
 // see them — recorded here so the reasons survive):
-//   - Reception fallback rows (zero-gap stack) and recent rows (1px hairline
-//     gap): vertical cap 0 — reach ≈32 / ≈42, WCAG 2.5.8 satisfied.
+//   - Reception (Phase 4 PR 5): the rows, the same-department row-buttons and
+//     the recent rows are the sheet's own heights — 48 (`--sp-recep-row-h`),
+//     40 (`--sp-row-button-h`), 40 (`--sp-recep-recent-row-h`), the clear × 40
+//     — in sp-components.css; no Tailwind size literal, no expansion pin, no
+//     ledger row. Rows are listbox options reached from the field (never a tab
+//     stop), so the 44 rule applies to the 40 ghosts as WCAG 2.5.8's 24 floor.
 //   - Floor/kebab menu items (zero-gap stack, ≈33–37): no vertical expansion;
 //     Carbon's own menu row is 32.
 //   - Management sort-header buttons: expanded only within the header row's
