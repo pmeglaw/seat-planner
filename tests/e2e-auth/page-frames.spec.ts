@@ -151,11 +151,15 @@ test.describe("Reception frame", () => {
       await page.goto("/reception");
       await expect(page.getByRole("heading", { name: "Reception", level: 1 })).toBeVisible();
       await expect(page.locator('li[role="option"]').first()).toBeVisible();
+      // The live grid inside <main> — the loading skeleton has its own `.sp-recep`
+      // that can still be on screen while the streamed page waits in React's
+      // hidden pre-swap container.
+      await expect(page.locator("main .sp-recep")).toBeVisible();
 
       await expectNoHorizontalScroll(page, `reception ${width}`);
-      await expect(page.locator(".sp-page .cds-page-header .cds-btn")).toHaveCount(0);
+      await expect(page.locator("main .sp-page .cds-page-header .cds-btn")).toHaveCount(0);
 
-      const list = (await page.locator(".sp-recep-list").boundingBox())!;
+      const list = (await page.locator("main .sp-recep-list").boundingBox())!;
       const readout = (await page.getByRole("region", { name: "Caller detail" }).boundingBox())!;
       if (width >= 1280) {
         expect(Math.round(readout.width), `${width}: the readout column is 480`).toBe(480);
@@ -163,15 +167,22 @@ test.describe("Reception frame", () => {
         if (width === 1920) expect(Math.round(list.width), "the list takes the rest of the 1520 content box (Q-6)").toBe(1008);
         await expect(page.getByRole("button", { name: "Back to the list" })).toBeHidden();
       } else {
-        const columns = await page.locator(".sp-recep").evaluate(el => getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length);
+        const columns = await page.locator("main .sp-recep").evaluate(el => getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length);
         expect(columns, `${width}: one column under the fold`).toBe(1);
         expect(readout.y).toBeGreaterThanOrEqual(list.y + list.height - 1);
         await expect(page.getByRole("button", { name: "Back to the list" })).toBeVisible();
       }
 
       // The skip link lands on the field itself. Autofocus already parked
-      // focus there, so blur first; Tab then reaches the header's skip link.
-      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      // focus there, and blur() would leave Chrome's sequential-focus starting
+      // point on the field; focusing <body> resets it to the document start so
+      // the next Tab reaches the header's skip link.
+      await page.evaluate(() => {
+        const body = document.body;
+        body.tabIndex = -1;
+        body.focus();
+        body.removeAttribute("tabindex");
+      });
       await page.keyboard.press("Tab");
       await page.keyboard.press("Enter");
       await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? "")).toBe("reception-main");

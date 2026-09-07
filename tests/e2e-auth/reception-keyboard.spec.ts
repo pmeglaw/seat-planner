@@ -29,6 +29,19 @@ async function activeElementId(page: Page) {
   return page.evaluate(() => document.activeElement?.id ?? "");
 }
 
+// Autofocus parks focus in the field, and blur() leaves Chrome's sequential-focus
+// starting point ON the field — Tab would then reach the next control, not the
+// header's skip link. Focusing <body> moves the starting point to the document
+// start, so the next Tab is the first focusable: the skip link.
+async function resetFocusStart(page: Page) {
+  await page.evaluate(() => {
+    const body = document.body;
+    body.tabIndex = -1;
+    body.focus();
+    body.removeAttribute("tabindex");
+  });
+}
+
 async function expectNoViolations(page: Page) {
   await waitForOneShotAnimations(page);
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
@@ -53,7 +66,7 @@ test.describe("Reception keyboard loop (viewer)", () => {
     // on the field itself (PHASE2UX §1R.7) — blur first, since autofocus
     // already parked focus there.
     await expectNoViolations(page);
-    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await resetFocusStart(page);
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
     await page.keyboard.press("Enter");
@@ -164,9 +177,13 @@ test.describe("Reception keyboard loop (viewer)", () => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto("/reception?q=201");
     await expect(lockedRows(page)).toHaveCount(1);
-    const columns = await page.locator(".sp-recep").evaluate(el => getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length);
-    expect(columns, "one grid column under the 1055 fold (sheet amendment E)").toBe(1);
-    const listBox = (await page.locator(".sp-recep-list").boundingBox())!;
+    // The streamed page lands in React's hidden pre-swap container while the
+    // loading skeleton's own `.sp-recep` is still on screen — measure the live
+    // grid inside <main> once it is visible, never the skeleton's.
+    await expect(page.locator("main .sp-recep")).toBeVisible();
+    const grid = await page.locator("main .sp-recep").evaluate(el => ({ columns: getComputedStyle(el).gridTemplateColumns.trim(), innerWidth: window.innerWidth }));
+    expect(grid.columns.split(/\s+/).length, `one grid column under the 1055 fold (sheet amendment E) — got "${grid.columns}" at innerWidth ${grid.innerWidth}`).toBe(1);
+    const listBox = (await page.locator("main .sp-recep-list").boundingBox())!;
     const readoutBox = (await readout(page).boundingBox())!;
     expect(readoutBox.y, "the readout follows the list").toBeGreaterThanOrEqual(listBox.y + listBox.height - 1);
     expect(await readout(page).evaluate(el => getComputedStyle(el).position)).toBe("static");

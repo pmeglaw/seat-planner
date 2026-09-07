@@ -2,56 +2,70 @@
 
 Plan of record: `../../plans/phase4-pr5-reception.md`. Branch `feat/phase4-reception`.
 
-## What is here
+**What these show.** Reception on the Phase 3 `.sp-recep` family (PHASE2UX §1R; PHASE3DS §1.29; sheet amendment E for
+the 1024 fold): the 1584 page frame with title + subtitle and no action; the 48px search with the leading glyph, the
+platform hint (`⌘ K` on this Mac) and the clear × once typed; the 32px count header; 48px rows with name + meta, the
+seat code as plain code text, the Floor 2 tag where the floor differs, the extension right-aligned (dash via the empty
+cell); the cursor row (hover surface + terracotta bar) while typing and the locked row (selected surface + bar) after ↵;
+the sticky 480 readout — name, the tile with the `heading-06` Light numeral and the ↵ / Esc hint, the D3′ seat line,
+"No extension on file", the same-department fallback rows, Show on map, Recent lookups; the zero state keeping the
+last locked person; the `?q=201` landing; the 1280 frame; the 1024 one-column frame with the ruled static readout and
+"Back to the list". Plus the route cards: the `/admin` 403 (a viewer), the 404, and — no database needed — the global
+boundary. Both themes at 1920.
 
-`route-cards/` — the two route surfaces that need **no database**, captured on this build with Playwright's bundled
-Chromium (1920×1080, both themes, after `document.fonts.ready` + 800 ms; theme seeded through an init script so the
-boot script derives `data-theme` / `data-carbon-theme` before paint):
+## Directories
 
-| Capture | What it shows | Read from the page |
+| Dir | Rig | Contents |
 |---|---|---|
-| `not-found-{light,dark}-1920.png` | the 404 (`/no-such-page-pr5`, status 404) on `.sp-route-card` — copy as shipped, the one tertiary "Back to the seat map" (its primary verb), no glyph | card `rgb(255,255,255)` / `rgb(57,57,57)` (layer-02 light / dark), 640 wide; tertiary `rgb(184,92,46)` light (#B85C2E), white dark (Carbon's g100 tertiary); 0 page errors |
-| `global-error-{light,dark}-1920.png` | `app/global-error.tsx` (a temporary env-gated throw in the root layout — `PR5_GLOBAL_ERROR_CAPTURE=1` — reverted before the commit; status 500), the route card with the `ErrorGlyph`, "The app could not start", Try again (tertiary), the digest line, the footer line | attrs `light/white` and `dark/g100` — the SECOND run: the first found both themes light because a script inserted through `dangerouslySetInnerHTML` never executes on the client-rendered boundary, so a mount effect now replays the stored choice (PHASE4BUILD §1.42) |
+| `runtime/` (34) | `../../audit/runtime-audit.mjs` | the six routes × 2 themes at 1920 + the 1024 light frame; the three document pages (`/admin/management`, `/admin/settings`, **`/reception`**) at 1280 both themes and in the SYSTEM state (light / dark by emulated scheme, attrs `null/null`); the **viewer pass**: `viewer-reception-*`, `viewer-my-seat-*` at 1920 both themes |
+| `states/` (83) | `../../audit/page-states.mjs` | the PR 4 Management / Settings states (re-captured, unchanged rig section) + the **Reception section** (viewer): `reception-rest`, `-typing` ("sha"), `-locked`, `-recents` (after three lookups), `-no-extension` (Victor Chen), `-zero` ("zzzz"), `-landing-q201`, each `-{light,dark}-1920`; `reception-light-1280`; `reception-light-1024-readout` (scrolled to the readout, Back to the list); `admin-403-{light,dark}-1920`; `not-found-{light,dark}-1920` |
+| `route-cards/` (4) | `capture-route-cards.mjs` (session scratch, bundled Chromium) | `not-found-*` (dummy env, no database) and `global-error-*` (a temporary env-gated throw in the root layout, reverted before the commit) |
 
-On the white page the card's edge disappears (white on white) and the tertiary's outline is the visible shape — the
-PR 4 observation on the 403 cards (PHASE4BUILD §1.37), unchanged.
+## Results on the local Docker stack (colima; branch head)
 
-## What is NOT here, and why (the Docker-stack evidence is outstanding)
+| Tier / rig | Result |
+|---|---|
+| `runtime-audit.mjs` | **0 undefined `var()`** on 6 routes × 2 themes (`/` 241 refs, `/admin` 245, `/admin/management` 224, `/admin/settings` 214, `/reception` 228, `/login` 184), the three document pages at 1280 and in the system state (attrs `null/null`), the viewer pass (`/reception` 228, `/my-seat` 178). Console errors = the Vercel Speed Insights script 404ing under a local `next start`, as every PR |
+| `page-states.mjs` | 83 captures, both themes; the strip pinned at y=48; nothing mutated |
+| **`/login` + `/my-seat` byte-compare** | `main` (1f43bb8 — v1.75.0 plus two docs / skills commits, no app code) built in a worktree and served on :3201, the SAME rig, seed and fonts-ready wait: `login-light-1920`, `login-dark-1920`, `login-light-1024`, `viewer-my-seat-light-1920`, `viewer-my-seat-dark-1920` — **all five IDENTICAL** (`cmp`). D4 and deviation 12 confirmed unchanged |
+| `npm run test:e2e:auth` | **53 passed** (2.5 min) on a reset + reseeded stack: publish flow, nav-shell, header-geometry (+ `/reception` viewer), page-frames (+ the Reception block at 1920 / 1280 / 1024), accessibility (+ Reception rest / locked, the `/admin` 403), draft dialogs, the new `reception-keyboard.spec.ts` (4). The first full run had 4 Reception failures, both test-side (below); after the fix the two specs were re-run alone (16/16) and the tier re-run in full |
+| contrast | `product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs` — **202/202 pass**, no token change |
+| the two environment-only tests, unsandboxed with real Chrome | `backup-script-safety` **5/5**; `tests/e2e/axe-helpers.spec.ts` **5 passed** (the earlier failures were the sandbox and the headless-shell binary respectively) |
 
-The build box for this session has **no Docker runtime** (no Docker Desktop, OrbStack or colima; no `docker` binary)
-and **no Google Chrome** (the rigs launch `channel: "chrome"`), so everything the plan puts on the local Docker
-Supabase stack could not run here:
+Tiers that need no stack (branch head): unit 1445 · 1443 pass (the 2 "fails" are the sandbox-only backup test — 5/5
+outside it — see above) · ct 318/318 (`reception-screen` 34) · gate clean (lint 0 errors, typecheck, coverage
+98.33 / 92.35 / 98.29) · build clean · backend-free e2e 34 pass (+ the 2 helper self-tests that pass on real Chrome).
 
-- `npm run test:e2e:auth` (publish flow, nav-shell, header-geometry incl. `/reception`, page-frames incl. the Reception
-  block, accessibility incl. Reception rest / locked + the `/admin` 403, the new `reception-keyboard.spec.ts`);
-- `audit/runtime-audit.mjs` (0-undefined-`var()` audit; `/reception` at 1280 + the system state; the viewer pass for
-  `/reception` + `/my-seat`) and `audit/page-states.mjs` (the Reception section: rest · typing · locked · recents ·
-  no-extension · zero · `?q=201` landing · 1280 · 1024 with Back to the list; the `/admin` 403; the 404 both themes);
-- the `main` (v1.75.0) baseline run of the same rig for the `/login` + `/my-seat` byte-compare (D4, deviation 12).
+## Findings (recorded, not fixed silently)
 
-These run unchanged once a Docker runtime is on the box (`npm run db:start` + `db:seed`, the tier's own build with
-the local env, the two rigs with the seeded admin + viewer accounts — never against production). Until then the
-Reception states are **ct-covered** (`tests/reception-screen.test.mjs`, 34 tests) and the specs are written but
-unexecuted; the reviewer's smoke on the Vercel preview is the first real-browser look at Reception.
+1. **Zero state with a lock — the tile hint reads "Esc to unlock"** (`states/reception-zero-light-1920.png`,
+   `-dark-`): with "zzzz" typed and Alex locked, the readout keeps the person (correct, §1R.6) but the tile's hint
+   promises "Esc to unlock", while Esc will first CLEAR the typed query (ruling Q-1's first rung) and only a second
+   Esc unlocks. The hint follows the lock, not the query. A wording call for the owner: hide the hint while a query
+   is typed, or read "Esc to clear"; no change made.
+2. **Test-side, fixed in the specs:** (a) the skip-link step — autofocus parks focus in the field and `blur()` leaves
+   Chrome's sequential-focus starting point there, so Tab reached the next control instead of the header's skip link;
+   the specs now focus `<body>` first. (b) At 1024 the `.sp-recep` locator hit two grids — the loading skeleton's
+   (still on screen) and the streamed page's inside React's hidden pre-swap container, whose computed
+   `grid-template-columns` is the specified two-track value; the specs now measure `main .sp-recep` once visible.
+   Product behaviour was correct in both cases (the 1024 frame IS one column: `page-frames` 1024 passed on the first
+   run).
+3. The route cards on the white page: the card's edge disappears (white on white) and the tertiary's outline is the
+   visible shape — the PR 4 observation (PHASE4BUILD §1.37), unchanged.
+4. `global-error` needed a mount effect to follow the stored theme (PHASE4BUILD §1.42) — found by the first capture.
 
 **Not drivable on any tier by design (ct-only):** the partial state (seats failed alone), the empty directory, the
-loading skeleton, the Reception error boundary, the root boundary (`app/error.tsx`) — named in the plan's item 7.
-
-## Tiers that did run on this box (branch head)
-
-| Tier | Result |
-|---|---|
-| `npm test` (unit + source + db) | 1445 tests · 1443 pass · **2 fail, environment-only**: `backup-script-safety` ("a failed dump never echoes…") — the sandbox blocks the script's `mkdir` outside the repo; passes 5/5 outside the sandbox. The touch-target pin for the old `/admin` 403 link left with the card (`touch-target-source`) |
-| `npm run test:ct` | 318 / 318 (`reception-screen` 34) |
-| `npm run gate` | lint 0 errors (80 pre-existing warnings) · typecheck clean · coverage lines 98.33 / branches 92.35 / funcs 98.29 — floors 90 / 80 / 95 met (the one failing test in `coverage:check` is the sandbox-only backup test above) |
-| `npm run build` | clean (`global-error.tsx` with its stylesheet + font imports compiles; `/reception`, `/my-seat` ƒ; `/_not-found` ○). Note: under the session sandbox the Turbopack build hangs before writing anything — build outside it |
-| `npm run test:e2e` (backend-free, Playwright Chromium headless shell) | 34 passed · **2 failed, environment-only**: `tests/e2e/axe-helpers.spec.ts` › `waitForColorSettle` timing self-tests (`elapsed ≥ 300` on a synthetic `page.setContent` page — no app code); the same two fail on the full Chromium build; the tier's own assertions on the app all pass |
-| Contrast (`generate-pairs.mjs` + `check_contrast.py`) | `product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs` — **202/202 pass**, no token change |
-| Skill fingerprint | `f997ee525800e755` (PHASE3DS §0 recipe) |
+loading skeleton, the Reception error boundary, the root boundary (`app/error.tsx`) — the plan's item 7.
 
 ## Provenance
 
-Sample data only — the seeded local directory (`supabase/seed.sql`) is the fixture for every spec; no production
-name, seat or count appears anywhere in this directory. `.env.local` was never edited: the route-card captures used a
-dummy Supabase env on `next start -p 3101`, and no request reached any database (the 404 is static; the global boundary
-throws before the layout reads anything).
+Local Docker Supabase stack (`npm run db:start` + `db:seed`; `npx supabase db reset` + the seed between the rigs and
+the tier and before the final tier run, because the publish-flow spec leaves a published layer the seed does not
+tolerate). Runtime: colima (`brew install colima docker docker-compose`, `colima start --cpu 4 --memory 8`, Docker
+server 29.5.2) and Google Chrome (`brew install --cask google-chrome`) installed on 2026-09-06 with the owner's
+go-ahead. Signed in as the seeded local admin `e2e-admin@example.test` (the seeded viewer `e2e-viewer@example.test`
+for Reception, `/my-seat` and the 403 / 404). **No production data and no production write**: every name, seat and
+extension is `supabase/seed.sql` sample data; Reception is read-only and nothing the rigs open is confirmed.
+`.env.local` was never edited: the local stack's URL + anon key were passed to `next build` and `next start` (the
+README recipe; the e2e-auth tier does the same). Captures: real Chrome (`channel: "chrome"`), 1920×1080 (1280×800 /
+1024×768 for the frames), after `document.fonts.ready` + 500–800 ms; theme by `sp-theme` in localStorage + reload.
