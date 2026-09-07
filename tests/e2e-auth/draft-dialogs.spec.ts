@@ -25,6 +25,8 @@ import { db } from "./db-helpers";
 // locator serves both modes; the notice strip is also role="status", which is
 // why the accessible name is part of the query rather than the role alone.
 const modeCard = (page: Page) => page.getByRole("status", { name: /\bmode$/ });
+// The map's confirm dialogs (PR 5b): role="alertdialog" on the asset modal.
+const confirm = (page: Page) => page.getByRole("alertdialog");
 
 // Captured by beforeAll. The local dataset is LARGE (thousands of seats, most
 // employees pre-assigned), so nothing here may assume a given seat is empty —
@@ -144,11 +146,13 @@ test("publish review, enabled chrome menu, and discard-draft confirm dialogs", a
   await expectNoAxeViolations(page);
 
   await page.getByRole("menuitem", { name: "Discard draft changes" }).click();
+  // Phase 4 PR 5b: the map's confirms are role="alertdialog" on the asset
+  // modal (the publish review above stays a "dialog" — the wide tearsheet).
   await expect(page.getByRole("heading", { name: "Discard all draft changes?" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Keep draft changes" })).toBeEnabled();
   await expectNoAxeViolations(page);
   await page.getByRole("button", { name: "Keep draft changes" }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(confirm(page)).toBeHidden();
 });
 
 test("vacate, swap, and move confirm dialogs", async ({ page }) => {
@@ -164,8 +168,8 @@ test("vacate, swap, and move confirm dialogs", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Vacate N01?" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Vacate seat" })).toBeEnabled();
   await expectNoAxeViolations(page);
-  await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await confirm(page).getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(confirm(page)).toBeHidden();
 
   await expect(inspector).toBeVisible();
   await page.getByRole("button", { name: "Swap N01" }).click();
@@ -178,7 +182,7 @@ test("vacate, swap, and move confirm dialogs", async ({ page }) => {
   // label and "Esc exits" chip — both of which pass at rest.
   await waitForColorSettle(modeCard(page));
   await expectNoAxeViolations(page);
-  await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
+  await confirm(page).getByRole("button", { name: "Cancel", exact: true }).click();
   // Cancelling the dialog deliberately keeps swap MODE armed; Escape exits it.
   await page.keyboard.press("Escape");
   await expect(page.getByText("Swap canceled — no changes made.")).toBeVisible();
@@ -190,7 +194,7 @@ test("vacate, swap, and move confirm dialogs", async ({ page }) => {
   // Move mode mounts the same fading card as swap above.
   await waitForColorSettle(modeCard(page));
   await expectNoAxeViolations(page);
-  await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
+  await confirm(page).getByRole("button", { name: "Cancel", exact: true }).click();
   await page.keyboard.press("Escape");
 });
 
@@ -221,11 +225,12 @@ test("move-conflict dialog when assigning an already-seated employee", async ({ 
   // iteration and reports the computed fg/bg/ratio below.
   //
   // Also the one scan scoped to the dialog subtree: it is the only dialog
-  // that coexists with the mid-edit inspector, and its deliberate 95%-alpha
-  // glass surface makes axe blend the obscured commit bar behind it into
-  // sub-AA readings on text nobody can read or operate while the modal is up.
-  // The page around the inspector is covered by the other scans; app-side
-  // inert on background content while dialogs are open would retire this.
+  // that coexists with the mid-edit inspector. (PR 5b: the asset modal is
+  // opaque layer-02, so the 95%-alpha blend that first forced the scope is
+  // gone — the scope stays because the inspector's commit bar behind the
+  // overlay is still not operable while the modal is up.) The page around
+  // the inspector is covered by the other scans; app-side inert on
+  // background content while dialogs are open would retire this.
   await expect(async () => {
     await expect(page.getByRole("button", { name: "Move them" })).toBeEnabled({ timeout: 2_000 });
     await waitForColorSettle(page.getByRole("button", { name: "Move them" }));
@@ -243,8 +248,9 @@ test("move-conflict dialog when assigning an already-seated employee", async ({ 
     // The state axe measured must still be the state the pre-checks saw.
     await expect(page.getByRole("button", { name: "Move them" })).toBeEnabled({ timeout: 1_000 });
   }).toPass({ timeout: 45_000 });
-  await page.getByRole("button", { name: "Cancel moving employee" }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  // PR 5b: no × — the dialog's Cancel (R-3).
+  await confirm(page).getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(confirm(page)).toBeHidden();
 });
 
 // (PR 4: the Settings Reset-draft review retired with ruling 22 — the map's
