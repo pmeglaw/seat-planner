@@ -163,15 +163,29 @@ test("no --cds- reference outside sp-tokens.css and the two asset files", () => 
   assert.deepEqual(offenders, [], `--cds-* must be consumed via --sp-* names:\n${offenders.join("\n")}`);
 });
 
+// PR 5 (PHASE4BUILD §1 O-7): the two localFont calls moved from
+// app/layout.tsx into app/fonts/plex.ts so app/global-error.tsx — which
+// replaces <html> — can put the same families on its own root. The pins
+// follow the declaration; both roots must still carry the variables.
+const FONT_MODULE = "app/fonts/plex.ts";
+// Task 6 of PR 5 adds "app/global-error.tsx" here (the route card needs Plex).
+const FONT_ROOTS = ["app/layout.tsx"];
+
 test("the font bridge re-points both Carbon font tokens at next/font's variables", () => {
   const css = stripCssComments(read(BRIDGE_FILE));
   assert.match(css, /--cds-font-sans:\s*var\(--font-sans\)/);
   assert.match(css, /--cds-font-mono:\s*var\(--font-mono\)/);
-  const layout = read("app/layout.tsx");
-  assert.match(layout, /variable:\s*"--font-sans"/);
-  assert.match(layout, /variable:\s*"--font-mono"/);
-  // The variables must be on <html> for :root to see them.
-  assert.match(layout, /<html[^>]*className=\{`\$\{plexSans\.variable\} \$\{plexMono\.variable\}`\}/);
+  const fonts = read(FONT_MODULE);
+  assert.match(fonts, /variable:\s*"--font-sans"/);
+  assert.match(fonts, /variable:\s*"--font-mono"/);
+  assert.match(fonts, /export const plexFontClassName = `\$\{plexSans\.variable\} \$\{plexMono\.variable\}`/);
+  // The variables must be on <html> for :root to see them — on the app's
+  // root and on the global boundary's replacement root alike.
+  for (const rel of FONT_ROOTS) {
+    const source = read(rel);
+    assert.match(source, /from "@\/app\/fonts\/plex"/, `${rel} imports the shared font module`);
+    assert.match(source, /<html[^>]*className=\{plexFontClassName\}/, `${rel} puts the font variables on <html>`);
+  }
 });
 
 // ---------------------------------------------------------------------------

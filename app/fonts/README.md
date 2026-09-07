@@ -5,7 +5,8 @@
 - **IBM Plex Mono** — three *static* cuts (400/500/600), latin subset. IBM Plex
   Mono has no variable release, so this is the only available form.
 
-Loaded by `app/layout.tsx` through `next/font/local`, exposed as the
+Declared once in `app/fonts/plex.ts` through `next/font/local` (consumed by
+`app/layout.tsx` and `app/global-error.tsx`), exposed as the
 `--font-sans` / `--font-mono` CSS variables.
 
 ## Why these are in the repo

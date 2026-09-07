@@ -627,6 +627,16 @@ box passes). **Fix** PHASE3DS §1.23 **amendment D** (both copies): `.sp-table t
 `page-frames` spec now hit-test the tooltip on the first and last row (painted + inside the viewport); ct pins the
 placement attribute. Owner ruling: required by §1.23 — a defect, not a look choice. No token change.
 
+### 1.40 PR 5 — as planned (v1 + rulings 2026-09-06)
+
+Plan of record: `plans/phase4-pr5-reception.md` — the v1 plan (2026-09-05) reviewed against the record and
+approved by the owner with seven rulings (Q-1…Q-7, 2026-09-06). Built on `feat/phase4-reception`. Scope:
+Reception on the `.sp-recep` family (P3-4 Reception half, P3-18, P2-4 last half, P2-5), the route cards
+(`/admin` 403, the admin / root / global boundaries, the 404), `/login` + `/my-seat` confirmed unchanged by
+capture, and the carry-ins (`shadow-sp` gone, `components/ui/CloseIcon.tsx` retired, `HEX_LEDGER` down to two
+permanent rows). The plan's O-items (O-1…O-17) are the deviations from the record and what the code forced;
+those the owner ruled are marked there. _Entries 1.41+ record what the build found._
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
