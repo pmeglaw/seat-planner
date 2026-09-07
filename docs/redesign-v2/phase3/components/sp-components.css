@@ -1079,6 +1079,16 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-recep-skeleton-row .sp-skeleton:nth-child(2) { width: 40%; }
 .sp-recep-skeleton-row .sp-skeleton:nth-child(3) { width: 48px; justify-self: end; }
 
+/* Phase 4 PR 5 amendment E (PHASE2UX §1R.6 narrow frame; specimen #narrow): below the asset's 1055
+   fold Reception is one column — the readout follows the list, static, ruled above, with the
+   "Back to the list" ghost (the explicit back path, D3) shown only there. */
+.sp-recep-back { display: none; }
+@media (max-width: 1055px) {
+  .sp-recep { grid-template-columns: minmax(0, 1fr); }
+  .sp-recep-readout { position: static; min-height: 0; padding-left: 0; padding-right: 0; box-shadow: inset 0 1px 0 var(--sp-border-subtle-00); }
+  .sp-recep-back { display: inline-flex; align-self: flex-start; height: var(--sp-size-md); padding: 0 var(--sp-space-05); }
+}
+
 /* -----------------------------------------------------------------------------
    28. ROUTE CARDS — §3 "403 card · exists .cds-empty", "Error boundary card ·
        exists .cds-empty (error kind)". PHASE3DS §1.29. The asset empty state

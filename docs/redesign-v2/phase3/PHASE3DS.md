@@ -580,6 +580,14 @@ States: first run ("Waiting for a call"), zero (count says 0, ghost Clear search
 `code-01` digest). Route cards for the admin pages: 403 and "This admin page could not load" on the asset
 empty state with a digest line. Narrow 1024: one column, readout below the list with Back to the list.
 
+**Phase 4 PR 5 amendment E (the narrow fold, 2026-09-06).** Below the asset's 1055 fold Reception is one column:
+`.sp-recep { grid-template-columns: minmax(0, 1fr) }`; the readout follows the list — static, a 1px rule above
+(`inset 0 1px 0 --sp-border-subtle-00`), no side padding, no min-height — and `.sp-recep-back` (the "Back to the
+list" ghost, D3's explicit back path; PHASE2UX §1R.6 "Narrow (1024)") renders only there (`display: none` above the
+fold, `inline-flex` at the 40 `--sp-size-md` under it). The specimen's `#narrow` frame carried this as page-local
+inline CSS; the app needs it in the sheet. Same fold as amendment C (1055). Both copies, byte-identical; no token
+change.
+
 ---
 
 ## 2. Component inventory (PHASE2UX §3 → kind → class → specimen anchor)
