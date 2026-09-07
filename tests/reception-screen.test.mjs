@@ -199,6 +199,25 @@ test("while previewing: the ↵ hint, and no Show on map", async () => {
   assert.equal(mapLink(), null, "Show on map is for the locked person only");
 });
 
+test("the tile hint states the current key: ↵ while previewing, none while a typed query matches nobody, Esc when locked at rest", async () => {
+  await renderReception();
+  type("Bob");
+  assert.match(hint(), /↵/);
+  press("Enter");
+  assert.match(hint(), /Esc/);
+  assert.match(hint(), /to unlock/);
+  // Zero matches with a lock: the readout keeps the person, but Esc would CLEAR
+  // the query first (Q-1's first rung) — so no hint promises an unlock.
+  type("zzzz");
+  assert.equal(readoutName(), "Bob Baker");
+  assert.equal(hint(), null);
+  press("Escape");
+  assert.match(hint(), /Esc/);
+  // A preview over a lock reads ↵ again.
+  type("Car");
+  assert.match(hint(), /↵/);
+});
+
 // ---------------------------------------------------------------- the lock
 
 test("↵ locks the cursor's person: aria-selected on that row only, the query cleared, ?q=<name>, the Esc hint, Show on map", async () => {

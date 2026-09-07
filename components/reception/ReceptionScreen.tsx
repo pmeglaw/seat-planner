@@ -364,9 +364,14 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
                 ) : (
                   <span className="sp-readout-none">No extension on file</span>
                 )}
+                {/* The hint states the CURRENT key (PHASE2UX §1R.4 item 2; the
+                    specimen's readout states; Q-1): ↵ while a result is
+                    previewed; nothing while a typed query matches nobody (Esc
+                    would clear the query, not unlock); Esc only when locked
+                    and not typing. */}
                 {previewing ? (
                   <span className="sp-readout-hint"><span className="sp-kbd" aria-hidden="true">↵</span>to lock</span>
-                ) : locked ? (
+                ) : locked && !searching ? (
                   <span className="sp-readout-hint"><span className="sp-kbd" aria-hidden="true">Esc</span>to unlock</span>
                 ) : null}
               </div>

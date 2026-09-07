@@ -719,6 +719,12 @@ seed, same fonts-ready wait — `screenshots/pr5/README.md`. DECISIONS D4 and de
 `viewer-my-seat-{light,dark}-1920`); `git diff main` shows `app/login/**`, `components/auth/**`, `app/my-seat/**` and
 `SeatSheet.tsx` untouched.
 
+**Smoke pre-fix (owner, 2026-09-06, from the evidence captures `states/reception-zero-*`):** the readout hint
+followed the LOCK, so with a person locked and a query matching nobody the tile promised "Esc to unlock" while Esc
+would first clear the query (Q-1's first rung). Now the hint states the current key: ↵ "to lock" while a result is
+previewed; no hint while a typed query matches nobody; Esc "to unlock" only when locked and not typing (PHASE2UX
+§1R.4 item 2; the specimen's readout states). `reception-screen` ct pins the three states.
+
 ### 1.45 PR 5 — the Docker-stack evidence (build box, 2026-09-06)
 
 The session's machine had no Docker runtime and no Google Chrome at Task 10; with the owner's go-ahead colima +
