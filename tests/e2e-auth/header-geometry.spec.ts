@@ -70,3 +70,13 @@ test("viewer header: the indicator never meets a section link or a utility acros
   await expect(page.locator("#shell-header button.sp-mode")).toBeVisible();
   await assertIndicatorClear(page, "viewer");
 });
+
+// Phase 4 PR 5: Reception carries the same viewer header; its own content
+// (the 1584 page frame, the sticky readout) must not shift the run.
+test("viewer header on /reception: the indicator never meets a section link or a utility across the width ladder", async ({ page }) => {
+  await signIn(page, SEEDED_VIEWER_EMAIL);
+  await page.goto("/reception");
+  await expect(page.getByRole("heading", { name: "Reception", level: 1 })).toBeVisible();
+  await expect(page.locator("#shell-header button.sp-mode")).toBeVisible();
+  await assertIndicatorClear(page, "viewer");
+});

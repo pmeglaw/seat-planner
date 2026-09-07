@@ -1,5 +1,5 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
-import { SEEDED_ADMIN_EMAIL, signIn } from "./auth-helpers";
+import { SEEDED_ADMIN_EMAIL, SEEDED_VIEWER_EMAIL, signIn } from "./auth-helpers";
 
 // Page frames across the width ladder (Phase 4 PR 4; PHASE2UX §1G / §1S,
 // PHASE3DS §1.22 / §1.27): the two document pages — /admin/management and
@@ -130,6 +130,51 @@ test.describe("Settings frame", () => {
       await page.keyboard.press("Tab");
       await page.keyboard.press("Enter");
       await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? "")).toBe("admin-subpage-main");
+    });
+  }
+});
+
+// Reception (Phase 4 PR 5; PHASE2UX §1R.2 as amended by owner ruling Q-6;
+// PHASE3DS §1.22 / §1.29; sheet amendment E): the same 1584 frame, NO action
+// in the page header (D3-a), the readout 480 with the 32 gutter at the two
+// wide frames (the list takes the rest of the 1520 content box — 1008 at
+// 1920), one column under the 1055 fold with the readout following the list
+// and "Back to the list" shown; the skip link lands on the FIELD (§1R.7).
+test.describe("Reception frame", () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page, SEEDED_VIEWER_EMAIL);
+  });
+
+  for (const [width, height] of WIDTHS) {
+    test(`${width}×${height}: no header action, readout 480 + gap 32 (or one column), skip link on the field, no sideways scroll`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto("/reception");
+      await expect(page.getByRole("heading", { name: "Reception", level: 1 })).toBeVisible();
+      await expect(page.locator('li[role="option"]').first()).toBeVisible();
+
+      await expectNoHorizontalScroll(page, `reception ${width}`);
+      await expect(page.locator(".sp-page .cds-page-header .cds-btn")).toHaveCount(0);
+
+      const list = (await page.locator(".sp-recep-list").boundingBox())!;
+      const readout = (await page.getByRole("region", { name: "Caller detail" }).boundingBox())!;
+      if (width >= 1280) {
+        expect(Math.round(readout.width), `${width}: the readout column is 480`).toBe(480);
+        expect(Math.round(readout.x - (list.x + list.width)), `${width}: the gutter is 32`).toBe(32);
+        if (width === 1920) expect(Math.round(list.width), "the list takes the rest of the 1520 content box (Q-6)").toBe(1008);
+        await expect(page.getByRole("button", { name: "Back to the list" })).toBeHidden();
+      } else {
+        const columns = await page.locator(".sp-recep").evaluate(el => getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length);
+        expect(columns, `${width}: one column under the fold`).toBe(1);
+        expect(readout.y).toBeGreaterThanOrEqual(list.y + list.height - 1);
+        await expect(page.getByRole("button", { name: "Back to the list" })).toBeVisible();
+      }
+
+      // The skip link lands on the field itself. Autofocus already parked
+      // focus there, so blur first; Tab then reaches the header's skip link.
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Enter");
+      await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? "")).toBe("reception-main");
     });
   }
 });

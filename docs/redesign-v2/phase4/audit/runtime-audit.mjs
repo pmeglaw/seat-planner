@@ -3,7 +3,11 @@
 // Also captures screenshots at 1920×1080 (both themes) + 1024×768 (light); the PR 4 document pages
 // (/admin/management, /admin/settings) additionally at 1280×800 (both themes) and in the SYSTEM state
 // (no stored theme — the OS colour scheme decides; attrs must read null/null) light and dark at 1920.
-// Usage: node docs/redesign-v2/phase4/audit/runtime-audit.mjs <baseUrl> <outDir> [email] [password]
+// Usage: node docs/redesign-v2/phase4/audit/runtime-audit.mjs <baseUrl> <outDir> [email] [password] [viewerEmail]
+// PR 5: /reception joins the document-page routes (1280 both themes + the system state); with a
+// viewerEmail the rig signs out and re-enters as the seeded viewer for /reception and /my-seat at
+// 1920 (both themes) — the /login and /my-seat captures are byte-compared against the same rig's
+// run on main (v1.75.0) to confirm D4 and deviation 12 unchanged.
 // Run against the LOCAL Docker stack (npm run db:start + db:seed; .env.local pointed at it) — never
 // against production: the seeded local admin is e2e-admin@example.test (tests/e2e-auth/auth-helpers.ts).
 // Outputs one line per route × theme (referenced count, undefined names), the system-state attribute
@@ -14,7 +18,7 @@ import path from "node:path";
 const require = createRequire(new URL("../../../../package.json", import.meta.url));
 const { chromium } = require("playwright");
 
-const [base = "http://localhost:3000", outDir = "out", email, password] = process.argv.slice(2);
+const [base = "http://localhost:3000", outDir = "out", email, password, viewerEmail] = process.argv.slice(2);
 mkdirSync(outDir, { recursive: true });
 
 const ROUTES = ["/", "/admin", "/admin/management", "/admin/settings", "/reception", "/login"];
@@ -100,7 +104,7 @@ for (const route of ROUTES) {
 }
 // PR 4 document pages: the laptop frame in both themes, then the system state (light and dark by
 // emulated colour scheme, no stored theme — the boot script must leave both attributes off).
-const PAGE_ROUTES = ["/admin/management", "/admin/settings"];
+const PAGE_ROUTES = ["/admin/management", "/admin/settings", "/reception"];
 for (const route of PAGE_ROUTES) {
   const name = route.slice(1).replaceAll("/", "-");
   for (const theme of ["light", "dark"]) {
@@ -125,6 +129,34 @@ for (const route of PAGE_ROUTES) {
     console.log(`${route} system-${scheme} attrs=${attrs.join("/")} (expected null/null) referenced=${audit.referenced} undefined=${audit.stillUndefined.length}${audit.stillUndefined.length ? " " + audit.stillUndefined.join(",") : ""}`);
   }
   await page.emulateMedia({ colorScheme: null });
+}
+// The viewer pass (PR 5): /reception and /my-seat as the seeded viewer, 1920 both themes.
+if (viewerEmail && email && password) {
+  await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Account/ }).click().catch(() => {});
+  const signOut = page.getByRole("button", { name: /Sign out/ });
+  if (await signOut.count()) await signOut.first().click();
+  await page.waitForURL(u => u.pathname.startsWith("/login"), { timeout: 30000 }).catch(() => {});
+  await page.goto(`${base}/login`, { waitUntil: "networkidle" });
+  await page.fill('input[type="email"]', viewerEmail);
+  await page.fill('input[type="password"]', password);
+  await page.getByRole("button", { name: "Log in", exact: true }).click();
+  await page.waitForURL(u => !u.pathname.startsWith("/login"), { timeout: 30000 });
+  for (const route of ["/reception", "/my-seat"]) {
+    const name = `viewer-${route.slice(1).replaceAll("/", "-")}`;
+    for (const theme of ["light", "dark"]) {
+      await page.setViewportSize({ width: 1920, height: 1080 });
+      await page.goto(`${base}${route}`, { waitUntil: "networkidle" });
+      await page.evaluate(t => { localStorage.setItem("sp-theme", t); }, theme);
+      await page.reload({ waitUntil: "networkidle" });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(800);
+      const attrs = await page.evaluate(() => [document.documentElement.getAttribute("data-theme"), document.documentElement.getAttribute("data-carbon-theme")]);
+      const audit = await page.evaluate(auditInPage);
+      await page.screenshot({ path: path.join(outDir, `${name}-${theme}-1920.png`), fullPage: false });
+      console.log(`${route} (viewer) ${theme} attrs=${attrs.join("/")} referenced=${audit.referenced} undefined=${audit.stillUndefined.length}${audit.stillUndefined.length ? " " + audit.stillUndefined.join(",") : ""}`);
+    }
+  }
 }
 await page.evaluate(() => localStorage.removeItem("sp-theme"));
 await page.goto(`${base}/`, { waitUntil: "networkidle" });
