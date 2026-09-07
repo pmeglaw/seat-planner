@@ -436,6 +436,7 @@ test("inspector move-conflict failure renders inside the still-open dialog with 
   });
   await waitFor(() => screen.getByRole("alert"));
   const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "move-employee-confirm-description" });
   assert.match(dialog.textContent, /Move Jane Doe to S01\?/, "the conflict dialog must still be open");
   assert.match(alert.textContent, /Move did not complete\..*The move RPC refused\./);
   assert.equal(screen.getByRole("button", { name: "Retry move" }).disabled, false);

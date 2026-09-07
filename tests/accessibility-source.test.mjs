@@ -323,8 +323,9 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
     // (SeatMapDialogs.tsx left this list in Phase 4 PR 5b: its six dialogs
     // render through CarbonModal, which hosts the aria-modal section.)
     "../components/seat-map/PublishReviewSheet.tsx",
-    "../components/seat-map/SeatInspector.tsx",
-    // (AskPlannerDrawer left this list in PR 3b: it is the right slot, a side panel.)
+    // (SeatInspector.tsx left this list in PR 5b with the move-conflict
+    // dialog moving onto CarbonModal; AskPlannerDrawer in PR 3b — the right
+    // slot, a side panel.)
     "../components/admin-settings/CsvImportSheet.tsx",
     "../components/admin-settings/SnapshotRestoreSheet.tsx",
     // PR 4: Management's dialogs are the 480 panel, the narrow confirm sheet
@@ -472,10 +473,13 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.doesNotMatch(inspectorSource, /VIEW DETAILS/);
   assert.doesNotMatch(inspectorSource, /Collapse inspector/);
   // Phase 4 PR 3b: the inspector IS the right slot (`.sp-slot` inside
-  // RightSlot's host) — no z-index of its own; the move-conflict dialog keeps
-  // its own stacking above everything.
+  // RightSlot's host) — no z-index of its own.
   assert.match(inspectorSource, /className="sp-slot max-w-full"/);
-  assert.match(inspectorSource, /z-\[90\][\s\S]*sm:z-\[70\]/);
+  // (PR 5b: the move-conflict dialog is the asset modal on CarbonModal — the
+  // overlay z-index is the sheet's; the z-[90] / sm:z-[70] look-pin retired.)
+  assert.match(inspectorSource, /titleId="move-employee-confirm-title"/);
+  assert.match(inspectorSource, /role="alertdialog"/);
+  assert.doesNotMatch(inspectorSource, /aria-label="Cancel moving employee"/);
   assert.match(inspectorSource, /hasCurrentAssignment \? "Assignment" : "Assign this seat"/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"/);
   assert.match(inspectorSource, /id=\{employeeHelpId\}/);
