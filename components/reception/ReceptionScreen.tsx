@@ -24,6 +24,10 @@ import { buildInitials } from "@/lib/validators";
 
 type ReceptionScreenProps = {
   people: ReceptionPerson[];
+  /** The landing `?q=` (D3-c) — wired in the PR 5 rebuild. */
+  initialQuery?: string;
+  /** The seats query failed alone (PHASE2UX §1R.6 partial) — wired in the PR 5 rebuild. */
+  seatsUnavailable?: boolean;
 };
 
 const RECENTS_STORED_MAX = 5;
@@ -125,6 +129,7 @@ export function ReceptionScreen({ people }: ReceptionScreenProps) {
           // eslint-disable-next-line jsx-a11y/no-autofocus -- the handoff's core
           // contract: focus lands in search on route entry (phone in one hand).
           autoFocus
+          id="reception-main"
           type="text"
           role="combobox"
           aria-expanded="true"

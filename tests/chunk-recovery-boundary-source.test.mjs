@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
-// Both route boundaries must route a stale-chunk failure through
+// Every route boundary must route a stale-chunk failure through
 // planChunkErrorRecovery and hard-reload the document. `reset()` alone cannot
 // recover from a purged chunk — it re-renders against the same dead URL — so a
 // boundary that only offers "Try again" strands the tab until the user knows to
@@ -12,7 +12,9 @@ async function readSource(relativePath) {
   return readFile(new URL(relativePath, import.meta.url), "utf8");
 }
 
-for (const boundary of ["../app/error.tsx", "../app/(shell)/admin/error.tsx"]) {
+// Phase 4 PR 5 (P2-5, D3-e): Reception gained its own boundary in its own
+// voice; it carries the same recovery guarantee.
+for (const boundary of ["../app/error.tsx", "../app/(shell)/admin/error.tsx", "../app/(shell)/reception/error.tsx"]) {
   test(`${boundary} self-heals a stale-chunk error with a document reload`, async () => {
     const source = await readSource(boundary);
 
