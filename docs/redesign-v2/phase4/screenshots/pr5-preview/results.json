@@ -1,0 +1,536 @@
+{
+  "results": [
+    {
+      "step": "1 Reception at rest",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "theme": "white",
+        "headerBtns": 0,
+        "listWidth": 1008,
+        "readoutWidth": 480,
+        "gap": 32,
+        "ring": "solid 2px rgb(184, 92, 46) -2px",
+        "focus": {
+          "tag": "input",
+          "id": "reception-main",
+          "label": "Search the directory"
+        },
+        "kbd": "⌘ K",
+        "count": "98 people",
+        "blues": [],
+        "noScroll": true
+      },
+      "note": "",
+      "files": [
+        "01-rest-light.png"
+      ]
+    },
+    {
+      "step": "2 Typing",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "count": "1 match",
+        "cursors": 1,
+        "bar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset",
+        "activedescMatches": true,
+        "hint": "↵to lock"
+      },
+      "note": "",
+      "files": [
+        "02-typing-light.png"
+      ]
+    },
+    {
+      "step": "3 Lock",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "locked": 1,
+        "bar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset",
+        "urlHasQ": true,
+        "historyBefore": 5,
+        "historyAfter": 5,
+        "hint": "Escto unlock",
+        "mapColor": "rgb(143, 69, 33)",
+        "mapHrefHasQ": true,
+        "numeralDigits": 3
+      },
+      "note": "",
+      "files": [
+        "03-locked-light.png"
+      ]
+    },
+    {
+      "step": "4 Esc rungs",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "zero": {
+          "count": "0 matches",
+          "empty": 1,
+          "readoutKeepsPerson": true,
+          "hints": 0
+        },
+        "rung1": {
+          "value": "",
+          "locked": 1,
+          "urlHasQ": true,
+          "hints": 1
+        },
+        "rung2": {
+          "locked": 0,
+          "waiting": true,
+          "url": "/reception"
+        }
+      },
+      "note": "",
+      "files": [
+        "04-zero-light.png",
+        "04-unlocked-light.png"
+      ]
+    },
+    {
+      "step": "5 No extension",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "note": "no person without an extension in the live directory"
+      },
+      "note": "skipped: none in the directory",
+      "files": []
+    },
+    {
+      "step": "6 ?q=201 landing",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "locked": 0,
+        "urlRewritten": false,
+        "count": "0 matches"
+      },
+      "note": "201 is not a unique match in the live directory — query kept",
+      "files": [
+        "06-landing-201-light.png"
+      ]
+    },
+    {
+      "step": "7 Show on map",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "fieldFilled": true,
+        "pressed": 1,
+        "inspector": 1,
+        "palette": 0,
+        "backUrlHasQ": true,
+        "backLocked": 1
+      },
+      "note": "",
+      "files": [
+        "07-show-on-map-light.png"
+      ]
+    },
+    {
+      "step": "8 /admin",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "is403": false,
+        "isMap": true,
+        "cardBg": null,
+        "tertiaryColor": null,
+        "raster": 1
+      },
+      "note": "the admin map: this account holds the admin role in production — the 403 card is verified on the local stack (smoke step 16, e2e-auth)",
+      "files": [
+        "08-admin-light.png"
+      ]
+    },
+    {
+      "step": "9 404",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "status": 404,
+        "h2": "This page does not exist",
+        "bg": "rgb(255, 255, 255)",
+        "action": "/",
+        "theme": "white"
+      },
+      "note": "",
+      "files": [
+        "09-not-found-light.png"
+      ]
+    },
+    {
+      "step": "10 1024 fold",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "columns": 1,
+        "position": "static",
+        "backHeight": 40,
+        "focusAfterBack": {
+          "tag": "input",
+          "id": "reception-main",
+          "label": "Search the directory"
+        }
+      },
+      "note": "",
+      "files": [
+        "10-1024-readout-light.png"
+      ]
+    },
+    {
+      "step": "frame light hygiene",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "newActionPosts": 2,
+        "consoleErrors": 12
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "1 Reception at rest",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "theme": "g100",
+        "headerBtns": 0,
+        "listWidth": 1008,
+        "readoutWidth": 480,
+        "gap": 32,
+        "ring": "solid 2px rgb(184, 92, 46) -2px",
+        "focus": {
+          "tag": "input",
+          "id": "reception-main",
+          "label": "Search the directory"
+        },
+        "kbd": "⌘ K",
+        "count": "98 people",
+        "blues": [],
+        "noScroll": true
+      },
+      "note": "",
+      "files": [
+        "01-rest-dark.png"
+      ]
+    },
+    {
+      "step": "2 Typing",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "count": "1 match",
+        "cursors": 1,
+        "bar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset",
+        "activedescMatches": true,
+        "hint": "↵to lock"
+      },
+      "note": "",
+      "files": [
+        "02-typing-dark.png"
+      ]
+    },
+    {
+      "step": "3 Lock",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "locked": 1,
+        "bar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset",
+        "urlHasQ": true,
+        "historyBefore": 11,
+        "historyAfter": 11,
+        "hint": "Escto unlock",
+        "mapColor": "rgb(232, 160, 122)",
+        "mapHrefHasQ": true,
+        "numeralDigits": 3
+      },
+      "note": "",
+      "files": [
+        "03-locked-dark.png"
+      ]
+    },
+    {
+      "step": "4 Esc rungs",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "zero": {
+          "count": "0 matches",
+          "empty": 1,
+          "readoutKeepsPerson": true,
+          "hints": 0
+        },
+        "rung1": {
+          "value": "",
+          "locked": 1,
+          "urlHasQ": true,
+          "hints": 1
+        },
+        "rung2": {
+          "locked": 0,
+          "waiting": true,
+          "url": "/reception"
+        }
+      },
+      "note": "",
+      "files": [
+        "04-zero-dark.png",
+        "04-unlocked-dark.png"
+      ]
+    },
+    {
+      "step": "5 No extension",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "note": "no person without an extension in the live directory"
+      },
+      "note": "skipped: none in the directory",
+      "files": []
+    },
+    {
+      "step": "6 ?q=201 landing",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "locked": 0,
+        "urlRewritten": false,
+        "count": "0 matches"
+      },
+      "note": "201 is not a unique match in the live directory — query kept",
+      "files": [
+        "06-landing-201-dark.png"
+      ]
+    },
+    {
+      "step": "7 Show on map",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "fieldFilled": true,
+        "pressed": 1,
+        "inspector": 1,
+        "palette": 0,
+        "backUrlHasQ": true,
+        "backLocked": 1
+      },
+      "note": "",
+      "files": [
+        "07-show-on-map-dark.png"
+      ]
+    },
+    {
+      "step": "8 /admin",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "is403": false,
+        "isMap": true,
+        "cardBg": null,
+        "tertiaryColor": null,
+        "raster": 1
+      },
+      "note": "the admin map: this account holds the admin role in production — the 403 card is verified on the local stack (smoke step 16, e2e-auth)",
+      "files": [
+        "08-admin-dark.png"
+      ]
+    },
+    {
+      "step": "9 404",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "status": 404,
+        "h2": "This page does not exist",
+        "bg": "rgb(57, 57, 57)",
+        "action": "/",
+        "theme": "g100"
+      },
+      "note": "",
+      "files": [
+        "09-not-found-dark.png"
+      ]
+    },
+    {
+      "step": "frame dark hygiene",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "newActionPosts": 2,
+        "consoleErrors": 10
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "1 Reception at rest",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "theme": "white",
+        "headerBtns": 0,
+        "listWidth": 704,
+        "readoutWidth": 480,
+        "gap": 32,
+        "ring": "solid 2px rgb(184, 92, 46) -2px",
+        "focus": {
+          "tag": "input",
+          "id": "reception-main",
+          "label": "Search the directory"
+        },
+        "kbd": "⌘ K",
+        "count": "98 people",
+        "blues": [],
+        "noScroll": true
+      },
+      "note": "",
+      "files": [
+        "01-rest-1280-light.png"
+      ]
+    },
+    {
+      "step": "2 Typing",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "count": "1 match",
+        "cursors": 1,
+        "bar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset",
+        "activedescMatches": true,
+        "hint": "↵to lock"
+      },
+      "note": "",
+      "files": [
+        "02-typing-1280-light.png"
+      ]
+    },
+    {
+      "step": "3 Lock",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "locked": 1,
+        "bar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset",
+        "urlHasQ": true,
+        "historyBefore": 16,
+        "historyAfter": 16,
+        "hint": "Escto unlock",
+        "mapColor": "rgb(143, 69, 33)",
+        "mapHrefHasQ": true,
+        "numeralDigits": 3
+      },
+      "note": "",
+      "files": [
+        "03-locked-1280-light.png"
+      ]
+    },
+    {
+      "step": "4 Esc rungs",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "zero": {
+          "count": "0 matches",
+          "empty": 1,
+          "readoutKeepsPerson": true,
+          "hints": 0
+        },
+        "rung1": {
+          "value": "",
+          "locked": 1,
+          "urlHasQ": true,
+          "hints": 1
+        },
+        "rung2": {
+          "locked": 0,
+          "waiting": true,
+          "url": "/reception"
+        }
+      },
+      "note": "",
+      "files": [
+        "04-zero-1280-light.png",
+        "04-unlocked-1280-light.png"
+      ]
+    },
+    {
+      "step": "5 No extension",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "note": "no person without an extension in the live directory"
+      },
+      "note": "skipped: none in the directory",
+      "files": []
+    },
+    {
+      "step": "6 ?q=201 landing",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "locked": 0,
+        "urlRewritten": false,
+        "count": "0 matches"
+      },
+      "note": "201 is not a unique match in the live directory — query kept",
+      "files": [
+        "06-landing-201-1280-light.png"
+      ]
+    },
+    {
+      "step": "frame 1280-light hygiene",
+      "frame": "1280-light",
+      "ok": true,
+      "values": {
+        "newActionPosts": 0,
+        "consoleErrors": 4
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "indicator before/after + writes",
+      "frame": "both",
+      "ok": true,
+      "values": {
+        "indicatorAtStart": "Published · Aug 31, 2026",
+        "indicatorAtEnd": "Published · Aug 31, 2026",
+        "actionPosts": 4,
+        "nonEmptyActionBodies": 0,
+        "otherFailedResponses": [],
+        "peopleCount": 98
+      },
+      "note": "",
+      "files": []
+    }
+  ],
+  "actionPosts": [
+    {
+      "at": "2026-09-07T19:54:50.888Z",
+      "path": "/admin",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-07T19:54:52.377Z",
+      "path": "/admin",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-07T19:55:37.006Z",
+      "path": "/admin",
+      "body": "[]"
+    },
+    {
+      "at": "2026-09-07T19:55:38.608Z",
+      "path": "/admin",
+      "body": "[]"
+    }
+  ]
+}

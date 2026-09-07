@@ -43,7 +43,7 @@ await context.addInitScript(() => {
   document.addEventListener("DOMContentLoaded", () => {
     const style = document.createElement("style");
     style.id = "walk-mask";
-    style.textContent = ".sp-recep-row .sp-recep-name, .sp-recep-row .sp-recep-meta, .sp-recep-row .sp-recep-ext, .sp-recep-readout h2, .sp-recep-readout .sp-recep-role, .sp-readout-numeral, .sp-row-buttons .cds-btn, .sp-recep-recent .cds-btn, .sp-recep-list .cds-empty h3, #viewer-find-palette, .sp-pill, #seat-inspector-panel, .cds-header-name span, .sp-roster { -webkit-text-fill-color: transparent !important; text-shadow: 0 0 9px rgba(128, 128, 128, 0.9) !important; }";
+    style.textContent = ".sp-recep-row .sp-recep-name, .sp-recep-row .sp-recep-meta, .sp-recep-row .sp-recep-ext, .sp-recep-readout h2, .sp-recep-readout .sp-recep-role, .sp-readout-numeral, .sp-row-buttons .cds-btn, .sp-recep-recent .cds-btn, .sp-recep-list .cds-empty h3, #viewer-find-palette, .sp-pill, #seat-inspector-panel, #viewer-seat-search, .cds-header-name span, .sp-roster, .sp-inspector-eyebrow, [data-seat-id] { -webkit-text-fill-color: transparent !important; text-shadow: 0 0 9px rgba(128, 128, 128, 0.9) !important; }";
     document.head.appendChild(style);
   });
 });
@@ -188,7 +188,8 @@ for (const F of FRAMES) {
   await step("4 Esc rungs", T, async () => {
     await field().fill("zzzzqq");
     await page.waitForTimeout(300);
-    const zero = { count: await count(), empty: await page.locator("main .sp-recep-list .cds-empty h3").count(), locked: await lockedRow().count(), hints: await hintCount() };
+    // The locked row is not in the (empty) filtered list, so "keeps the person" is read from the readout.
+    const zero = { count: await count(), empty: await page.locator("main .sp-recep-list .cds-empty h3").count(), readoutKeepsPerson: (await readout().getByRole("heading", { level: 2 }).count()) === 1, hints: await hintCount() };
     const files = [await shot(`04-zero-${T}`)];
     await page.keyboard.press("Escape");
     await page.waitForTimeout(250);
@@ -197,7 +198,7 @@ for (const F of FRAMES) {
     await page.waitForTimeout(250);
     const rung2 = { locked: await lockedRow().count(), waiting: /Waiting for a call\./.test(await readout().textContent()), url: url() };
     files.push(await shot(`04-unlocked-${T}`));
-    const ok = zero.count === "0 matches" && zero.empty === 1 && zero.locked === 1 && zero.hints === 0 && rung1.value === "" && rung1.locked === 1 && rung1.urlHasQ && rung1.hints === 1 && rung2.locked === 0 && rung2.waiting && rung2.url === "/reception";
+    const ok = zero.count === "0 matches" && zero.empty === 1 && zero.readoutKeepsPerson && zero.hints === 0 && rung1.value === "" && rung1.locked === 1 && rung1.urlHasQ && rung1.hints === 1 && rung2.locked === 0 && rung2.waiting && rung2.url === "/reception";
     rec("4 Esc rungs", T, ok, { zero, rung1, rung2 }, "", files);
   });
 
@@ -276,7 +277,16 @@ for (const F of FRAMES) {
   if (T === "light") {
     await step("10 1024 fold", T, async () => {
       await open("/reception?q=201", F.theme, 1024, 768);
-      if ((await lockedRow().count()) === 0) { await field().fill((await pickPeople()).withExt); await page.keyboard.press("Enter"); await page.waitForTimeout(400); }
+      if ((await lockedRow().count()) === 0) {
+        // 201 is not unique in the live directory: clear the kept query, then lock a person with an extension.
+        await field().fill("");
+        await page.waitForTimeout(300);
+        const people = await pickPeople();
+        await field().fill(people.withExt);
+        await page.waitForTimeout(300);
+        await page.keyboard.press("Enter");
+        await page.waitForTimeout(400);
+      }
       const columns = (await css(page.locator("main .sp-recep"), "gridTemplateColumns")).split(/\s+/).length;
       const position = await css(readout(), "position");
       const back = readout().getByRole("button", { name: "Back to the list" });
