@@ -111,6 +111,7 @@ async function readModal() {
       role: el.getAttribute("role"),
       labelledBy: el.getAttribute("aria-labelledby"),
       heading: (el.querySelector("h2")?.textContent || "").trim(),
+      eyebrow: (el.querySelector(".cds-modal-eyebrow")?.textContent || "").trim(),
       describedBy,
       descriptionInside: Boolean(description && el.contains(description) && description.textContent.trim()),
       bg: s.backgroundColor,
@@ -128,9 +129,11 @@ async function readModal() {
     };
   });
 }
-function checkModal(m, theme, { role, primary, danger, columns = 2, heading }) {
+function checkModal(m, theme, { role, primary, danger, columns = 2, heading, eyebrow }) {
   const problems = [];
   if (m.role !== role) problems.push(`role ${m.role} ≠ ${role}`);
+  // R-4: the asset eyebrow over the question.
+  if (eyebrow && (eyebrow instanceof RegExp ? !eyebrow.test(m.eyebrow) : m.eyebrow !== eyebrow)) problems.push(`eyebrow "${m.eyebrow}" ≠ ${eyebrow}`);
   if (!m.descriptionInside) problems.push("aria-describedby does not resolve inside the dialog");
   if (m.bg !== LAYER_02[theme]) problems.push(`bg ${m.bg} ≠ layer-02 ${LAYER_02[theme]}`);
   if (m.width !== 480) problems.push(`width ${m.width} ≠ 480`);
@@ -219,7 +222,7 @@ for (const theme of themes) {
     await modal().waitFor();
     await page.waitForTimeout(300);
     const m = await readModal();
-    const problems = checkModal(m, T, { role: "alertdialog", primary: "Vacate seat", danger: true, heading: /^Vacate / });
+    const problems = checkModal(m, T, { role: "alertdialog", primary: "Vacate seat", danger: true, heading: /^Vacate /, eyebrow: "Vacate seat" });
     const focus = await checkFocusAndOverlay();
     problems.push(...focus.problems);
     const file = await shot(`01-vacate-${T}`);
@@ -290,7 +293,7 @@ for (const theme of themes) {
     await modal().waitFor();
     await page.waitForTimeout(300);
     const m = await readModal();
-    const problems = checkModal(m, T, { role: "alertdialog", primary: "Delete seat", danger: true, heading: /^Delete custom seat R99\?$/ });
+    const problems = checkModal(m, T, { role: "alertdialog", primary: "Delete seat", danger: true, heading: /^Delete custom seat R99\?$/, eyebrow: "Delete seat" });
     const bodyErrorBlocks = await modal().locator('.cds-modal-body [role="alert"], .cds-modal-body .cds-notification').count();
     if (bodyErrorBlocks) problems.push("the scope line renders as an error block");
     const focus = await checkFocusAndOverlay();
@@ -315,7 +318,7 @@ for (const theme of themes) {
     await modal().waitFor();
     await page.waitForTimeout(300);
     const m = await readModal();
-    const problems = checkModal(m, T, { role: "alertdialog", primary: "Confirm swap", danger: false, heading: /^Confirm seat swap$/ });
+    const problems = checkModal(m, T, { role: "alertdialog", primary: "Confirm swap", danger: false, heading: /^Confirm seat swap$/, eyebrow: "Swap seats" });
     const items = await modal().locator(".cds-modal-body ul li").allTextContents();
     if (items.length !== 2 || !/^Source:/.test(items[0].trim()) || !/^Target:/.test(items[1].trim())) problems.push(`list ${JSON.stringify(items)}`);
     const summary = await modal().locator(".cds-modal-body p").last().textContent();
@@ -338,7 +341,7 @@ for (const theme of themes) {
     await modal().waitFor();
     await page.waitForTimeout(300);
     const m = await readModal();
-    const problems = checkModal(m, T, { role: "alertdialog", primary: "Move them", danger: false, heading: new RegExp(`^Move .* to ${openSeat.label}\\?$`) });
+    const problems = checkModal(m, T, { role: "alertdialog", primary: "Move them", danger: false, heading: new RegExp(`^Move .* to ${openSeat.label}\\?$`), eyebrow: "Move employee" });
     const focus = await checkFocusAndOverlay();
     problems.push(...focus.problems);
     const file = await shot(`04-move-${T}`);
@@ -349,7 +352,7 @@ for (const theme of themes) {
     await modal().waitFor();
     await page.waitForTimeout(300);
     const m2 = await readModal();
-    const problems2 = checkModal(m2, T, { role: "alertdialog", primary: "Swap them", danger: false, heading: /^Swap .* and .*\?$/ });
+    const problems2 = checkModal(m2, T, { role: "alertdialog", primary: "Swap them", danger: false, heading: /^Swap .* and .*\?$/, eyebrow: "Move employee" });
     const file2 = await shot(`04-move-swap-arm-${T}`);
     rec("04b-move-swap-them", T, problems2.length === 0, m2, problems2.join("; "), [file2]);
     await modal().getByRole("button", { name: "Cancel", exact: true }).click();
@@ -367,7 +370,7 @@ for (const theme of themes) {
     await modal().waitFor();
     await page.waitForTimeout(300);
     const m = await readModal();
-    const problems = checkModal(m, T, { role: "dialog", primary: "Save changes", danger: false, columns: 3, heading: /^Unsaved seat edits$/ });
+    const problems = checkModal(m, T, { role: "dialog", primary: "Save changes", danger: false, columns: 3, heading: /^Unsaved seat edits$/, eyebrow: new RegExp(`^Seat ${assigned.label} · `) });
     if (!/sp-modal-footer--3/.test(m.footerClass)) problems.push(`footer class ${m.footerClass}`);
     if (m.buttons[0].text !== "Keep editing" || m.buttons[1].text !== "Discard") problems.push(`secondaries ${m.buttons.map(b => b.text).join("/")}`);
     if (!m.buttons[1].cls.includes("cds-btn--secondary")) problems.push("Discard is not secondary weight");
@@ -400,7 +403,7 @@ for (const theme of themes) {
     await modal().getByRole("button", { name: "Move them" }).waitFor({ timeout: 15000 });
     await page.waitForTimeout(400);
     const m = await readModal();
-    const problems = checkModal(m, T, { role: "alertdialog", primary: "Move them", danger: false, heading: new RegExp(`^Move .* to ${openSeat.label}\\?$`) });
+    const problems = checkModal(m, T, { role: "alertdialog", primary: "Move them", danger: false, heading: new RegExp(`^Move .* to ${openSeat.label}\\?$`), eyebrow: "Move employee" });
     const focus = await checkFocusAndOverlay();
     const file = await shot(`06-move-conflict-${T}`);
     rec("06-move-conflict", T, problems.length === 0, { ...m, overlay: { after: focus.after } }, problems.join("; "), [file]);
@@ -432,7 +435,7 @@ for (const theme of themes) {
     await modal().waitFor();
     await page.waitForTimeout(300);
     const m = await readModal();
-    const problems = checkModal(m, T, { role: "alertdialog", primary: "Discard everything", danger: true, heading: /^Discard all draft changes\?$/ });
+    const problems = checkModal(m, T, { role: "alertdialog", primary: "Discard everything", danger: true, heading: /^Discard all draft changes\?$/, eyebrow: "Discard draft changes" });
     if (m.buttons[0].text !== "Keep draft changes") problems.push(`secondary "${m.buttons[0].text}"`);
     const focus = await checkFocusAndOverlay();
     problems.push(...focus.problems);
