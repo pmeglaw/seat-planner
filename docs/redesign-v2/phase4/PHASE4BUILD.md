@@ -800,6 +800,18 @@ Scope: `SeatMapDialogs.tsx` (Vacate · Delete seat · Discard draft · the inspe
   (`Cancel custom seat deletion`, `Cancel swap confirmation`, `Cancel moving employee`) retired; e2e-auth
   `draft-dialogs` re-pointed to the dialog's Cancel.
 
+- **R-4 (found at review, 2026-09-07 — a plan omission): every one of the seven carries the asset's `.cds-modal-eyebrow`**
+  (CarbonModal's existing `eyebrow` prop), as specimen `02-map.html#slot` draws ("Move employee" over the question) and
+  `03-panels-and-sheets.html#confirm`'s anatomy states ("Eyebrow label-01 · heading-03 question"); the PR 4 modals
+  already do. Strings only — no sheet, token or copy change to headings / bodies / buttons: Vacate → **Vacate seat**;
+  Delete seat → **Delete seat**; Swap → **Swap seats**; Move (both arms) and the inspector's move-conflict → **Move
+  employee**; Discard draft → **Discard draft changes**; the inspector guard → the inspector's own eyebrow (`Seat CW01 ·
+  Center West`, the string `SeatInspector` composes, passed from SeatMap). `dialog-error-placement` pins the eyebrow
+  per id in `DIALOG_REGISTRY` (rendered text for the six ct dialogs; a source pin that every map `CarbonModal` carries
+  `eyebrow=` and that the guard's is the inspector's string).
+- **R-5 (2026-09-07): the move-conflict initial-focus finding is not a 5b change** — parked for PR 6 (below); the
+  rig's `06b` stays recorded as a finding, not a FAIL of this slice.
+
 **Sheet amendment F (PHASE3DS §1.24, cross-referenced from §1.17):** `.cds-modal-footer.sp-modal-footer--3` — Carbon's
 own three-button modal footer, 25 / 25 / 50 — applies only when a modal carries two secondaries, which today is the
 inspector guard alone; not a licence for three-button footers elsewhere. Its second rule, found by the captures:
@@ -843,6 +855,12 @@ shows Esc ignored during a 2.5 s delayed vacate.
   focus the first control); outside this slice's plan.
 - Draft-only custom seats leave with Discard everything (draft = published again) — correct by definition; a rig that
   inserts a custom seat re-inserts it after a discard (`pr5b-dialogs` `07b`).
+
+**Parked for PR 6 (owner ruling R-5, 2026-09-07):**
+- `CarbonModal` busy → idle refocus — when the host's `busy` flips false while focus sits on the section, focus the
+  first control (a shared-host change, its own ct pin); closes the move-conflict initial-focus finding above.
+- `Button.tsx` `adminDangerButtonClassName` — unused since 5b (its last consumers were the map's danger confirms) —
+  retire in PR 6.
 
 **Evidence (build box, 2026-09-07 — `screenshots/pr5b/README.md`):** `pr5b-dialogs.mjs` **27 / 29** records (the two
 FAILs are the one focus finding above), every computed value in the plan's Verification met — bg layer-02, 480, radius 0,

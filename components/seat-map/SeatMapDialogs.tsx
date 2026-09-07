@@ -16,7 +16,9 @@
 // draft (data destruction), `cds-btn--primary` on Swap / Move (R-2). No ×:
 // Cancel · Esc are the exits (R-3). The confirms are `role="alertdialog"`;
 // the inspector guard — a choice, not an alert — stays `role="dialog"` on
-// the one three-button footer (sheet amendment F, 25/25/50).
+// the one three-button footer (sheet amendment F, 25/25/50). Every dialog
+// carries the asset's eyebrow (R-4, found at review): the verb family over
+// the question — the guard carries the inspector's own eyebrow.
 //
 // Error placement (dialog-error-placement): the failure renders INSIDE the
 // modal body as a focusable error notification and takes focus once the
@@ -104,6 +106,7 @@ export function VacateConfirmDialog({
   return (
     <CarbonModal
       titleId="vacate-seat-confirm-title"
+      eyebrow="Vacate seat"
       title={`Vacate ${formatSeatCode(label)}?`}
       role="alertdialog"
       describedBy="vacate-seat-confirm-description"
@@ -150,6 +153,7 @@ export function DeleteSeatConfirmDialog({
   return (
     <CarbonModal
       titleId="delete-seat-confirm-title"
+      eyebrow="Delete seat"
       title={`Delete custom seat ${label}?`}
       role="alertdialog"
       describedBy="delete-seat-confirm-description"
@@ -199,6 +203,7 @@ export function DiscardDraftDialog({
   return (
     <CarbonModal
       titleId="discard-draft-title"
+      eyebrow="Discard draft changes"
       title="Discard all draft changes?"
       role="alertdialog"
       describedBy="discard-draft-description"
@@ -231,6 +236,7 @@ export function DiscardDraftDialog({
 
 export function InspectorGuardDialog({
   seatLabel,
+  eyebrow,
   actionDescription,
   pending,
   onKeepEditing,
@@ -238,6 +244,8 @@ export function InspectorGuardDialog({
   onSave
 }: {
   seatLabel: string;
+  /** The inspector's own eyebrow ("Seat CW01 · Center West") — the guard speaks for the panel it protects (R-4). */
+  eyebrow: string;
   actionDescription: string;
   pending: boolean;
   onKeepEditing: () => void;
@@ -250,6 +258,7 @@ export function InspectorGuardDialog({
   return (
     <CarbonModal
       titleId="inspector-unsaved-title"
+      eyebrow={eyebrow}
       title="Unsaved seat edits"
       describedBy="inspector-unsaved-description"
       busy={pending}
@@ -300,6 +309,7 @@ export function SwapConfirmDialog({
   return (
     <CarbonModal
       titleId="swap-confirm-title"
+      eyebrow="Swap seats"
       title="Confirm seat swap"
       role="alertdialog"
       describedBy="swap-confirm-description"
@@ -372,6 +382,7 @@ export function MoveEmployeeConfirmDialog({
     return (
       <CarbonModal
         titleId="move-employee-map-confirm-title"
+        eyebrow="Move employee"
         title={`Swap ${formatDisplayName(sourceEmployeeName)} and ${formatDisplayName(seatPersonLabel(moveEmployeeTargetSeat))}?`}
         role="alertdialog"
         describedBy="move-employee-map-confirm-description"
@@ -397,6 +408,7 @@ export function MoveEmployeeConfirmDialog({
   return (
     <CarbonModal
       titleId="move-employee-map-confirm-title"
+      eyebrow="Move employee"
       title={<>Move {formatDisplayName(sourceEmployeeName)} to {formatSeatCode(moveEmployeeTargetSeat.label)}<SeatFloorTag tag={targetTag} />?</>}
       role="alertdialog"
       describedBy="move-employee-map-confirm-description"

@@ -146,13 +146,20 @@ function assertAlertInsideOpenDialog() {
 }
 
 // PR 5b: every map confirm names its description paragraph (aria-describedby
-// resolves to an element inside the dialog) and carries the ruled role.
+// resolves to an element inside the dialog), carries the ruled role, and
+// (R-4, 2026-09-07) the asset's eyebrow — the string DIALOG_REGISTRY pins.
 function assertDescribedDialog(dialog, { role, describedBy }) {
   assert.equal(dialog.getAttribute("role"), role, `the dialog must carry role="${role}"`);
   assert.equal(dialog.getAttribute("aria-describedby"), describedBy);
   const description = document.getElementById(describedBy);
   assert.ok(description && dialog.contains(description), `aria-describedby="${describedBy}" must resolve inside the dialog`);
   assert.ok(description.textContent.trim().length > 0, "the description must carry text");
+  const id = dialog.getAttribute("aria-labelledby");
+  const expected = DIALOG_REGISTRY[id]?.eyebrow;
+  assert.ok(expected, `DIALOG_REGISTRY["${id}"] must pin an eyebrow (R-4)`);
+  const eyebrow = dialog.querySelector(".cds-modal-eyebrow");
+  assert.ok(eyebrow, `dialog "${id}" must render the asset eyebrow`);
+  assert.equal(eyebrow.textContent.trim(), expected);
 }
 
 async function assertFocusLandsIn(alert) {
@@ -560,13 +567,16 @@ const DIALOG_REGISTRY = {
   "management-discard-title": { kind: "ct" },
   "management-option-create-title": { kind: "ct" },
   "json-restore-review-title": { kind: "ct" },
-  "swap-confirm-title": { kind: "ct" },
+  // PR 5b (owner ruling R-4, 2026-09-07): the map's confirms carry the asset
+  // eyebrow — the verb family over the question; assertDescribedDialog
+  // checks the rendered text against this string.
+  "swap-confirm-title": { kind: "ct", eyebrow: "Swap seats" },
   "publish-review-title": { kind: "ct" },
-  "discard-draft-title": { kind: "ct" },
-  "vacate-seat-confirm-title": { kind: "ct" },
-  "delete-seat-confirm-title": { kind: "ct" },
-  "move-employee-map-confirm-title": { kind: "ct" },
-  "move-employee-confirm-title": { kind: "ct" },
+  "discard-draft-title": { kind: "ct", eyebrow: "Discard draft changes" },
+  "vacate-seat-confirm-title": { kind: "ct", eyebrow: "Vacate seat" },
+  "delete-seat-confirm-title": { kind: "ct", eyebrow: "Delete seat" },
+  "move-employee-map-confirm-title": { kind: "ct", eyebrow: "Move employee" },
+  "move-employee-confirm-title": { kind: "ct", eyebrow: "Move employee" },
 
   // PR-5 owner ruling (2026-08-27): the guard dialog's Save arm KEEPS closing
   // before resolve. It closes INTO the inspector, whose commit bar +
@@ -576,7 +586,10 @@ const DIALOG_REGISTRY = {
   // pending-state-source.test.mjs covers it.
   "inspector-unsaved-title": {
     kind: "closes-into-announcing-surface",
-    reason: "Save submits the inspector form; the inspector's own pending UI + sr region announce the flight"
+    reason: "Save submits the inspector form; the inspector's own pending UI + sr region announce the flight",
+    // R-4: the guard carries the inspector's OWN eyebrow ("Seat CW01 · Center
+    // West") — a prop from SeatMap, pinned in source below.
+    eyebrow: "the inspector's eyebrow (prop)"
   },
 
   // Deliberate close-on-both-outcomes AFTER resolve.
@@ -692,6 +705,23 @@ test("every role=dialog is classified: ct-covered or ledgered under one of the t
       discovered.set(match[1], file);
     }
   }
+
+  // R-4: every CarbonModal the map raises carries an eyebrow — the opening
+  // tag that names the titleId also carries `eyebrow=` (string or prop).
+  for (const file of collectComponentFiles("components/seat-map")) {
+    const source = readFileSync(path.join(repoRoot, file), "utf8");
+    for (const match of source.matchAll(/<CarbonModal\b([^>]*)>/g)) {
+      const tag = match[1];
+      const id = tag.match(/titleId="([\w-]+)"/)?.[1];
+      assert.ok(id, `${file}: a CarbonModal without a literal titleId`);
+      assert.match(tag, /\beyebrow=/, `${file}: dialog "${id}" must carry the asset eyebrow (R-4)`);
+    }
+  }
+  assert.match(
+    readFileSync(path.join(repoRoot, "components/seat-map/SeatMap.tsx"), "utf8"),
+    /<InspectorGuardDialog[\s\S]{0,400}?eyebrow=\{`Seat \$\{formatSeatCode\(selectedSeat\.label\)\} · \$\{selectedSeat\.zone \?\? selectedSeat\.department \?\? "Unzoned"\}`\}/,
+    "the guard carries the inspector's own eyebrow string (R-4)"
+  );
 
   for (const [id, file] of discovered) {
     const entry = DIALOG_REGISTRY[id];

@@ -42,7 +42,7 @@ import { arrowKeyToDirection, edgeKeyToPosition, findNearestSeatInDirection, res
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { canVacateSeat } from "@/lib/seatDraftActions";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
-import { formatDisplayName } from "@/lib/formatName";
+import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import {
   MAP_IMAGE_HEIGHT,
   MAP_IMAGE_WIDTH,
@@ -3415,6 +3415,8 @@ export function SeatMap({
       {inspectorGuardAction && selectedSeat && (
         <InspectorGuardDialog
           seatLabel={selectedSeat.label}
+          // The inspector's own eyebrow (SeatInspector composes the same string) — R-4.
+          eyebrow={`Seat ${formatSeatCode(selectedSeat.label)} · ${selectedSeat.zone ?? selectedSeat.department ?? "Unzoned"}`}
           actionDescription={describeInspectorGuardAction(inspectorGuardAction)}
           pending={pending}
           onKeepEditing={keepEditingInspector}

@@ -1414,6 +1414,7 @@ export function SeatInspector({
       // rAF focus from runSeatAssignment (PR-5 §8.1).
       <CarbonModal
         titleId="move-employee-confirm-title"
+        eyebrow="Move employee"
         title={<>Move {formatDisplayName(moveConflict.employeeName)} to {formatSeatCode(selectedSeat.label)}?</>}
         role="alertdialog"
         describedBy="move-employee-confirm-description"
