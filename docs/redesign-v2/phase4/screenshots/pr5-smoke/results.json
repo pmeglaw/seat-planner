@@ -1,0 +1,980 @@
+[
+  {
+    "step": "1 Frame",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "h1Font": "28px/36px",
+      "sub": "Front-desk directory — type what the caller gives you, read the extension, transfer.",
+      "headerBtns": 0,
+      "listWidth": 1008,
+      "readoutWidth": 480,
+      "gap": 32,
+      "noScroll": true,
+      "scrolled": 300,
+      "readoutTopAfterScroll": 64,
+      "stickyPos": "sticky",
+      "attrs": [
+        "light",
+        "white"
+      ],
+      "bodyBg": "rgb(255, 255, 255)"
+    },
+    "note": "",
+    "files": [
+      "01-frame-light.png",
+      "01-frame-sticky-light.png"
+    ]
+  },
+  {
+    "step": "2 Search at rest",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "height": 48,
+      "glyph": 1,
+      "placeholder": "Name, department, seat, or extension…",
+      "focus": {
+        "tag": "input",
+        "id": "reception-main",
+        "label": "Search the directory",
+        "isField": true
+      },
+      "kbd": "⌘ K",
+      "clear": 0,
+      "ring": "solid 2px rgb(184, 92, 46) -2px"
+    },
+    "note": "",
+    "files": [
+      "02-search-rest-light.png"
+    ]
+  },
+  {
+    "step": "3 Count and typing",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "rest": "12 people",
+      "typed": "2 matches",
+      "cursors": 1,
+      "cursorBg": "rgb(232, 232, 232)",
+      "hoverSurface": "#e8e8e8",
+      "cursorBar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset",
+      "activedesc": "reception-option-00000000-0000-0000-0000-000000000006",
+      "cursorId": "reception-option-00000000-0000-0000-0000-000000000006",
+      "cursorName": "Daniel Garcia",
+      "preview": "Daniel Garcia",
+      "hint": "↵to lock",
+      "rows": [
+        "Daniel Garcia",
+        "David Kim"
+      ],
+      "lastName": "David Kim",
+      "firstName": "Daniel Garcia"
+    },
+    "note": "",
+    "files": [
+      "03-typing-light.png"
+    ]
+  },
+  {
+    "step": "4 Lock",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "name": "Daniel Garcia",
+      "locked": 1,
+      "lockedBg": "rgb(224, 224, 224)",
+      "selectedSurface": "#e0e0e0",
+      "lockedBar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset",
+      "url": "/reception?q=Daniel+Garcia",
+      "historyBefore": 4,
+      "historyAfter": 4,
+      "value": "",
+      "hint": "Escto unlock",
+      "mapHref": "/?q=Daniel+Garcia",
+      "mapColor": "rgb(143, 69, 33)",
+      "attrs": [
+        "light",
+        "white"
+      ]
+    },
+    "note": "",
+    "files": [
+      "04-locked-light.png"
+    ]
+  },
+  {
+    "step": "5 Esc both rungs",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "lockedName": "Daniel Garcia",
+      "zeroCount": "0 matches",
+      "emptyH3": "No one matches “zz”",
+      "clearGhost": "Clear search",
+      "stillName": "Daniel Garcia",
+      "hintsZero": 0,
+      "afterEsc1": {
+        "value": "",
+        "locked": 1,
+        "name": "Daniel Garcia",
+        "hint": "Escto unlock",
+        "url": "/reception?q=Daniel+Garcia"
+      },
+      "afterEsc2": {
+        "locked": 0,
+        "waiting": true,
+        "url": "/reception",
+        "hints": 0
+      },
+      "afterEnter": {
+        "locked": 0,
+        "url": "/reception",
+        "value": ""
+      }
+    },
+    "note": "",
+    "files": [
+      "05-zero-locked-light.png",
+      "05-unlocked-light.png"
+    ]
+  },
+  {
+    "step": "6 Focus never leaves the field",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "rowOk": true,
+      "rowLocked": true,
+      "fallbackName": "Alex Shabazian",
+      "fbOk": true,
+      "fbLocked": true,
+      "recentName": "Victor Chen",
+      "recentOk": true,
+      "recentLocked": true,
+      "clearOk": true,
+      "cleared": true
+    },
+    "note": "",
+    "files": [
+      "06-pointer-light.png"
+    ]
+  },
+  {
+    "step": "7 Cmd K",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "tabbed": {
+        "tag": "button",
+        "id": "",
+        "label": "Clear search",
+        "isField": false
+      },
+      "after": {
+        "isField": true,
+        "selStart": 0,
+        "selEnd": 3,
+        "value": "Kim"
+      }
+    },
+    "note": "",
+    "files": [
+      "07-cmd-k-light.png"
+    ]
+  },
+  {
+    "step": "8 Clear ×",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "shown": 1,
+      "value": "",
+      "focus": {
+        "tag": "input",
+        "id": "reception-main",
+        "label": "Search the directory",
+        "isField": true
+      },
+      "gone": 0,
+      "lockedBefore": "Alex Shabazian",
+      "lockedAfter": "Alex Shabazian"
+    },
+    "note": "",
+    "files": [
+      "08-clear-x-light.png"
+    ]
+  },
+  {
+    "step": "9 No extension",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "noneText": "No extension on file",
+      "noneFont": "14px/20px",
+      "tileHasDash": false,
+      "seatLine": "Floor 2 · Litigation — reaches voicemail if away",
+      "fbHeading": "If no answer — same department",
+      "fbCount": 1,
+      "fbHeights": [
+        40
+      ],
+      "fbGhost": true,
+      "fbExts": [
+        "201"
+      ],
+      "lockedAfter": "Alex Shabazian",
+      "numeral": "201"
+    },
+    "note": "",
+    "files": [
+      "09-no-extension-light.png"
+    ]
+  },
+  {
+    "step": "10 Recents",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "names": [
+        "David Kim",
+        "Maria Lopez",
+        "Alex Shabazian"
+      ],
+      "outsideLive": true,
+      "liveInReadout": 1,
+      "afterReload": 0
+    },
+    "note": "",
+    "files": [
+      "10-recents-light.png"
+    ]
+  },
+  {
+    "step": "11 Show on map",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "mapUrl": "/?q=Alex+Shabazian",
+      "fieldValue": "Alex Shabazian",
+      "pressed": 1,
+      "pressedName": "CW01 Alex Shabazian. Assigned seat. Search result. Highlighted search result. Selected.",
+      "inspector": 1,
+      "palette": 0,
+      "backUrl": "/reception?q=Alex+Shabazian",
+      "backLocked": 1
+    },
+    "note": "",
+    "files": [
+      "11-show-on-map-light.png"
+    ]
+  },
+  {
+    "step": "12 q landing",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "unique": {
+        "locked": 1,
+        "name": "Alex Shabazian",
+        "url": "/reception?q=Alex+Shabazian"
+      },
+      "several": {
+        "cursor": 1,
+        "cursorName": "Rachel Nguyen",
+        "locked": 0,
+        "value": "Records",
+        "count": "2 matches"
+      },
+      "zero": {
+        "count": "0 matches",
+        "value": "zzzz",
+        "empty": "No one matches “zzzz”",
+        "waiting": true
+      }
+    },
+    "note": "",
+    "files": [
+      "12-landing-201-light.png",
+      "12-landing-records-light.png",
+      "12-landing-zero-light.png"
+    ]
+  },
+  {
+    "step": "13 Keyboard path and landmarks",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "skip": {
+        "tag": "a",
+        "id": "",
+        "label": "Skip to content",
+        "isField": false
+      },
+      "landed": {
+        "tag": "input",
+        "id": "reception-main",
+        "label": "Search the directory",
+        "isField": true
+      },
+      "order": [
+        "Alex Shabazian201",
+        "Show on map",
+        "Maria Lopez202",
+        "try{var t=localStorage.getItem('sp-theme",
+        "Skip to content"
+      ],
+      "listboxStops": 0,
+      "landmarks": {
+        "search": 1,
+        "main": 1,
+        "complementary": [
+          "Recent lookups"
+        ]
+      },
+      "axeRest": [],
+      "axeLocked": []
+    },
+    "note": "",
+    "files": [
+      "13-keyboard-light.png"
+    ]
+  },
+  {
+    "step": "14 Widths",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "w1280": {
+        "columns": 2,
+        "readout": 480,
+        "noScroll": true
+      },
+      "w1024": {
+        "columns": 1,
+        "position": "static",
+        "below": true,
+        "backDisplay": "flex",
+        "backAtTop": true,
+        "backFirst": "Back to the list",
+        "noScroll": true
+      },
+      "focusAfterBack": {
+        "tag": "input",
+        "id": "reception-main",
+        "label": "Search the directory",
+        "isField": true
+      },
+      "fieldInView": true
+    },
+    "note": "",
+    "files": [
+      "14-1280-light.png",
+      "14-1024-readout-light.png",
+      "14-1024-back-light.png"
+    ]
+  },
+  {
+    "step": "15 Themes",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "attrs": [
+        "light",
+        "white"
+      ],
+      "bar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset",
+      "link": "rgb(143, 69, 33)",
+      "blues": [],
+      "mainBg": "rgb(255, 255, 255)"
+    },
+    "note": "",
+    "files": [
+      "15-theme-light.png"
+    ]
+  },
+  {
+    "step": "16 Route cards",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "cardBg": "rgb(255, 255, 255)",
+      "empty": 1,
+      "raster": 0,
+      "h2": "Admin access required",
+      "tertiaryText": "Back to seat map",
+      "tertiaryHref": "/",
+      "tertiaryColor": "rgb(184, 92, 46)",
+      "after403": "/",
+      "status": 404,
+      "nfH2": "This page does not exist",
+      "nfBg": "rgb(255, 255, 255)",
+      "nfActionText": "Back to the seat map",
+      "after404": "/",
+      "missingAnchors": []
+    },
+    "note": "",
+    "files": [
+      "16-admin-403-light.png",
+      "16-not-found-light.png"
+    ]
+  },
+  {
+    "step": "1 Frame",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "h1Font": "28px/36px",
+      "sub": "Front-desk directory — type what the caller gives you, read the extension, transfer.",
+      "headerBtns": 0,
+      "listWidth": 1008,
+      "readoutWidth": 480,
+      "gap": 32,
+      "noScroll": true,
+      "scrolled": 300,
+      "readoutTopAfterScroll": 64,
+      "stickyPos": "sticky",
+      "attrs": [
+        "dark",
+        "g100"
+      ],
+      "bodyBg": "rgb(22, 22, 22)"
+    },
+    "note": "",
+    "files": [
+      "01-frame-dark.png",
+      "01-frame-sticky-dark.png"
+    ]
+  },
+  {
+    "step": "2 Search at rest",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "height": 48,
+      "glyph": 1,
+      "placeholder": "Name, department, seat, or extension…",
+      "focus": {
+        "tag": "input",
+        "id": "reception-main",
+        "label": "Search the directory",
+        "isField": true
+      },
+      "kbd": "⌘ K",
+      "clear": 0,
+      "ring": "solid 2px rgb(184, 92, 46) -2px"
+    },
+    "note": "",
+    "files": [
+      "02-search-rest-dark.png"
+    ]
+  },
+  {
+    "step": "3 Count and typing",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "rest": "12 people",
+      "typed": "2 matches",
+      "cursors": 1,
+      "cursorBg": "rgb(51, 51, 51)",
+      "hoverSurface": "#333",
+      "cursorBar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset",
+      "activedesc": "reception-option-00000000-0000-0000-0000-000000000006",
+      "cursorId": "reception-option-00000000-0000-0000-0000-000000000006",
+      "cursorName": "Daniel Garcia",
+      "preview": "Daniel Garcia",
+      "hint": "↵to lock",
+      "rows": [
+        "Daniel Garcia",
+        "David Kim"
+      ],
+      "lastName": "David Kim",
+      "firstName": "Daniel Garcia"
+    },
+    "note": "",
+    "files": [
+      "03-typing-dark.png"
+    ]
+  },
+  {
+    "step": "4 Lock",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "name": "Daniel Garcia",
+      "locked": 1,
+      "lockedBg": "rgb(57, 57, 57)",
+      "selectedSurface": "#393939",
+      "lockedBar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset",
+      "url": "/reception?q=Daniel+Garcia",
+      "historyBefore": 4,
+      "historyAfter": 4,
+      "value": "",
+      "hint": "Escto unlock",
+      "mapHref": "/?q=Daniel+Garcia",
+      "mapColor": "rgb(232, 160, 122)",
+      "attrs": [
+        "dark",
+        "g100"
+      ]
+    },
+    "note": "",
+    "files": [
+      "04-locked-dark.png"
+    ]
+  },
+  {
+    "step": "5 Esc both rungs",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "lockedName": "Daniel Garcia",
+      "zeroCount": "0 matches",
+      "emptyH3": "No one matches “zz”",
+      "clearGhost": "Clear search",
+      "stillName": "Daniel Garcia",
+      "hintsZero": 0,
+      "afterEsc1": {
+        "value": "",
+        "locked": 1,
+        "name": "Daniel Garcia",
+        "hint": "Escto unlock",
+        "url": "/reception?q=Daniel+Garcia"
+      },
+      "afterEsc2": {
+        "locked": 0,
+        "waiting": true,
+        "url": "/reception",
+        "hints": 0
+      },
+      "afterEnter": {
+        "locked": 0,
+        "url": "/reception",
+        "value": ""
+      }
+    },
+    "note": "",
+    "files": [
+      "05-zero-locked-dark.png",
+      "05-unlocked-dark.png"
+    ]
+  },
+  {
+    "step": "6 Focus never leaves the field",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "rowOk": true,
+      "rowLocked": true,
+      "fallbackName": "Alex Shabazian",
+      "fbOk": true,
+      "fbLocked": true,
+      "recentName": "Victor Chen",
+      "recentOk": true,
+      "recentLocked": true,
+      "clearOk": true,
+      "cleared": true
+    },
+    "note": "",
+    "files": [
+      "06-pointer-dark.png"
+    ]
+  },
+  {
+    "step": "7 Cmd K",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "tabbed": {
+        "tag": "button",
+        "id": "",
+        "label": "Clear search",
+        "isField": false
+      },
+      "after": {
+        "isField": true,
+        "selStart": 0,
+        "selEnd": 3,
+        "value": "Kim"
+      }
+    },
+    "note": "",
+    "files": [
+      "07-cmd-k-dark.png"
+    ]
+  },
+  {
+    "step": "8 Clear ×",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "shown": 1,
+      "value": "",
+      "focus": {
+        "tag": "input",
+        "id": "reception-main",
+        "label": "Search the directory",
+        "isField": true
+      },
+      "gone": 0,
+      "lockedBefore": "Alex Shabazian",
+      "lockedAfter": "Alex Shabazian"
+    },
+    "note": "",
+    "files": [
+      "08-clear-x-dark.png"
+    ]
+  },
+  {
+    "step": "9 No extension",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "noneText": "No extension on file",
+      "noneFont": "14px/20px",
+      "tileHasDash": false,
+      "seatLine": "Floor 2 · Litigation — reaches voicemail if away",
+      "fbHeading": "If no answer — same department",
+      "fbCount": 1,
+      "fbHeights": [
+        40
+      ],
+      "fbGhost": true,
+      "fbExts": [
+        "201"
+      ],
+      "lockedAfter": "Alex Shabazian",
+      "numeral": "201"
+    },
+    "note": "",
+    "files": [
+      "09-no-extension-dark.png"
+    ]
+  },
+  {
+    "step": "10 Recents",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "names": [
+        "David Kim",
+        "Maria Lopez",
+        "Alex Shabazian"
+      ],
+      "outsideLive": true,
+      "liveInReadout": 1,
+      "afterReload": 0
+    },
+    "note": "",
+    "files": [
+      "10-recents-dark.png"
+    ]
+  },
+  {
+    "step": "11 Show on map",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "mapUrl": "/?q=Alex+Shabazian",
+      "fieldValue": "Alex Shabazian",
+      "pressed": 1,
+      "pressedName": "CW01 Alex Shabazian. Assigned seat. Search result. Highlighted search result. Selected.",
+      "inspector": 1,
+      "palette": 0,
+      "backUrl": "/reception?q=Alex+Shabazian",
+      "backLocked": 1
+    },
+    "note": "",
+    "files": [
+      "11-show-on-map-dark.png"
+    ]
+  },
+  {
+    "step": "12 q landing",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "unique": {
+        "locked": 1,
+        "name": "Alex Shabazian",
+        "url": "/reception?q=Alex+Shabazian"
+      },
+      "several": {
+        "cursor": 1,
+        "cursorName": "Rachel Nguyen",
+        "locked": 0,
+        "value": "Records",
+        "count": "2 matches"
+      },
+      "zero": {
+        "count": "0 matches",
+        "value": "zzzz",
+        "empty": "No one matches “zzzz”",
+        "waiting": true
+      }
+    },
+    "note": "",
+    "files": [
+      "12-landing-201-dark.png",
+      "12-landing-records-dark.png",
+      "12-landing-zero-dark.png"
+    ]
+  },
+  {
+    "step": "13 Keyboard path and landmarks",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "skip": {
+        "tag": "a",
+        "id": "",
+        "label": "Skip to content",
+        "isField": false
+      },
+      "landed": {
+        "tag": "input",
+        "id": "reception-main",
+        "label": "Search the directory",
+        "isField": true
+      },
+      "order": [
+        "Alex Shabazian201",
+        "Show on map",
+        "Maria Lopez202",
+        "try{var t=localStorage.getItem('sp-theme",
+        "Skip to content"
+      ],
+      "listboxStops": 0,
+      "landmarks": {
+        "search": 1,
+        "main": 1,
+        "complementary": [
+          "Recent lookups"
+        ]
+      },
+      "axeRest": [],
+      "axeLocked": []
+    },
+    "note": "",
+    "files": [
+      "13-keyboard-dark.png"
+    ]
+  },
+  {
+    "step": "14 Widths",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "w1280": {
+        "columns": 2,
+        "readout": 480,
+        "noScroll": true
+      },
+      "w1024": {
+        "columns": 1,
+        "position": "static",
+        "below": true,
+        "backDisplay": "flex",
+        "backAtTop": true,
+        "backFirst": "Back to the list",
+        "noScroll": true
+      },
+      "focusAfterBack": {
+        "tag": "input",
+        "id": "reception-main",
+        "label": "Search the directory",
+        "isField": true
+      },
+      "fieldInView": true
+    },
+    "note": "",
+    "files": [
+      "14-1280-dark.png",
+      "14-1024-readout-dark.png",
+      "14-1024-back-dark.png"
+    ]
+  },
+  {
+    "step": "15 Themes",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "attrs": [
+        "dark",
+        "g100"
+      ],
+      "bar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset",
+      "link": "rgb(232, 160, 122)",
+      "blues": [],
+      "mainBg": "rgb(22, 22, 22)"
+    },
+    "note": "",
+    "files": [
+      "15-theme-dark.png"
+    ]
+  },
+  {
+    "step": "16 Route cards",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "cardBg": "rgb(57, 57, 57)",
+      "empty": 1,
+      "raster": 0,
+      "h2": "Admin access required",
+      "tertiaryText": "Back to seat map",
+      "tertiaryHref": "/",
+      "tertiaryColor": "rgb(255, 255, 255)",
+      "after403": "/",
+      "status": 404,
+      "nfH2": "This page does not exist",
+      "nfBg": "rgb(57, 57, 57)",
+      "nfActionText": "Back to the seat map",
+      "after404": "/",
+      "missingAnchors": []
+    },
+    "note": "",
+    "files": [
+      "16-admin-403-dark.png",
+      "16-not-found-dark.png"
+    ]
+  },
+  {
+    "step": "1 Frame",
+    "theme": "system",
+    "ok": true,
+    "values": {
+      "h1Font": "28px/36px",
+      "sub": "Front-desk directory — type what the caller gives you, read the extension, transfer.",
+      "headerBtns": 0,
+      "listWidth": 1008,
+      "readoutWidth": 480,
+      "gap": 32,
+      "noScroll": true,
+      "scrolled": 300,
+      "readoutTopAfterScroll": 64,
+      "stickyPos": "sticky",
+      "attrs": [
+        null,
+        null
+      ],
+      "bodyBg": "rgb(22, 22, 22)"
+    },
+    "note": "",
+    "files": [
+      "01-frame-system.png",
+      "01-frame-sticky-system.png"
+    ]
+  },
+  {
+    "step": "4 Lock",
+    "theme": "system",
+    "ok": true,
+    "values": {
+      "name": "Daniel Garcia",
+      "locked": 1,
+      "lockedBg": "rgb(57, 57, 57)",
+      "selectedSurface": "#393939",
+      "lockedBar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset",
+      "url": "/reception?q=Daniel+Garcia",
+      "historyBefore": 4,
+      "historyAfter": 4,
+      "value": "",
+      "hint": "Escto unlock",
+      "mapHref": "/?q=Daniel+Garcia",
+      "mapColor": "rgb(232, 160, 122)",
+      "attrs": [
+        null,
+        null
+      ]
+    },
+    "note": "",
+    "files": [
+      "04-locked-system.png"
+    ]
+  },
+  {
+    "step": "9 No extension",
+    "theme": "system",
+    "ok": true,
+    "values": {
+      "noneText": "No extension on file",
+      "noneFont": "14px/20px",
+      "tileHasDash": false,
+      "seatLine": "Floor 2 · Litigation — reaches voicemail if away",
+      "fbHeading": "If no answer — same department",
+      "fbCount": 1,
+      "fbHeights": [
+        40
+      ],
+      "fbGhost": true,
+      "fbExts": [
+        "201"
+      ],
+      "lockedAfter": "Alex Shabazian",
+      "numeral": "201"
+    },
+    "note": "",
+    "files": [
+      "09-no-extension-system.png"
+    ]
+  },
+  {
+    "step": "15 Themes",
+    "theme": "system",
+    "ok": true,
+    "values": {
+      "attrs": [
+        null,
+        null
+      ],
+      "bar": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset",
+      "link": "rgb(232, 160, 122)",
+      "blues": [],
+      "mainBg": "rgb(22, 22, 22)"
+    },
+    "note": "",
+    "files": [
+      "15-theme-system.png"
+    ]
+  },
+  {
+    "step": "17 Unchanged surfaces",
+    "theme": "both",
+    "ok": false,
+    "values": {
+      "login-light-1920.png": "DIFFERS",
+      "login-dark-1920.png": "IDENTICAL",
+      "login-light-1024.png": "IDENTICAL",
+      "viewer-my-seat-light-1920.png": "IDENTICAL",
+      "viewer-my-seat-dark-1920.png": "DIFFERS"
+    },
+    "note": "baseline /var/folders/5q/975b9pnd6h9153skbkcq5tc80000gn/T/pr5-baseline-main4",
+    "files": [
+      "runtime-recheck/login-light-1920.png",
+      "runtime-recheck/login-dark-1920.png",
+      "runtime-recheck/login-light-1024.png",
+      "runtime-recheck/viewer-my-seat-light-1920.png",
+      "runtime-recheck/viewer-my-seat-dark-1920.png"
+    ]
+  },
+  {
+    "step": "18 Hygiene",
+    "theme": "both",
+    "ok": true,
+    "values": {
+      "consoleErrorsTotal": 20,
+      "failedResponsesTotal": 68,
+      "speedInsights404s": 66,
+      "otherFailedResponses": [],
+      "otherConsole": [],
+      "blueFiles": "app/styles/carbon-tokens.css",
+      "shadowSp": "",
+      "closeIcon": ""
+    },
+    "note": "",
+    "files": []
+  }
+]

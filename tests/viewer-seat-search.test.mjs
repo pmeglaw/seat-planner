@@ -250,3 +250,20 @@ test("viewer search: with nothing published, an unseated person belongs to no fl
   assert.equal(person.floor, null);
   assert.equal(person.subtitle, "No assigned seat");
 });
+
+// The ?q= landing's unique match (D1-d; PR 5 smoke step 11): a seated person's
+// name query lists the person AND their seat row — one match, two rows.
+test("uniqueLandingResult: one result, or one person whose only other rows are their own seat", async () => {
+  const { uniqueLandingResult } = await importTsModule("lib/viewerSeatSearch.ts");
+  const person = { id: "p-1", kind: "person", title: "Alex", subtitle: "", meta: "", seatId: "s-1", seatIds: ["s-1"], floor: "3", employeeId: "e-1" };
+  const ownSeat = { id: "s-1", kind: "seat", title: "CW01", subtitle: "Alex", meta: "", seatId: "s-1", seatIds: ["s-1"], floor: "3" };
+  const otherSeat = { id: "s-2", kind: "seat", title: "CW02", subtitle: "", meta: "", seatId: "s-2", seatIds: ["s-2"], floor: "3" };
+  const otherPerson = { ...person, id: "p-2", employeeId: "e-2", seatId: null, seatIds: [] };
+  assert.equal(uniqueLandingResult([]), null);
+  assert.equal(uniqueLandingResult([ownSeat]), ownSeat, "a single result of any kind is unique");
+  assert.equal(uniqueLandingResult([person, ownSeat]), person, "the person and their own seat are one match");
+  assert.equal(uniqueLandingResult([ownSeat, person]), person, "order does not matter");
+  assert.equal(uniqueLandingResult([person, otherSeat]), null, "another seat keeps the list");
+  assert.equal(uniqueLandingResult([person, otherPerson]), null, "two people keep the list");
+  assert.equal(uniqueLandingResult([otherPerson, ownSeat]), null, "an unseated person beside a seat keeps the list");
+});

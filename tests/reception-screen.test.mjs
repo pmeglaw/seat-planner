@@ -560,6 +560,25 @@ test("landing on ?q= with several matches keeps the query and puts the cursor on
   assert.equal(window.location.search, "?q=Litigation");
 });
 
+// Browser back onto /reception?q=<name>: the App Router may restore the cached
+// tree whose server render saw no ?q= (staleTimes) — the live URL still locks.
+test("a cache-restored tree with ?q= in the live URL still lands locked", async () => {
+  setUrl("/reception?q=102");
+  await renderReception({ initialQuery: "" });
+  assert.equal(readoutName(), "Bob Baker");
+  assert.equal(lockedRows().length, 1);
+  assert.equal(window.location.search, "?q=Bob+Baker");
+});
+
+test("the URL writer passes history.state through (never null — it would wipe the router's entry)", async () => {
+  setUrl("/reception");
+  window.history.replaceState({ marker: "router" }, "", "/reception");
+  await renderReception();
+  lockByTyping("Bob");
+  assert.deepEqual(window.history.state, { marker: "router" });
+  assert.equal(window.location.search, "?q=Bob+Baker");
+});
+
 test("landing on ?q= with no match shows the zero state with the query kept", async () => {
   setUrl("/reception?q=zzzz");
   await renderReception({ initialQuery: "zzzz" });

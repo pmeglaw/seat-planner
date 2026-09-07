@@ -71,7 +71,7 @@ test("PR 5 contracts: [data-highlight] is the cursor, aria-selected the lock; no
 
 test("PR 5 URL contract: one writer (withQueryParam) through history.replaceState — never the router", async () => {
   const source = await screenSource();
-  assert.match(source, /history\.replaceState/);
+  assert.match(source, /history\.replaceState\(window\.history\.state,/, "the router's history state is passed through, never null");
   assert.match(source, /from "@\/lib\/deepLink"/);
   assert.match(source, /withQueryParam\(/);
   // Import-anchored: the header comment NAMES router.replace to say why not.

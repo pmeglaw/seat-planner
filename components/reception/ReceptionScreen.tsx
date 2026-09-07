@@ -5,7 +5,7 @@ import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
 import { CloseIcon, PinIcon, SearchIcon } from "@/components/seat-map/mapIcons";
-import { withQueryParam } from "@/lib/deepLink";
+import { readQueryParam, withQueryParam } from "@/lib/deepLink";
 import { DEFAULT_FLOOR } from "@/lib/floorIds";
 import { floorLabel, floorTag } from "@/lib/floors";
 import { shortcutHint } from "@/lib/platformShortcut";
@@ -73,10 +73,22 @@ function metaLine(person: ReceptionPerson) {
 // One writer for the URL (D3-c): `?q=<name>` on lock, bare on unlock.
 // `history.replaceState`, not `router.replace` — the page is force-dynamic and
 // a soft navigation would refetch the whole directory for a lock (the PR 4
-// `?tab=` precedent, PHASE4BUILD §1.37).
+// `?tab=` precedent, PHASE4BUILD §1.37). The current `history.state` is passed
+// back verbatim: a `null` state wipes the App Router's own history entry and
+// breaks back / forward (the SeatMap and Management writers do the same).
 function writeQueryUrl(name: string | null) {
   if (typeof window === "undefined") return;
-  window.history.replaceState(null, "", RECEPTION_PATH + withQueryParam("", name ?? ""));
+  window.history.replaceState(window.history.state, "", RECEPTION_PATH + withQueryParam("", name ?? ""));
+}
+
+// The landing query: the server's `?q=` (searchParams), or — when the router
+// restores a cached tree on browser back (Client Router Cache, `staleTimes`)
+// whose server render saw no `?q=` — the live URL's. On a hydration render both
+// agree (the server read the same URL), so the markup never differs.
+function landingQuery(initialQuery: string) {
+  if (initialQuery.trim()) return initialQuery;
+  if (typeof window === "undefined") return "";
+  return readQueryParam(window.location.search);
 }
 
 export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = false }: ReceptionScreenProps) {
@@ -84,12 +96,13 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
   // (lazy initial state — identical on the server and the client, so no
   // setState-in-effect and no hydration mismatch); otherwise the query stays
   // in the field with the cursor on the first row, or the zero state.
+  const [landing] = useState(() => landingQuery(initialQuery));
   const [landed] = useState<ReceptionPerson | null>(() => {
-    if (!initialQuery.trim()) return null;
-    const found = searchReceptionDirectory(people, initialQuery);
+    if (!landing.trim()) return null;
+    const found = searchReceptionDirectory(people, landing);
     return found.length === 1 ? found[0] : null;
   });
-  const [query, setQuery] = useState(landed ? "" : initialQuery);
+  const [query, setQuery] = useState(landed ? "" : landing);
   const [highlightIndex, setHighlightIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(landed?.id ?? null);
   const [recents, setRecents] = useState<string[]>(landed ? [landed.id] : []);
