@@ -198,6 +198,26 @@ dialog, side panel or tearsheet re-enumerates it.
 - **Retired:** `close-icon-source` with `components/ui/CloseIcon.tsx` (the one close glyph is `mapIcons.tsx`'s; the
   seven consumer sites import it; `accessibility-source` still pins no × on the publish tearsheet).
 
+### PR 5b outcomes (2026-09-07)
+
+- **Added:** `seat-map-escape-source` — the four confirm rungs (vacate / delete / swap / move) gate on the predicate
+  the dialog receives (`!pending && !mutationInFlight`), found in build; `dialog-error-placement` — `aria-describedby`
+  + the ruled role for all seven (`assertDescribedDialog`), the Discard error now focusable with its verb line.
+- **Re-pointed (never loosened):** `dialog-error-placement` (the open-dialog query accepts `dialog` and `alertdialog`;
+  the `role="dialog"` registry scan strips comments), `dialog-initial-focus` (the pending fallback lands on the
+  `alertdialog` container), `accessibility-source` (SeatMapDialogs + SeatInspector leave the aria-modal ↔
+  `useDialogFocus` pairing loop — `CarbonModal` hosts it; the guard and Delete titles by `titleId`; Delete's Cancel
+  replaces the `Cancel custom seat deletion` × pin; the inspector's `z-[90] / sm:z-[70]` look-pin retired for
+  `titleId` + `alertdialog` + no `Cancel moving employee`), `touch-target-source` (the two `-inset-1.5` × rows leave
+  with the ×), `tailwind-arbitrary-alpha-source` (the container scan follows the host — `CarbonModal.tsx`, code only,
+  `role={role}` accepted), `bulk-destructive-action-safety-source` (`titleId="discard-draft-title"`), e2e-auth
+  `draft-dialogs` (the map's confirms by `alertdialog`; the × → the dialog's Cancel; the axe scope unchanged),
+  browser `seat-map` + `accessibility` (Move / Discard by `alertdialog`).
+- **Unchanged, verified:** `pending-state-source` (every label expression character-for-character), `seat-creation-ui-source`
+  (the two Delete copy pins), the `dialog-error-placement` registry (titleIds unchanged), `phase4-token-layer-source`
+  (byte-identical sheets, no token change).
+- **Retired:** nothing.
+
 ## 6. The PR 0 test — `tests/phase4-token-layer-source.test.mjs`
 
 Three rules from the hand-off, phased so PR 0 is green before any component moves:

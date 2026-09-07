@@ -1058,6 +1058,16 @@ D2's measured paragraph is the evidence: at a 480 push the tightest marker gap o
 #### D2-b · Draft-mode control row order (owner ruling Q2)
 After the shared controls (floor selector · search · "Filters N ×" · result count · Find me) and a divider: **Undo · Redo** as ghost icon buttons (tooltips carry the shortcuts; Redo disabled when its stack is empty) · **Add seat** as a ghost button *with its label* (creation, low frequency — not icon-only) · **Ask Planner** (tertiary) · **Publish N changes** (the row's one primary) · **⋯ overflow** · **Names** toggle. The overflow holds **Discard draft changes only**, last item, danger styling, divider above, disabled when nothing to discard (parity with what ships). Reset zoom is **not** in the overflow — it stays with the zoom/fit control on the canvas (a viewport action does not belong in a menu of document actions). Owner-approved mockups: "Seat Planner Shell Mockups" canvas, page "Phase 2 Q1–Q2". Recorded as PHASE1IA.md B4 amendment.
 
+### D2 — Phase 4 PR 5b amendment (2026-09-07; owner rulings R-1…R-3, PHASE4BUILD §1.47)
+
+**The confirm dialogs are the asset modal.** The map's seven confirms (Vacate · Delete seat · Discard draft · the
+inspector's unsaved-edits guard · Swap · Move / Swap them · the inspector's move-conflict) are the asset `.cds-modal`
+through the PR 4 `CarbonModal` host — 480, `layer-02`, 50/50 footer, no ×, Esc never while busy — with the copy, verbs
+and floor tags D2′ describes. Danger primary on Vacate / Delete seat / Discard draft, plain primary on Swap / Move /
+move-conflict; the guard keeps a plain primary with two secondaries on Carbon's 25/25/50 footer (PHASE3DS §1.24
+amendment F). §1.38's "destructive confirmation = narrow tearsheet" is scoped to `/admin/management` (the note under
+D5-b); the map's Delete seat stays the modal.
+
 ---
 
 ### D3 — Reception (`/reception`)
@@ -1243,6 +1253,9 @@ bulk actions or delete are added.
 *Phase 4 PR 4 amendment (owner ruling 2026-09-05; PHASE4BUILD §1.38).* The Deactivate confirmation is the **narrow
 tearsheet** (`.sp-tearsheet--narrow`, right-aligned Cancel · danger primary, no ×) opening OVER the still-open panel —
 not a confirm modal on top. The dirty-close ask stays the modal (PHASE3DS §1.24). Nothing else in D5-b changes.
+*Scope clarification (2026-09-07, PR 5b — PHASE4BUILD §1.47 R-1):* this ruling governs `/admin/management`'s
+destructive confirmations only; the map's confirms (Vacate, Delete seat, Discard draft) are the asset modal with a
+danger primary (D2, Phase 4 PR 5b amendment) — not a reversal of §1.38, a boundary.
 
 **D5-c · Departments and Zones are structured lists with visible actions.** Row: name · count · ghost Rename
 (inline) · overflow ⋯ with Delete (danger). The hover-revealed trash goes — hidden-until-hover actions are
