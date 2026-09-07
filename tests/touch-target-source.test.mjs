@@ -88,7 +88,8 @@ const PINS = {
     "cds-btn cds-btn--icon cds-touch-target",
     "after:absolute after:-inset-1.5"
   ],
-  "components/seat-map/SeatMapDialogs.tsx": ["after:absolute after:-inset-1.5"],
+  // (Phase 4 PR 5b: SeatMapDialogs.tsx has no row — the six dialogs are the
+  // asset modal's 64px footer buttons; the × and its expansion left.)
   // Seat markers: the canvas stays exempt from the sweep (SKIP_FILES). Phase 4
   // PR 3b: every marker — the name pill and the empty-seat footprint — carries
   // the asset's `.cds-touch-target` pseudo (44px, deviation 7; the rule is

@@ -129,11 +129,30 @@ function panelProps() {
 
 const noop = () => {};
 
+// Phase 4 PR 5b: the map's confirms are `role="alertdialog"` on the asset
+// modal (CarbonModal); the inspector guard and the panels stay `dialog`.
+// One query serves both — the contract is "inside the modal subtree".
+function getOpenDialog() {
+  const dialogs = [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')];
+  assert.equal(dialogs.length, 1, `expected exactly one open dialog, found ${dialogs.length}`);
+  return dialogs[0];
+}
+
 function assertAlertInsideOpenDialog() {
-  const dialog = screen.getByRole("dialog");
+  const dialog = getOpenDialog();
   const alert = screen.getByRole("alert");
   assert.ok(dialog.contains(alert), "the error alert must render INSIDE the [role=dialog] subtree");
   return { dialog, alert };
+}
+
+// PR 5b: every map confirm names its description paragraph (aria-describedby
+// resolves to an element inside the dialog) and carries the ruled role.
+function assertDescribedDialog(dialog, { role, describedBy }) {
+  assert.equal(dialog.getAttribute("role"), role, `the dialog must carry role="${role}"`);
+  assert.equal(dialog.getAttribute("aria-describedby"), describedBy);
+  const description = document.getElementById(describedBy);
+  assert.ok(description && dialog.contains(description), `aria-describedby="${describedBy}" must resolve inside the dialog`);
+  assert.ok(description.textContent.trim().length > 0, "the description must carry text");
 }
 
 async function assertFocusLandsIn(alert) {
@@ -221,7 +240,8 @@ test("swap dialog renders actionError inline, keeps confirm enabled as Retry, an
     })
   );
 
-  const { alert } = assertAlertInsideOpenDialog();
+  const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "swap-confirm-description" });
   assert.match(alert.textContent, /Swap did not complete\..*Could not swap seats\./);
   const retry = screen.getByRole("button", { name: "Retry swap" });
   assert.equal(retry.disabled, false);
@@ -248,7 +268,8 @@ test("vacate dialog renders actionError inline with an enabled Retry vacate, and
       onConfirm: noop
     })
   );
-  const { alert } = assertAlertInsideOpenDialog();
+  const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "vacate-seat-confirm-description" });
   assert.match(alert.textContent, /Vacate did not complete\..*Could not vacate seat\./);
   assert.equal(screen.getByRole("button", { name: "Retry vacate" }).disabled, false);
   await assertFocusLandsIn(alert);
@@ -279,7 +300,8 @@ test("delete-seat dialog renders actionError inline with an enabled Retry delete
       onConfirm: noop
     })
   );
-  const { alert } = assertAlertInsideOpenDialog();
+  const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "delete-seat-confirm-description" });
   assert.match(alert.textContent, /Delete did not complete\..*Could not delete custom seat\./);
   assert.equal(screen.getByRole("button", { name: "Retry delete" }).disabled, false);
   await assertFocusLandsIn(alert);
@@ -318,7 +340,8 @@ test("move-employee dialog renders actionError inline on both arms with retry la
       actionError: "Could not move the employee."
     })
   );
-  let { alert } = assertAlertInsideOpenDialog();
+  let { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "move-employee-map-confirm-description" });
   assert.match(alert.textContent, /Move did not complete\./);
   assert.equal(screen.getByRole("button", { name: "Retry move" }).disabled, false);
   await assertFocusLandsIn(alert);
@@ -333,7 +356,8 @@ test("move-employee dialog renders actionError inline on both arms with retry la
       actionError: "Could not swap seats."
     })
   );
-  ({ alert } = assertAlertInsideOpenDialog());
+  ({ dialog, alert } = assertAlertInsideOpenDialog());
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "move-employee-map-confirm-description" });
   assert.equal(screen.getByRole("button", { name: "Retry swap" }).disabled, false);
 
   cleanup();
@@ -395,7 +419,7 @@ test("inspector move-conflict stays open with Moving… while the force move is 
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Move them" }));
   });
-  const dialog = screen.getByRole("dialog");
+  const dialog = getOpenDialog();
   assert.match(dialog.textContent, /Move Jane Doe to S01\?/);
   const busy = screen.getByRole("button", { name: "Moving…" });
   assert.equal(busy.disabled, true, "confirm must disable while the move is in flight");
@@ -456,9 +480,13 @@ test("discard draft renders actionError inline with an enabled Retry discard", a
       onConfirm: noop
     })
   );
-  const { alert } = assertAlertInsideOpenDialog();
-  assert.match(alert.textContent, /The reset RPC refused\./);
+  const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "discard-draft-description" });
+  assert.match(alert.textContent, /Discard did not complete\..*The reset RPC refused\./);
   assert.equal(screen.getByRole("button", { name: /Retry discard/ }).disabled, false);
+  // PR 5b: the discard error joins the other six — a focusable notification
+  // (ref + tabIndex -1) that takes focus, not a bare <p role="alert">.
+  await assertFocusLandsIn(alert);
 });
 
 // PR 3b: the drawer is the right slot (a side panel, not a dialog); the
@@ -648,7 +676,9 @@ function collectComponentFiles(root) {
 test("every role=dialog is classified: ct-covered or ledgered under one of the two reasons", () => {
   const discovered = new Map();
   for (const file of collectComponentFiles("components")) {
-    const source = readFileSync(path.join(repoRoot, file), "utf8");
+    // Comments quote the attribute in prose (PR 5b's SeatMapDialogs header);
+    // scan code only.
+    const source = readFileSync(path.join(repoRoot, file), "utf8").replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
     for (const match of source.matchAll(/role="dialog"/g)) {
       const window = source.slice(match.index, match.index + 400);
       const label = window.match(/aria-labelledby="([\w-]+)"/);

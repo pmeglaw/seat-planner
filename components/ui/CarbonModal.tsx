@@ -36,7 +36,8 @@ export function CarbonModal({
   footer
 }: {
   titleId: string;
-  title: string;
+  /** The heading-03 question; a node so a cross-floor `.cds-tag` can ride inside it (D2′). */
+  title: ReactNode;
   eyebrow?: string;
   role?: "dialog" | "alertdialog";
   /** id of the description paragraph the body renders (aria-describedby). */

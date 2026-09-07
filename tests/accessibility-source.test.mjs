@@ -320,7 +320,8 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
   // tabIndex={-1}); aria-modal without focus management tells assistive tech
   // the page is inert while the keyboard proves otherwise.
   const dialogFiles = [
-    "../components/seat-map/SeatMapDialogs.tsx",
+    // (SeatMapDialogs.tsx left this list in Phase 4 PR 5b: its six dialogs
+    // render through CarbonModal, which hosts the aria-modal section.)
     "../components/seat-map/PublishReviewSheet.tsx",
     "../components/seat-map/SeatInspector.tsx",
     // (AskPlannerDrawer left this list in PR 3b: it is the right slot, a side panel.)
@@ -599,7 +600,10 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   // Guard-dialog markup lives in SeatMapDialogs.tsx (R-02a extraction); the
   // guard state machine and its action descriptions stay in SeatMap.
   const guardDialogSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
-  assert.match(guardDialogSource, /id="inspector-unsaved-title"/);
+  // PR 5b: the guard renders on CarbonModal, which owns the <h2 id>; the
+  // dialog names itself by titleId (the id is unchanged — the browser tier
+  // and the Save arm's ledger row key on it).
+  assert.match(guardDialogSource, /titleId="inspector-unsaved-title"/);
   assert.match(guardDialogSource, /Unsaved seat edits/);
   assert.match(guardDialogSource, /Save changes/);
   assert.match(guardDialogSource, /Discard/);
@@ -1007,8 +1011,13 @@ test("custom seat deletion remains guarded by the parent map action", async () =
   assert.match(deleteFunction[0], /setActionNotice\(`Deleted custom seat \$\{deletedSeatLabel\}\. Undo is available until publish\.`\)/);
   // Confirm-dialog markup lives in SeatMapDialogs.tsx (R-02a extraction).
   const deleteDialogSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
-  assert.match(deleteDialogSource, /aria-labelledby="delete-seat-confirm-title"/);
-  assert.match(deleteDialogSource, /Cancel custom seat deletion/);
+  // PR 5b: on the asset modal (CarbonModal owns aria-labelledby); no × — the
+  // one way out is the footer's Cancel (secondary, first) or Esc.
+  assert.match(deleteDialogSource, /titleId="delete-seat-confirm-title"/);
+  const deleteDialog = deleteDialogSource.match(/export function DeleteSeatConfirmDialog[\s\S]*?\n\}\n/);
+  assert.ok(deleteDialog, "DeleteSeatConfirmDialog should remain source-visible.");
+  assert.match(deleteDialog[0], /className="cds-btn cds-btn--secondary"[^>]*onClick=\{onCancel\}[^>]*disabled=\{pending\}[^>]*>\s*Cancel\s*</);
+  assert.doesNotMatch(deleteDialog[0], /aria-label="Cancel custom seat deletion"|<CloseIcon/);
 });
 
 test("narrow widths keep the viewer switch and people directory reachable", async () => {

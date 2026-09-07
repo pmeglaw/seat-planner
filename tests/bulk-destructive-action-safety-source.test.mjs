@@ -144,7 +144,9 @@ test("reset-to-published has ONE call site — the map's Discard confirm; Settin
   assert.doesNotMatch(settingsSource, /resetDraftToPublishedAction/, "Settings no longer imports or calls the reset action");
   assert.doesNotMatch(settingsSource, /Reset draft to published|openResetReview|resetReviewOpen/);
   assert.match(seatMapSource, /setDiscardDraftConfirmOpen\(true\)/);
-  assert.match(seatMapDialogsSource, /aria-labelledby="discard-draft-title"/);
+  // PR 5b: the confirm is the asset modal — CarbonModal renders the
+  // aria-labelledby; the dialog names itself by titleId.
+  assert.match(seatMapDialogsSource, /titleId="discard-draft-title"/);
   assert.match(publishHookSource, /function confirmDiscardDraftChanges\(\)[\s\S]{0,900}resetDraftToPublishedAction\(listDraftSeatExpectations\(localSeats\)\)/);
   assert.equal((publishHookSource.match(/resetDraftToPublishedAction\(/g) ?? []).length, 1, "the hook has exactly one reset call site, inside the confirm");
   assert.doesNotMatch(seatMapSource, /resetDraftToPublishedAction\(/);

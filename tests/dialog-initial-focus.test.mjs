@@ -46,5 +46,6 @@ test("focus falls back to the container when the dialog has no enabled control",
   );
   // pending disables both buttons — the container keeps focus so the Tab
   // trap and Escape handling still have an anchor inside the dialog.
-  assert.equal(document.activeElement?.getAttribute("role"), "dialog");
+  // (PR 5b: the confirm is `role="alertdialog"` on the asset modal.)
+  assert.equal(document.activeElement?.getAttribute("role"), "alertdialog");
 });
