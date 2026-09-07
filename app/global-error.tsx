@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { ErrorGlyph } from "@/components/ui/ErrorGlyph";
 import { plexFontClassName } from "@/app/fonts/plex";
-import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { applyThemeAttributes, THEME_BOOT_SCRIPT, THEME_DARK, THEME_LIGHT, THEME_STORAGE_KEY } from "@/lib/theme";
 // The file replaces <html> entirely, so the root layout's stylesheets are not
 // in the document: they are imported here in the same contracted order
 // (PHASE3DS §5 item 3; app/layout.tsx). CSS and next/font/local are resolved
@@ -19,8 +20,12 @@ import "./styles/phase4-bridge.css";
 // app/error.tsx and the segment boundaries can never see (they render inside
 // it). It replaces <html>, so it carries its own head: the stylesheets above,
 // the Plex variables (app/fonts/plex.ts, shared with the root layout) and the
-// theme boot script. No theme attribute is set here — the boot script replays
-// the stored choice, else the system state decides (PHASE4BUILD §1 O-7).
+// theme boot script. The boundary is rendered on the CLIENT after the root
+// layout throws, and a script inserted through dangerouslySetInnerHTML never
+// executes there (the PR 5 capture found both themes rendering light) — so a
+// mount effect replays the stored choice through the same derivation
+// (lib/theme applyThemeAttributes); nothing stored → the system state decides
+// (PHASE4BUILD §1 O-7). The inline script stays for the server-rendered path.
 //
 // Phase 4 PR 5: the route card in the design system (PHASE3DS §1.29 / sheet
 // block 28) replaced the ten inline hex values this file carried while the
@@ -38,6 +43,16 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    let stored: string | null = null;
+    try {
+      stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    } catch {
+      stored = null;
+    }
+    applyThemeAttributes(document.documentElement, stored === THEME_DARK || stored === THEME_LIGHT ? stored : null);
+  }, []);
+
   return (
     <html lang="en" className={plexFontClassName} suppressHydrationWarning>
       <body>
