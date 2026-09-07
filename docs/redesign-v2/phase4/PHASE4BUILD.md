@@ -688,6 +688,11 @@ those the owner ruled are marked there. Entries 1.41–1.44 record the rulings f
 - **The fonts moved to `app/fonts/plex.ts`** (O-7): `global-error.tsx` replaces `<html>` and needs the same families;
   it imports the four sheets + brand + bridge in `layout.tsx`'s order and the theme boot script (no theme attribute set
   → the system state). CSS and `next/font/local` resolve at build time, so the boundary gains no runtime dependency.
+- **`global-error.tsx` replays the stored theme in a mount effect** (found by the Task 10 capture): the boundary is
+  rendered on the client after the root layout throws, and a script inserted through `dangerouslySetInnerHTML` never
+  executes there — both themes captured light on the first run. The effect reads `sp-theme` and calls
+  `applyThemeAttributes` (the same derivation as the boot script); nothing stored → the system state. The inline
+  script stays for the server-rendered path. Second run: `light/white` and `dark/g100` (`screenshots/pr5/route-cards/`).
 - **The `/admin` 403 card drops its raster-mark strip** (O-12): the shell header already carries the product name;
   `megeredchian-mark.png` keeps its `/login` consumer (D4).
 - **`page.tsx` reads `?q=` as a string only** and hands it down as `initialQuery`; nothing else is in the URL.
@@ -710,6 +715,21 @@ over the overlay, as the asset `.cds-modal` reads) and the × glyph. Slice-log r
 No code change on either. The runtime audit gained a viewer pass (`/reception`, `/my-seat` at 1920 both themes); the
 `/login` and `/my-seat` PNGs from the branch are byte-compared against the same rig's run on `main` (v1.75.0), same
 seed, same fonts-ready wait — `screenshots/pr5/README.md`. DECISIONS D4 and deviation 12 each carry the dated line.
+**Outstanding as of 2026-09-06:** the build box had no Docker runtime and no Chrome (§1.45), so the compare — like the
+whole Docker-stack evidence — has not run yet; `git diff` proves the no-code-change half (`app/login/**`,
+`components/auth/**`, `app/my-seat/**`, `SeatSheet.tsx` untouched on the branch).
+
+### 1.45 PR 5 — the Docker-stack evidence is outstanding (build box, 2026-09-06)
+
+The session's machine has no Docker runtime (no Docker Desktop / OrbStack / colima, no `docker` binary) and no Google
+Chrome (the rigs launch `channel: "chrome"`), so `npm run test:e2e:auth`, `audit/runtime-audit.mjs`,
+`audit/page-states.mjs` and the `main` baseline compare could not run there. Everything that needs no stack ran and is
+recorded in `screenshots/pr5/README.md`: unit / source / db (two environment-only failures explained there), ct
+318 / 318, the gate (0 lint errors, typecheck, coverage 98.33 / 92.35 / 98.29), the build, the backend-free e2e tier
+(two environment-only self-test failures in `axe-helpers.spec.ts`), contrast 202 / 202, and the two no-database
+captures (the 404, the global boundary via a temporary env-gated throw). The e2e-auth specs and the rig sections for
+Reception are written and type-checked but unexecuted; they run unchanged once a Docker runtime is on a box. Lesson
+for §5: the evidence step needs the runtime checked at Task 0, not Task 10.
 
 ## 2. Obligations checklist
 
@@ -842,7 +862,8 @@ PR 5 (2026-09-06, **no token change** — sheet amendment E only, §1.29; the ro
 suite already gates):
 
 ```
-<!-- PR5-CONTRAST -->
+product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs
+202/202 pass
 ```
 
 Marker states (`audit/marker-contrast.mjs`, local Docker stack, seed data, 2026-09-03 after the §1.6 fix) —
@@ -914,7 +935,7 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | 3a | #516 | `feat/phase4-map-frame` | v1.74.5 | map frame (P3-4, 5 band half, 13; P2-1, 4 `?q=` `?names=`): control row on both surfaces, **provisional tenant row removed** (PR 2 seam closed — SeatMap's bar tenants + the viewer search move into the map control row, PHASE2UX §1M.3), one search + palette on `/admin` too, Filters split control, Find me, band + `SeatMark` + legend follows Names, canvas status region, roster Copy link; washes + clusters (D1-h/D1-i), `FilterPanel` / `ActiveFilterChips` / `DeptChipRow` / `AiHighlightChip` / `FloorSelector` / `ResultsPanel` / `adminChrome.ts` retired; owner rulings O1 O5 O6 O7 (2026-09-04); pre-merge smoke 24/24 (`screenshots/pr3a-smoke/`) + §1.22–§1.25 | merged |
 | 3b | #518 | `feat/phase4-map-markers` | v1.74.6 | map markers + slot (P3-5 marker half, 7, 8, 11, 12, 14; P2-3, 9): `.sp-pill` rewrite, seat-code tooltip, ◇ from the publish diff, quiet pill replaces the dim (ledger row closed), invalid target wired (O4), 400 slot (inspector · mode card · Ask Planner), publish tearsheet, group-3 sweep, marker rig + Draft-mark crops; owner rulings O2 O3 (brand-layer tokens); carry-ins C-1 (row rules out of `globals.css`, Q1/Q2), C-2 (palette rows, add-seat card), C-3 (§1.25 Redo fix, Q3 every column); Q4 seed reserved + unavailable; Q5 one PR. **Pre-merge smoke 13/13 steps pass** (18/18 records, `screenshots/pr3b-smoke/`); fix §1.36 — people edits now badge the seat; ◇ `rgb(138, 63, 252)` light / `rgb(190, 149, 255)` dark; live hit-pill contrast **15.23:1** light / **10.50:1** dark; Redo reapplies; invalid targets refused with the notice; 1024 pass; tooltip = seat code only (ruling, §1.36) | merged 2026-09-05 (squash) |
 | 4 | #519 | `feat/phase4-pages` | v1.75.0 | Management + Settings (P3-7 Management half, 8 Deactivate, 15, 16, 17; P2-6, 7, 8): `ManagementFrame` (line tabs in the sections landmark, the primary follows the tab), `EmployeesTable` (`.cds-table`, toolbar count, ● / ○, seat-code link, one ghost Edit), `EmployeePanel` (480 layer-02 slide-over, 50/50 footer, no ×, one dirty check → `CarbonModal` ask), `OptionList` (Save · Cancel inline rename, blur validates, ⋯ Delete), `OptionCreateModal`, `ManagementConfirmSheet` (**owner ruling §1.38**, sheet amendment B), Publish History tab gone; Settings: `.sp-callout`, sections in the record's order, `FileTrigger` + `lib/fileGuard` (5 MB / type, inline before a sheet), `CsvImportSheet` / `SnapshotRestoreSheet` (D6-e done-state ghost; MLS02 keeps the restore review), Reset draft gone (one call site pinned), draft-only page; group-4 sweep (`SWEPT` {1,2,3,4}, bridge §2 empty); `lib/managementCounts` / `inlineRename` / `fileGuard` | built 2026-09-05: unit 1428 · ct 307 · gate clean · e2e 36 · **e2e-auth 39/39** (local stack) · runtime audit 0 undefined (6 routes × 2 themes + 1280 + system state) · page-states rig 63 captures (`screenshots/pr4/`) · contrast 202/202 (no token change) · build clean. **Owner's twenty-step smoke 2026-09-05: 47/47 after four fixes (§1.39 — the indicator seam, the returned deactivate refusal, the inert overlay keeping focus, sheet amendment C for the narrow frame); captures + `results.json` in `screenshots/pr4-smoke/`**; read-only preview walk 22/22 on the Vercel preview (`screenshots/pr4-preview/`, people data masked) → §1.23 **amendment D** (the Edit tooltip escaped the asset's clipped cell; smoke step 4 re-run 4/4, e2e-auth 42/42) | merged (v1.75.0) 2026-09-05 (squash, 18f855d) |
-| 5 | — | `feat/phase4-reception` | v1.76.0 | Reception on `.sp-recep` (P3-4 Reception half, 5 Reception half closed "no mark drawn", 18; P2-4 last half, 5): `ReceptionFrame`, `ReceptionScreen` (search lg + clear × + Ctrl / ⌘ K, the cursor / lock split, the Q-1 Esc rungs, `?q=` via `replaceState`, readout tile + D3′ line + "No extension on file" + Show on map, fallback rows, recents outside the live region, zero · empty · partial · loading · error), sheet **amendment E** (the 1024 fold); route cards on `.sp-route-card` (admin boundary, `/admin` 403 without its raster strip, root boundary + 404 by Q-2, `global-error` in the design system — fonts moved to `app/fonts/plex.ts`); carry-ins: `shadow-sp` 4 → 0 (+ the token ban, `boxShadow` gone from Tailwind), `components/ui/CloseIcon.tsx` retired for `mapIcons`, `HEX_LEDGER` two permanent rows (Q-3); `/login` + `/my-seat` confirmed unchanged by capture; O-8 → PR 5b (Q-5). Plan of record `plans/phase4-pr5-reception.md`; §1.40–§1.44 | <!-- PR5-SLICE-STATUS --> |
+| 5 | — | `feat/phase4-reception` | v1.76.0 | Reception on `.sp-recep` (P3-4 Reception half, 5 Reception half closed "no mark drawn", 18; P2-4 last half, 5): `ReceptionFrame`, `ReceptionScreen` (search lg + clear × + Ctrl / ⌘ K, the cursor / lock split, the Q-1 Esc rungs, `?q=` via `replaceState`, readout tile + D3′ line + "No extension on file" + Show on map, fallback rows, recents outside the live region, zero · empty · partial · loading · error), sheet **amendment E** (the 1024 fold); route cards on `.sp-route-card` (admin boundary, `/admin` 403 without its raster strip, root boundary + 404 by Q-2, `global-error` in the design system — fonts moved to `app/fonts/plex.ts`); carry-ins: `shadow-sp` 4 → 0 (+ the token ban, `boxShadow` gone from Tailwind), `components/ui/CloseIcon.tsx` retired for `mapIcons`, `HEX_LEDGER` two permanent rows (Q-3); `/login` + `/my-seat` confirmed unchanged by capture; O-8 → PR 5b (Q-5). Plan of record `plans/phase4-pr5-reception.md`; §1.40–§1.44 | built 2026-09-06 on `feat/phase4-reception`: unit 1445 (1443 pass; 2 environment-only fails — sandbox / box, `screenshots/pr5/README.md`) · ct 318 · gate clean (lint 0 errors, typecheck, coverage 98.33 / 92.35 / 98.29) · build clean · e2e 34 pass (+ 2 environment-only helper self-test fails) · contrast **202/202 (no token change)** · 404 + global-error captured both themes (the global-error theme fix, §1.42). **Docker-stack evidence outstanding** (§1.45: no Docker / Chrome on the build box) — e2e-auth incl. `reception-keyboard`, the two rigs and the `/login` + `/my-seat` byte-compare run once a runtime is available; the reviewer's smoke on the preview precedes the PR |
 | 5b | — | `feat/phase4-map-dialogs` | v1.77.0 | the map's seven confirm dialogs (Vacate · Delete seat · Swap · Discard draft · move-conflict + two) onto the asset `.cds-modal` on the PR 4 `CarbonModal` host (PHASE2UX §3, a PR 3 landing found open — §1.43, owner ruling Q-5) | not started |
 | 6 | — | — | v2.0.0 (after 5b) | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
 
