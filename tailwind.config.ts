@@ -5,9 +5,9 @@ import type { Config } from "tailwindcss";
 // (app/styles/sp-tokens.css) — no literal values here
 // (tests/phase4-token-layer-source.test.mjs). The named keys below are the
 // ones the shipped components still consume; each retires with the component
-// PR that stops using it (redesign-v2 Phase 4). `shadow-sp` in particular is a
-// bridge — depth is layers in the design system — and must be gone by the end
-// of PR 5.
+// PR that stops using it (redesign-v2 Phase 4). The one named shadow bridge
+// retired in PR 5 — depth is layers in the design system, and the token test
+// bans the class.
 const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
@@ -70,12 +70,6 @@ const config: Config = {
           info: "var(--sp-status-info-mark)",
           search: "var(--sp-status-search-text)"
         }
-      },
-      boxShadow: {
-        // ONE named shadow utility. Tailwind v3 drops arbitrary
-        // shadow-[var(--…)] candidates (box-shadow vs shadow-color ambiguity),
-        // so a var-backed shadow must be a named key. Bridge: retires by PR 5.
-        sp: "var(--sp-shadow)"
       },
       transitionDuration: {
         "sp-fast": "var(--sp-duration-fast-01)",

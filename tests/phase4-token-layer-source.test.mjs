@@ -108,13 +108,20 @@ function countMatches(chunks, re) {
 // word boundary), and the ledger absorbs any that do.
 const HEX = /#[0-9a-fA-F]{3,8}(?![\w-])/g;
 
-// PR 0 snapshot (2026-09-03, main @ c36f216). Rows leave in the PR that
-// re-tokenises the file — PR 1 for globals.css / tailwind / design-system,
-// then the component PRs (TEST-TRIAGE.md names the PR per file). A row may
-// only go down or out; it may never appear.
+// PR 0 snapshot (2026-09-03, main @ c36f216) shrank per PR as each file was
+// re-tokenised (TEST-TRIAGE.md named the PR per file). Since PR 5 the two rows
+// left are PERMANENT, each with its reason (owner ruling Q-3, 2026-09-06);
+// a row may still only go down or out, never appear.
 const HEX_LEDGER = {
-  "app/layout.tsx": 1, // themeColor meta: gray 100, the header colour — Next's Viewport wants a string (owner, PR 1)
-  "components/seat-map/SeatSheet.tsx": 12, // PR 5 (`/my-seat` ruling, O5 — deviation 12 keeps the sheet chrome-free)
+  // themeColor meta: gray 100, the header colour in both themes — Next's
+  // Viewport wants a string, not a var() (owner, PR 1).
+  "app/layout.tsx": 1,
+  // `/my-seat` (DECISIONS §6 deviation 12): the share card is the ONE surface
+  // off the token system — chrome-free, a plan sheet glanced at on a phone,
+  // with no Phase 2 wireframe and no Phase 3 specimen; a re-skin would be a
+  // Phase 4 design decision, so it stays byte-identical (confirmed by capture
+  // in PR 5, PHASE4BUILD §1).
+  "components/seat-map/SeatSheet.tsx": 12,
 };
 
 test("no hex literal outside the two asset files (ledger only shrinks)", () => {
@@ -334,6 +341,20 @@ test("every retired-name group is a known sweep PR", () => {
 // tests/elevation-shadow-tokens-source.test.mjs, which retires in PR 1 with
 // the elevation tokens; the build-correctness half lives on here).
 // ---------------------------------------------------------------------------
+
+// PR 5 (PHASE4BUILD §1.5): the one named shadow bridge, `shadow-sp`, is gone
+// — depth is layers in the design system; the overflow menu's shadow is the
+// sheet's own rule. 40 sites in PR 1 → 4 after PR 4 → 0.
+test("no shadow-sp class in app/ or components/ (the bridge retired in PR 5)", () => {
+  const offenders = [];
+  for (const rel of files) {
+    if (!/\.(ts|tsx)$/.test(rel)) continue;
+    const n = countMatches(stringLiterals(read(rel)), /(?<![\w-])shadow-sp(?![\w-])/g);
+    if (n > 0) offenders.push(`${rel}: ${n}`);
+  }
+  assert.deepEqual(offenders, [], offenders.join("\n"));
+  assert.doesNotMatch(read("tailwind.config.ts"), /boxShadow/, "tailwind.config.ts declares no named shadow");
+});
 
 test("no shadow-[var( arbitrary class (Tailwind v3 drops it silently)", () => {
   const offenders = [];

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { askPlannerAction, type AskPlannerActionError, type AskPlannerActionResult } from "@/app/actions";
 import type { AskPlannerResponse } from "@/lib/types";
-import { CloseIcon } from "@/components/ui/CloseIcon";
+import { CloseIcon } from "@/components/seat-map/mapIcons";
 import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
 import { shortcutHint } from "@/lib/platformShortcut";
 
