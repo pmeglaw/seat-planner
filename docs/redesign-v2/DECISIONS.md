@@ -1147,6 +1147,13 @@ seat map. Today the segment falls through to the root boundary and says "The sea
 wrong surface, wrong voice (PHASE1IA B2). The loading skeleton is rebuilt to the 1584 layout (today's is 720
 wide against 1060 of content).
 
+**Built 2026-09-06 (Phase 4 PR 5):** `app/(shell)/reception/error.tsx` on the asset empty state / `.sp-route-card`
+(PHASE3DS §1.29) with the copy above, Try again (tertiary) · Open the seat map (ghost), the digest line, and the admin
+boundary's stale-chunk recovery verbatim (`tests/chunk-recovery-boundary-source.test.mjs`); `loading.tsx` on the real
+`.sp-recep` layout (header + search real, six skeleton rows, one readout block). The partial state (seats failed alone)
+is one warning notification above the list — "Seat locations didn't load" / "Extensions are up to date. Seat and floor
+details will show after a reload." (owner ruling Q-7). Plan of record: `phase4/plans/phase4-pr5-reception.md`.
+
 ---
 
 ### D4 — Login (`/login`)
@@ -1196,6 +1203,10 @@ session); invalid credentials; magic-link sent; reset requested; and a submittin
 **Confirmed 2026-09-03 (Phase 4 PR 1, owner ruling):** D4 rules the login *layout* unchanged; the login inherits
 the token layer, so the primary renders Blue 60 with the rest of the system. `LoginForm.tsx` swept mechanically
 (retired names and the six SVG `#fff` attributes → tokens); `login-form.test.mjs` untouched.
+
+**Confirmed unchanged by capture 2026-09-06 (Phase 4 PR 5):** no code change on `/login`; the runtime audit's
+`/login` PNGs (1920, both themes, same rig, same seed, same fonts-ready wait) byte-compared against the same rig's run
+on `main` (v1.75.0) — `phase4/screenshots/pr5/README.md`.
 
 ---
 
@@ -1311,7 +1322,7 @@ labelled triggers with the accepted type and the 5 MB limit stated up front, not
 | 9 | Roster rows are non-interactive list items — no per-row disclosure or side panel (D1′; the admin editor mounts the same roster, D2′) | Every fact the inspector would show is already on the row, so a 40-row selection model would select nothing; a disabled row would misuse `disabled` where content must be read (`SKILL.md`'s disabled/read-only rule), and a read-only row would promise an operation that does not exist. Static rows are the honest shape, owner-confirmed 2026-09-01 |
 | 10 | Interim floor membership is inferred from seat absence (owner rule 2026-09-01) | The schema can now express the floor (`seats.floor`), but the 2nd-floor seats do not exist until slice B seeds and publishes them. The inference lives in ONE dated function (`lib/floors.ts` `rosterFloorForUnseated`) and retires by itself on the first 2nd-floor publish — liveness, not a flag, so nothing has to be remembered and flipped |
 | 11 | *(reserved — not taken)* | The option where the mode indicator itself toggles Published ⇄ Draft (PHASE1IA.md E2.1). Not chosen; number held so cross-references stay stable |
-| 12 | `/my-seat` renders without the shell | `ui-shell.md`: the shell is present on every signed-in surface. Kept chrome-free because it is a share card glanced at on a phone; a wordmark / back-link to `/` stands in for the header. **Would change if** the sheet gains any action beyond reading (PHASE1IA.md answers 11, 15; ruling 18) |
+| 12 | `/my-seat` renders without the shell | `ui-shell.md`: the shell is present on every signed-in surface. Kept chrome-free because it is a share card glanced at on a phone; a wordmark / back-link to `/` stands in for the header. **Would change if** the sheet gains any action beyond reading (PHASE1IA.md answers 11, 15; ruling 18). **Confirmed unchanged by capture 2026-09-06 (Phase 4 PR 5, owner ruling Q-3):** the sheet has no Phase 2 wireframe and no Phase 3 specimen, so a re-skin would be a Phase 4 design decision; `SeatSheet.tsx` keeps its 12 hex as a permanent, reasoned `HEX_LEDGER` row and the viewer's `/my-seat` PNGs byte-compare against `main` (v1.75.0) — `phase4/screenshots/pr5/README.md` |
 | 13 | *(reserved — not taken)* | Per-floor search without a widen-to-building control (PHASE1IA.md E2.4). Not chosen — Focused search with a scope control ships instead (D1-b); the number re-enters only if that control slips |
 | 14 | Ask Planner opens from the map surface, not a header product icon | `ui-shell.md`: product-specific utilities sit in the header and open right panels. Kept in-surface because it exists on one route in one mode (admin, draft); a header icon would appear and disappear as admins navigate, breaking the "icons don't move" rule it was meant to satisfy. Phase 2 resolves right-edge stacking with the seat inspector and the shell panels; Phase 3 applies Carbon-for-AI labelling (D2; ruling 19) |
 | 15 | Seat inspector side panel is **400px**, not Carbon's 480 side-panel default | At 480 the pushed canvas's tightest marker gap falls to 42.3px and two 44px hit regions overlap; the floor holds to a 420 panel (D2, measured; D2-a). **Would change if** the marker pitch changes (a new floor plan) or the inspector gains content that cannot be read at 400. Ruled 2026-09-02 |

@@ -842,7 +842,9 @@ the file Phase 4 touches. The specimens' HTML is reference; the CSS files are th
 5. **`SeatMark` inlining** — a `components/seat-map/SeatMark.tsx` that emits the four symbols' paths (○ ring, lock,
    hatch, the ● / mini-pill legend forms) with their `data-stroke` / `data-fill` / `data-hatch` parts; never a sprite
    `<use>` (CSS cannot reach a use's shadow tree, §7). Consumers: the legend in `MapStatusBand`, `SeatMarker.tsx`
-   footprints, the inspector header, the Account panel, the Management status column, Reception rows.
+   footprints, the inspector header, the Account panel, the Management status column, ~~Reception rows~~ (struck
+   2026-09-06, Phase 4 PR 5 — owner ruling Q-4: §1.29 governs; Reception rows draw the seat code and the Floor tag only,
+   no status mark).
 6. **Tier-C zone rules** — every asset class restyled inside `.sp-panel` (Help / History / Account in
    `components/ui/ShellPanels.tsx`) repeats the asset selector's element names or exceeds its specificity, and each
    gets a light-theme render of the dark panel before it is called done (§7 item 5).
@@ -871,8 +873,11 @@ the file Phase 4 touches. The specimens' HTML is reference; the CSS files are th
     (employee editor in `components/admin-management/`); **destructive confirmations are the narrow tearsheet over the
     panel** (owner ruling 2026-09-05, PHASE4BUILD §1.38 — amended from "confirm modal on top"); the tearsheets never
     open a modal from inside (the review dialogs in `components/admin-settings/`).
-18. **Reception keyboard** — ↑ ↓ move `[data-highlight]`, ↵ sets `aria-selected` (lock), Esc unlocks then clears; the
-    readout region is `aria-live` (`components/reception/ReceptionScreen.tsx`).
+18. **Reception keyboard** — ↑ ↓ move `[data-highlight]`, ↵ sets `aria-selected` (lock), ~~Esc unlocks then clears~~
+    **Esc clears a typed query; on an empty field it unlocks** (re-worded 2026-09-06, Phase 4 PR 5 — owner ruling Q-1:
+    PHASE2UX §1R.6's readout keeps the last locked person because the call may still be live; the specimen's two
+    hints, "↵ to lock" while typing and "Esc to unlock" at rest, already read that order); the readout is `aria-live`
+    (`components/reception/ReceptionScreen.tsx`).
 19. **Contrast regression** — after every token change, rerun the two commands in §3; a Phase 4 `tests/*.test.mjs` may
     wrap them (the generator is plain Node; the checker needs Python on the box or a JS port of its WCAG formula).
 20. **The specimens do not ship** — `specimens/*.html` and `screenshots/` stay in `docs/`; the four CSS files and the
@@ -938,6 +943,14 @@ Reception's keyboard path (↑ ↓ move the highlight, ↵ locks, Esc unlocks / 
 (the asset's `thead`), `--sp-table-row-border` → *`--sp-border-subtle`*; `--sp-extension-bg` / `-border` /
 `-label` → *`--sp-readout-bg`* / retired (no border) / *`--sp-readout-eyebrow`*; `--sp-identity-avatar-bg` /
 `-avatar-fg` / `-gradient` → retired (no avatar, no gradient — owner ruling).
+
+**Landing note (PR 5, built 2026-09-06).** The `.sp-recep` family landed in `components/reception/ReceptionScreen.tsx`
++ `ReceptionFrame.tsx` and `app/(shell)/reception/{page,loading,error}.tsx` (the shipped avatar and seat chip retired;
+the readout tile and row-buttons replaced the shipped extension block; the narrow fold is sheet amendment E, §1.29);
+`.sp-route-card` landed on `app/(shell)/admin/error.tsx`, the `/admin` 403 branch, `app/error.tsx`, `app/not-found.tsx`
+and `app/global-error.tsx` (which imports the four sheets and the Plex module itself, PHASE4BUILD §1 O-7). The seven map
+confirm dialogs (PHASE2UX §3 "Modal … → asset `.cds-modal`", a PR 3 landing) were found still on their Tailwind markup
+and go to **PR 5b** (owner ruling Q-5; PHASE4BUILD §1 O-8). Plan of record: `../phase4/plans/phase4-pr5-reception.md`.
 
 **Landing files (PR 2 scope).** `.sp-header`, `.sp-header-slot`, utilities + `.sp-tooltip` → `AppTopBar.tsx`
 (the rail in `AppRail.tsx` retires — the shell is a top bar with a hamburger, D0); `.sp-panel` family +

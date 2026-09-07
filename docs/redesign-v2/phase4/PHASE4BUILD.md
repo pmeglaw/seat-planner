@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 4: code
 
-**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 merged (v1.74.1). 1b #514 merged (v1.74.2). PR 2 #515 merged (v1.74.3). PR 3a #516 merged (v1.74.5 — v1.74.4 went to chore #517). PR 3b #518 merged (v1.74.6, 2026-09-05). PR 4 #519 merged (v1.75.0, 2026-09-05). PR 5–6 not started.** Inputs, in reading order:
+**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 merged (v1.74.1). 1b #514 merged (v1.74.2). PR 2 #515 merged (v1.74.3). PR 3a #516 merged (v1.74.5 — v1.74.4 went to chore #517). PR 3b #518 merged (v1.74.6, 2026-09-05). PR 4 #519 merged (v1.75.0, 2026-09-05). PR 5 built 2026-09-06 on `feat/phase4-reception` (awaiting the reviewer's smoke + the owner's preview walk). 5b, 6 not started.** Inputs, in reading order:
 `CLAUDE.md` / `AGENTS.md`; `phase3/PHASE3DS.md` §5 (20 obligations with landing files, landing files by PR, retired
 names) and §7 (what Phase 3 learned); `PHASE2UX.md` §3 (component checklist), §5 (nine obligations), the per-screen
 decision logs and the wireframes under `wireframes/`; `PHASE1IA.md` §B–§C; `DECISIONS.md` D0–D6 + §6 (deviations
@@ -635,7 +635,81 @@ Reception on the `.sp-recep` family (P3-4 Reception half, P3-18, P2-4 last half,
 (`/admin` 403, the admin / root / global boundaries, the 404), `/login` + `/my-seat` confirmed unchanged by
 capture, and the carry-ins (`shadow-sp` gone, `components/ui/CloseIcon.tsx` retired, `HEX_LEDGER` down to two
 permanent rows). The plan's O-items (O-1…O-17) are the deviations from the record and what the code forced;
-those the owner ruled are marked there. _Entries 1.41+ record what the build found._
+those the owner ruled are marked there. Entries 1.41–1.44 record the rulings folded in and what the build found.
+
+### 1.41 PR 5 — the seven owner rulings, as built (2026-09-06)
+
+- **Q-1 Esc, two rungs** (O-2): a typed query clears first and the lock stays — the readout keeps reading the person
+  because the call may still be live (PHASE2UX §1R.6); an empty field unlocks and removes `?q=`. PHASE3DS §5 item 18
+  and §2 P3-18 re-worded; `reception-screen` ct pins both rungs and the no-op on an empty field with nothing locked.
+- **Q-2 the root boundary and the 404 join the route-card pass** (O-17): `app/error.tsx` and `app/not-found.tsx` on
+  `.sp-route-card` (layer-02 inline, the §1.22 rule), copy as shipped, the glyph on the boundary only, the 404's one
+  action the tertiary (its primary verb); both outside the shell, so each keeps its own full-height centring and the
+  `seats.megeredchianlaw.com · internal use only` line as `.sp-digest`. The 404 is captured (any unknown URL); the root
+  boundary is not drivable — `chunk-recovery-boundary-source` keeps its anchors.
+- **Q-3 `/my-seat` unchanged; two permanent ledger rows** (O-16): `HEX_LEDGER` = `app/layout.tsx` 1 (themeColor — a
+  Viewport string) + `SeatSheet.tsx` 12 (deviation 12: the share card is the one surface off the token system, no
+  Phase 2 / 3 design, byte-identical by capture), each with its reason in the test. `global-error.tsx`'s ten hex left
+  with the route card.
+- **Q-4 no status mark on Reception rows** (O-4): PHASE3DS §5 item 5's consumer list struck; P3-5's Reception half closes
+  as "no mark drawn, §1.29" (§2).
+- **Q-5 the map's seven confirm dialogs → PR 5b** (O-8, §1.43).
+- **Q-6 the list is 1008 at 1920** (O-1): the `.sp-page` padding sits inside the 1584; PHASE2UX §1R.2 amended;
+  `page-frames` asserts 480 / 32 / 1008.
+- **Q-7 the partial-state copy** (O-6): "Seat locations didn't load" / "Extensions are up to date. Seat and floor
+  details will show after a reload." — warning kind, `role="status"`, above the list. The asset's 640 max-width holds
+  (no Reception override in the sheet; a wider notice would be a sheet change the plan does not carry).
+
+### 1.42 PR 5 — what the code forced (engineering, one line each)
+
+- **The live region is the readout BLOCK, not the column** (O-9 as built): the readout column is sticky (the sheet), so
+  "Recent lookups" has to ride inside it — a sibling landmark after a sticky section would be covered as the section
+  slides. `section.sp-recep-readout[aria-label="Caller detail"]` holds Back to the list · `div[aria-live="polite"]`
+  (name, tile, seat line, fallback, Show on map) · `aside[aria-label="Recent lookups"]` — the recents stay outside the
+  live region (§1R.7's `complementary`), and the sheet's direct-child ghost rule now reaches only Back to the list, so
+  Show on map carries `cds-btn--md self-start`. `reception-screen` pins the aside outside `[aria-live]`.
+- **The landing lock is lazy initial state, not an effect** (O-15's sibling): a unique `?q=` match is locked from the
+  first render (identical on server and client — no setState-in-effect, no hydration mismatch); one effect rewrites
+  `?q=` to the name. The platform hint is set in a frame after mount (the SeatMap precedent, P3-4).
+- **The listbox stays mounted through the zero state**: the field's `aria-controls` must resolve (an unresolved
+  reference is a critical axe finding); the `.cds-empty` renders after the empty `ul`.
+- **The sticky readout zeroes `--sp-shell-header-h` on itself at `lg`** (O-11) — the PR 4 §1.37 tab-strip trick; no
+  sheet change.
+- **Arrows move the cursor only while typing**: at rest the readout holds the locked person and ↑ ↓ are inert (the
+  cursor exists only over results).
+- **`Promise.allSettled` on the page** (O-15): the directory failing still throws to the new boundary; the seats
+  failing alone yields `seatsUnavailable` — every seat cell empty, no Floor tag, the readout's "Seat unknown right now"
+  line, one warning notification.
+- **`ErrorGlyph` cuts its cross in `--sp-layer-02`** (O-13): the route card is layer-02 by the §1.22 rule; the specimen's
+  symbol strokes layer-01.
+- **`mapIcons.tsx` is the shared glyph module** (O-14): the retired `components/ui/CloseIcon.tsx` drew a 20-grid
+  1.8-stroke ×; the three Tailwind-sized dialog closes (Delete seat, Swap, the move-conflict ×) pass `h-4 w-4` to keep
+  their 16px; the asset icon buttons are sized by the sheet. A rename to `components/ui/icons.tsx` is a PR 6 candidate.
+- **The fonts moved to `app/fonts/plex.ts`** (O-7): `global-error.tsx` replaces `<html>` and needs the same families;
+  it imports the four sheets + brand + bridge in `layout.tsx`'s order and the theme boot script (no theme attribute set
+  → the system state). CSS and `next/font/local` resolve at build time, so the boundary gains no runtime dependency.
+- **The `/admin` 403 card drops its raster-mark strip** (O-12): the shell header already carries the product name;
+  `megeredchian-mark.png` keeps its `/login` consumer (D4).
+- **`page.tsx` reads `?q=` as a string only** and hands it down as `initialQuery`; nothing else is in the URL.
+- **Not built, recorded:** the map's confirm dialogs (§1.43); the narrow tearsheet's content height, a distinct
+  SQLSTATE for `deactivate_employee`, the Help-panel opener for the Ask Planner popover, the 900px `panel:` screen and
+  `SEAT_CENTER_PANEL_BREAKPOINT_PX`, `.sp-callout` — all parked as the plan lists.
+
+### 1.43 PR 5 — a PR 3 obligation found open: the map's confirm dialogs → PR 5b (OWNER RULING Q-5, 2026-09-06)
+
+**Screen** `/admin` → Vacate · Delete seat · Swap · Discard draft · the move-conflict dialog and the two others.
+**Problem** PHASE2UX §3 lands "Modal (Move / Swap / Delete confirms) → asset `.cds-modal`" in PR 3; 3b rebuilt the
+publish review as the tearsheet and the inspector on the slot but left the seven confirm dialogs on their Tailwind
+markup (`SeatMapDialogs.tsx`, `SeatInspector.tsx`) — two of them still carried `shadow-sp`. **Ruling** their own slice
+after PR 5 and before PR 6: `feat/phase4-map-dialogs` → **v1.77.0**, on the PR 4 `CarbonModal` host; PR 6 becomes
+v2.0.0 after it. In PR 5 they were touched only for `shadow-sp` (deleted, nothing replaces it — layer-01 + 1px border
+over the overlay, as the asset `.cds-modal` reads) and the × glyph. Slice-log row 5b added.
+
+### 1.44 PR 5 — `/login` and `/my-seat` confirmed unchanged by capture (D4; deviation 12)
+
+No code change on either. The runtime audit gained a viewer pass (`/reception`, `/my-seat` at 1920 both themes); the
+`/login` and `/my-seat` PNGs from the branch are byte-compared against the same rig's run on `main` (v1.75.0), same
+seed, same fonts-ready wait — `screenshots/pr5/README.md`. DECISIONS D4 and deviation 12 each carry the dated line.
 
 ## 2. Obligations checklist
 
@@ -647,8 +721,8 @@ PHASE2UX §5 item n.
 | P3-1 | `sp-tokens.css` replaces the `--sp-*` block; `carbon-tokens.css` beside it minus `@import`; `tailwind.config.ts` re-pointed; retired names swept | `app/globals.css`, `app/layout.tsx`, `tailwind.config.ts` | 1 | done (PR 1) |
 | P3-2 | `data-carbon-theme` derived from `data-theme` (light → `white`, dark → `g100`, absent → removed) by one function, used by the boot script and the Theme radio | `app/layout.tsx`, `components/ui/ShellPanels.tsx` | 1, 2 | done (PR 1 boot; PR 2 radio calls `applyTheme` only) |
 | P3-3 | `carbon-components.css` then `sp-components.css` land verbatim; every product change is an `sp-*` override | `app/layout.tsx` (imports) | 1 | done (PR 1) |
-| P3-4 | Platform-aware shortcut hint (`Ctrl K` / `⌘ K`) decided at hydration | `lib/platformShortcut.ts` (new), `MapSearch.tsx`, `SeatMap.tsx`, `ViewerSeatFinder.tsx`, `ShellPanels.tsx`; `ReceptionScreen.tsx` | 3a, 5 | done for the map + Help (PR 3a); Reception in PR 5 |
-| P3-5 | `SeatMark.tsx` inlines the four symbols' paths with `data-stroke` / `data-fill` / `data-hatch`; never `<use>` | `components/seat-map/SeatMark.tsx` (new) + consumers | 3a (band legend), 3b (marker, inspector), 2 (Account panel), 4 (Management status), 5 (Reception rows) | `SeatMark.tsx` landed in PR 3a (six inlined kinds, `tests/seat-mark.test.mjs` pins no `<use>`); band legend consumes it; marker + inspector in 3b |
+| P3-4 | Platform-aware shortcut hint (`Ctrl K` / `⌘ K`) decided at hydration | `lib/platformShortcut.ts` (new), `MapSearch.tsx`, `SeatMap.tsx`, `ViewerSeatFinder.tsx`, `ShellPanels.tsx`; `ReceptionScreen.tsx` | 3a, 5 | done (PR 3a: map + Help; PR 5: Reception — the hint after a frame, Ctrl / ⌘ K refocuses the field from anywhere) |
+| P3-5 | `SeatMark.tsx` inlines the four symbols' paths with `data-stroke` / `data-fill` / `data-hatch`; never `<use>` | `components/seat-map/SeatMark.tsx` (new) + consumers | 3a (band legend), 3b (marker, inspector), 2 (Account panel), 4 (Management status), ~~5 (Reception rows)~~ | done — `SeatMark.tsx` landed in PR 3a (six inlined kinds, `tests/seat-mark.test.mjs` pins no `<use>`); band legend consumes it; marker + inspector in 3b; Management status in PR 4; the Reception half closes as **no mark drawn, §1.29** (owner ruling Q-4, 2026-09-06) |
 | P3-6 | Tier-C zone rules repeat the asset selector's element names; every dark-panel restyle gets a light-theme render before "done" | `components/ui/ShellPanels.tsx` | 2 | done (PR 2: `span.sp-radio-mark` kept; light-theme renders of Help / History / Account / left panel / tooltip in `screenshots/pr2/`) |
 | P3-7 | Hover-surface text step on the ROW's hover (Management seat link, Ask Planner label); roster rows static; red on dark = `text-error` | `components/admin-management/*`, `AskPlannerDrawer.tsx` | 3, 4 | done (3b: Ask Planner label row; PR 4: `.sp-seat-link` steps on the ROW's hover — `EmployeesTable`) |
 | P3-8 | Danger-ghost override covers Delete seat and Deactivate | `sp-components.css` (lands in PR 1), consumers | 3, 4 | done (3b: Delete seat; PR 4: Deactivate… in the panel's danger zone — `EmployeePanel`) |
@@ -661,14 +735,14 @@ PHASE2UX §5 item n.
 | P3-15 | Sticky tab strip offsets by `--sp-shell-header-h`, paints `--sp-tabs-bg`; primary follows `?tab=` | `components/admin-management/ManagementFrame.tsx` | 4 | done (PR 4: `.sp-tabs-host`, the `lg` offset zeroed on the strip — §1.37; the primary follows the tab; `?tab=` via `replaceState`) |
 | P3-16 | File trigger = labelled button forwarding to a hidden input (`tabindex=-1`, `aria-hidden`); unhappy paths inline before the tearsheet | `components/admin-settings/FileTrigger.tsx`, `DataUtilitiesPanel.tsx`, `lib/fileGuard.ts` | 4 | done (PR 4) |
 | P3-17 | Side panel: focus trap, Esc-asks-when-dirty (the modal on top), scrim = Cancel; destructive confirms = the narrow tearsheet over the panel (ruling, §1.38); tearsheets never open a modal from inside | `EmployeePanel.tsx`, `ManagementConfirmSheet.tsx`, `CarbonModal.tsx`, the two Settings sheets | 4 | done (PR 4) |
-| P3-18 | Reception keyboard: ↑ ↓ move `[data-highlight]`, ↵ locks (`aria-selected`), Esc unlocks then clears; readout `aria-live` | `components/reception/ReceptionScreen.tsx` | 5 | open |
+| P3-18 | Reception keyboard: ↑ ↓ move `[data-highlight]`, ↵ locks (`aria-selected`), **Esc clears a typed query; on an empty field it unlocks** (re-worded 2026-09-06, owner ruling Q-1); readout `aria-live` | `components/reception/ReceptionScreen.tsx` | 5 | done (PR 5: the cursor / lock split, the two Esc rungs, the readout block live — `reception-screen` ct + e2e-auth `reception-keyboard`) |
 | P3-19 | Contrast regression rerun after every token change (192/192 or better), summary line in the PR | `docs/redesign-v2/phase3/contrast/` | 1 (+ any later token change) | done (PR 1: 192/192) |
 | P3-20 | Specimens and screenshots do not ship; only the four CSS files and the generator move | — | 1 | done (PR 1) |
 | P2-1 | Undo / Redo keyboard shortcuts (tooltips promise them) | `SeatMap.tsx`, `lib/platformShortcut.ts` | 3a | done (PR 3a: Ctrl/⌘ Z, Ctrl/⌘ Shift Z, Ctrl Y on Windows; never while typing or inside a dialog; the same gate as the buttons) |
 | P2-2 | History "last edit N min ago" from max draft `updated_at` | `ShellPanels.tsx` (History) | 2 | done (PR 2: `lib/shellMode.ts` `relativeMinutes`; live from SeatMap, fetched on sub-pages) |
 | P2-3 | Roving tabindex + arrow keys across markers; Esc cancel ladder | `SeatMap.tsx`, `SeatMarker.tsx` | 3 | done (3b: Home / End on both marker layers; the ladder was already in §1M.11 order — §1.30) |
-| P2-4 | `?q=` on `/`, `/admin`, `/reception`; `?dept=` / `?zone=` / `?status=` / `?position=`; `?names=` | map surfaces, `LeftPanel.tsx`, `ReceptionScreen.tsx` | 2 (filters), 3a, 5 | filter params done (PR 2); `?q=` / `?names=on` done on `/` and `/admin` (PR 3a, `lib/mapUrlState.ts`); `/reception` `?q=` in PR 5 |
-| P2-5 | Reception `error.tsx` in its own voice; loading skeleton on the real layout | `app/(shell)/reception/error.tsx` (new), `loading.tsx` | 5 | open |
+| P2-4 | `?q=` on `/`, `/admin`, `/reception`; `?dept=` / `?zone=` / `?status=` / `?position=`; `?names=` | map surfaces, `LeftPanel.tsx`, `ReceptionScreen.tsx` | 2 (filters), 3a, 5 | done — filter params (PR 2); `?q=` / `?names=on` on `/` and `/admin` (PR 3a, `lib/mapUrlState.ts`); `/reception` `?q=` (PR 5: the landing locks a unique match, `replaceState` writes `?q=<name>` on lock and bare on unlock — one writer, `withQueryParam`) |
+| P2-5 | Reception `error.tsx` in its own voice; loading skeleton on the real layout | `app/(shell)/reception/error.tsx` (new), `loading.tsx` | 5 | done (PR 5: the route card in Reception's voice with the admin boundary's recovery; the skeleton on `ReceptionFrame` + `.sp-recep`; the partial state — Q-7 copy) |
 | P2-6 | 5 MB client guard on CSV and snapshot files; labelled file triggers | `lib/fileGuard.ts`, `FileTrigger.tsx`, `DataUtilitiesPanel.tsx` | 4 | done (PR 4) |
 | P2-7 | Management: real tablist; 403 card gains its action; tiles removed | `ManagementFrame.tsx`, `app/(shell)/admin/management/page.tsx` (+ settings 403), `AdminManagementPanel.tsx` | 4 | done (PR 4; Publish History tab also gone — D5) |
 | P2-8 | Settings: Reset-draft entry removed (ruling 22; Q7 keeps the map's Discard) | `DataUtilitiesPanel.tsx` | 4 | done (PR 4; `resetDraftToPublishedAction` has ONE call site, pinned in `bulk-destructive-action-safety-source`) |
@@ -690,6 +764,7 @@ allowlisted `/`; `nav-shell.spec.ts` walks `/` through the History switch.
 | 2 | `app-rail` (its three navigation contracts — veto with modifier bypass, deploy-skew full load, 4s watchdog disarmed on route commit — moved verbatim into `app-top-bar` before deletion) | `app-shell`, `app-top-bar`, `accessibility-source` (shell half: header id, skip-link config, guard wiring, Account panel, viewer header gone), `auth-session-source` (Account panel form; viewer under the shell), `role-fitted-tabs-source` (role-fitted `shellNavConfig`), `shell-viewport-height-source` (flex pane contract), `theme` (radio writes only through `applyTheme`), `touch-target-source` / `type-floor-source` (deleted-file rows), `nav-shell.spec.ts` (header persistence, `/` via the switch) | `full-navigation` (importer = `useShellNavigation.ts`), `published-employee-snapshot` / `viewer-seat-columns` / `desktop-seat-marker-system-source` / `accessibility-source` (page path), `browser/seat-map.spec.ts` (guarded exit = History switch), `viewer-seat-finder` (two header tests retired), `pending-state-source` (loading sentences), `phase4-token-layer-source` (`SWEPT` = {1, 2}), `deep-link` (+ filter params) | added `shell-mode`, `shell-state`, `viewer-filter-groups`, `shell-panels` (ct), `left-panel` (ct), `viewer-shell` (ct, one bundle via `tests/helpers/viewerShellEntry.ts`), `e2e/viewport-matrix.spec.ts` (owner addition); 1414 pass · 0 fail; ct 280; browser 27; build clean |
 | 3a | `office-room-wash`, `zone-wash`, `seat-clusters` (D1-h / D1-i, with their modules) | `filter-feedback-source` (the control row's live count), `seat-map-components` (FloorMenuButton replaces FloorSelector; DeptChipRow + nameplate blocks gone), `map-status-band` (`.sp-band`, marks, Names), `viewer-seat-finder` (filters via URL state; D1-d scope; the row's toggle), `viewer-shell` (control row seam; Filters · N), `app-shell` (left-panel + state hooks in place of slots), `accessibility-source` (map half: control row, palette, canvas status, roster Copy link; none loosened), `browser/seat-map.spec.ts` (wash tests gone; palette; More actions), `browser/draft-history.spec.ts` (row names), `e2e-auth` accessibility / draft-dialogs (More actions menu) | `status-label-source` (Status group from `lib/viewerFilterGroups`), `touch-target-source` + `type-floor-source` (deleted-file rows; the row's 40px controls are on the ladder), `pending-state-source` (flows 12 / 13 → the row's busy Undo / Redo), `seat-creation-ui-source`, `floors` (Add seat Hidden on the roster), `focus-handoff-source`, `viewer-keyboard-parity-source` (the shared field), `ask-planner-ai-source`, `virtualized-directory`, `desktop-seat-marker-system-source`, `session-expiry-source` (the notice's sign-in action), `viewer-find-palette-source` | added `platform-shortcut`, `map-search-scope`, `map-url-state`, `seat-mark` (ct), `map-control-row` (ct); `deep-link` + `floor-roster` extended (Copy link); unit 1407 · ct 289 · browser 25 |
 | 4 | `settings-tiles-source` (both anchors re-homed: the publish-boundary copy → `settings-affordance-source`, the single-call-site pin → `bulk-destructive-action-safety-source`); ct `data-utilities-panel` reset tests (feature gone, ruling 22); e2e-auth `draft-dialogs` reset review | `management-detail-source`, `management-directory-map-link-source`, `settings-affordance-source` (labelled triggers, callout, one primary per section, exports never disabled), `admin-management-panel` (ct: 16 — tabs, count, two row stops, dirty close, inline rename, create modal, the sheet over the panel), `data-utilities-panel` (ct: 12 — guard inline, triggers, header-only export, done-state ghost, MLS02 keeps the restore review) | `accessibility-source` (dialog files = the panel / sheets / `CarbonModal`; hygiene attrs in `EmployeePanel`; scroll regions = `.cds-side-panel-body` / `.sp-tearsheet-body`; counts in `lib/managementCounts` + `OptionList`; row stops in `EmployeesTable`), `bulk-destructive-action-safety-source` (host + sheets), `action-input-validation-source` (three sinks), `virtualized-directory` (host + table), `pending-state-source` (flows 15–20 → the sheets / list / create modal), `touch-target-source` (Management ledger rows gone), `close-icon-source` (Management's × = the search clear; Settings has none), `dialog-error-placement` (census + 3 ct: restore MLS02, create-modal failure, dirty-close ask; `titleId` discovery), `phase4-token-layer-source` (`SWEPT` {1,2,3,4}), e2e-auth `accessibility` (sheet + ⋯ + names) | added `management-counts`, `inline-rename`, `file-guard`; unit 1428 · ct 307 · lint 0 errors · build clean |
+| 5 | `close-icon-source` (with `components/ui/CloseIcon.tsx` — the one glyph is `mapIcons.tsx`'s) | `reception-screen` (ct: 34 — the cursor / lock split, the Esc rungs, `?q=` landings + `replaceState`, the clear ×, Ctrl / ⌘ K, the platform hint, the readout tile / D3′ line / no-extension / Show on map, zero · empty · partial, fallback rows, recents outside the live region, Back to the list, no avatar) | `reception-source` (published-layer + D3′ pins verbatim; + the PR 5 contracts), `chunk-recovery-boundary-source` (+ the Reception boundary), `touch-target-source` (Reception comment block; the `/admin` 403 pin left with the card), `phase4-token-layer-source` (two permanent ledger rows; the `shadow-sp` ban; the font pin on `app/fonts/plex.ts` + both roots), e2e-auth `page-frames` (+ Reception), `header-geometry` (+ `/reception` viewer), `accessibility` (+ Reception rest / locked, the `/admin` 403) | added e2e-auth `reception-keyboard.spec.ts`; the rigs gained the Reception section (viewer), the 404, the `/admin` 403 and a viewer pass for `/my-seat`; unit 1445 (1443 pass + 2 environment-only fails on the sandboxed box — see the slice log) · ct 34 (reception) |
 | 1 | `elevation-shadow-tokens-source`, `color-twin-drift-source`, `e2e/publish-ready-badge-contrast.spec.ts`, `marker-contrast.test.mjs` + `scripts/marker-contrast.mjs` (missed by the PR 0 survey: measured the old `--sp-marker-*` values from the deleted block; the obligation — marker contrast in both themes, non-hue pair distinction — is carried by the generated 192-pair suite and Phase 3's two-signal marks) | `auth-theme-source` (both-themes resolution against `sp-tokens.css` + `carbon-tokens.css`; class bans and ledger kept), `focus-brand-contrast-source` (one `--sp-focus` aliasing `$focus`, defined light + system-dark + forced-dark; tier-C panel focus; raw brand orange banned in code, not comments), `theme.test` (derivation function ↔ boot string; three states; toggle writes only through `applyTheme`) | `accessibility-source` (two kind-tag token pins: `pending-surface` → `draft-surface`, `--admin-diff-vacated-text` → `--sp-status-error-text`), `ask-planner-ai-source` (dim rules read from `globals.css` + the bridge), `phase4-token-layer-source` (`SWEPT` = {1}; ledger 4 rows; font-bridge, asset-identity, import-order and bridge-alias assertions added) | 1390 pass · 0 fail; `npm run gate` clean; `npm run build` clean |
 
 ---
@@ -763,6 +838,13 @@ product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs
 202/202 pass
 ```
 
+PR 5 (2026-09-06, **no token change** — sheet amendment E only, §1.29; the route cards and Reception consume pairs the
+suite already gates):
+
+```
+<!-- PR5-CONTRAST -->
+```
+
 Marker states (`audit/marker-contrast.mjs`, local Docker stack, seed data, 2026-09-03 after the §1.6 fix) —
 worst text span per state, light / dark:
 
@@ -832,13 +914,14 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | 3a | #516 | `feat/phase4-map-frame` | v1.74.5 | map frame (P3-4, 5 band half, 13; P2-1, 4 `?q=` `?names=`): control row on both surfaces, **provisional tenant row removed** (PR 2 seam closed — SeatMap's bar tenants + the viewer search move into the map control row, PHASE2UX §1M.3), one search + palette on `/admin` too, Filters split control, Find me, band + `SeatMark` + legend follows Names, canvas status region, roster Copy link; washes + clusters (D1-h/D1-i), `FilterPanel` / `ActiveFilterChips` / `DeptChipRow` / `AiHighlightChip` / `FloorSelector` / `ResultsPanel` / `adminChrome.ts` retired; owner rulings O1 O5 O6 O7 (2026-09-04); pre-merge smoke 24/24 (`screenshots/pr3a-smoke/`) + §1.22–§1.25 | merged |
 | 3b | #518 | `feat/phase4-map-markers` | v1.74.6 | map markers + slot (P3-5 marker half, 7, 8, 11, 12, 14; P2-3, 9): `.sp-pill` rewrite, seat-code tooltip, ◇ from the publish diff, quiet pill replaces the dim (ledger row closed), invalid target wired (O4), 400 slot (inspector · mode card · Ask Planner), publish tearsheet, group-3 sweep, marker rig + Draft-mark crops; owner rulings O2 O3 (brand-layer tokens); carry-ins C-1 (row rules out of `globals.css`, Q1/Q2), C-2 (palette rows, add-seat card), C-3 (§1.25 Redo fix, Q3 every column); Q4 seed reserved + unavailable; Q5 one PR. **Pre-merge smoke 13/13 steps pass** (18/18 records, `screenshots/pr3b-smoke/`); fix §1.36 — people edits now badge the seat; ◇ `rgb(138, 63, 252)` light / `rgb(190, 149, 255)` dark; live hit-pill contrast **15.23:1** light / **10.50:1** dark; Redo reapplies; invalid targets refused with the notice; 1024 pass; tooltip = seat code only (ruling, §1.36) | merged 2026-09-05 (squash) |
 | 4 | #519 | `feat/phase4-pages` | v1.75.0 | Management + Settings (P3-7 Management half, 8 Deactivate, 15, 16, 17; P2-6, 7, 8): `ManagementFrame` (line tabs in the sections landmark, the primary follows the tab), `EmployeesTable` (`.cds-table`, toolbar count, ● / ○, seat-code link, one ghost Edit), `EmployeePanel` (480 layer-02 slide-over, 50/50 footer, no ×, one dirty check → `CarbonModal` ask), `OptionList` (Save · Cancel inline rename, blur validates, ⋯ Delete), `OptionCreateModal`, `ManagementConfirmSheet` (**owner ruling §1.38**, sheet amendment B), Publish History tab gone; Settings: `.sp-callout`, sections in the record's order, `FileTrigger` + `lib/fileGuard` (5 MB / type, inline before a sheet), `CsvImportSheet` / `SnapshotRestoreSheet` (D6-e done-state ghost; MLS02 keeps the restore review), Reset draft gone (one call site pinned), draft-only page; group-4 sweep (`SWEPT` {1,2,3,4}, bridge §2 empty); `lib/managementCounts` / `inlineRename` / `fileGuard` | built 2026-09-05: unit 1428 · ct 307 · gate clean · e2e 36 · **e2e-auth 39/39** (local stack) · runtime audit 0 undefined (6 routes × 2 themes + 1280 + system state) · page-states rig 63 captures (`screenshots/pr4/`) · contrast 202/202 (no token change) · build clean. **Owner's twenty-step smoke 2026-09-05: 47/47 after four fixes (§1.39 — the indicator seam, the returned deactivate refusal, the inert overlay keeping focus, sheet amendment C for the narrow frame); captures + `results.json` in `screenshots/pr4-smoke/`**; read-only preview walk 22/22 on the Vercel preview (`screenshots/pr4-preview/`, people data masked) → §1.23 **amendment D** (the Edit tooltip escaped the asset's clipped cell; smoke step 4 re-run 4/4, e2e-auth 42/42) | merged (v1.75.0) 2026-09-05 (squash, 18f855d) |
-| 5 | — | — | — | Reception, route surfaces, `/login` + `/my-seat` confirmed unchanged (P3-18; P2-5) | not started |
-| 6 | — | — | v2.0.0 | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
+| 5 | — | `feat/phase4-reception` | v1.76.0 | Reception on `.sp-recep` (P3-4 Reception half, 5 Reception half closed "no mark drawn", 18; P2-4 last half, 5): `ReceptionFrame`, `ReceptionScreen` (search lg + clear × + Ctrl / ⌘ K, the cursor / lock split, the Q-1 Esc rungs, `?q=` via `replaceState`, readout tile + D3′ line + "No extension on file" + Show on map, fallback rows, recents outside the live region, zero · empty · partial · loading · error), sheet **amendment E** (the 1024 fold); route cards on `.sp-route-card` (admin boundary, `/admin` 403 without its raster strip, root boundary + 404 by Q-2, `global-error` in the design system — fonts moved to `app/fonts/plex.ts`); carry-ins: `shadow-sp` 4 → 0 (+ the token ban, `boxShadow` gone from Tailwind), `components/ui/CloseIcon.tsx` retired for `mapIcons`, `HEX_LEDGER` two permanent rows (Q-3); `/login` + `/my-seat` confirmed unchanged by capture; O-8 → PR 5b (Q-5). Plan of record `plans/phase4-pr5-reception.md`; §1.40–§1.44 | <!-- PR5-SLICE-STATUS --> |
+| 5b | — | `feat/phase4-map-dialogs` | v1.77.0 | the map's seven confirm dialogs (Vacate · Delete seat · Swap · Discard draft · move-conflict + two) onto the asset `.cds-modal` on the PR 4 `CarbonModal` host (PHASE2UX §3, a PR 3 landing found open — §1.43, owner ruling Q-5) | not started |
+| 6 | — | — | v2.0.0 (after 5b) | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
 
 PR 3b pre-merge smoke (2026-09-05, owner-ordered, thirteen steps, local Docker stack, real Chrome 1920×1080, both themes):
 **18/18 PASS** after one fix (§1.36); captures + `results.json` in `screenshots/pr3b-smoke/`; e2e-auth 32/32 on the
 same build; marker rig 58 measurements, 0 under floor, ledger empty (both planner-highlight passes SKIPPED on a
 broad answer this run — a model outcome, not a marker).
 
-Next: PR 4 built on `feat/phase4-pages` (Tasks 1–10); Task 11 evidence (Docker stack: runtime audit, page-states rig,
-e2e-auth) then the PR + preview; the owner's smoke hand-off runs before merge; on "merge" → v1.75.0.
+Next: PR 5 built on `feat/phase4-reception` (Tasks 0–10); the reviewer's smoke hand-off runs on the preview, then the
+PR opens; on the owner's "merge" → v1.76.0. Then PR 5b (`feat/phase4-map-dialogs`, v1.77.0), then PR 6 (v2.0.0).
