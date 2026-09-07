@@ -13,27 +13,22 @@ export default async function AdminPage() {
   if (!isAdmin) {
     // Deep links can still land viewers here (the in-app Admin shortcut is
     // role-gated), so the page must offer a way back instead of a dead end.
+    // The shared 403 card (DECISIONS D5-d; PR 4 built it for Management and
+    // Settings, PR 5 brings this page onto it): the asset empty state on the
+    // route card, its tertiary on the WHITE card (layer-02), never layer-01 —
+    // 4.14:1 there is recorded not-gated (PHASE4BUILD §1.22). The sheet paints
+    // `.sp-route-card` layer-01 (PHASE3DS §1.29), so the surface is set inline
+    // (a utility class loses to the sheet's later rule). The shell header
+    // already carries the product name (O-12).
     return (
-      <main className="flex min-h-0 flex-1 items-center justify-center bg-[var(--sp-background)] p-6 text-[var(--sp-text-primary)]">
-        <section className="w-full max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] shadow-sp">
-          <div className="sp-zone-chrome flex items-center gap-2 border-b border-[var(--sp-border-subtle)] bg-[var(--sp-background)] px-5 py-2.5 text-[12.5px] font-semibold text-[var(--sp-text-primary)]">
-            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark, unoptimized on purpose */}
-              <img src="/images/megeredchian-mark.png?v=ma-2026-128" alt="" width={24} height={24} className="h-6 w-6 object-contain" />
-            </span>
-            Megeredchian Law <span className="font-normal text-[var(--sp-text-helper)]">· Seat Planner</span>
-          </div>
-          <div className="p-6">
-            <h1 className="text-lg font-semibold">Admin access required</h1>
-            <p className="mt-2 text-sm text-[var(--sp-text-secondary)]">
-              You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to edit the seat map.
-            </p>
-            <Link
-              href="/"
-              className="relative mt-5 inline-flex min-h-9 items-center justify-center border border-[var(--sp-button-primary)] bg-[var(--sp-button-primary)] px-4 py-2 text-sm font-semibold leading-none text-white transition-colors after:absolute after:-inset-y-1 after:inset-x-0 hover:border-[var(--sp-button-primary-hover)] hover:bg-[var(--sp-button-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] focus-visible:ring-offset-2"
-            >
-              Back to seat map
-            </Link>
+      <main className="flex min-h-0 flex-1 items-start justify-center bg-[var(--sp-background)] p-8">
+        <section className="sp-route-card w-full" style={{ background: "var(--sp-layer-02)" }}>
+          <div className="cds-empty">
+            <h2>Admin access required</h2>
+            <p>You are signed in, but your profile does not have admin permissions. Ask an admin to upgrade your role if you need to edit the seat map.</p>
+            <div className="cds-empty-actions">
+              <Link href="/" className="cds-btn cds-btn--tertiary cds-btn--md">Back to seat map</Link>
+            </div>
           </div>
         </section>
       </main>

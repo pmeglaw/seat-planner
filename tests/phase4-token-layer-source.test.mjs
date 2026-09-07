@@ -113,7 +113,6 @@ const HEX = /#[0-9a-fA-F]{3,8}(?![\w-])/g;
 // then the component PRs (TEST-TRIAGE.md names the PR per file). A row may
 // only go down or out; it may never appear.
 const HEX_LEDGER = {
-  "app/global-error.tsx": 10, // PR 5 (route cards)
   "app/layout.tsx": 1, // themeColor meta: gray 100, the header colour — Next's Viewport wants a string (owner, PR 1)
   "components/seat-map/SeatSheet.tsx": 12, // PR 5 (`/my-seat` ruling, O5 — deviation 12 keeps the sheet chrome-free)
 };
@@ -168,8 +167,7 @@ test("no --cds- reference outside sp-tokens.css and the two asset files", () => 
 // replaces <html> — can put the same families on its own root. The pins
 // follow the declaration; both roots must still carry the variables.
 const FONT_MODULE = "app/fonts/plex.ts";
-// Task 6 of PR 5 adds "app/global-error.tsx" here (the route card needs Plex).
-const FONT_ROOTS = ["app/layout.tsx"];
+const FONT_ROOTS = ["app/layout.tsx", "app/global-error.tsx"];
 
 test("the font bridge re-points both Carbon font tokens at next/font's variables", () => {
   const css = stripCssComments(read(BRIDGE_FILE));

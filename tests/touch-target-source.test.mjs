@@ -113,8 +113,10 @@ const PINS = {
   "components/seat-map/AskPlannerDrawer.tsx": [
     "cds-btn cds-btn--icon cds-btn--md cds-touch-target",
     "sp-prompt-list"
-  ],
-  "app/(shell)/admin/page.tsx": ["after:absolute after:-inset-y-1"]
+  ]
+  // PR 5: the /admin 403 card's link is the asset's 40px tertiary on the
+  // route card (as Management's and Settings' since PR 4) — its expansion pin
+  // left with the hand-built card.
 };
 
 const ROOTS = ["app", "components"];

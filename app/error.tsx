@@ -2,12 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { Button } from "@/components/ui/design-system";
+import { ErrorGlyph } from "@/components/ui/ErrorGlyph";
 import { planChunkErrorRecovery } from "@/lib/chunkLoadRecovery";
 
 // Route error boundary for every non-admin segment (viewer map, login, auth
-// callbacks). Without one, a failed Supabase query in app/page.tsx renders
+// callbacks). Without one, a failed Supabase query in the viewer page renders
 // Next's unstyled default error screen with no way back into the app.
+//
+// The card is the asset empty state on the route card (PHASE3DS §1.29 / sheet
+// block 28, Phase 4 PR 5 — owner ruling Q-2); copy as shipped. The tertiary
+// sits on the WHITE card (layer-02), never layer-01 (PHASE4BUILD §1.22), so the
+// surface is set inline — the sheet paints `.sp-route-card` layer-01 and a
+// utility class loses to that later rule. This boundary renders OUTSIDE the
+// (shell) layout, so it owns its own full-height centring.
 //
 // `digest` is deliberately the only failure detail shown: in production Next
 // already replaces a thrown server message with an opaque digest, so the digest
@@ -46,42 +53,29 @@ export default function ViewerError({
   }, []);
 
   return (
-    <main className="shell-theme sp-zone-chrome flex min-h-screen flex-col items-center justify-center bg-[var(--sp-background)] px-6 py-12">
-      <section className="sp-zone-base w-full max-w-[440px] bg-[var(--sp-layer-01)] p-6 sm:px-10 sm:pb-9 sm:pt-10">
-        <h1
-          ref={headingRef}
-          tabIndex={-1}
-          className="text-2xl font-semibold text-[var(--sp-text-primary)] outline-none"
-        >
-          The seat map could not load
-        </h1>
-        <p className="mt-4 text-[13px] leading-5 text-[var(--sp-text-secondary)]">
-          Something went wrong while loading this page. The seating map itself is unchanged — this is a display
-          problem, not a data one.
-        </p>
-
-        <div className="mt-6 flex flex-col gap-2">
-          <Button variant="primary" onClick={reset} className="w-full">
-            Try again
-          </Button>
-          <Link
-            href="/"
-            className="flex min-h-11 w-full items-center justify-center rounded-[var(--sp-radius)] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-sm font-semibold text-[var(--sp-text-primary)] transition-colors hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] focus-visible:ring-offset-2"
-          >
-            Back to the seat map
-          </Link>
-        </div>
-
-        {error.digest ? (
-          <p className="mt-6 font-mono text-xs leading-4 text-[var(--sp-text-helper)]">
-            Reference: {error.digest}
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[var(--sp-background)] px-6 py-12 text-[var(--sp-text-primary)]">
+      <section className="sp-route-card w-full" style={{ background: "var(--sp-layer-02)" }}>
+        <div className="cds-empty">
+          <h2 ref={headingRef} tabIndex={-1} className="outline-none">
+            <ErrorGlyph />
+            The seat map could not load
+          </h2>
+          <p>
+            Something went wrong while loading this page. The seating map itself is unchanged — this is a display
+            problem, not a data one.
           </p>
-        ) : null}
+          <div className="cds-empty-actions">
+            <button type="button" className="cds-btn cds-btn--tertiary cds-btn--md" onClick={reset}>
+              Try again
+            </button>
+            <Link href="/" className="cds-btn cds-btn--ghost cds-btn--md">
+              Back to the seat map
+            </Link>
+          </div>
+          {error.digest ? <p className="sp-digest">Reference: {error.digest}</p> : null}
+        </div>
       </section>
-
-      <p className="mt-10 font-mono text-xs text-[var(--sp-text-helper)]">
-        seats.megeredchianlaw.com · internal use only
-      </p>
+      <p className="sp-digest">seats.megeredchianlaw.com · internal use only</p>
     </main>
   );
 }
