@@ -10,6 +10,14 @@
 //
 // Focus: `useDialogFocus` lands on the first control, traps Tab, restores the
 // opener on close. Esc = the secondary action, never while `busy`.
+//
+// Phase 4 PR 5b: the map's seven confirm dialogs (SeatMapDialogs.tsx, the
+// inspector's move-conflict) are the third consumer family. `describedBy`
+// names the description <p> the body renders (aria-describedby on the
+// section); `footerColumns={3}` is Carbon's own three-button modal footer
+// (25 / 25 / 50 — sheet amendment F, PHASE3DS §1.24) and exists for the one
+// modal that carries two secondaries: the inspector's unsaved-edits guard.
+// No ×, no danger variant on the host — the danger lives on the primary.
 
 import type { ReactNode } from "react";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
@@ -19,9 +27,11 @@ export function CarbonModal({
   title,
   eyebrow,
   role = "dialog",
+  describedBy,
   busy = false,
   onEscape,
   maxWidth = 480,
+  footerColumns = 2,
   children,
   footer
 }: {
@@ -29,11 +39,15 @@ export function CarbonModal({
   title: string;
   eyebrow?: string;
   role?: "dialog" | "alertdialog";
+  /** id of the description paragraph the body renders (aria-describedby). */
+  describedBy?: string;
   busy?: boolean;
   onEscape: () => void;
   maxWidth?: number;
+  /** 2 = the asset's 50/50 bleed (default); 3 = Carbon's 25/25/50 three-button footer. */
+  footerColumns?: 2 | 3;
   children: ReactNode;
-  /** The two footer buttons, secondary first (50/50 bleed). */
+  /** The footer buttons, secondary first (50/50 bleed; 25/25/50 with `footerColumns={3}`). */
   footer: ReactNode;
 }) {
   const dialogFocusRef = useDialogFocus<HTMLElement>();
@@ -48,6 +62,7 @@ export function CarbonModal({
           role={role}
           aria-modal="true"
           aria-labelledby={titleId}
+          aria-describedby={describedBy}
           onKeyDown={event => {
             if (event.key === "Escape" && !busy) {
               event.stopPropagation();
@@ -62,7 +77,7 @@ export function CarbonModal({
             <h2 id={titleId}>{title}</h2>
           </div>
           <div className="cds-modal-body">{children}</div>
-          <div className="cds-modal-footer">{footer}</div>
+          <div className={footerColumns === 3 ? "cds-modal-footer sp-modal-footer--3" : "cds-modal-footer"}>{footer}</div>
         </section>
       </div>
     </div>
