@@ -2,18 +2,22 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { Button } from "@/components/ui/design-system";
+import { ErrorGlyph } from "@/components/ui/ErrorGlyph";
 import { planChunkErrorRecovery } from "@/lib/chunkLoadRecovery";
 
 // Route error boundary for the /admin subtree. All three admin pages throw on a
-// failed query (app/admin/page.tsx:80, management/page.tsx:63,
-// settings/page.tsx:44); without this the admin sees Next's default error
-// screen and cannot tell whether the draft map survived.
+// failed query; without this the admin sees Next's default error screen and
+// cannot tell whether the draft map survived.
 //
-// Separate from app/error.tsx because the nearest boundary wins: this one wears
-// `.admin-theme` and says what an editor needs to hear about in-flight edits.
-// As with the viewer boundary, only `digest` is surfaced — in production Next
-// has already replaced the thrown message with it.
+// Separate from app/error.tsx because the nearest boundary wins: this one says
+// what an editor needs to hear about in-flight edits. The card is the asset
+// empty state on the route card (PHASE3DS §1.29 / sheet block 28, Phase 4
+// PR 5); its tertiary sits on the WHITE card (layer-02), never layer-01 —
+// 4.14:1 there is the recorded not-gated pair (PHASE4BUILD §1.22), so the
+// surface is set inline because the sheet paints `.sp-route-card` layer-01 and
+// a utility class loses to that later rule. As with the viewer boundary, only
+// `digest` is surfaced — in production Next has already replaced the thrown
+// message with it.
 export default function AdminError({
   error,
   reset
@@ -45,37 +49,27 @@ export default function AdminError({
   }, []);
 
   return (
-    <main className="flex min-h-0 flex-1 items-center justify-center bg-[var(--sp-background)] p-6 text-[var(--sp-text-primary)]">
-      <section className="w-full max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-6 shadow-sp">
-        <h1
-          ref={headingRef}
-          tabIndex={-1}
-          className="text-lg font-semibold text-[var(--sp-text-primary)] outline-none"
-        >
-          This admin page could not load
-        </h1>
-        <p className="mt-2 text-sm leading-5 text-[var(--sp-text-secondary)]">
-          The page failed before it finished loading. Nothing was published, and the draft map is exactly as the last
-          successful save left it — but any edit you had open and unsaved is gone.
-        </p>
-
-        <div className="mt-6 flex flex-col gap-2">
-          <Button variant="primary" onClick={reset} className="w-full">
-            Try again
-          </Button>
-          <Link
-            href="/"
-            className="flex min-h-11 w-full items-center justify-center rounded-[var(--sp-radius)] border border-[var(--sp-border-strong)] bg-[var(--sp-layer-01)] text-sm font-semibold text-[var(--sp-text-primary)] transition-colors hover:bg-[var(--sp-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sp-focus)] focus-visible:ring-offset-2"
-          >
-            Back to the published map
-          </Link>
-        </div>
-
-        {error.digest ? (
-          <p className="mt-6 font-mono text-xs leading-4 text-[var(--sp-text-helper)]">
-            Reference: {error.digest}
+    <main className="flex min-h-0 flex-1 items-start justify-center bg-[var(--sp-background)] p-8 text-[var(--sp-text-primary)]">
+      <section className="sp-route-card w-full" style={{ background: "var(--sp-layer-02)" }}>
+        <div className="cds-empty">
+          <h2 ref={headingRef} tabIndex={-1} className="outline-none">
+            <ErrorGlyph />
+            This admin page could not load
+          </h2>
+          <p>
+            The page failed before it finished loading. Nothing was published, and the draft map is exactly as the
+            last successful save left it — but any edit you had open and unsaved is gone.
           </p>
-        ) : null}
+          <div className="cds-empty-actions">
+            <button type="button" className="cds-btn cds-btn--tertiary cds-btn--md" onClick={reset}>
+              Try again
+            </button>
+            <Link href="/" className="cds-btn cds-btn--ghost cds-btn--md">
+              Back to the published map
+            </Link>
+          </div>
+          {error.digest ? <p className="sp-digest">Reference: {error.digest}</p> : null}
+        </div>
       </section>
     </main>
   );

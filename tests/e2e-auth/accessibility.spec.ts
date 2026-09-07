@@ -439,6 +439,50 @@ test("the viewer map and its seat inspector have no WCAG A/AA violations", async
   await expect(page.locator("#seat-inspector-panel")).toBeHidden();
 });
 
+// Phase 4 PR 5: Reception on the `.sp-recep` family (PHASE3DS §1.29) — the
+// combobox → listbox loop with aria-activedescendant, the live readout, the
+// recents landmark — scanned at rest and with a person locked (the readout's
+// tile, seat line, fallback rows, Show on map and the locked row's surfaces
+// are only on screen then). Viewer session: Reception is for every role.
+test.describe("Reception has no WCAG A/AA violations", () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page, SEEDED_VIEWER_EMAIL);
+  });
+
+  test("at rest", async ({ page }) => {
+    await page.goto("/reception");
+    await expect(page.getByRole("heading", { name: "Reception", level: 1 })).toBeVisible();
+    await expect(page.locator('li[role="option"]').first()).toBeVisible();
+    await waitForOneShotAnimations(page);
+    const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
+    expect(formatAxeViolations(results.violations)).toEqual([]);
+    expect(results.passes.map(rule => rule.id)).toContain("color-contrast");
+  });
+
+  test("with a person locked", async ({ page }) => {
+    await page.goto("/reception?q=201");
+    await expect(page.locator('li[role="option"][aria-selected="true"]')).toHaveCount(1);
+    await expect(page.getByRole("link", { name: "Show on map" })).toBeVisible();
+    await waitForOneShotAnimations(page);
+    const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
+    expect(formatAxeViolations(results.violations)).toEqual([]);
+  });
+});
+
+// Phase 4 PR 5: the /admin 403 card (a signed-in viewer) on the route card —
+// the asset empty state with its tertiary on the white card (PHASE4BUILD
+// §1.22); Management's and Settings' 403 cards were built in PR 4.
+test("the /admin 403 card (a viewer) has no WCAG A/AA violations", async ({ page }) => {
+  await signIn(page, SEEDED_VIEWER_EMAIL);
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "Admin access required" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Back to seat map" })).toBeVisible();
+  await waitForOneShotAnimations(page);
+  const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
+  expect(formatAxeViolations(results.violations)).toEqual([]);
+  await expect(page).toHaveURL(/\/admin$/);
+});
+
 // Liveness guard, mirroring the one in tests/e2e/accessibility.spec.ts. "No
 // violations" is also what a scan that examined nothing reports (docs/RISKS.md
 // R-04), and an admin route that silently redirected to /login would report

@@ -1,4 +1,5 @@
-// Phase 4 · PR 4 page-state captures (rerun on every PR that touches Management or Settings).
+// Phase 4 · PR 4 page-state captures (rerun on every PR that touches Management or Settings);
+// PR 5 adds the Reception section (viewer session), the /admin 403 card and the 404.
 // Drives the two document pages through their component states and screenshots each one, both
 // themes at 1920×1080, plus the 1280×800 laptop and the 1024×768 narrow frame (light) per page.
 // Nothing here mutates: every sheet and modal is opened and CANCELLED; the file pickers receive
@@ -222,7 +223,52 @@ if (viewerEmail) {
     await shot(`management-403-${theme}-1920`);
     await open("/admin/settings", theme);
     await shot(`settings-403-${theme}-1920`);
+    // PR 5: the /admin 403 on the same route card; the 404 (any unknown URL).
+    await open("/admin", theme);
+    await shot(`admin-403-${theme}-1920`);
+    await open("/no-such-page", theme);
+    await shot(`not-found-${theme}-1920`);
   }
+
+  // ---------------------------------------------------------------- Reception (PR 5, viewer)
+  // Seed facts: Alex Shabazian · Intake · 201; Victor Chen · Intake · no extension. Nothing here
+  // mutates — Reception is read-only. Partial / empty / loading / the boundary are ct-only.
+  const field = page.getByRole("combobox", { name: "Search the directory" });
+  const lock = async query => {
+    await field.fill(query);
+    await page.waitForTimeout(150);
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(300);
+  };
+  for (const theme of ["light", "dark"]) {
+    await open("/reception", theme);
+    await page.locator('li[role="option"]').first().waitFor();
+    await shot(`reception-rest-${theme}-1920`);
+    await field.fill("sha");
+    await page.waitForTimeout(300);
+    await shot(`reception-typing-${theme}-1920`);
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(300);
+    await shot(`reception-locked-${theme}-1920`);
+    await lock("Maria");
+    await lock("David");
+    await shot(`reception-recents-${theme}-1920`);
+    await lock("Victor");
+    await shot(`reception-no-extension-${theme}-1920`);
+    await field.fill("zzzz");
+    await page.waitForTimeout(300);
+    await shot(`reception-zero-${theme}-1920`);
+    await open("/reception?q=201", theme);
+    await page.locator('li[role="option"][aria-selected="true"]').waitFor();
+    await shot(`reception-landing-q201-${theme}-1920`);
+  }
+  await open("/reception?q=201", "light", 1280, 800);
+  await shot("reception-light-1280");
+  await open("/reception?q=201", "light", 1024, 768);
+  await page.getByRole("button", { name: "Back to the list" }).waitFor();
+  await page.getByRole("region", { name: "Caller detail" }).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
+  await shot("reception-light-1024-readout");
 }
 
 console.log(`console/page errors: ${errors.length}`);

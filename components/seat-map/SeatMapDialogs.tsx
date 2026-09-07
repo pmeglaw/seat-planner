@@ -15,7 +15,7 @@ import { FLOORS } from "@/lib/floors";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import type { SeatWithEmployee } from "@/lib/types";
 import { adminDangerButtonClassName, Button } from "@/components/ui/Button";
-import { CloseIcon } from "@/components/ui/CloseIcon";
+import { CloseIcon } from "@/components/seat-map/mapIcons";
 import { focusRingClass } from "@/components/ui/design-system";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
@@ -76,7 +76,7 @@ export function VacateConfirmDialog({
         aria-modal="true"
         aria-labelledby="vacate-seat-confirm-title"
         aria-describedby="vacate-seat-confirm-description"
-        className="w-full max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp focus-visible:outline-none"
+        className="w-full max-w-md border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] focus-visible:outline-none"
       >
         <h2 id="vacate-seat-confirm-title" className="text-base font-semibold">
           Vacate {formatSeatCode(label)}?
@@ -157,7 +157,7 @@ export function DeleteSeatConfirmDialog({
             className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
             aria-label="Cancel custom seat deletion"
           >
-            <CloseIcon />
+            <CloseIcon className="h-4 w-4" />
           </button>
         </div>
 
@@ -218,7 +218,7 @@ export function DiscardDraftDialog({
             onCancel();
           }
         }}
-        className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] shadow-sp focus-visible:outline-none"
+        className="w-full max-w-lg overscroll-contain border border-[var(--sp-border-subtle)] bg-[var(--sp-layer-01)] p-4 text-[var(--sp-text-primary)] focus-visible:outline-none"
       >
         <h2 id="discard-draft-title" className="text-base font-semibold">Discard all draft changes?</h2>
         <p id="discard-draft-description" className="mt-2 text-sm leading-5 text-[var(--sp-text-secondary)]">
@@ -346,7 +346,7 @@ export function SwapConfirmDialog({
             className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Cancel swap confirmation"
           >
-            <CloseIcon />
+            <CloseIcon className="h-4 w-4" />
           </button>
         </div>
 

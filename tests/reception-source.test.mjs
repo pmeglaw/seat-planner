@@ -56,6 +56,39 @@ test("keyboard loop: autofocused combobox drives an aria-activedescendant listbo
   assert.match(source, /"Escape"/);
 });
 
+// Phase 4 PR 5 (plan of record: docs/redesign-v2/phase4/plans/phase4-pr5-reception.md):
+// the cursor / lock split, the URL contract, the landmarks and the platform
+// hint are contracts a redesign must keep, not looks.
+test("PR 5 contracts: [data-highlight] is the cursor, aria-selected the lock; no avatar; the search landmark; the skip-link field", async () => {
+  const source = await screenSource();
+  assert.match(source, /data-highlight=/);
+  assert.doesNotMatch(source, /buildInitials/, "no avatar on Reception (PHASE3DS §1.29 owner ruling)");
+  assert.match(source, /role="search"/);
+  assert.match(source, /id="reception-main"/, "the skip link lands on the field (PHASE2UX §1R.7)");
+  assert.match(source, /from "@\/lib\/platformShortcut"/, "the Ctrl K / ⌘ K hint is decided at hydration (P3-4)");
+  assert.match(source, /aria-label="Recent lookups"/);
+});
+
+test("PR 5 URL contract: one writer (withQueryParam) through history.replaceState — never the router", async () => {
+  const source = await screenSource();
+  assert.match(source, /history\.replaceState\(window\.history\.state,/, "the router's history state is passed through, never null");
+  assert.match(source, /from "@\/lib\/deepLink"/);
+  assert.match(source, /withQueryParam\(/);
+  // Import-anchored: the header comment NAMES router.replace to say why not.
+  assert.doesNotMatch(source, /from "next\/navigation"|useRouter\(/);
+  // The page hands the landing query down as a string only.
+  const page = await pageSource();
+  assert.match(page, /typeof rawQuery === "string"/);
+  assert.match(page, /initialQuery=\{initialQuery\}/);
+});
+
+test("PR 5 partial state: the seats query may fail alone; the directory failing still throws to the boundary", async () => {
+  const page = await pageSource();
+  assert.match(page, /Promise\.allSettled/);
+  assert.match(page, /employeesResult\.status === "rejected"\) throw/);
+  assert.match(page, /seatsUnavailable=\{seatsUnavailable\}/);
+});
+
 test("the extension readout announces selection changes (aria-live output)", async () => {
   const source = await screenSource();
   assert.match(source, /aria-live="polite"/);

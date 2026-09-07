@@ -391,6 +391,11 @@ Would change if: the directory outgrows ~300 people (D3's line) — faceted filt
 | Readout column | 480, sticky under the header | calm zone; 32px padding |
 | Gap | 32 | grid gutter |
 
+*Phase 4 PR 5 amendment (2026-09-06, owner ruling Q-6):* the list measures **1008** at 1920 — the live area's 32
+padding is inside the 1584 (`.sp-page`: `max-width 1584; padding 0 32`, PHASE3DS §1.22, as shipped for Management and
+Settings in v1.75.0), so the content box is 1520 and the readout keeps its 480 with the 32 gutter; the specimen renders
+the same. The e2e-auth `page-frames` spec asserts the 480, the 32 and the 1008.
+
 ### 1R.3 List (dense zone)
 
 Row: name `body-compact-01` 600 + `label-01` "position · department" ("—" when both
@@ -403,7 +408,9 @@ Overflow: names and departments truncate end-line with `title`; the list is the 
 
 ### 1R.4 Readout (calm zone) — D3-d
 
-1. Avatar 48 · name `heading-03` 20/28 · "position · department" `body-compact-01`.
+1. ~~Avatar 48 ·~~ name `heading-03` 20/28 · "position · department" `body-compact-01` — *Phase 4 PR 5 amendment
+   (2026-09-06): no avatar, PHASE3DS §1.29 owner ruling (a 32px initials disc is decoration and a circle is a radius the
+   system does not have).*
 2. Extension block (tinted, `aria-live="polite"`): eyebrow "Extension" `label-01`; number in
    `heading-06` 42/50, tabular figures — weight set in Phase 3 for arm's-length reading (the fixed scale's
    light weight at display size is the system default; legibility at 2 m is the constraint to check);

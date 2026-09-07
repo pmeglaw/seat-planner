@@ -1,0 +1,22 @@
+[
+  {
+    "step": "17 Unchanged surfaces",
+    "theme": "both",
+    "ok": true,
+    "values": {
+      "login-light-1920.png": "IDENTICAL",
+      "login-dark-1920.png": "IDENTICAL",
+      "login-light-1024.png": "IDENTICAL",
+      "viewer-my-seat-light-1920.png": "IDENTICAL",
+      "viewer-my-seat-dark-1920.png": "IDENTICAL"
+    },
+    "note": "baseline /var/folders/5q/975b9pnd6h9153skbkcq5tc80000gn/T/pr5-baseline-main4",
+    "files": [
+      "runtime-recheck/login-light-1920.png",
+      "runtime-recheck/login-dark-1920.png",
+      "runtime-recheck/login-light-1024.png",
+      "runtime-recheck/viewer-my-seat-light-1920.png",
+      "runtime-recheck/viewer-my-seat-dark-1920.png"
+    ]
+  }
+]

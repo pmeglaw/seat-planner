@@ -360,3 +360,20 @@ export function buildViewerSeatSearch({
 
   return { query, results: sortedResults, resultSeatIds, kindCounts };
 }
+
+/**
+ * The `?q=` landing's "unique match" (DECISIONS D1-d): the one result when the
+ * palette holds exactly one — or the one PERSON when every other result is
+ * that person's own seat (a seated person's name is also in their seat row's
+ * meta, so a name query lists the person and the seat: one match, two rows —
+ * found by the PR 5 smoke, step 11). Anything else stays a list.
+ */
+export function uniqueLandingResult(results: ViewerSearchResult[]): ViewerSearchResult | null {
+  if (results.length === 1) return results[0];
+  const people = results.filter(result => result.kind === "person");
+  if (people.length !== 1) return null;
+  const person = people[0];
+  if (!person.seatId) return null;
+  const others = results.filter(result => result !== person);
+  return others.every(result => result.kind === "seat" && result.seatId === person.seatId) ? person : null;
+}

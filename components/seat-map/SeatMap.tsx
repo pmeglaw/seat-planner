@@ -85,7 +85,7 @@ import {
 import { useAppShellFilters, useAppShellLeftPanel, useAppShellNavigation, useAppShellState, type ShellFilterSpec } from "@/components/ui/AppShell";
 import { focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
-import { SEAT_SEARCH_PLACEHOLDER, buildViewerSeatSearch, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
+import { SEAT_SEARCH_PLACEHOLDER, buildViewerSeatSearch, type ViewerSearchResult, uniqueLandingResult } from "@/lib/viewerSeatSearch";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { deploySkewMonitor } from "@/lib/deploySkew";
 import { assignLocation } from "@/lib/fullNavigation";
@@ -2827,12 +2827,15 @@ export function SeatMap({
     handleSearchInputChange(value);
     setPaletteOpen(true);
   }
-  // ?q= landing, second half: a unique match opens itself once the results exist.
+  // ?q= landing, second half: a unique match opens itself once the results exist
+  // (lib/viewerSeatSearch uniqueLandingResult: one row, or one person whose only
+  // other row is their own seat — PR 5 smoke step 11).
   useEffect(() => {
     const query = landingQueryRef.current;
     if (!query || search !== query) return;
     landingQueryRef.current = null;
-    if (searchResults.results.length === 1) openResult(searchResults.results[0]);
+    const unique = uniqueLandingResult(searchResults.results);
+    if (unique) openResult(unique);
     // openResult is a render-scope function; the landing runs once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, searchResults.results]);

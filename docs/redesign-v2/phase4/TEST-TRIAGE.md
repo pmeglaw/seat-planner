@@ -37,7 +37,7 @@ dialog, side panel or tearsheet re-enumerates it.
 | `auth-theme-source` | look-pinning + one correctness half | every `--sp-*` the auth files use resolves in both themes | bans on `rounded-*`, palette classes, `focus:ring-4`; per-file `text-white` ledger; old token names (`--sp-brand`, `--sp-shadow-*`, `--sp-status-danger-mark`) | rewrite: keep the both-themes resolution check against `sp-tokens.css`; drop the class bans (the asset owns radius = 0); the ledger stays only if `/login` keeps its `text-white` sites (D4 unchanged) | 1 |
 | `bulk-destructive-action-safety-source` | guardrail | no `window.confirm`; CSV / JSON / discard flows open an in-app review before the action; review copy anchors (`Review CSV import`, `CSV import has blocking errors`, `Apply import`, `Fix CSV first`, `Review draft snapshot restore`, `Restore draft snapshot`, `Deactivation impact`, `Department delete impact`, `Zone delete impact`); `management-confirm-title`; confirm stays mounted until settled | — | re-point: the tearsheet IS the review (PHASE3DS §5 PR 4). The **Settings Reset-draft anchor is removed** in PR 4 because the feature is removed (ruling 22) — a scope reduction the owner ruled, not a loosening; the map's Discard anchor stays | 3 (map), 4 (settings, management) |
 | `chunk-recovery-boundary-source` | guardrail | chunk-load recovery + loop guard + `onClick={reset}` in both error boundaries | — | re-point (route cards keep the reset control) | 5 |
-| `close-icon-source` | look-pinning | — (one shared × glyph across four surfaces) | SVG path `m5.5 5.5 9 9m0-9-9 9`, import graph | **retire**: tearsheets have no × (frame invariant), the side panel's × is the asset's; PR 3 drops the two map consumers, PR 4 deletes the file with the last two | 4 |
+| `close-icon-source` | look-pinning | — (one shared × glyph across four surfaces) | SVG path `m5.5 5.5 9 9m0-9-9 9`, import graph | **retire**: tearsheets have no × (frame invariant), the side panel's × is the asset's; PR 3 drops the two map consumers, PR 4 deletes the file with the last two — *retired in PR 5 (the map's seven confirm dialogs kept their × through 3b → PR 5b; the file and the test left with the glyph swap)* | 4 → 5 |
 | `color-twin-drift-source` | look-pinning | — (`--x-rgb` twins equal their partner) | the twin convention; `:root` / `.admin-theme` cascade shape | **retire**: `sp-tokens.css` has zero `-rgb` twins (alpha derives in place); nothing to verify | 1 |
 | `desktop-seat-marker-system-source` | mixed | calibration literals (`MAP_IMAGE_SRC` `?v=`, 3822×1734, per-floor `xScale/xOffset/yScale`) untouched; two-signal glyphs per state (WCAG 1.4.1); no data / auth / publish / route call in the marker path | `--sp-marker-unavailable-hatch`, `--sp-marker-active-edge`, `bg-clip-padding`, `text-[9px]` C05 chip, `validTargetTone` ban, `Read-only` / `Published` strings in `ViewerSeatFinder` | rewrite (glyph presence → `SeatMark` parts `data-stroke` / `data-fill` / `data-hatch`) | 3 |
 | `elevation-shadow-tokens-source` | look-pinning + one build rule | `shadow-[var(` is dropped by Tailwind v3 — **carried to `phase4-token-layer-source`** (PR 0) | `shadow-elevation-N`, `shadow-panel`, `marker-selected` / `marker-hover` theme keys and the `--sp-elevation-*` / `--sp-legend-*-shadow` tokens | **retire** (depth is layers; the overflow menu keeps `--sp-shadow`) | 1 |
@@ -172,6 +172,31 @@ dialog, side panel or tearsheet re-enumerates it.
   inline now), `draft-dialogs.spec.ts` (the reset review is gone).
 - **Retired:** `settings-tiles-source` (anchors re-homed, §5 row 4); the two ct reset tests; the e2e-auth reset
   review test — all with ruling 22.
+
+### PR 5 outcomes (2026-09-06)
+
+- **Added:** e2e-auth `reception-keyboard.spec.ts` (the whole loop against the real shell: skip link → field, cursor,
+  ↵ lock + `?q=`, the Q-1 Esc rungs, the zero state keeping the person, the clear ×, Ctrl K from a row-button, a
+  pointer never stealing focus, the `?q=201` / several-match landings, axe at rest + locked, the 1024 column with Back
+  to the list); `page-frames` gained the Reception block (no header action, readout 480 + gutter 32, list 1008 at
+  1920, one column under the fold, skip link on the field); `header-geometry` the viewer ladder on `/reception`;
+  `accessibility.spec.ts` Reception at rest + locked and the `/admin` 403 card as a viewer; `chunk-recovery-boundary-source`
+  the Reception boundary.
+- **Rewritten:** `reception-screen` (34 ct: the cursor / lock split — `[data-highlight]` vs `aria-selected` —
+  aria-activedescendant, clamp, the Esc ladder, `?q=` landings + `history.replaceState`, the clear ×, Ctrl / ⌘ K, the
+  platform hint after mount, the readout's tile / D3′ seat line / "No extension on file" / Show on map only when
+  locked, zero · empty · partial states, the fallback rows, recents ≤ 4 outside the live region, Back to the list,
+  no avatar).
+- **Re-pointed:** `reception-source` (published-layer and D3′ pins verbatim; + `[data-highlight]`, no `buildInitials`,
+  `role="search"`, the field as `#reception-main`, `platformShortcut`, one URL writer through `replaceState` — never the
+  router, `Promise.allSettled` with the directory still throwing), `touch-target-source` (the Reception comment block:
+  rows / row-buttons / recents are the sheet's 48 / 40 / 40; the `/admin` 403 link's expansion pin left with the
+  hand-built card), `phase4-token-layer-source` (`HEX_LEDGER` two permanent rows — `app/layout.tsx`, `SeatSheet.tsx`;
+  the `shadow-sp` ban + no `boxShadow` in Tailwind; the font pin re-pointed to `app/fonts/plex.ts` and asserted on
+  BOTH roots, `layout.tsx` and `global-error.tsx`), `accessibility-source` (unchanged, verified: the skip-link config
+  still maps `/reception` → `#reception-main`).
+- **Retired:** `close-icon-source` with `components/ui/CloseIcon.tsx` (the one close glyph is `mapIcons.tsx`'s; the
+  seven consumer sites import it; `accessibility-source` still pins no × on the publish tearsheet).
 
 ## 6. The PR 0 test — `tests/phase4-token-layer-source.test.mjs`
 

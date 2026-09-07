@@ -43,7 +43,7 @@ import {
   fitMapWidth as computeFitMapWidth
 } from "@/lib/mapViewport";
 import { arrowKeyToDirection, edgeKeyToPosition, findNearestSeatInDirection, resolveRovingSeatId, seatAtReadingEdge } from "@/lib/seatKeyboardNav";
-import { buildViewerSeatSearch, searchHandsPanelToResults, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
+import { buildViewerSeatSearch, searchHandsPanelToResults, uniqueLandingResult, type ViewerSearchResult } from "@/lib/viewerSeatSearch";
 import { buildViewerPaletteBrowse, getSeatZone, zoneKey } from "@/lib/viewerFindPalette";
 import { buildPositionOptions, seatMatchesPosition } from "@/lib/positions";
 import { useAppShellFilters, useAppShellLeftPanel, useAppShellState, type ShellFilterSpec } from "@/components/ui/AppShell";
@@ -1140,12 +1140,16 @@ export function ViewerSeatFinder({
   const scopedResults = useMemo(() => scopeResults(searchResults.results, floor, searchScope), [floor, searchResults.results, searchScope]);
   // ?q= landing, second half: a unique match opens itself once the results
   // exist (seat → inspector; unseated person → roster row); several stay a
-  // list; zero shows the zero state with the query kept.
+  // list; zero shows the zero state with the query kept. "Unique" is
+  // lib/viewerSeatSearch uniqueLandingResult: one row, or one person whose
+  // only other row is their own seat — a seated person's name query lists
+  // both (PR 5 smoke step 11, the Reception "Show on map" link).
   useEffect(() => {
     const query = landingQueryRef.current;
     if (!query || search !== query || !floorPreferenceHydrated) return;
     landingQueryRef.current = null;
-    if (searchResults.results.length === 1) openResult(searchResults.results[0]);
+    const unique = uniqueLandingResult(searchResults.results);
+    if (unique) openResult(unique);
     // openResult is a render-scope function; the landing runs once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [floorPreferenceHydrated, search, searchResults.results]);

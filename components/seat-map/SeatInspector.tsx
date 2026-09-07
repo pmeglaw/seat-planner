@@ -13,10 +13,9 @@ import { buildContactRows, employeeAssignmentFields, type ContactFactRow } from 
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { Button } from "@/components/ui/Button";
 import { SeatMark, seatMarkKindFor } from "@/components/seat-map/SeatMark";
-import { CheckIcon, CopyIcon } from "@/components/seat-map/mapIcons";
+import { CheckIcon, CloseIcon, CopyIcon } from "@/components/seat-map/mapIcons";
 import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
 import { withQueryParam, withSeatParam } from "@/lib/deepLink";
-import { CloseIcon } from "@/components/ui/CloseIcon";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatInspectorProps = {
@@ -1445,7 +1444,7 @@ export function SeatInspector({
               className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
               aria-label="Cancel moving employee"
             >
-              <CloseIcon />
+              <CloseIcon className="h-4 w-4" />
             </button>
           </div>
 
