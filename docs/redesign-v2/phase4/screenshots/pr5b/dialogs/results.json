@@ -1,0 +1,1129 @@
+[
+  {
+    "step": "01-vacate",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "vacate-seat-confirm-title",
+      "heading": "Vacate CW01?",
+      "describedBy": "vacate-seat-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(255, 255, 255)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(57, 57, 57)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Vacate seat",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Cancel",
+        "after": "button:Cancel"
+      }
+    },
+    "note": "",
+    "files": [
+      "01-vacate-light.png"
+    ]
+  },
+  {
+    "step": "01b-vacate-esc-while-busy",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "mid": {
+        "role": "alertdialog",
+        "labelledBy": "vacate-seat-confirm-title",
+        "heading": "Vacate CW01?",
+        "describedBy": "vacate-seat-confirm-description",
+        "descriptionInside": true,
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerHeight": 64,
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(198, 198, 198)",
+            "color": "rgba(22, 22, 22, 0.25)",
+            "disabled": true,
+            "busy": null
+          },
+          {
+            "text": "Vacating…",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(198, 198, 198)",
+            "color": "rgba(22, 22, 22, 0.25)",
+            "disabled": true,
+            "busy": "true"
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "alert": null
+      },
+      "stillOpen": 1,
+      "file": "01-vacate-busy-esc-light.png"
+    },
+    "note": "",
+    "files": [
+      "01-vacate-busy-esc-light.png"
+    ]
+  },
+  {
+    "step": "01c-vacate-error-in-dialog",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "vacate-seat-confirm-title",
+      "heading": "Vacate CW01?",
+      "describedBy": "vacate-seat-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(255, 255, 255)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(57, 57, 57)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Retry vacate",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": {
+        "cls": "cds-notification cds-notification--error focus-visible:outline-none",
+        "text": "Vacate did not complete. Could not vacate seat.",
+        "focused": true
+      }
+    },
+    "note": "",
+    "files": [
+      "01-vacate-error-light.png"
+    ]
+  },
+  {
+    "step": "02-delete-seat",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "delete-seat-confirm-title",
+      "heading": "Delete custom seat R99?",
+      "describedBy": "delete-seat-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(255, 255, 255)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(57, 57, 57)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Delete seat",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Cancel",
+        "after": "button:Cancel"
+      }
+    },
+    "note": "",
+    "files": [
+      "02-delete-seat-light.png"
+    ]
+  },
+  {
+    "step": "02b-delete-cancel-restores-focus",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "closed": true,
+      "focusBack": "button:Delete seat"
+    },
+    "note": "",
+    "files": []
+  },
+  {
+    "step": "03-swap",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "swap-confirm-title",
+      "heading": "Confirm seat swap",
+      "describedBy": "swap-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(255, 255, 255)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(57, 57, 57)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Confirm swap",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "items": [
+        "Source: CW01 · Alex Shabazian",
+        "Target: CW02 · Open"
+      ],
+      "focus": {
+        "problems": [],
+        "first": "button:Cancel",
+        "after": "button:Cancel"
+      }
+    },
+    "note": "",
+    "files": [
+      "03-swap-light.png"
+    ]
+  },
+  {
+    "step": "04-move",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "move-employee-map-confirm-title",
+      "heading": "Move Alex Shabazian to CW02?",
+      "describedBy": "move-employee-map-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(255, 255, 255)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(57, 57, 57)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Move them",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Cancel",
+        "after": "button:Cancel"
+      }
+    },
+    "note": "",
+    "files": [
+      "04-move-light.png"
+    ]
+  },
+  {
+    "step": "04b-move-swap-them",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "move-employee-map-confirm-title",
+      "heading": "Swap Alex Shabazian and Maria Lopez?",
+      "describedBy": "move-employee-map-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(255, 255, 255)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(71, 71, 71)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Swap them",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null
+    },
+    "note": "",
+    "files": [
+      "04-move-swap-arm-light.png"
+    ]
+  },
+  {
+    "step": "05-inspector-guard",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "role": "dialog",
+      "labelledBy": "inspector-unsaved-title",
+      "heading": "Unsaved seat edits",
+      "describedBy": "inspector-unsaved-description",
+      "descriptionInside": true,
+      "bg": "rgb(255, 255, 255)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer sp-modal-footer--3",
+      "buttons": [
+        {
+          "text": "Keep editing",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 120,
+          "height": 64,
+          "bg": "rgb(57, 57, 57)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Discard",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 120,
+          "height": 64,
+          "bg": "rgb(57, 57, 57)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Save changes",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Keep editing",
+        "after": "button:Keep editing"
+      }
+    },
+    "note": "",
+    "files": [
+      "05-inspector-guard-light.png"
+    ]
+  },
+  {
+    "step": "05b-guard-esc-keeps-editing",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "kept": true
+    },
+    "note": "",
+    "files": []
+  },
+  {
+    "step": "06-move-conflict",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "move-employee-confirm-title",
+      "heading": "Move Maria Lopez to CW02?",
+      "describedBy": "move-employee-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(255, 255, 255)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(57, 57, 57)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Move them",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "overlay": {
+        "after": "section[alertdialog]:Move Maria Lopez to CW02?They currently "
+      }
+    },
+    "note": "",
+    "files": [
+      "06-move-conflict-light.png"
+    ]
+  },
+  {
+    "step": "06b-move-conflict-initial-focus",
+    "theme": "light",
+    "ok": false,
+    "values": {
+      "first": "section[alertdialog]:Move Maria Lopez to CW02?They currently ",
+      "after": "section[alertdialog]:Move Maria Lopez to CW02?They currently "
+    },
+    "note": "initial focus section[alertdialog]:Move Maria Lopez to CW02?They currently  is not a button; initial focus section[alertdialog]:Move Maria Lopez to CW02?They currently  ≠ the first footer button \"Cancel\"",
+    "files": []
+  },
+  {
+    "step": "07-discard-draft",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "discard-draft-title",
+      "heading": "Discard all draft changes?",
+      "describedBy": "discard-draft-description",
+      "descriptionInside": true,
+      "bg": "rgb(255, 255, 255)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Keep draft changes",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(57, 57, 57)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Discard everything",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Keep draft changes",
+        "after": "button:Keep draft changes"
+      }
+    },
+    "note": "",
+    "files": [
+      "07-discard-draft-light.png"
+    ]
+  },
+  {
+    "step": "07b-discard-for-real-converges",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "converged": true,
+      "r99Erased": true
+    },
+    "note": "the draft-only custom seat R99 went with the discard (draft = published again)",
+    "files": []
+  },
+  {
+    "step": "01-vacate",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "vacate-seat-confirm-title",
+      "heading": "Vacate CW01?",
+      "describedBy": "vacate-seat-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(57, 57, 57)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(111, 111, 111)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Vacate seat",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Cancel",
+        "after": "button:Cancel"
+      }
+    },
+    "note": "",
+    "files": [
+      "01-vacate-dark.png"
+    ]
+  },
+  {
+    "step": "01b-vacate-esc-while-busy",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "mid": {
+        "role": "alertdialog",
+        "labelledBy": "vacate-seat-confirm-title",
+        "heading": "Vacate CW01?",
+        "describedBy": "vacate-seat-confirm-description",
+        "descriptionInside": true,
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerHeight": 64,
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgba(244, 244, 244, 0.25)",
+            "color": "rgba(244, 244, 244, 0.25)",
+            "disabled": true,
+            "busy": null
+          },
+          {
+            "text": "Vacating…",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgba(244, 244, 244, 0.25)",
+            "color": "rgba(244, 244, 244, 0.25)",
+            "disabled": true,
+            "busy": "true"
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "alert": null
+      },
+      "stillOpen": 1,
+      "file": "01-vacate-busy-esc-dark.png"
+    },
+    "note": "",
+    "files": [
+      "01-vacate-busy-esc-dark.png"
+    ]
+  },
+  {
+    "step": "01c-vacate-error-in-dialog",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "vacate-seat-confirm-title",
+      "heading": "Vacate CW01?",
+      "describedBy": "vacate-seat-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(57, 57, 57)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(111, 111, 111)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Retry vacate",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": {
+        "cls": "cds-notification cds-notification--error focus-visible:outline-none",
+        "text": "Vacate did not complete. Could not vacate seat.",
+        "focused": true
+      }
+    },
+    "note": "",
+    "files": [
+      "01-vacate-error-dark.png"
+    ]
+  },
+  {
+    "step": "02-delete-seat",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "delete-seat-confirm-title",
+      "heading": "Delete custom seat R99?",
+      "describedBy": "delete-seat-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(57, 57, 57)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(111, 111, 111)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Delete seat",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Cancel",
+        "after": "button:Cancel"
+      }
+    },
+    "note": "",
+    "files": [
+      "02-delete-seat-dark.png"
+    ]
+  },
+  {
+    "step": "02b-delete-cancel-restores-focus",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "closed": true,
+      "focusBack": "button:Delete seat"
+    },
+    "note": "",
+    "files": []
+  },
+  {
+    "step": "03-swap",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "swap-confirm-title",
+      "heading": "Confirm seat swap",
+      "describedBy": "swap-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(57, 57, 57)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(111, 111, 111)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Confirm swap",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "items": [
+        "Source: CW01 · Alex Shabazian",
+        "Target: CW02 · Open"
+      ],
+      "focus": {
+        "problems": [],
+        "first": "button:Cancel",
+        "after": "button:Cancel"
+      }
+    },
+    "note": "",
+    "files": [
+      "03-swap-dark.png"
+    ]
+  },
+  {
+    "step": "04-move",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "move-employee-map-confirm-title",
+      "heading": "Move Alex Shabazian to CW02?",
+      "describedBy": "move-employee-map-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(57, 57, 57)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(111, 111, 111)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Move them",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Cancel",
+        "after": "button:Cancel"
+      }
+    },
+    "note": "",
+    "files": [
+      "04-move-dark.png"
+    ]
+  },
+  {
+    "step": "04b-move-swap-them",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "move-employee-map-confirm-title",
+      "heading": "Swap Alex Shabazian and Maria Lopez?",
+      "describedBy": "move-employee-map-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(57, 57, 57)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(94, 94, 94)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Swap them",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null
+    },
+    "note": "",
+    "files": [
+      "04-move-swap-arm-dark.png"
+    ]
+  },
+  {
+    "step": "05-inspector-guard",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "role": "dialog",
+      "labelledBy": "inspector-unsaved-title",
+      "heading": "Unsaved seat edits",
+      "describedBy": "inspector-unsaved-description",
+      "descriptionInside": true,
+      "bg": "rgb(57, 57, 57)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer sp-modal-footer--3",
+      "buttons": [
+        {
+          "text": "Keep editing",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 120,
+          "height": 64,
+          "bg": "rgb(111, 111, 111)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Discard",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 120,
+          "height": 64,
+          "bg": "rgb(111, 111, 111)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Save changes",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Keep editing",
+        "after": "button:Keep editing"
+      }
+    },
+    "note": "",
+    "files": [
+      "05-inspector-guard-dark.png"
+    ]
+  },
+  {
+    "step": "05b-guard-esc-keeps-editing",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "kept": true
+    },
+    "note": "",
+    "files": []
+  },
+  {
+    "step": "06-move-conflict",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "move-employee-confirm-title",
+      "heading": "Move Maria Lopez to CW02?",
+      "describedBy": "move-employee-confirm-description",
+      "descriptionInside": true,
+      "bg": "rgb(57, 57, 57)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Cancel",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(111, 111, 111)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Move them",
+          "cls": "cds-btn cds-btn--primary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(184, 92, 46)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "overlay": {
+        "after": "section[alertdialog]:Move Maria Lopez to CW02?They currently "
+      }
+    },
+    "note": "",
+    "files": [
+      "06-move-conflict-dark.png"
+    ]
+  },
+  {
+    "step": "06b-move-conflict-initial-focus",
+    "theme": "dark",
+    "ok": false,
+    "values": {
+      "first": "section[alertdialog]:Move Maria Lopez to CW02?They currently ",
+      "after": "section[alertdialog]:Move Maria Lopez to CW02?They currently "
+    },
+    "note": "initial focus section[alertdialog]:Move Maria Lopez to CW02?They currently  is not a button; initial focus section[alertdialog]:Move Maria Lopez to CW02?They currently  ≠ the first footer button \"Cancel\"",
+    "files": []
+  },
+  {
+    "step": "07-discard-draft",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "role": "alertdialog",
+      "labelledBy": "discard-draft-title",
+      "heading": "Discard all draft changes?",
+      "describedBy": "discard-draft-description",
+      "descriptionInside": true,
+      "bg": "rgb(57, 57, 57)",
+      "width": 480,
+      "radius": "0px",
+      "footerHeight": 64,
+      "footerClass": "cds-modal-footer",
+      "buttons": [
+        {
+          "text": "Keep draft changes",
+          "cls": "cds-btn cds-btn--secondary",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(111, 111, 111)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        {
+          "text": "Discard everything",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        }
+      ],
+      "overlayZ": "8500",
+      "closeButtons": 0,
+      "alert": null,
+      "focus": {
+        "problems": [],
+        "first": "button:Keep draft changes",
+        "after": "button:Keep draft changes"
+      }
+    },
+    "note": "",
+    "files": [
+      "07-discard-draft-dark.png"
+    ]
+  },
+  {
+    "step": "07b-discard-for-real-converges",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "converged": true,
+      "r99Erased": true
+    },
+    "note": "the draft-only custom seat R99 went with the discard (draft = published again)",
+    "files": []
+  },
+  {
+    "step": "08-delete-r99-for-real",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "gone": true,
+      "marker": 0
+    },
+    "note": "",
+    "files": []
+  }
+]

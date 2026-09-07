@@ -636,6 +636,11 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
    every other modal keeps the asset's 50/50 bleed. */
 .cds-modal-footer.sp-modal-footer--3 .cds-btn { flex: 1 1 25%; }
 .cds-modal-footer.sp-modal-footer--3 .cds-btn--primary { flex: 1 1 50%; }
+/* …and (found by the PR 5b captures) the body's stacked paragraphs: the asset spaces only its list
+   (ul margin-top spacing-03) and the reset zeroes <p> margins, so Delete seat's scope line and the
+   move-conflict's publish note ran into the description. One step between body paragraphs, the same
+   step the list already takes. */
+.cds-modal-body > p + p, .cds-modal-body > ul + p { margin-top: var(--sp-space-03); }
 
 /* -----------------------------------------------------------------------------
    14. MODE CARD — §3 "Mode card · hand-built". PHASE3DS §1.18. Owns the slot
