@@ -367,6 +367,16 @@ info notification. The Move / Swap confirm is the asset's modal and may open ove
 panel is not a modal) — never from inside the tearsheet. **Would change if** the inspector gains a
 second step (then a tearsheet, not a longer panel).
 
+**Phase 4 PR 5b amendment (2026-09-07; PHASE4BUILD §1.47, owner rulings R-1…R-3).** The map's seven confirm dialogs
+(Vacate · Delete seat · Discard draft · the inspector guard · Swap · Move / Swap-them · the inspector's move-conflict)
+are built on the asset `.cds-modal` through the PR 4 `CarbonModal` host — 480, `layer-02`, 50/50 footer, overlay
+mousedown cancelled, `useDialogFocus`, Esc never while busy, no × (Cancel · Esc exit). The confirms carry
+`role="alertdialog"` with the danger primary on Vacate / Delete seat / Discard draft and the plain primary on Swap / Move
+/ move-conflict; the inspector guard keeps `role="dialog"` with a plain primary and two secondaries on the 25/25/50
+footer — **amendment F under §1.24**, the one place a three-button modal footer is sanctioned. Copy, verbs, `titleId`s
+and the pending / error contracts are as shipped; the map's `Delete seat` confirm stays the modal (§1.38's "destructive =
+narrow tearsheet" ruling is scoped to `/admin/management`).
+
 ### 1.18 Ask Planner — Map → `.sp-ai-label`, `.sp-ai-popover`, `.sp-textarea--ai`, drawer parts (§3 "Ask Planner drawer · Carbon-for-AI label")
 
 **Problem.** The one AI surface must be marked as AI and explain itself (`carbon-next.md`: the AI label
@@ -499,6 +509,16 @@ as `.cds-btn--danger`. **The anatomy text is built** — Keep editing (secondary
 discard of unsaved edits is not destruction of data. Panel as built: `EmployeePanel.tsx` (layer-02, 50/50 footer, no
 ×, one dirty check for Cancel / Esc / scrim; Department on the 3b combobox with the create row; the refused
 deactivation inline in the danger zone with the seat link).
+
+**Phase 4 PR 5b amendment F (2026-09-07; PHASE4BUILD §1.47).** The modal footer gains one variant: `.cds-modal-footer.sp-modal-footer--3`
+is Carbon's own three-button modal footer — **25 / 25 / 50** (two secondaries at a quarter each, the primary at half) — and
+applies **only** when a modal carries two secondaries. Today that is one modal: the map inspector's unsaved-edits guard
+(Keep editing · Discard · Save changes — the dirty-close rule above, plain primary; PHASE4BUILD R-2). It is not a licence
+for three-button footers elsewhere: every other modal, the map's six confirms included, keeps the asset's 50/50 bleed. The
+same amendment spaces the body's stacked paragraphs (`.cds-modal-body > p + p`, `> ul + p`: one spacing-03 step, the step
+the asset's list already takes) — the reset zeroes `<p>` margins and the asset spaces only its `ul`, so a second body
+paragraph (Delete seat's scope line, the move-conflict's publish note) ran into the description (found by the PR 5b
+captures). The map's confirm dialogs themselves are built on the asset modal by PR 5b — recorded under §1.17.
 
 ### 1.25 Structured list with inline rename — `.sp-list` (§3 "Structured list with inline rename · none needed")
 
@@ -636,7 +656,7 @@ changes on purpose. Zone-scoped dark variants are overrides too (they live under
 | Combobox (employee name; inline create) | hand-built | `.sp-combobox` > `.cds-text-input[role=combobox]` + `.sp-listbox` (`.sp-listbox-create`, `-meta`), `.sp-create-note` | `02-map.html#slot` | 3 | |
 | Select · text input · text area · counter | hand-built on asset | asset `.cds-select`, `.cds-text-input`; `.sp-textarea`, `.sp-field-counter` | `02-map.html#slot` | 3 | |
 | Actions row · Danger button (Delete seat, custom only) · block reason | hand-built | `.sp-actions`, `.cds-btn--danger-ghost`, `.sp-block-reason` | `02-map.html#slot` | 3 | |
-| Modal (Move / Swap / Delete confirms) | asset | asset `.cds-modal` | `02-map.html#slot` | 3 | |
+| Modal (Move / Swap / Delete confirms) | asset | asset `.cds-modal` (`CarbonModal`; `role=alertdialog`, `--danger` primary on Vacate / Delete / Discard; the guard `role=dialog` on `.sp-modal-footer--3`) | `02-map.html#slot` | 3 → **5b** | built 2026-09-07 (§1.17 amendment; PHASE4BUILD §1.47) |
 | Mode card | hand-built | `.sp-mode-card` (+`-title`, `.sp-esc-note`) | `02-map.html#slot` | 3 | |
 | Ask Planner drawer · AI label · explainability popover · AI textarea | hand-built | `.sp-ai-label`, `.sp-ai-popover-host[data-open]` > `.sp-ai-popover`, `.sp-textarea--ai`, `.sp-drawer-subline`, `.sp-prompt-list`, `.sp-answer`, `.sp-highlight-list`, `.sp-drawer-loading` | `02-map.html#slot` | 3 | |
 | Wide tearsheet (publish review) · readiness rail · group rows | hand-built | `.sp-tearsheet-host[data-open]` > `.sp-tearsheet-overlay` + `.sp-tearsheet` (`-header`, `-body`, `-rail`, `-main`, `-footer`, `-facts`, `-section`), `.sp-readiness` (+`-title`, `-facts`), `.sp-rail-heading` / `-text`, `.sp-detail-list`, `tr.sp-table-group` | `02-map.html#review` | 3 | |
@@ -951,6 +971,8 @@ the readout tile and row-buttons replaced the shipped extension block; the narro
 and `app/global-error.tsx` (which imports the four sheets and the Plex module itself, PHASE4BUILD §1 O-7). The seven map
 confirm dialogs (PHASE2UX §3 "Modal … → asset `.cds-modal`", a PR 3 landing) were found still on their Tailwind markup
 and go to **PR 5b** (owner ruling Q-5; PHASE4BUILD §1 O-8). Plan of record: `../phase4/plans/phase4-pr5-reception.md`.
+**PR 5b (built 2026-09-07):** the seven landed on `CarbonModal` — `SeatMapDialogs.tsx` (six) and `SeatInspector.tsx`
+(the move-conflict); §1.17 amendment, §1.24 amendment F. Plan of record: `../phase4/plans/phase4-pr5b-map-dialogs.md`.
 
 **Landing files (PR 2 scope).** `.sp-header`, `.sp-header-slot`, utilities + `.sp-tooltip` → `AppTopBar.tsx`
 (the rail in `AppRail.tsx` retires — the shell is a top bar with a hamburger, D0); `.sp-panel` family +

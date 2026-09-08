@@ -780,6 +780,117 @@ frees the port by listener PID before starting. Environment: the repo's `node_mo
 lockfile (and a fresh `npm ci`, CI, Vercel) resolve 16.3.3 — the baseline worktree built on 16.3.3, the branch on
 16.3.1; the login captures still compare byte-identical.
 
+### 1.47 PR 5b — the map's seven confirm dialogs on the asset modal (plan approved 2026-09-07; built 2026-09-07)
+
+Plan of record: `plans/phase4-pr5b-map-dialogs.md` (no plan change). Built on `feat/phase4-map-dialogs` → v1.77.0.
+Scope: `SeatMapDialogs.tsx` (Vacate · Delete seat · Discard draft · the inspector guard · Swap · Move / Swap them) and
+`SeatInspector.tsx`'s move-conflict dialog rebuilt on the PR 4 `CarbonModal` host — the asset `.cds-modal` (480,
+`layer-02`, 50/50 footer, z 8500, overlay mousedown cancelled, `useDialogFocus`, Esc never while busy). Copy, verbs,
+`titleId`s, the pending / error contracts and every label expression are as shipped (`pending-state-source` verbatim).
+
+**Owner rulings (plan mode, 2026-09-07):**
+- **R-1** all seven on the asset modal via `CarbonModal`. §1.38's "destructive confirmation = narrow tearsheet" is a
+  **scope clarification**, not a reversal: it governs `/admin/management`; the map's Delete seat / Vacate / Discard stay
+  the modal with the danger primary (DECISIONS D2 Phase 4 PR 5b amendment; the note under D5-b).
+- **R-2** the inspector's unsaved-edits guard keeps a **plain** primary (Save changes; Discard at secondary weight —
+  §1.24's dirty-close rule: discarding unsaved edits is not data destruction). **Discard draft changes** gets the
+  **danger** primary (it erases saved draft work and the undo history — §1M.3's danger item); Vacate / Delete seat
+  danger; Swap / Move / move-conflict plain.
+- **R-3** no × on the modal — Cancel · Esc are the exits, as on every design-system container. The three `aria-label`s
+  (`Cancel custom seat deletion`, `Cancel swap confirmation`, `Cancel moving employee`) retired; e2e-auth
+  `draft-dialogs` re-pointed to the dialog's Cancel.
+
+- **R-4 (found at review, 2026-09-07 — a plan omission): every one of the seven carries the asset's `.cds-modal-eyebrow`**
+  (CarbonModal's existing `eyebrow` prop), as specimen `02-map.html#slot` draws ("Move employee" over the question) and
+  `03-panels-and-sheets.html#confirm`'s anatomy states ("Eyebrow label-01 · heading-03 question"); the PR 4 modals
+  already do. Strings only — no sheet, token or copy change to headings / bodies / buttons: Vacate → **Vacate seat**;
+  Delete seat → **Delete seat**; Swap → **Swap seats**; Move (both arms) and the inspector's move-conflict → **Move
+  employee**; Discard draft → **Discard draft changes**; the inspector guard → the inspector's own eyebrow (`Seat CW01 ·
+  Center West`, the string `SeatInspector` composes, passed from SeatMap). `dialog-error-placement` pins the eyebrow
+  per id in `DIALOG_REGISTRY` (rendered text for the six ct dialogs; a source pin that every map `CarbonModal` carries
+  `eyebrow=` and that the guard's is the inspector's string).
+- **R-5 (2026-09-07): the move-conflict initial-focus finding is not a 5b change** — parked for PR 6 (below); the
+  rig's `06b` stays recorded as a finding, not a FAIL of this slice.
+
+**Sheet amendment F (PHASE3DS §1.24, cross-referenced from §1.17):** `.cds-modal-footer.sp-modal-footer--3` — Carbon's
+own three-button modal footer, 25 / 25 / 50 — applies only when a modal carries two secondaries, which today is the
+inspector guard alone; not a licence for three-button footers elsewhere. Its second rule, found by the captures:
+`.cds-modal-body > p + p, > ul + p { margin-top: spacing-03 }` — the reset zeroes `<p>` margins and the asset spaces
+only its `ul`, so Delete seat's scope line and the move-conflict's publish note ran into the description on the first
+run. One sheet change (both copies, byte-identical), **no token change** (§4).
+
+**Roles — a finding, not a choice (recorded per the plan):** the six confirms carry `role="alertdialog"` (PHASE3DS §2
+"`.cds-modal` + `--danger` primary, `role=alertdialog`"); the inspector guard carries `role="dialog"` — a choice with
+three arms, not an alert. `dialog-error-placement` pins each id's role and a resolving `aria-describedby` (all seven
+name their description paragraph; Swap gains one — it was unlabelled).
+
+**Found in build: four dialogs closed on Esc while their RPC was in flight.** SeatMap's window Esc listener guarded
+only the discard / publish rungs on `pending`; Vacate, Delete seat, Swap and Move — which render with
+`pending={pending || mutationInFlight}` — closed mid-flight, hiding the only "still running" indicator (CarbonModal
+ignores Esc while busy, but the window listener fires regardless). The four rungs now gate on the predicate the dialog
+receives (`!pending && !mutationInFlight`); `seat-map-escape-source` pins them; `screenshots/pr5b/dialogs/01-vacate-busy-esc-*`
+shows Esc ignored during a 2.5 s delayed vacate.
+
+**What the code forced (one line each):**
+- `CarbonModal` gains `describedBy` (aria-describedby on the section; the body renders the `<p id>`), `footerColumns`
+  (2 default, 3 → `sp-modal-footer--3`) and a `ReactNode` title — the move heading keeps its cross-floor `.cds-tag`
+  inside the question (D2′); nothing else (no ×, no danger variant — the danger is the primary button's).
+- The floor tag is the asset `.cds-tag` (D2′); Swap's Source / Target are the asset's two-item body list.
+- The in-modal error is the focusable `.cds-notification--error` with the `NotificationGlyph` (two signals) inside
+  `.cds-modal-body`; Discard draft gains the ref + focus the other six already had (it was a bare `<p role="alert">`)
+  and its verb line ("Discard did not complete.").
+- `Button` and `adminDangerButtonClassName` leave both files (the export stays in `Button.tsx`, unused — nothing
+  deleted this slice); `useDialogFocus` leaves the inspector (the host owns it); `CloseIcon` stays for Close inspector.
+- Test re-points, never loosened — TEST-TRIAGE "PR 5b outcomes". Two scans now strip comments before matching
+  (`dialog-error-placement`'s registry, `tailwind-arbitrary-alpha`'s container scan): the file headers quote the
+  attributes in prose.
+- The rigs `map-states.mjs` and `pr5b-dialogs.mjs` locate the confirms by `alertdialog`.
+
+**Findings for the owner (recorded, not changed):**
+- **The move-conflict dialog opens with focus on its container, not on Cancel** (`pr5b-dialogs` `06b`, both themes).
+  It mounts INSIDE the rejected assignment's still-running transition, so its footer is disabled at mount and
+  `useDialogFocus` falls back to the section; when the transition settles the buttons enable but focus stays on the
+  invisibly-focused section (Tab reaches Cancel). Pre-existing — the pre-5b markup used the same hook the same way —
+  not a 5b regression. A candidate fix is a host-level effect in `CarbonModal` (busy → idle with focus on the section →
+  focus the first control); outside this slice's plan.
+- Draft-only custom seats leave with Discard everything (draft = published again) — correct by definition; a rig that
+  inserts a custom seat re-inserts it after a discard (`pr5b-dialogs` `07b`).
+
+**The pre-merge smoke (owner-ordered, 2026-09-07 — `audit/pr5b-smoke.mjs`, `screenshots/pr5b-smoke/`): 22 / 22 records
+pass**, light then dark on a reset + reseeded stack, every geometric claim a hit-test: Vacate (contract, the 2px inset
+terracotta outline on Cancel, the five hit-tests, the Tab trap, Esc restoring the opener), Vacate mid-flight (Esc + a
+pointer ignored; resolves to Open with ◇; Undo via the row), Vacate error (the notification inside with focus, Retry),
+Delete seat (the 8px paragraph gap of amendment F; Cancel restores focus; deleted for real), Swap (mode card owns the
+slot; list + summary; overlay mousedown inert), Move both arms (cross-floor tag N/A on the seed), move-conflict (initial
+focus on the section — R-5 recorded; Tab → Cancel; moved for real; Undo), the guard (120 / 120 / 240, Keep editing
+focused, Esc keeps the edit, Discard writes nothing, the shell veto → Save changes saves and continues to Management),
+Discard draft (Esc; for real → "Draft — no changes", Publish disabled with its reason beside it), stacking (no tooltip
+under the overlay; the overlay above the slot and the row), the brand line (terracotta / red 60 with white labels; no
+`0f62fe` outside `carbon-tokens.css`). No product change was needed; three rig-side fixes are in the README. **One
+further finding, recorded not changed:** mid-flight focus sits on `<body>` — Chrome drops focus from the clicked primary
+when it disables under it; Tab re-anchors through the trap. Pre-existing (the old `Button` disabled while loading too);
+the PR 6 host-level refocus below would also cover it (move focus to the section when `busy` flips true). After R-4:
+the dialog rig **27 / 29** (the two = the R-5 finding), runtime audit **0 undefined** (6 routes × 2 themes + 1280 + system state + the viewer pass), e2e-auth **53 / 53** on the same
+build; unit 1449 · ct 321 · browser 26. **Preview walk (2026-09-07, after CI on #523):** `audit/pr5b-preview-walk.mjs` on the
+a30dcf1 deployment — 21 / 21, opened and dismissed only, zero writes proven by the indicator + Undo before / after and the
+POST log (`screenshots/pr5b-preview/README.md`).
+
+**Parked for PR 6 (owner ruling R-5, 2026-09-07):**
+- `CarbonModal` busy → idle refocus — when the host's `busy` flips false while focus sits on the section, focus the
+  first control (a shared-host change, its own ct pin); closes the move-conflict initial-focus finding above. The same
+  change should anchor focus on the section when `busy` flips TRUE (the smoke's mid-flight `<body>` finding).
+- `Button.tsx` `adminDangerButtonClassName` — unused since 5b (its last consumers were the map's danger confirms) —
+  retire in PR 6.
+
+**Evidence (build box, 2026-09-07 — `screenshots/pr5b/README.md`):** `pr5b-dialogs.mjs` **27 / 29** records (the two
+FAILs are the one focus finding above), every computed value in the plan's Verification met — bg layer-02, 480, radius 0,
+footer 64 at 240 / 240 (the guard 120 / 120 / 240), primary terracotta or red 60 with a white label, overlay 8500, no ×,
+first-control focus, overlay pointer inert, Esc ignored while busy, the error notification inside with focus; runtime
+audit **0 undefined** on 6 routes × 2 themes + 1280 + system state + the viewer pass; contrast **202 / 202** (no token
+change); unit 1449 · ct 321 · `test:browser` 26 · e2e 36 · e2e-auth **53 / 53** (reset + reseeded stack) · clean (lint 0 errors, typecheck, coverage 98.33 / 92.39 / 98.30) · build clean. Real mutations
+on the local stack only: one vacate through the delayed route (re-assigned through REST), one move + Discard everything
+for real (converged), custom seat R99 inserted through REST and deleted for real through the confirm.
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -816,6 +927,7 @@ PHASE2UX §5 item n.
 | P2-7 | Management: real tablist; 403 card gains its action; tiles removed | `ManagementFrame.tsx`, `app/(shell)/admin/management/page.tsx` (+ settings 403), `AdminManagementPanel.tsx` | 4 | done (PR 4; Publish History tab also gone — D5) |
 | P2-8 | Settings: Reset-draft entry removed (ruling 22; Q7 keeps the map's Discard) | `DataUtilitiesPanel.tsx` | 4 | done (PR 4; `resetDraftToPublishedAction` has ONE call site, pinned in `bulk-destructive-action-safety-source`) |
 | P2-9 | Ask Planner drawer 408 → 400 | `AskPlannerDrawer.tsx` | 3 | done (3b: the drawer is the 400 slot — §1.31) |
+| P2-3b / O-8 | Map confirm dialogs → the asset `.cds-modal` (PHASE2UX §3 "Modal (Move / Swap / Delete confirms)", a PR 3 landing found open in PR 5 — §1.43) | `SeatMapDialogs.tsx`, `SeatInspector.tsx` (move-conflict), `CarbonModal.tsx` | 5b | done (PR 5b: all seven on `CarbonModal`; R-1…R-3; amendment F — §1.47) |
 
 Architecture item the hand-off named for the **PR 2 plan** — done (owner confirmation 2026-09-03): `app/page.tsx`
 moved into `app/(shell)/` so the one shell mounts on `/` (PHASE1IA B2); `auth-session-source`'s matcher list already
@@ -834,6 +946,7 @@ allowlisted `/`; `nav-shell.spec.ts` walks `/` through the History switch.
 | 3a | `office-room-wash`, `zone-wash`, `seat-clusters` (D1-h / D1-i, with their modules) | `filter-feedback-source` (the control row's live count), `seat-map-components` (FloorMenuButton replaces FloorSelector; DeptChipRow + nameplate blocks gone), `map-status-band` (`.sp-band`, marks, Names), `viewer-seat-finder` (filters via URL state; D1-d scope; the row's toggle), `viewer-shell` (control row seam; Filters · N), `app-shell` (left-panel + state hooks in place of slots), `accessibility-source` (map half: control row, palette, canvas status, roster Copy link; none loosened), `browser/seat-map.spec.ts` (wash tests gone; palette; More actions), `browser/draft-history.spec.ts` (row names), `e2e-auth` accessibility / draft-dialogs (More actions menu) | `status-label-source` (Status group from `lib/viewerFilterGroups`), `touch-target-source` + `type-floor-source` (deleted-file rows; the row's 40px controls are on the ladder), `pending-state-source` (flows 12 / 13 → the row's busy Undo / Redo), `seat-creation-ui-source`, `floors` (Add seat Hidden on the roster), `focus-handoff-source`, `viewer-keyboard-parity-source` (the shared field), `ask-planner-ai-source`, `virtualized-directory`, `desktop-seat-marker-system-source`, `session-expiry-source` (the notice's sign-in action), `viewer-find-palette-source` | added `platform-shortcut`, `map-search-scope`, `map-url-state`, `seat-mark` (ct), `map-control-row` (ct); `deep-link` + `floor-roster` extended (Copy link); unit 1407 · ct 289 · browser 25 |
 | 4 | `settings-tiles-source` (both anchors re-homed: the publish-boundary copy → `settings-affordance-source`, the single-call-site pin → `bulk-destructive-action-safety-source`); ct `data-utilities-panel` reset tests (feature gone, ruling 22); e2e-auth `draft-dialogs` reset review | `management-detail-source`, `management-directory-map-link-source`, `settings-affordance-source` (labelled triggers, callout, one primary per section, exports never disabled), `admin-management-panel` (ct: 16 — tabs, count, two row stops, dirty close, inline rename, create modal, the sheet over the panel), `data-utilities-panel` (ct: 12 — guard inline, triggers, header-only export, done-state ghost, MLS02 keeps the restore review) | `accessibility-source` (dialog files = the panel / sheets / `CarbonModal`; hygiene attrs in `EmployeePanel`; scroll regions = `.cds-side-panel-body` / `.sp-tearsheet-body`; counts in `lib/managementCounts` + `OptionList`; row stops in `EmployeesTable`), `bulk-destructive-action-safety-source` (host + sheets), `action-input-validation-source` (three sinks), `virtualized-directory` (host + table), `pending-state-source` (flows 15–20 → the sheets / list / create modal), `touch-target-source` (Management ledger rows gone), `close-icon-source` (Management's × = the search clear; Settings has none), `dialog-error-placement` (census + 3 ct: restore MLS02, create-modal failure, dirty-close ask; `titleId` discovery), `phase4-token-layer-source` (`SWEPT` {1,2,3,4}), e2e-auth `accessibility` (sheet + ⋯ + names) | added `management-counts`, `inline-rename`, `file-guard`; unit 1428 · ct 307 · lint 0 errors · build clean |
 | 5 | `close-icon-source` (with `components/ui/CloseIcon.tsx` — the one glyph is `mapIcons.tsx`'s) | `reception-screen` (ct: 34 — the cursor / lock split, the Esc rungs, `?q=` landings + `replaceState`, the clear ×, Ctrl / ⌘ K, the platform hint, the readout tile / D3′ line / no-extension / Show on map, zero · empty · partial, fallback rows, recents outside the live region, Back to the list, no avatar) | `reception-source` (published-layer + D3′ pins verbatim; + the PR 5 contracts), `chunk-recovery-boundary-source` (+ the Reception boundary), `touch-target-source` (Reception comment block; the `/admin` 403 pin left with the card), `phase4-token-layer-source` (two permanent ledger rows; the `shadow-sp` ban; the font pin on `app/fonts/plex.ts` + both roots), e2e-auth `page-frames` (+ Reception), `header-geometry` (+ `/reception` viewer), `accessibility` (+ Reception rest / locked, the `/admin` 403) | added e2e-auth `reception-keyboard.spec.ts`; the rigs gained the Reception section (viewer), the 404, the `/admin` 403 and a viewer pass for `/my-seat`; unit 1445 (1443 pass + 2 environment-only fails on the sandboxed box — see the slice log) · ct 34 (reception) |
+| 5b | — | `dialog-error-placement` (role-agnostic open-dialog query; `aria-describedby` + the ruled role for all seven; Discard's error focusable; comment-stripped registry scan), `seat-map-escape-source` (+ the four pending guards) | `dialog-initial-focus` (alertdialog container), `accessibility-source` (SeatMapDialogs + SeatInspector off the aria-modal host loop; `titleId` pins; Delete's Cancel for the × pin; the inspector's z-index look-pin → `titleId` + `alertdialog` + no `Cancel moving employee`), `touch-target-source` (two × rows), `tailwind-arbitrary-alpha-source` (container scan follows `CarbonModal`, code only), `bulk-destructive-action-safety-source` (`titleId`), e2e-auth `draft-dialogs` (alertdialog; the dialog's Cancel), browser `seat-map` + `accessibility` (alertdialog) | unit 1449 · ct 321 · browser 26 · e2e 36 · e2e-auth **53 / 53** (reset + reseeded stack) |
 | 1 | `elevation-shadow-tokens-source`, `color-twin-drift-source`, `e2e/publish-ready-badge-contrast.spec.ts`, `marker-contrast.test.mjs` + `scripts/marker-contrast.mjs` (missed by the PR 0 survey: measured the old `--sp-marker-*` values from the deleted block; the obligation — marker contrast in both themes, non-hue pair distinction — is carried by the generated 192-pair suite and Phase 3's two-signal marks) | `auth-theme-source` (both-themes resolution against `sp-tokens.css` + `carbon-tokens.css`; class bans and ledger kept), `focus-brand-contrast-source` (one `--sp-focus` aliasing `$focus`, defined light + system-dark + forced-dark; tier-C panel focus; raw brand orange banned in code, not comments), `theme.test` (derivation function ↔ boot string; three states; toggle writes only through `applyTheme`) | `accessibility-source` (two kind-tag token pins: `pending-surface` → `draft-surface`, `--admin-diff-vacated-text` → `--sp-status-error-text`), `ask-planner-ai-source` (dim rules read from `globals.css` + the bridge), `phase4-token-layer-source` (`SWEPT` = {1}; ledger 4 rows; font-bridge, asset-identity, import-order and bridge-alias assertions added) | 1390 pass · 0 fail; `npm run gate` clean; `npm run build` clean |
 
 ---
@@ -915,6 +1028,14 @@ product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs
 202/202 pass
 ```
 
+PR 5b (2026-09-07, **no token change** — sheet amendment F only, §1.47; the modal's pairs — layer-02 text, the
+secondary, the terracotta and red-60 primaries with white labels — are gated since 3b / PR 4):
+
+```
+product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs
+202/202 pass
+```
+
 Marker states (`audit/marker-contrast.mjs`, local Docker stack, seed data, 2026-09-03 after the §1.6 fix) —
 worst text span per state, light / dark:
 
@@ -985,7 +1106,7 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | 3b | #518 | `feat/phase4-map-markers` | v1.74.6 | map markers + slot (P3-5 marker half, 7, 8, 11, 12, 14; P2-3, 9): `.sp-pill` rewrite, seat-code tooltip, ◇ from the publish diff, quiet pill replaces the dim (ledger row closed), invalid target wired (O4), 400 slot (inspector · mode card · Ask Planner), publish tearsheet, group-3 sweep, marker rig + Draft-mark crops; owner rulings O2 O3 (brand-layer tokens); carry-ins C-1 (row rules out of `globals.css`, Q1/Q2), C-2 (palette rows, add-seat card), C-3 (§1.25 Redo fix, Q3 every column); Q4 seed reserved + unavailable; Q5 one PR. **Pre-merge smoke 13/13 steps pass** (18/18 records, `screenshots/pr3b-smoke/`); fix §1.36 — people edits now badge the seat; ◇ `rgb(138, 63, 252)` light / `rgb(190, 149, 255)` dark; live hit-pill contrast **15.23:1** light / **10.50:1** dark; Redo reapplies; invalid targets refused with the notice; 1024 pass; tooltip = seat code only (ruling, §1.36) | merged 2026-09-05 (squash) |
 | 4 | #519 | `feat/phase4-pages` | v1.75.0 | Management + Settings (P3-7 Management half, 8 Deactivate, 15, 16, 17; P2-6, 7, 8): `ManagementFrame` (line tabs in the sections landmark, the primary follows the tab), `EmployeesTable` (`.cds-table`, toolbar count, ● / ○, seat-code link, one ghost Edit), `EmployeePanel` (480 layer-02 slide-over, 50/50 footer, no ×, one dirty check → `CarbonModal` ask), `OptionList` (Save · Cancel inline rename, blur validates, ⋯ Delete), `OptionCreateModal`, `ManagementConfirmSheet` (**owner ruling §1.38**, sheet amendment B), Publish History tab gone; Settings: `.sp-callout`, sections in the record's order, `FileTrigger` + `lib/fileGuard` (5 MB / type, inline before a sheet), `CsvImportSheet` / `SnapshotRestoreSheet` (D6-e done-state ghost; MLS02 keeps the restore review), Reset draft gone (one call site pinned), draft-only page; group-4 sweep (`SWEPT` {1,2,3,4}, bridge §2 empty); `lib/managementCounts` / `inlineRename` / `fileGuard` | built 2026-09-05: unit 1428 · ct 307 · gate clean · e2e 36 · **e2e-auth 39/39** (local stack) · runtime audit 0 undefined (6 routes × 2 themes + 1280 + system state) · page-states rig 63 captures (`screenshots/pr4/`) · contrast 202/202 (no token change) · build clean. **Owner's twenty-step smoke 2026-09-05: 47/47 after four fixes (§1.39 — the indicator seam, the returned deactivate refusal, the inert overlay keeping focus, sheet amendment C for the narrow frame); captures + `results.json` in `screenshots/pr4-smoke/`**; read-only preview walk 22/22 on the Vercel preview (`screenshots/pr4-preview/`, people data masked) → §1.23 **amendment D** (the Edit tooltip escaped the asset's clipped cell; smoke step 4 re-run 4/4, e2e-auth 42/42) | merged (v1.75.0) 2026-09-05 (squash, 18f855d) |
 | 5 | #522 | `feat/phase4-reception` | v1.76.0 | Reception on `.sp-recep` (P3-4 Reception half, 5 Reception half closed "no mark drawn", 18; P2-4 last half, 5): `ReceptionFrame`, `ReceptionScreen` (search lg + clear × + Ctrl / ⌘ K, the cursor / lock split, the Q-1 Esc rungs, `?q=` via `replaceState`, readout tile + D3′ line + "No extension on file" + Show on map, fallback rows, recents outside the live region, zero · empty · partial · loading · error), sheet **amendment E** (the 1024 fold); route cards on `.sp-route-card` (admin boundary, `/admin` 403 without its raster strip, root boundary + 404 by Q-2, `global-error` in the design system — fonts moved to `app/fonts/plex.ts`); carry-ins: `shadow-sp` 4 → 0 (+ the token ban, `boxShadow` gone from Tailwind), `components/ui/CloseIcon.tsx` retired for `mapIcons`, `HEX_LEDGER` two permanent rows (Q-3); `/login` + `/my-seat` confirmed unchanged by capture; O-8 → PR 5b (Q-5). Plan of record `plans/phase4-pr5-reception.md`; §1.40–§1.44 | built 2026-09-06 on `feat/phase4-reception`: unit 1445 (1443 pass; 2 environment-only fails — sandbox / box, `screenshots/pr5/README.md`) · ct 318 · gate clean (lint 0 errors, typecheck, coverage 98.33 / 92.35 / 98.29) · build clean · e2e 34 pass (+ 2 environment-only helper self-test fails) · contrast **202/202 (no token change)** · 404 + global-error captured both themes (the global-error theme fix, §1.42). **Docker-stack evidence (§1.45, colima + Chrome installed with the owner's go-ahead): runtime audit 0 undefined on 6 routes × 2 themes + 1280 + system state + the viewer pass · page-states 83 captures · `/login` + `/my-seat` byte-identical vs `main` (5/5) · e2e-auth 53/53 · the two environment-only tests pass unsandboxed on real Chrome**; **Owner's eighteen-step smoke 2026-09-06/07 (`audit/pr5-smoke.mjs`, `screenshots/pr5-smoke/`): 37/38 records in the final run — the one FAIL is the in-run step-17 compare flaking on two animated surfaces, 5/5 IDENTICAL standalone; three product fixes (§1.44 hint states the current key; §1.46 `replaceState` passes `history.state` + the cache-restored landing; the map's D1-d unique landing counts a person plus their own seat as one match) and e2e-auth 53/53 after them**. **Read-only preview walk 2026-09-07 (`audit/pr5-preview-walk.mjs`, `screenshots/pr5-preview/`): 29/29 on the `68e8b03` deployment as the fixture account (admin role in production — `/admin` shows the map, the 403 is proven on the local stack), people data masked; indicator identical before and after, 4 argument-less status POSTs, no other failed responses.** PR #522 CI green (verify · e2e · e2e-auth · CodeQL) | **merged (v1.76.0) 2026-09-07 (squash, 79b29d9)** — the row's build / smoke / walk facts stand |
-| 5b | — | `feat/phase4-map-dialogs` | v1.77.0 | the map's seven confirm dialogs (Vacate · Delete seat · Swap · Discard draft · move-conflict + two) onto the asset `.cds-modal` on the PR 4 `CarbonModal` host (PHASE2UX §3, a PR 3 landing found open — §1.43, owner ruling Q-5) | not started |
+| 5b | — | `feat/phase4-map-dialogs` | v1.77.0 | the map's seven confirm dialogs (Vacate · Delete seat · Swap · Discard draft · the inspector guard · Move / Swap them · the inspector's move-conflict) onto the asset `.cds-modal` on the PR 4 `CarbonModal` host (PHASE2UX §3, a PR 3 landing found open — §1.43, owner ruling Q-5): `CarbonModal` `describedBy` / `footerColumns` / node title; sheet **amendment F** (the guard's 25/25/50; body paragraph spacing); `alertdialog` on the six confirms, `dialog` on the guard; danger primary on Vacate / Delete / Discard (R-2); no × (R-3); found in build — Esc closed four dialogs mid-flight (fixed, pinned). Plan of record `plans/phase4-pr5b-map-dialogs.md`; §1.47 | built 2026-09-07: unit 1449 · ct 321 · gate clean (lint 0 errors, typecheck, coverage 98.33 / 92.39 / 98.30) · build clean · browser 26 · e2e 36 · **Docker-stack evidence: `pr5b-dialogs.mjs` 27/29 (the 2 = one pre-existing focus finding, §1.47) · runtime audit 0 undefined · e2e-auth **53 / 53** (reset + reseeded stack) · contrast 202/202 (no token change)** (`screenshots/pr5b/`). **R-4 (eyebrows on all seven) + R-5 folded in 2026-09-07; owner's smoke `audit/pr5b-smoke.mjs` 22/22 light + dark (`screenshots/pr5b-smoke/`), no product change**. **PR #523 CI green (verify · e2e · e2e-auth · CodeQL). Read-only preview walk 2026-09-07 (`audit/pr5b-preview-walk.mjs`, `screenshots/pr5b-preview/`): 21/21 on the a30dcf1 deployment, the owner signed in by hand in headed Chrome, every dialog opened and dismissed only, people data masked; indicator "Draft — no changes" + Undo disabled before and after; 3 action POSTs (1 status read + the move-conflict's 2 refused Assign submits); Delete seat and Discard draft N/A on production (no custom seat, no draft change)** |
 | 6 | — | — | v2.0.0 (after 5b) | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
 
 PR 3b pre-merge smoke (2026-09-05, owner-ordered, thirteen steps, local Docker stack, real Chrome 1920×1080, both themes):
@@ -993,4 +1114,4 @@ PR 3b pre-merge smoke (2026-09-05, owner-ordered, thirteen steps, local Docker s
 same build; marker rig 58 measurements, 0 under floor, ledger empty (both planner-highlight passes SKIPPED on a
 broad answer this run — a model outcome, not a marker).
 
-Next: PR 5b (`feat/phase4-map-dialogs`, v1.77.0 — the seven map confirm dialogs onto the asset modal via `CarbonModal`, §1.43), then PR 6 (v2.0.0).
+Next: PR 5b's smoke + preview walk, then the PR; on merge → tag v1.77.0, PHASE4BUILD "merged (v1.77.0)"; then PR 6 (v2.0.0).

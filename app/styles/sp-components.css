@@ -397,7 +397,8 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
      11. .sp-palette      — 560 search palette
      12. .sp-pill         — the seat name pill and its states; ◇ badge; names-off
      13. .sp-slot         — the 400 right slot: header, body, commit bar; inspector parts
-                            (contact rows, combobox + listbox, text area, actions)
+                            (contact rows, combobox + listbox, text area, actions);
+                            .sp-modal-footer--3 (amendment F, the guard's 25/25/50)
      14. .sp-mode-card
      15. .sp-ai-label / .sp-ai-popover / .sp-textarea--ai — Carbon for AI; drawer parts
      16. .sp-tearsheet    — wide (PR 4 adds --narrow); readiness rail; table group rows
@@ -628,6 +629,18 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 /* Phase 4 PR 3b (asset override, PHASE3DS §2): native <select> popups ignore the control's classes —
    without explicit option colours Windows dark mode paints OS-coloured options against the layer (#200) */
 .cds-select option { background: var(--sp-layer-01); color: var(--sp-text-primary); }
+
+/* Phase 4 PR 5b amendment F (PHASE3DS §1.24; the map's confirm dialogs on the asset modal): Carbon's own
+   three-button modal footer — 25 / 25 / 50 — for the ONE modal that carries two secondaries, the inspector's
+   unsaved-edits guard (Keep editing · Discard · Save changes). Not a licence for three-button footers elsewhere:
+   every other modal keeps the asset's 50/50 bleed. */
+.cds-modal-footer.sp-modal-footer--3 .cds-btn { flex: 1 1 25%; }
+.cds-modal-footer.sp-modal-footer--3 .cds-btn--primary { flex: 1 1 50%; }
+/* …and (found by the PR 5b captures) the body's stacked paragraphs: the asset spaces only its list
+   (ul margin-top spacing-03) and the reset zeroes <p> margins, so Delete seat's scope line and the
+   move-conflict's publish note ran into the description. One step between body paragraphs, the same
+   step the list already takes. */
+.cds-modal-body > p + p, .cds-modal-body > ul + p { margin-top: var(--sp-space-03); }
 
 /* -----------------------------------------------------------------------------
    14. MODE CARD — §3 "Mode card · hand-built". PHASE3DS §1.18. Owns the slot

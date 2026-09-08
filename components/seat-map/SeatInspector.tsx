@@ -11,12 +11,11 @@ import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { PUBLISH_IMPACT_NOTE } from "@/lib/copy";
 import { buildContactRows, employeeAssignmentFields, type ContactFactRow } from "@/lib/employeeAssignment";
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
-import { Button } from "@/components/ui/Button";
+import { CarbonModal } from "@/components/ui/CarbonModal";
 import { SeatMark, seatMarkKindFor } from "@/components/seat-map/SeatMark";
 import { CheckIcon, CloseIcon, CopyIcon } from "@/components/seat-map/mapIcons";
 import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
 import { withQueryParam, withSeatParam } from "@/lib/deepLink";
-import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 type SeatInspectorProps = {
   seat: SeatWithEmployee | null;
@@ -371,7 +370,6 @@ export function SeatInspector({
   const primaryActionRef = useRef<HTMLButtonElement | null>(null);
   const pendingPrimaryFocusRef = useRef(false);
   const assignmentSectionRef = useRef<HTMLElement | null>(null);
-  const moveConflictDialogFocusRef = useDialogFocus<HTMLElement>();
   const employeeInputRef = useRef<HTMLInputElement | null>(null);
   const employeePositionRef = useRef<HTMLInputElement | null>(null);
   const phoneExtensionRef = useRef<HTMLInputElement | null>(null);
@@ -1410,79 +1408,53 @@ export function SeatInspector({
         edits, because a transient surface earns less trust than this panel. */}
 
     {moveConflict && (
-      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,var(--sp-overlay)_45%,transparent)] p-3 backdrop-blur-[2px] sm:z-[70] sm:items-center">
-        <section
-          ref={moveConflictDialogFocusRef}
-          tabIndex={-1}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="move-employee-confirm-title"
-          aria-describedby="move-employee-confirm-description"
-          onKeyDown={event => {
-            if (event.key === "Escape" && !pending) {
-              event.stopPropagation();
-              setMoveConflict(null);
-              setMoveConflictError(null);
-            }
-          }}
-          className="w-full max-w-md rounded-[16px] border border-[var(--sp-border-subtle)] bg-[color-mix(in_srgb,var(--sp-layer-01)_95%,transparent)] p-4 text-[var(--sp-text-primary)] shadow-[0_26px_80px_rgba(23,26,29,0.32)] backdrop-blur-2xl"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 id="move-employee-confirm-title" className="text-base font-black">Move {formatDisplayName(moveConflict.employeeName)} to {formatSeatCode(selectedSeat.label)}?</h2>
-              <p id="move-employee-confirm-description" className="mt-1 text-sm leading-5 text-[var(--sp-text-helper)]">
-                They currently sit at {formatSeatCode(moveConflict.currentSeatLabel)}. Moving frees {formatSeatCode(moveConflict.currentSeatLabel)} (it becomes Open).
-              </p>
-            </div>
+      // Phase 4 PR 5b: the asset modal through the shared host (PHASE3DS
+      // §1.17 amendment) — alertdialog, plain primary (R-2), no × (R-3). The
+      // host owns focus + Esc-not-while-busy; the in-dialog error keeps the
+      // rAF focus from runSeatAssignment (PR-5 §8.1).
+      <CarbonModal
+        titleId="move-employee-confirm-title"
+        eyebrow="Move employee"
+        title={<>Move {formatDisplayName(moveConflict.employeeName)} to {formatSeatCode(selectedSeat.label)}?</>}
+        role="alertdialog"
+        describedBy="move-employee-confirm-description"
+        busy={pending}
+        onEscape={() => {
+          setMoveConflict(null);
+          setMoveConflictError(null);
+        }}
+        footer={
+          <>
             <button
               type="button"
+              className="cds-btn cds-btn--secondary"
               onClick={() => {
                 setMoveConflict(null);
                 setMoveConflictError(null);
               }}
               disabled={pending}
-              className="relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-[var(--sp-text-helper)] transition after:absolute after:-inset-1.5 hover:bg-[var(--sp-layer-accent)] hover:text-[var(--sp-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
-              aria-label="Cancel moving employee"
-            >
-              <CloseIcon className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="mt-4 grid gap-2">
-            <div className="rounded-[12px] border border-[var(--sp-status-warning-mark)] bg-[var(--sp-status-warning-surface)] p-3 text-sm font-semibold leading-5 text-[var(--sp-status-warning-text)]">
-              {PUBLISH_IMPACT_NOTE}
-            </div>
-          </div>
-
-          {moveConflictError && !pending && (
-            <div
-              ref={moveConflictErrorRef}
-              tabIndex={-1}
-              role="alert"
-              className="mt-4 rounded-[12px] border border-[var(--sp-status-error-mark)] bg-[var(--sp-status-error-surface)] p-3 text-sm font-semibold leading-5 text-[var(--sp-status-error-text)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--sp-focus)]"
-            >
-              <span className="font-semibold">Move did not complete.</span> {moveConflictError}
-            </div>
-          )}
-
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              onClick={() => {
-                setMoveConflict(null);
-                setMoveConflictError(null);
-              }}
-              disabled={pending}
-              className="w-full"
             >
               Cancel
-            </Button>
-            <Button type="button" variant="primary" onClick={confirmMoveEmployee} loading={pending} className="w-full">
+            </button>
+            <button type="button" className="cds-btn cds-btn--primary" onClick={confirmMoveEmployee} disabled={pending} aria-busy={pending || undefined}>
               {pending ? "Moving…" : moveConflictError ? "Retry move" : "Move them"}
-            </Button>
+            </button>
+          </>
+        }
+      >
+        <p id="move-employee-confirm-description">
+          They currently sit at {formatSeatCode(moveConflict.currentSeatLabel)}. Moving frees {formatSeatCode(moveConflict.currentSeatLabel)} (it becomes Open).
+        </p>
+        <p>{PUBLISH_IMPACT_NOTE}</p>
+        {moveConflictError && !pending && (
+          <div ref={moveConflictErrorRef} tabIndex={-1} role="alert" className="cds-notification cds-notification--error focus-visible:outline-none">
+            <NotificationGlyph kind="error" />
+            <div className="cds-notification-text">
+              <strong>Move did not complete.</strong> {moveConflictError}
+            </div>
           </div>
-        </section>
-      </div>
+        )}
+      </CarbonModal>
     )}
     </>
   );

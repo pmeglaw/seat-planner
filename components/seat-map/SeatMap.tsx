@@ -42,7 +42,7 @@ import { arrowKeyToDirection, edgeKeyToPosition, findNearestSeatInDirection, res
 import { canDeleteSeat, getSeatDeleteBlockReason } from "@/lib/seatProtection";
 import { canVacateSeat } from "@/lib/seatDraftActions";
 import { detectSeatZoneForPointResult, getSeatZoneDetectionFailureMessage } from "@/lib/seatZones";
-import { formatDisplayName } from "@/lib/formatName";
+import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import {
   MAP_IMAGE_HEIGHT,
   MAP_IMAGE_WIDTH,
@@ -901,13 +901,18 @@ export function SeatMap({
         return;
       }
 
+      // Phase 4 PR 5b (found in build): the four confirms below render with
+      // `pending={pending || mutationInFlight}` — CarbonModal ignores Esc
+      // while busy, but this window listener closed a "Vacating…" dialog
+      // mid-flight. Same predicate as the dialog, same rule as discard /
+      // publish above.
       if (deleteSeatConfirm) {
-        setDeleteSeatConfirm(null);
+        if (!pending && !mutationInFlight) setDeleteSeatConfirm(null);
         return;
       }
 
       if (vacateConfirm) {
-        setVacateConfirm(null);
+        if (!pending && !mutationInFlight) setVacateConfirm(null);
         return;
       }
 
@@ -919,12 +924,12 @@ export function SeatMap({
       }
 
       if (swapConfirm) {
-        setSwapConfirm(null);
+        if (!pending && !mutationInFlight) setSwapConfirm(null);
         return;
       }
 
       if (moveEmployeeConfirm) {
-        setMoveEmployeeConfirm(null);
+        if (!pending && !mutationInFlight) setMoveEmployeeConfirm(null);
         return;
       }
 
@@ -993,7 +998,7 @@ export function SeatMap({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [addSeatMode, askPlannerOpen, paletteOpen, clearStructuredFilters, closeAskPlannerDrawer, deleteSeatConfirm, discardDraftConfirmOpen, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, pending, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, structuredFiltersActive, swapConfirm, swapSourceSeatId, vacateConfirm]);
+  }, [addSeatMode, askPlannerOpen, paletteOpen, clearStructuredFilters, closeAskPlannerDrawer, deleteSeatConfirm, discardDraftConfirmOpen, inspectorDirty, inspectorGuardAction, moveEmployeeConfirm, moveEmployeeSourceSeatId, mutationInFlight, pending, publishReviewOpen, search, selectedSeatId, setActionNotice, setDiscardDraftConfirmOpen, setPublishReviewOpen, setSearch, structuredFiltersActive, swapConfirm, swapSourceSeatId, vacateConfirm]);
 
   // Warn on tab close / hard navigation while the inspector holds unsaved
   // edits — in-app links route through the guard dialog, but only the browser
@@ -3410,6 +3415,8 @@ export function SeatMap({
       {inspectorGuardAction && selectedSeat && (
         <InspectorGuardDialog
           seatLabel={selectedSeat.label}
+          // The inspector's own eyebrow (SeatInspector composes the same string) — R-4.
+          eyebrow={`Seat ${formatSeatCode(selectedSeat.label)} · ${selectedSeat.zone ?? selectedSeat.department ?? "Unzoned"}`}
           actionDescription={describeInspectorGuardAction(inspectorGuardAction)}
           pending={pending}
           onKeepEditing={keepEditingInspector}

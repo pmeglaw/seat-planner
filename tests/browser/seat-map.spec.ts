@@ -91,12 +91,13 @@ test("in move mode a reserved empty seat is an invalid target that refuses the c
   await expect(marker(page, "N01")).toHaveClass(/sp-pill--origin/);
 
   await clickMarker(page, "NE09");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(page.locator(".sp-canvas-status")).toContainText("NE09 is reserved — choose another seat.");
   await expect(marker(page, "N01")).toHaveClass(/sp-pill--origin/, { timeout: 1000 });
 
   await clickMarker(page, "N02");
-  await expect(page.getByRole("dialog", { name: /^Move Alice Smith to N02/ })).toBeVisible();
+  // PR 5b: the map's confirms are role="alertdialog" on the asset modal.
+  await expect(page.getByRole("alertdialog", { name: /^Move Alice Smith to N02/ })).toBeVisible();
 });
 
 test("clicking a seat selects it and opens the inspector with the occupant's details", async ({ page }) => {
@@ -315,7 +316,7 @@ test("a failed discard surfaces its error inside the discard dialog (002)", asyn
   await page.getByRole("menuitem", { name: "Discard draft changes" }).dispatchEvent("click");
   await page.getByRole("button", { name: "Discard everything" }).dispatchEvent("click");
 
-  const dialog = page.getByRole("dialog", { name: /Discard all draft changes/ });
+  const dialog = page.getByRole("alertdialog", { name: /Discard all draft changes/ });
   await expect(dialog).toBeAttached();                             // dialog stayed open on failure (not swallowed)
   await expect(dialog.getByRole("alert")).toBeAttached();          // the error renders INSIDE the dialog — plan 002's core fix
   // ...carrying the WRITTEN fallback, not the thrown text: a throw reaching a

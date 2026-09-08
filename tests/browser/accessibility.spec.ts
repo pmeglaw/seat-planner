@@ -113,7 +113,8 @@ test("the discard-confirm dialog has no structural WCAG A/AA violations", async 
   // here since `custom` has no published counterpart, so hasChanges is true).
   await page.getByRole("button", { name: "More actions" }).dispatchEvent("click");
   await page.getByRole("menuitem", { name: "Discard draft changes" }).dispatchEvent("click");
-  await expect(page.getByRole("dialog", { name: /Discard all draft changes/ })).toBeAttached();
+  // PR 5b: the confirm is role="alertdialog" on the asset modal.
+  await expect(page.getByRole("alertdialog", { name: /Discard all draft changes/ })).toBeAttached();
 
   const { violations } = await scan(page);
   expect(formatAxeViolations(violations)).toEqual([]);

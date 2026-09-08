@@ -75,6 +75,29 @@ test("Esc cannot dismiss the publish/discard dialogs while their RPC is pending"
   );
 });
 
+test("Esc cannot dismiss the vacate / delete / swap / move confirms while their RPC is pending", async () => {
+  const handlerNoComments = readEscapeHandler(await readSeatMap());
+
+  // Phase 4 PR 5b (found in build): these four dialogs render with
+  // `pending={pending || mutationInFlight}` — the host modal already ignores
+  // Esc while busy, but this window listener closed a "Vacating…" dialog
+  // mid-flight regardless. Each rung gates its close on the SAME predicate
+  // the dialog is handed, inside its own if-block.
+  const rungs = [
+    ["vacateConfirm", "setVacateConfirm"],
+    ["deleteSeatConfirm", "setDeleteSeatConfirm"],
+    ["swapConfirm", "setSwapConfirm"],
+    ["moveEmployeeConfirm", "setMoveEmployeeConfirm"]
+  ];
+  for (const [flag, setter] of rungs) {
+    assert.match(
+      handlerNoComments,
+      new RegExp(`if \\(${flag}\\) \\{[^}]*if \\(!pending && !mutationInFlight\\) ${setter}\\(null\\)`),
+      `the ${flag} rung must gate ${setter}(null) on !pending && !mutationInFlight — the predicate the dialog receives.`
+    );
+  }
+});
+
 test("the open-coded department/zone/status trio is gone from the Esc handler", async () => {
   const handlerNoComments = readEscapeHandler(await readSeatMap());
 

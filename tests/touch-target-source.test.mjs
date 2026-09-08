@@ -81,14 +81,15 @@ const PINS = {
     "after:absolute after:-inset-y-1.5"
   ],
   // Phase 4 PR 3b: the inspector's icon buttons are the asset's 40px
-  // `.cds-btn--icon` with the `.cds-touch-target` pseudo (44); the move-
-  // conflict dialog's close keeps its Tailwind expansion.
+  // `.cds-btn--icon` with the `.cds-touch-target` pseudo (44). PR 5b: the
+  // move-conflict dialog is the asset modal (64px footer buttons) — its ×
+  // and the Tailwind expansion left.
   "components/seat-map/SeatInspector.tsx": [
     "cds-btn cds-btn--icon cds-btn--md cds-touch-target",
-    "cds-btn cds-btn--icon cds-touch-target",
-    "after:absolute after:-inset-1.5"
+    "cds-btn cds-btn--icon cds-touch-target"
   ],
-  "components/seat-map/SeatMapDialogs.tsx": ["after:absolute after:-inset-1.5"],
+  // (Phase 4 PR 5b: SeatMapDialogs.tsx has no row — the six dialogs are the
+  // asset modal's 64px footer buttons; the × and its expansion left.)
   // Seat markers: the canvas stays exempt from the sweep (SKIP_FILES). Phase 4
   // PR 3b: every marker — the name pill and the empty-seat footprint — carries
   // the asset's `.cds-touch-target` pseudo (44px, deviation 7; the rule is

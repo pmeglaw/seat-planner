@@ -291,7 +291,9 @@ truncate. Judgment recorded: composition says create containers omit the ×; thi
 that also edits, so it keeps the × (patterns: Close = icon, upper right) and adds Cancel only while dirty.
 
 ### 1M.6 Mode card (Move / Swap / Add seat)
-*Built 2026-09-05 (PR 3b: `ModeCard.tsx` owns the slot while a mode runs; the O4 note on the targeting modes).*
+*Built 2026-09-05 (PR 3b: `ModeCard.tsx` owns the slot while a mode runs; the O4 note on the targeting modes).
+"Confirm dialogs stay modal" built 2026-09-07 (Phase 4 PR 5b): the asset modal via `CarbonModal`, the shipped copy
+verbatim, floors tagged with the asset `.cds-tag` — PHASE4BUILD §1.47.*
 
 Owns the slot while a mode runs (INV-4). Card: eyebrow "Move employee mode", message ("Moving Sarah Reyes
 from NE04. Select the destination seat."), ghost **Exit move employee**; Esc exits ("Move canceled — no
@@ -717,7 +719,7 @@ add it to the component layer (and say so in its decision log).
 | Combobox (employee name) | inspector | **hand-built** | Creates inline; option rows with meta |
 | Select, text input, text area | inspector | exists `.cds-select`, `.cds-text-input`; text area **hand-built** | — |
 | Danger button (Delete seat) | inspector | exists `.cds-btn--danger-ghost` | Danger ghost; shown only for `is_custom` seats — original seats show no Delete at all (Hidden, not disabled; seatProtection); the block reason is helper text outside the button |
-| Modal (Move / Swap / Delete confirms) | map | exists `.cds-modal` | Never nested; Cancel left, primary right |
+| Modal (Move / Swap / Delete confirms) | map | exists `.cds-modal` | Never nested; Cancel left, primary right. *Built 2026-09-07 (Phase 4 PR 5b, PHASE4BUILD §1.47): all seven map confirms on `CarbonModal` — the 50/50 footer IS "Cancel left, primary right"; the guard's three buttons on the 25/25/50 footer (PHASE3DS §1.24 amendment F)* |
 | Wide tearsheet (publish review) | map | **hand-built** | Anchored bottom, overlay, no × |
 | Data table (publish review) | tearsheet | exists `.cds-table` | Floor eyebrow rows are group headers |
 | Status marks (seat legend) | band | exists `.cds-status` | Constant marker footprint, per-state symbol (deviation 3) |

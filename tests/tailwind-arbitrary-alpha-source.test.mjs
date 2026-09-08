@@ -50,22 +50,29 @@ test("every auto-focused seat-map dialog suppresses the UA focus outline on its 
   // focus-visible:outline-none the browser draws its default blue ring on the
   // keyboard-open path. Checked per dialog function — a file-wide count lets
   // one dialog's extra suppression (e.g. on its close button) mask another
-  // dialog's missing one. Covers every seat-map file that mounts an
-  // auto-focused dialog, not just the extracted dialogs module.
-  const files = ["../components/seat-map/SeatMapDialogs.tsx", "../components/seat-map/AskPlannerDrawer.tsx"];
+  // dialog's missing one. Covers every file that mounts an auto-focused
+  // dialog for the map: Phase 4 PR 5b moved the six SeatMapDialogs and the
+  // inspector's move-conflict onto CarbonModal, so the container is the
+  // host's section (`role={role}` — dialog or alertdialog by prop).
+  // SeatMapDialogs.tsx itself hosts no container any more — it passes
+  // `role="alertdialog"` as a PROP to the host, so it is not scanned.
+  const files = ["../components/ui/CarbonModal.tsx", "../components/seat-map/AskPlannerDrawer.tsx"];
+  const ROLE_ATTR = /role=(?:"dialog"|"alertdialog"|\{role\})/;
   const missing = [];
   let sawDialog = false;
   for (const file of files) {
-    const source = await readFile(new URL(file, import.meta.url), "utf8");
+    // Comments quote the attribute in prose; scan code only.
+    const source = (await readFile(new URL(file, import.meta.url), "utf8")).replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
     for (const body of source.split(/(?=export (?:default )?function )/)) {
-      if (!body.includes('role="dialog"')) continue;
+      const roleAt = body.search(ROLE_ATTR);
+      if (roleAt === -1) continue;
       sawDialog = true;
       const name = /export (?:default )?function (\w+)/.exec(body)?.[1] ?? "(unnamed)";
-      // The container is the element carrying role="dialog" — check the first
+      // The container is the element carrying the role — check the first
       // className after that attribute (still inside the opening tag), so a
       // suppressed inner button can't satisfy the rule. A bare end-of-tag
       // regex breaks on JSX arrow props (`onKeyDown={e => …}`).
-      const afterRole = body.slice(body.indexOf('role="dialog"'));
+      const afterRole = body.slice(roleAt);
       const containerClass = /className="([^"]*)"/.exec(afterRole)?.[1] ?? "";
       if (!containerClass.includes("focus-visible:outline-none")) missing.push(name);
     }

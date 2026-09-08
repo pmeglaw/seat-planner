@@ -320,10 +320,12 @@ test("aria-modal dialogs take focus, trap Tab, and restore the opener", async ()
   // tabIndex={-1}); aria-modal without focus management tells assistive tech
   // the page is inert while the keyboard proves otherwise.
   const dialogFiles = [
-    "../components/seat-map/SeatMapDialogs.tsx",
+    // (SeatMapDialogs.tsx left this list in Phase 4 PR 5b: its six dialogs
+    // render through CarbonModal, which hosts the aria-modal section.)
     "../components/seat-map/PublishReviewSheet.tsx",
-    "../components/seat-map/SeatInspector.tsx",
-    // (AskPlannerDrawer left this list in PR 3b: it is the right slot, a side panel.)
+    // (SeatInspector.tsx left this list in PR 5b with the move-conflict
+    // dialog moving onto CarbonModal; AskPlannerDrawer in PR 3b — the right
+    // slot, a side panel.)
     "../components/admin-settings/CsvImportSheet.tsx",
     "../components/admin-settings/SnapshotRestoreSheet.tsx",
     // PR 4: Management's dialogs are the 480 panel, the narrow confirm sheet
@@ -471,10 +473,13 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.doesNotMatch(inspectorSource, /VIEW DETAILS/);
   assert.doesNotMatch(inspectorSource, /Collapse inspector/);
   // Phase 4 PR 3b: the inspector IS the right slot (`.sp-slot` inside
-  // RightSlot's host) — no z-index of its own; the move-conflict dialog keeps
-  // its own stacking above everything.
+  // RightSlot's host) — no z-index of its own.
   assert.match(inspectorSource, /className="sp-slot max-w-full"/);
-  assert.match(inspectorSource, /z-\[90\][\s\S]*sm:z-\[70\]/);
+  // (PR 5b: the move-conflict dialog is the asset modal on CarbonModal — the
+  // overlay z-index is the sheet's; the z-[90] / sm:z-[70] look-pin retired.)
+  assert.match(inspectorSource, /titleId="move-employee-confirm-title"/);
+  assert.match(inspectorSource, /role="alertdialog"/);
+  assert.doesNotMatch(inspectorSource, /aria-label="Cancel moving employee"/);
   assert.match(inspectorSource, /hasCurrentAssignment \? "Assignment" : "Assign this seat"/);
   assert.match(inspectorSource, /aria-labelledby="seat-assignment-heading"/);
   assert.match(inspectorSource, /id=\{employeeHelpId\}/);
@@ -599,7 +604,10 @@ test("unsaved inspector changes use an explicit save discard keep-editing guard"
   // Guard-dialog markup lives in SeatMapDialogs.tsx (R-02a extraction); the
   // guard state machine and its action descriptions stay in SeatMap.
   const guardDialogSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
-  assert.match(guardDialogSource, /id="inspector-unsaved-title"/);
+  // PR 5b: the guard renders on CarbonModal, which owns the <h2 id>; the
+  // dialog names itself by titleId (the id is unchanged — the browser tier
+  // and the Save arm's ledger row key on it).
+  assert.match(guardDialogSource, /titleId="inspector-unsaved-title"/);
   assert.match(guardDialogSource, /Unsaved seat edits/);
   assert.match(guardDialogSource, /Save changes/);
   assert.match(guardDialogSource, /Discard/);
@@ -1007,8 +1015,13 @@ test("custom seat deletion remains guarded by the parent map action", async () =
   assert.match(deleteFunction[0], /setActionNotice\(`Deleted custom seat \$\{deletedSeatLabel\}\. Undo is available until publish\.`\)/);
   // Confirm-dialog markup lives in SeatMapDialogs.tsx (R-02a extraction).
   const deleteDialogSource = await readSource("../components/seat-map/SeatMapDialogs.tsx");
-  assert.match(deleteDialogSource, /aria-labelledby="delete-seat-confirm-title"/);
-  assert.match(deleteDialogSource, /Cancel custom seat deletion/);
+  // PR 5b: on the asset modal (CarbonModal owns aria-labelledby); no × — the
+  // one way out is the footer's Cancel (secondary, first) or Esc.
+  assert.match(deleteDialogSource, /titleId="delete-seat-confirm-title"/);
+  const deleteDialog = deleteDialogSource.match(/export function DeleteSeatConfirmDialog[\s\S]*?\n\}\n/);
+  assert.ok(deleteDialog, "DeleteSeatConfirmDialog should remain source-visible.");
+  assert.match(deleteDialog[0], /className="cds-btn cds-btn--secondary"[^>]*onClick=\{onCancel\}[^>]*disabled=\{pending\}[^>]*>\s*Cancel\s*</);
+  assert.doesNotMatch(deleteDialog[0], /aria-label="Cancel custom seat deletion"|<CloseIcon/);
 });
 
 test("narrow widths keep the viewer switch and people directory reachable", async () => {

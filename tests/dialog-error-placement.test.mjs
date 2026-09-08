@@ -129,11 +129,37 @@ function panelProps() {
 
 const noop = () => {};
 
+// Phase 4 PR 5b: the map's confirms are `role="alertdialog"` on the asset
+// modal (CarbonModal); the inspector guard and the panels stay `dialog`.
+// One query serves both — the contract is "inside the modal subtree".
+function getOpenDialog() {
+  const dialogs = [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')];
+  assert.equal(dialogs.length, 1, `expected exactly one open dialog, found ${dialogs.length}`);
+  return dialogs[0];
+}
+
 function assertAlertInsideOpenDialog() {
-  const dialog = screen.getByRole("dialog");
+  const dialog = getOpenDialog();
   const alert = screen.getByRole("alert");
   assert.ok(dialog.contains(alert), "the error alert must render INSIDE the [role=dialog] subtree");
   return { dialog, alert };
+}
+
+// PR 5b: every map confirm names its description paragraph (aria-describedby
+// resolves to an element inside the dialog), carries the ruled role, and
+// (R-4, 2026-09-07) the asset's eyebrow — the string DIALOG_REGISTRY pins.
+function assertDescribedDialog(dialog, { role, describedBy }) {
+  assert.equal(dialog.getAttribute("role"), role, `the dialog must carry role="${role}"`);
+  assert.equal(dialog.getAttribute("aria-describedby"), describedBy);
+  const description = document.getElementById(describedBy);
+  assert.ok(description && dialog.contains(description), `aria-describedby="${describedBy}" must resolve inside the dialog`);
+  assert.ok(description.textContent.trim().length > 0, "the description must carry text");
+  const id = dialog.getAttribute("aria-labelledby");
+  const expected = DIALOG_REGISTRY[id]?.eyebrow;
+  assert.ok(expected, `DIALOG_REGISTRY["${id}"] must pin an eyebrow (R-4)`);
+  const eyebrow = dialog.querySelector(".cds-modal-eyebrow");
+  assert.ok(eyebrow, `dialog "${id}" must render the asset eyebrow`);
+  assert.equal(eyebrow.textContent.trim(), expected);
 }
 
 async function assertFocusLandsIn(alert) {
@@ -221,7 +247,8 @@ test("swap dialog renders actionError inline, keeps confirm enabled as Retry, an
     })
   );
 
-  const { alert } = assertAlertInsideOpenDialog();
+  const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "swap-confirm-description" });
   assert.match(alert.textContent, /Swap did not complete\..*Could not swap seats\./);
   const retry = screen.getByRole("button", { name: "Retry swap" });
   assert.equal(retry.disabled, false);
@@ -248,7 +275,8 @@ test("vacate dialog renders actionError inline with an enabled Retry vacate, and
       onConfirm: noop
     })
   );
-  const { alert } = assertAlertInsideOpenDialog();
+  const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "vacate-seat-confirm-description" });
   assert.match(alert.textContent, /Vacate did not complete\..*Could not vacate seat\./);
   assert.equal(screen.getByRole("button", { name: "Retry vacate" }).disabled, false);
   await assertFocusLandsIn(alert);
@@ -279,7 +307,8 @@ test("delete-seat dialog renders actionError inline with an enabled Retry delete
       onConfirm: noop
     })
   );
-  const { alert } = assertAlertInsideOpenDialog();
+  const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "delete-seat-confirm-description" });
   assert.match(alert.textContent, /Delete did not complete\..*Could not delete custom seat\./);
   assert.equal(screen.getByRole("button", { name: "Retry delete" }).disabled, false);
   await assertFocusLandsIn(alert);
@@ -318,7 +347,8 @@ test("move-employee dialog renders actionError inline on both arms with retry la
       actionError: "Could not move the employee."
     })
   );
-  let { alert } = assertAlertInsideOpenDialog();
+  let { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "move-employee-map-confirm-description" });
   assert.match(alert.textContent, /Move did not complete\./);
   assert.equal(screen.getByRole("button", { name: "Retry move" }).disabled, false);
   await assertFocusLandsIn(alert);
@@ -333,7 +363,8 @@ test("move-employee dialog renders actionError inline on both arms with retry la
       actionError: "Could not swap seats."
     })
   );
-  ({ alert } = assertAlertInsideOpenDialog());
+  ({ dialog, alert } = assertAlertInsideOpenDialog());
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "move-employee-map-confirm-description" });
   assert.equal(screen.getByRole("button", { name: "Retry swap" }).disabled, false);
 
   cleanup();
@@ -395,7 +426,7 @@ test("inspector move-conflict stays open with Moving… while the force move is 
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Move them" }));
   });
-  const dialog = screen.getByRole("dialog");
+  const dialog = getOpenDialog();
   assert.match(dialog.textContent, /Move Jane Doe to S01\?/);
   const busy = screen.getByRole("button", { name: "Moving…" });
   assert.equal(busy.disabled, true, "confirm must disable while the move is in flight");
@@ -412,6 +443,7 @@ test("inspector move-conflict failure renders inside the still-open dialog with 
   });
   await waitFor(() => screen.getByRole("alert"));
   const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "move-employee-confirm-description" });
   assert.match(dialog.textContent, /Move Jane Doe to S01\?/, "the conflict dialog must still be open");
   assert.match(alert.textContent, /Move did not complete\..*The move RPC refused\./);
   assert.equal(screen.getByRole("button", { name: "Retry move" }).disabled, false);
@@ -456,9 +488,13 @@ test("discard draft renders actionError inline with an enabled Retry discard", a
       onConfirm: noop
     })
   );
-  const { alert } = assertAlertInsideOpenDialog();
-  assert.match(alert.textContent, /The reset RPC refused\./);
+  const { dialog, alert } = assertAlertInsideOpenDialog();
+  assertDescribedDialog(dialog, { role: "alertdialog", describedBy: "discard-draft-description" });
+  assert.match(alert.textContent, /Discard did not complete\..*The reset RPC refused\./);
   assert.equal(screen.getByRole("button", { name: /Retry discard/ }).disabled, false);
+  // PR 5b: the discard error joins the other six — a focusable notification
+  // (ref + tabIndex -1) that takes focus, not a bare <p role="alert">.
+  await assertFocusLandsIn(alert);
 });
 
 // PR 3b: the drawer is the right slot (a side panel, not a dialog); the
@@ -531,13 +567,16 @@ const DIALOG_REGISTRY = {
   "management-discard-title": { kind: "ct" },
   "management-option-create-title": { kind: "ct" },
   "json-restore-review-title": { kind: "ct" },
-  "swap-confirm-title": { kind: "ct" },
+  // PR 5b (owner ruling R-4, 2026-09-07): the map's confirms carry the asset
+  // eyebrow — the verb family over the question; assertDescribedDialog
+  // checks the rendered text against this string.
+  "swap-confirm-title": { kind: "ct", eyebrow: "Swap seats" },
   "publish-review-title": { kind: "ct" },
-  "discard-draft-title": { kind: "ct" },
-  "vacate-seat-confirm-title": { kind: "ct" },
-  "delete-seat-confirm-title": { kind: "ct" },
-  "move-employee-map-confirm-title": { kind: "ct" },
-  "move-employee-confirm-title": { kind: "ct" },
+  "discard-draft-title": { kind: "ct", eyebrow: "Discard draft changes" },
+  "vacate-seat-confirm-title": { kind: "ct", eyebrow: "Vacate seat" },
+  "delete-seat-confirm-title": { kind: "ct", eyebrow: "Delete seat" },
+  "move-employee-map-confirm-title": { kind: "ct", eyebrow: "Move employee" },
+  "move-employee-confirm-title": { kind: "ct", eyebrow: "Move employee" },
 
   // PR-5 owner ruling (2026-08-27): the guard dialog's Save arm KEEPS closing
   // before resolve. It closes INTO the inspector, whose commit bar +
@@ -547,7 +586,10 @@ const DIALOG_REGISTRY = {
   // pending-state-source.test.mjs covers it.
   "inspector-unsaved-title": {
     kind: "closes-into-announcing-surface",
-    reason: "Save submits the inspector form; the inspector's own pending UI + sr region announce the flight"
+    reason: "Save submits the inspector form; the inspector's own pending UI + sr region announce the flight",
+    // R-4: the guard carries the inspector's OWN eyebrow ("Seat CW01 · Center
+    // West") — a prop from SeatMap, pinned in source below.
+    eyebrow: "the inspector's eyebrow (prop)"
   },
 
   // Deliberate close-on-both-outcomes AFTER resolve.
@@ -648,7 +690,9 @@ function collectComponentFiles(root) {
 test("every role=dialog is classified: ct-covered or ledgered under one of the two reasons", () => {
   const discovered = new Map();
   for (const file of collectComponentFiles("components")) {
-    const source = readFileSync(path.join(repoRoot, file), "utf8");
+    // Comments quote the attribute in prose (PR 5b's SeatMapDialogs header);
+    // scan code only.
+    const source = readFileSync(path.join(repoRoot, file), "utf8").replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
     for (const match of source.matchAll(/role="dialog"/g)) {
       const window = source.slice(match.index, match.index + 400);
       const label = window.match(/aria-labelledby="([\w-]+)"/);
@@ -661,6 +705,23 @@ test("every role=dialog is classified: ct-covered or ledgered under one of the t
       discovered.set(match[1], file);
     }
   }
+
+  // R-4: every CarbonModal the map raises carries an eyebrow — the opening
+  // tag that names the titleId also carries `eyebrow=` (string or prop).
+  for (const file of collectComponentFiles("components/seat-map")) {
+    const source = readFileSync(path.join(repoRoot, file), "utf8");
+    for (const match of source.matchAll(/<CarbonModal\b([^>]*)>/g)) {
+      const tag = match[1];
+      const id = tag.match(/titleId="([\w-]+)"/)?.[1];
+      assert.ok(id, `${file}: a CarbonModal without a literal titleId`);
+      assert.match(tag, /\beyebrow=/, `${file}: dialog "${id}" must carry the asset eyebrow (R-4)`);
+    }
+  }
+  assert.match(
+    readFileSync(path.join(repoRoot, "components/seat-map/SeatMap.tsx"), "utf8"),
+    /<InspectorGuardDialog[\s\S]{0,400}?eyebrow=\{`Seat \$\{formatSeatCode\(selectedSeat\.label\)\} · \$\{selectedSeat\.zone \?\? selectedSeat\.department \?\? "Unzoned"\}`\}/,
+    "the guard carries the inspector's own eyebrow string (R-4)"
+  );
 
   for (const [id, file] of discovered) {
     const entry = DIALOG_REGISTRY[id];

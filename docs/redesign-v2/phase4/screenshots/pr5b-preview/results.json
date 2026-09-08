@@ -1,0 +1,973 @@
+{
+  "results": [
+    {
+      "step": "0 deployment",
+      "frame": "both",
+      "ok": true,
+      "values": {
+        "buildId": {
+          "buildId": "a30dcf1aa24ef1712479a16aa1c441e1691f6336"
+        },
+        "expectedSha": "a30dcf1aa24ef1712479a16aa1c441e1691f6336"
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "0 start",
+      "frame": "both",
+      "ok": true,
+      "values": {
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        },
+        "seats": 68,
+        "assigned": 58,
+        "open": 10
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "theme light",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "attr": "white"
+      },
+      "note": "Account panel → Theme",
+      "files": []
+    },
+    {
+      "step": "1 Vacate",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "vacate-seat-confirm-title",
+        "describedBy": "vacate-seat-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Vacate seat",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Vacate seat",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "firstFocused": true,
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--danger"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "esc": {
+          "how": "Escape",
+          "closed": true,
+          "focus": "button:Vacate C01",
+          "restored": true
+        },
+        "cancel": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "button:Vacate C01",
+          "restored": true
+        },
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "",
+      "files": [
+        "01-vacate-light.png"
+      ]
+    },
+    {
+      "step": "2 Delete seat",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "probed": 10
+      },
+      "note": "N/A — production has no available custom seat among the probed open seats",
+      "files": []
+    },
+    {
+      "step": "3 Swap",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "swap-confirm-title",
+        "describedBy": "swap-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Swap seats",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Confirm swap",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "firstFocused": true,
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--primary"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "items": 2,
+        "cancel": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "",
+      "files": [
+        "03-swap-light.png"
+      ]
+    },
+    {
+      "step": "4 Move",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "open": {
+          "role": "alertdialog",
+          "labelledBy": "move-employee-map-confirm-title",
+          "describedBy": "move-employee-map-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Move employee",
+          "bg": "rgb(255, 255, 255)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(57, 57, 57)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false
+            },
+            {
+              "text": "Move them",
+              "cls": "cds-btn cds-btn--primary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(184, 92, 46)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false
+            }
+          ],
+          "overlayZ": "8500",
+          "closeButtons": 0,
+          "firstFocused": true
+        },
+        "swapArm": {
+          "role": "alertdialog",
+          "labelledBy": "move-employee-map-confirm-title",
+          "describedBy": "move-employee-map-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Move employee",
+          "bg": "rgb(255, 255, 255)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(71, 71, 71)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false
+            },
+            {
+              "text": "Swap them",
+              "cls": "cds-btn cds-btn--primary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(184, 92, 46)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false
+            }
+          ],
+          "overlayZ": "8500",
+          "closeButtons": 0,
+          "firstFocused": true
+        },
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--primary"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "cancel1": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "cancel2": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "",
+      "files": [
+        "04-move-light.png",
+        "04-move-swap-arm-light.png"
+      ]
+    },
+    {
+      "step": "5 Move-conflict",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "move-employee-confirm-title",
+        "describedBy": "move-employee-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Move employee",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Move them",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "firstFocused": false,
+        "initialFocus": "section[alertdialog]:Move…",
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--primary"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "cancel": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "initial focus on the section — R-5, recorded",
+      "files": [
+        "05-move-conflict-light.png"
+      ]
+    },
+    {
+      "step": "6 Inspector guard",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "role": "dialog",
+        "labelledBy": "inspector-unsaved-title",
+        "describedBy": "inspector-unsaved-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Seat C01 · Center Desks",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer sp-modal-footer--3",
+        "buttons": [
+          {
+            "text": "Keep editing",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 120,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Discard",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 120,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Save changes",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "firstFocused": true,
+        "widths": [
+          120,
+          120,
+          240
+        ],
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--primary"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "keep": {
+          "how": "Keep editing",
+          "closed": true,
+          "focus": "textarea:preview…",
+          "restored": null
+        },
+        "stillDirty": true,
+        "esc": {
+          "how": "Escape",
+          "closed": true,
+          "focus": "textarea:preview…",
+          "restored": null
+        },
+        "stillDirtyAfterEsc": true,
+        "discard": {
+          "how": "Discard",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "postsDuring": 0,
+        "shownAfter": "Seat C03",
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "",
+      "files": [
+        "06-inspector-guard-light.png"
+      ]
+    },
+    {
+      "step": "7 Discard draft",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "indicator": "Draft — no changes"
+      },
+      "note": "N/A — the production draft has no change (\"Draft — no changes\"); nothing is created to make the dialog appear",
+      "files": []
+    },
+    {
+      "step": "frame light hygiene",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "consoleErrors": 0,
+        "actionPosts": 2
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "theme dark",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "attr": "g100"
+      },
+      "note": "Account panel → Theme",
+      "files": []
+    },
+    {
+      "step": "1 Vacate",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "vacate-seat-confirm-title",
+        "describedBy": "vacate-seat-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Vacate seat",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Vacate seat",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "firstFocused": true,
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--danger"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "esc": {
+          "how": "Escape",
+          "closed": true,
+          "focus": "button:Vacate C01",
+          "restored": true
+        },
+        "cancel": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "button:Vacate C01",
+          "restored": true
+        },
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "",
+      "files": [
+        "01-vacate-dark.png"
+      ]
+    },
+    {
+      "step": "2 Delete seat",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "probed": 10
+      },
+      "note": "N/A — production has no available custom seat among the probed open seats",
+      "files": []
+    },
+    {
+      "step": "3 Swap",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "swap-confirm-title",
+        "describedBy": "swap-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Swap seats",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Confirm swap",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "firstFocused": true,
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--primary"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "items": 2,
+        "cancel": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "",
+      "files": [
+        "03-swap-dark.png"
+      ]
+    },
+    {
+      "step": "4 Move",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "open": {
+          "role": "alertdialog",
+          "labelledBy": "move-employee-map-confirm-title",
+          "describedBy": "move-employee-map-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Move employee",
+          "bg": "rgb(57, 57, 57)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(111, 111, 111)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false
+            },
+            {
+              "text": "Move them",
+              "cls": "cds-btn cds-btn--primary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(184, 92, 46)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false
+            }
+          ],
+          "overlayZ": "8500",
+          "closeButtons": 0,
+          "firstFocused": true
+        },
+        "swapArm": {
+          "role": "alertdialog",
+          "labelledBy": "move-employee-map-confirm-title",
+          "describedBy": "move-employee-map-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Move employee",
+          "bg": "rgb(57, 57, 57)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(94, 94, 94)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false
+            },
+            {
+              "text": "Swap them",
+              "cls": "cds-btn cds-btn--primary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(184, 92, 46)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false
+            }
+          ],
+          "overlayZ": "8500",
+          "closeButtons": 0,
+          "firstFocused": true
+        },
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--primary"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "cancel1": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "cancel2": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "",
+      "files": [
+        "04-move-dark.png",
+        "04-move-swap-arm-dark.png"
+      ]
+    },
+    {
+      "step": "5 Move-conflict",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "move-employee-confirm-title",
+        "describedBy": "move-employee-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Move employee",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Move them",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "firstFocused": false,
+        "initialFocus": "section[alertdialog]:Move…",
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--primary"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "cancel": {
+          "how": "Cancel",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "initial focus on the section — R-5, recorded",
+      "files": [
+        "05-move-conflict-dark.png"
+      ]
+    },
+    {
+      "step": "6 Inspector guard",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "role": "dialog",
+        "labelledBy": "inspector-unsaved-title",
+        "describedBy": "inspector-unsaved-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Seat C01 · Center Desks",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer sp-modal-footer--3",
+        "buttons": [
+          {
+            "text": "Keep editing",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 120,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Discard",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 120,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          },
+          {
+            "text": "Save changes",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false
+          }
+        ],
+        "overlayZ": "8500",
+        "closeButtons": 0,
+        "firstFocused": true,
+        "widths": [
+          120,
+          120,
+          240
+        ],
+        "hits": [
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--secondary",
+          "button.cds-btn.cds-btn--primary"
+        ],
+        "markerHit": "div.cds-modal-overlay",
+        "keep": {
+          "how": "Keep editing",
+          "closed": true,
+          "focus": "textarea:preview…",
+          "restored": null
+        },
+        "stillDirty": true,
+        "esc": {
+          "how": "Escape",
+          "closed": true,
+          "focus": "textarea:preview…",
+          "restored": null
+        },
+        "stillDirtyAfterEsc": true,
+        "discard": {
+          "how": "Discard",
+          "closed": true,
+          "focus": "body:try{var…",
+          "restored": null
+        },
+        "postsDuring": 0,
+        "shownAfter": "Seat C03",
+        "hygiene": {
+          "ok": true,
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        }
+      },
+      "note": "",
+      "files": [
+        "06-inspector-guard-dark.png"
+      ]
+    },
+    {
+      "step": "7 Discard draft",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "indicator": "Draft — no changes"
+      },
+      "note": "N/A — the production draft has no change (\"Draft — no changes\"); nothing is created to make the dialog appear",
+      "files": []
+    },
+    {
+      "step": "frame dark hygiene",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "consoleErrors": 0,
+        "actionPosts": 3
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "indicator + Undo before/after, writes",
+      "frame": "both",
+      "ok": true,
+      "values": {
+        "start": {
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          }
+        },
+        "end": {
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          }
+        },
+        "actionPosts": 3,
+        "statusReads": 1,
+        "moveConflictAssignPosts": 2,
+        "unexpectedPosts": [],
+        "otherFailedResponses": []
+      },
+      "note": "2 × the move-conflict's Assign employee submit (the server's refusal as data; nothing changed)",
+      "files": []
+    }
+  ],
+  "actionPosts": [
+    {
+      "at": "2026-09-08T00:21:17.523Z",
+      "step": "entry",
+      "path": "/admin",
+      "body": "[]",
+      "status": 200
+    },
+    {
+      "at": "2026-09-08T00:21:28.387Z",
+      "step": "5 Move-conflict",
+      "path": "/admin",
+      "body": "[{\"seatId\":\"268165dd-f69f-4fa5-a48b-93e17b3d8532\",\"label\":\"C03\",\"status\":\"assigned\",\"employeeId\":\"7f043f0a-1e78-4c7b-bc35-e6abf855e560\",\"employeeName\":\"Tsov Pet",
+      "status": 200
+    },
+    {
+      "at": "2026-09-08T00:21:42.872Z",
+      "step": "5 Move-conflict",
+      "path": "/admin",
+      "body": "[{\"seatId\":\"268165dd-f69f-4fa5-a48b-93e17b3d8532\",\"label\":\"C03\",\"status\":\"assigned\",\"employeeId\":\"7f043f0a-1e78-4c7b-bc35-e6abf855e560\",\"employeeName\":\"Tsov Pet",
+      "status": 200
+    }
+  ]
+}

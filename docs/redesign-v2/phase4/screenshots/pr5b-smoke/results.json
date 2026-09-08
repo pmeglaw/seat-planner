@@ -1,0 +1,1342 @@
+{
+  "results": [
+    {
+      "step": "01-vacate",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "vacate-seat-confirm-title",
+        "describedBy": "vacate-seat-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Vacate seat",
+        "heading": "Vacate CW01?",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Vacate seat",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "outline": {
+          "style": "solid",
+          "width": "2px",
+          "offset": "-2px",
+          "color": "rgb(184, 92, 46)",
+          "focused": true
+        },
+        "hits": {
+          "cancel": "button.cds-btn.cds-btn--secondary:Cancel",
+          "primary": "button.cds-btn.cds-btn--danger:Vacate seat",
+          "inspectorEdit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+          "inspectorVacate": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+          "marker": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl"
+        },
+        "afterTab1": "button:Vacate seat",
+        "afterTab2": "button:Cancel",
+        "restored": "button:Vacate CW01"
+      },
+      "note": "",
+      "files": [
+        "01-vacate-light.png"
+      ]
+    },
+    {
+      "step": "01b-vacate-mid-flight",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "mid": {
+          "role": "alertdialog",
+          "labelledBy": "vacate-seat-confirm-title",
+          "describedBy": "vacate-seat-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Vacate seat",
+          "heading": "Vacate CW01?",
+          "bg": "rgb(255, 255, 255)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(198, 198, 198)",
+              "color": "rgba(22, 22, 22, 0.25)",
+              "disabled": true,
+              "busy": null
+            },
+            {
+              "text": "Vacating…",
+              "cls": "cds-btn cds-btn--danger",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(198, 198, 198)",
+              "color": "rgba(22, 22, 22, 0.25)",
+              "disabled": true,
+              "busy": "true"
+            }
+          ],
+          "overlayZ": "8500",
+          "alert": null
+        },
+        "afterEsc": 1,
+        "afterPointer": 1,
+        "focusBefore": "body:try{var t=localStorage.getItem('sp-theme",
+        "focusAfter": "body:try{var t=localStorage.getItem('sp-theme",
+        "label": "CW01 Unassigned. Open seat. Draft changed. Selected.",
+        "row": {
+          "id": "3081d4a5-3e58-441f-b679-abb512240d4b",
+          "label": "CW01",
+          "status": "available",
+          "employee_id": null,
+          "notes": null
+        },
+        "rowAfterUndo": {
+          "id": "3081d4a5-3e58-441f-b679-abb512240d4b",
+          "label": "CW01",
+          "status": "assigned",
+          "employee_id": "00000000-0000-0000-0000-000000000001",
+          "notes": null
+        }
+      },
+      "note": "finding: mid-flight focus sits on <body> (the clicked primary disabled under it) — Tab re-anchors via the trap; pre-existing",
+      "files": [
+        "01b-vacate-mid-flight-light.png",
+        "01b-vacate-resolved-light.png"
+      ]
+    },
+    {
+      "step": "01c-vacate-error",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "alert": {
+          "cls": "cds-notification cds-notification--error focus-visible:outline-none",
+          "text": "Vacate did not complete. Could not vacate seat.",
+          "focused": true
+        },
+        "retry": {
+          "text": "Retry vacate",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        "row": {
+          "id": "3081d4a5-3e58-441f-b679-abb512240d4b",
+          "label": "CW01",
+          "status": "assigned",
+          "employee_id": "00000000-0000-0000-0000-000000000001",
+          "notes": null
+        }
+      },
+      "note": "",
+      "files": [
+        "01c-vacate-error-light.png"
+      ]
+    },
+    {
+      "step": "02-delete-seat",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "delete-seat-confirm-title",
+        "describedBy": "delete-seat-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Delete seat",
+        "heading": "Delete custom seat R99?",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Delete seat",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "gap": {
+          "gap": 8,
+          "marginTop": "8px"
+        },
+        "restored": "button:Delete custom seat R99",
+        "markerCount": 0,
+        "rowsLeft": 0
+      },
+      "note": "",
+      "files": [
+        "02-delete-seat-light.png",
+        "02-delete-seat-deleted-light.png"
+      ]
+    },
+    {
+      "step": "03-swap",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "swap-confirm-title",
+        "describedBy": "swap-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Swap seats",
+        "heading": "Confirm seat swap",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Confirm swap",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "modeCard": 1,
+        "modeCardHit": "div.sp-mode-card-title:Swapping CW01",
+        "items": [
+          "Source: CW01 · Alex Shabazian",
+          "Target: CW02 · Open"
+        ],
+        "summary": "CW01 (Alex Shabazian) ↔ CW02 (Open)",
+        "stillOpen": 1,
+        "inside": true,
+        "afterCancel": {
+          "modeCard": 1,
+          "focus": "body:try{var t=localStorage.getItem('sp-theme"
+        }
+      },
+      "note": "after Cancel: mode card still armed, focus body:try{var t=localStorage.getItem('sp-theme (recorded, not asserted)",
+      "files": [
+        "03-swap-light.png",
+        "03-swap-after-cancel-light.png"
+      ]
+    },
+    {
+      "step": "04-move",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "open": {
+          "role": "alertdialog",
+          "labelledBy": "move-employee-map-confirm-title",
+          "describedBy": "move-employee-map-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Move employee",
+          "heading": "Move Alex Shabazian to CW02?",
+          "bg": "rgb(255, 255, 255)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(57, 57, 57)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false,
+              "busy": null
+            },
+            {
+              "text": "Move them",
+              "cls": "cds-btn cds-btn--primary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(184, 92, 46)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false,
+              "busy": null
+            }
+          ],
+          "overlayZ": "8500",
+          "alert": null
+        },
+        "swapArm": {
+          "role": "alertdialog",
+          "labelledBy": "move-employee-map-confirm-title",
+          "describedBy": "move-employee-map-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Move employee",
+          "heading": "Swap Alex Shabazian and Maria Lopez?",
+          "bg": "rgb(255, 255, 255)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(71, 71, 71)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false,
+              "busy": null
+            },
+            {
+              "text": "Swap them",
+              "cls": "cds-btn cds-btn--primary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(184, 92, 46)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false,
+              "busy": null
+            }
+          ],
+          "overlayZ": "8500",
+          "alert": null
+        },
+        "crossFloorTag": "N/A — the seed has no other-floor seat"
+      },
+      "note": "N/A — the seed has no other-floor seat",
+      "files": [
+        "04-move-light.png",
+        "04-move-swap-arm-light.png"
+      ]
+    },
+    {
+      "step": "05-move-conflict",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "move-employee-confirm-title",
+        "describedBy": "move-employee-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Move employee",
+        "heading": "Move Maria Lopez to CW02?",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Move them",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "initialFocus": "section[alertdialog]:Move employeeMove Maria Lopez to CW02?Th",
+        "afterTab": "button:Cancel",
+        "moved": {
+          "id": "ca47b603-72f2-492b-be6f-5b21562f793d",
+          "label": "CW02",
+          "status": "assigned",
+          "employee_id": "00000000-0000-0000-0000-000000000002",
+          "notes": null
+        },
+        "vacated": {
+          "id": "7396f55f-bc49-4fe9-bc73-3d34b72083bc",
+          "label": "N03",
+          "status": "available",
+          "employee_id": null,
+          "notes": null
+        },
+        "back": {
+          "id": "7396f55f-bc49-4fe9-bc73-3d34b72083bc",
+          "label": "N03",
+          "status": "assigned",
+          "employee_id": "00000000-0000-0000-0000-000000000002",
+          "notes": null
+        }
+      },
+      "note": "initial focus on the section — R-5, recorded not failed",
+      "files": [
+        "05-move-conflict-light.png",
+        "05-move-conflict-moved-light.png"
+      ]
+    },
+    {
+      "step": "06-inspector-guard",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "role": "dialog",
+        "labelledBy": "inspector-unsaved-title",
+        "describedBy": "inspector-unsaved-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Seat CW01 · Center West",
+        "heading": "Unsaved seat edits",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer sp-modal-footer--3",
+        "buttons": [
+          {
+            "text": "Keep editing",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 120,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Discard",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 120,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Save changes",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "widths": [
+          120,
+          120,
+          240
+        ],
+        "outline": {
+          "style": "solid",
+          "width": "2px",
+          "offset": "-2px",
+          "color": "rgb(184, 92, 46)",
+          "focused": true
+        },
+        "stillDirty": true,
+        "eyebrowAfter": "Seat CW02 · Center West",
+        "postsDuring": 0,
+        "veto": {
+          "role": "dialog",
+          "heading": "Unsaved seat edits"
+        },
+        "saved": "pr5b smoke note",
+        "landed": "/admin/management"
+      },
+      "note": "Save continued the vetoed navigation to /admin/management",
+      "files": [
+        "06-inspector-guard-light.png",
+        "06-inspector-guard-discarded-light.png",
+        "06-inspector-guard-veto-light.png"
+      ]
+    },
+    {
+      "step": "07-discard-draft",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "discard-draft-title",
+        "describedBy": "discard-draft-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Discard draft changes",
+        "heading": "Discard all draft changes?",
+        "bg": "rgb(255, 255, 255)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Keep draft changes",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(57, 57, 57)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Discard everything",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "outline": {
+          "style": "none",
+          "width": "3px",
+          "offset": "0px",
+          "color": "rgb(255, 255, 255)",
+          "focused": true
+        },
+        "indicator": "Draft — no changes",
+        "publishDisabled": true,
+        "reason": "No changes to publish",
+        "reasonHit": "span.sp-control-reason:No changes to publish",
+        "note": ""
+      },
+      "note": "",
+      "files": [
+        "07-discard-draft-light.png",
+        "07-discard-draft-converged-light.png"
+      ]
+    },
+    {
+      "step": "08-stacking",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "tipState": {
+          "display": "none",
+          "visibility": "visible",
+          "opacity": "1",
+          "x": 0,
+          "y": 0
+        },
+        "tipHit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+        "markerHit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+        "slotHit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+        "rowHit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl"
+      },
+      "note": "",
+      "files": [
+        "08-stacking-light.png"
+      ]
+    },
+    {
+      "step": "09-brand",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "primaries": [
+          {
+            "theme": "light",
+            "dialog": "vacate-seat-confirm-title",
+            "primary": "Vacate seat",
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "light",
+            "dialog": "delete-seat-confirm-title",
+            "primary": "Delete seat",
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "light",
+            "dialog": "swap-confirm-title",
+            "primary": "Confirm swap",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "light",
+            "dialog": "move-employee-map-confirm-title",
+            "primary": "Move them",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "light",
+            "dialog": "move-employee-map-confirm-title",
+            "primary": "Swap them",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "light",
+            "dialog": "move-employee-confirm-title",
+            "primary": "Move them",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "light",
+            "dialog": "inspector-unsaved-title",
+            "primary": "Save changes",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "light",
+            "dialog": "discard-draft-title",
+            "primary": "Discard everything",
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)"
+          }
+        ],
+        "blueFiles": [
+          "app/styles/carbon-tokens.css"
+        ]
+      },
+      "note": "8 primaries; 0f62fe only in app/styles/carbon-tokens.css",
+      "files": []
+    },
+    {
+      "step": "01-vacate",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "vacate-seat-confirm-title",
+        "describedBy": "vacate-seat-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Vacate seat",
+        "heading": "Vacate CW01?",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Vacate seat",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "outline": {
+          "style": "solid",
+          "width": "2px",
+          "offset": "-2px",
+          "color": "rgb(184, 92, 46)",
+          "focused": true
+        },
+        "hits": {
+          "cancel": "button.cds-btn.cds-btn--secondary:Cancel",
+          "primary": "button.cds-btn.cds-btn--danger:Vacate seat",
+          "inspectorEdit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+          "inspectorVacate": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+          "marker": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl"
+        },
+        "afterTab1": "button:Vacate seat",
+        "afterTab2": "button:Cancel",
+        "restored": "button:Vacate CW01"
+      },
+      "note": "",
+      "files": [
+        "01-vacate-dark.png"
+      ]
+    },
+    {
+      "step": "01b-vacate-mid-flight",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "mid": {
+          "role": "alertdialog",
+          "labelledBy": "vacate-seat-confirm-title",
+          "describedBy": "vacate-seat-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Vacate seat",
+          "heading": "Vacate CW01?",
+          "bg": "rgb(57, 57, 57)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgba(244, 244, 244, 0.25)",
+              "color": "rgba(244, 244, 244, 0.25)",
+              "disabled": true,
+              "busy": null
+            },
+            {
+              "text": "Vacating…",
+              "cls": "cds-btn cds-btn--danger",
+              "width": 240,
+              "height": 64,
+              "bg": "rgba(244, 244, 244, 0.25)",
+              "color": "rgba(244, 244, 244, 0.25)",
+              "disabled": true,
+              "busy": "true"
+            }
+          ],
+          "overlayZ": "8500",
+          "alert": null
+        },
+        "afterEsc": 1,
+        "afterPointer": 1,
+        "focusBefore": "body:try{var t=localStorage.getItem('sp-theme",
+        "focusAfter": "body:try{var t=localStorage.getItem('sp-theme",
+        "label": "CW01 Unassigned. Open seat. Draft changed. Selected.",
+        "row": {
+          "id": "3081d4a5-3e58-441f-b679-abb512240d4b",
+          "label": "CW01",
+          "status": "available",
+          "employee_id": null,
+          "notes": null
+        },
+        "rowAfterUndo": {
+          "id": "3081d4a5-3e58-441f-b679-abb512240d4b",
+          "label": "CW01",
+          "status": "assigned",
+          "employee_id": "00000000-0000-0000-0000-000000000001",
+          "notes": null
+        }
+      },
+      "note": "finding: mid-flight focus sits on <body> (the clicked primary disabled under it) — Tab re-anchors via the trap; pre-existing",
+      "files": [
+        "01b-vacate-mid-flight-dark.png",
+        "01b-vacate-resolved-dark.png"
+      ]
+    },
+    {
+      "step": "01c-vacate-error",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "alert": {
+          "cls": "cds-notification cds-notification--error focus-visible:outline-none",
+          "text": "Vacate did not complete. Could not vacate seat.",
+          "focused": true
+        },
+        "retry": {
+          "text": "Retry vacate",
+          "cls": "cds-btn cds-btn--danger",
+          "width": 240,
+          "height": 64,
+          "bg": "rgb(218, 30, 40)",
+          "color": "rgb(255, 255, 255)",
+          "disabled": false,
+          "busy": null
+        },
+        "row": {
+          "id": "3081d4a5-3e58-441f-b679-abb512240d4b",
+          "label": "CW01",
+          "status": "assigned",
+          "employee_id": "00000000-0000-0000-0000-000000000001",
+          "notes": null
+        }
+      },
+      "note": "",
+      "files": [
+        "01c-vacate-error-dark.png"
+      ]
+    },
+    {
+      "step": "02-delete-seat",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "delete-seat-confirm-title",
+        "describedBy": "delete-seat-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Delete seat",
+        "heading": "Delete custom seat R99?",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Delete seat",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "gap": {
+          "gap": 8,
+          "marginTop": "8px"
+        },
+        "restored": "button:Delete custom seat R99",
+        "markerCount": 0,
+        "rowsLeft": 0
+      },
+      "note": "",
+      "files": [
+        "02-delete-seat-dark.png",
+        "02-delete-seat-deleted-dark.png"
+      ]
+    },
+    {
+      "step": "03-swap",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "swap-confirm-title",
+        "describedBy": "swap-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Swap seats",
+        "heading": "Confirm seat swap",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Confirm swap",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "modeCard": 1,
+        "modeCardHit": "div.sp-mode-card-title:Swapping CW01",
+        "items": [
+          "Source: CW01 · Alex Shabazian",
+          "Target: CW02 · Open"
+        ],
+        "summary": "CW01 (Alex Shabazian) ↔ CW02 (Open)",
+        "stillOpen": 1,
+        "inside": true,
+        "afterCancel": {
+          "modeCard": 1,
+          "focus": "body:try{var t=localStorage.getItem('sp-theme"
+        }
+      },
+      "note": "after Cancel: mode card still armed, focus body:try{var t=localStorage.getItem('sp-theme (recorded, not asserted)",
+      "files": [
+        "03-swap-dark.png",
+        "03-swap-after-cancel-dark.png"
+      ]
+    },
+    {
+      "step": "04-move",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "open": {
+          "role": "alertdialog",
+          "labelledBy": "move-employee-map-confirm-title",
+          "describedBy": "move-employee-map-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Move employee",
+          "heading": "Move Alex Shabazian to CW02?",
+          "bg": "rgb(57, 57, 57)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(111, 111, 111)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false,
+              "busy": null
+            },
+            {
+              "text": "Move them",
+              "cls": "cds-btn cds-btn--primary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(184, 92, 46)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false,
+              "busy": null
+            }
+          ],
+          "overlayZ": "8500",
+          "alert": null
+        },
+        "swapArm": {
+          "role": "alertdialog",
+          "labelledBy": "move-employee-map-confirm-title",
+          "describedBy": "move-employee-map-confirm-description",
+          "labelInside": true,
+          "descriptionInside": true,
+          "eyebrow": "Move employee",
+          "heading": "Swap Alex Shabazian and Maria Lopez?",
+          "bg": "rgb(57, 57, 57)",
+          "width": 480,
+          "radius": "0px",
+          "footerClass": "cds-modal-footer",
+          "buttons": [
+            {
+              "text": "Cancel",
+              "cls": "cds-btn cds-btn--secondary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(94, 94, 94)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false,
+              "busy": null
+            },
+            {
+              "text": "Swap them",
+              "cls": "cds-btn cds-btn--primary",
+              "width": 240,
+              "height": 64,
+              "bg": "rgb(184, 92, 46)",
+              "color": "rgb(255, 255, 255)",
+              "disabled": false,
+              "busy": null
+            }
+          ],
+          "overlayZ": "8500",
+          "alert": null
+        },
+        "crossFloorTag": "N/A — the seed has no other-floor seat"
+      },
+      "note": "N/A — the seed has no other-floor seat",
+      "files": [
+        "04-move-dark.png",
+        "04-move-swap-arm-dark.png"
+      ]
+    },
+    {
+      "step": "05-move-conflict",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "move-employee-confirm-title",
+        "describedBy": "move-employee-confirm-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Move employee",
+        "heading": "Move Maria Lopez to CW02?",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Cancel",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Move them",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "initialFocus": "section[alertdialog]:Move employeeMove Maria Lopez to CW02?Th",
+        "afterTab": "button:Cancel",
+        "moved": {
+          "id": "ca47b603-72f2-492b-be6f-5b21562f793d",
+          "label": "CW02",
+          "status": "assigned",
+          "employee_id": "00000000-0000-0000-0000-000000000002",
+          "notes": null
+        },
+        "vacated": {
+          "id": "7396f55f-bc49-4fe9-bc73-3d34b72083bc",
+          "label": "N03",
+          "status": "available",
+          "employee_id": null,
+          "notes": null
+        },
+        "back": {
+          "id": "7396f55f-bc49-4fe9-bc73-3d34b72083bc",
+          "label": "N03",
+          "status": "assigned",
+          "employee_id": "00000000-0000-0000-0000-000000000002",
+          "notes": null
+        }
+      },
+      "note": "initial focus on the section — R-5, recorded not failed",
+      "files": [
+        "05-move-conflict-dark.png",
+        "05-move-conflict-moved-dark.png"
+      ]
+    },
+    {
+      "step": "06-inspector-guard",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "role": "dialog",
+        "labelledBy": "inspector-unsaved-title",
+        "describedBy": "inspector-unsaved-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Seat CW01 · Center West",
+        "heading": "Unsaved seat edits",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer sp-modal-footer--3",
+        "buttons": [
+          {
+            "text": "Keep editing",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 120,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Discard",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 120,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Save changes",
+            "cls": "cds-btn cds-btn--primary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "widths": [
+          120,
+          120,
+          240
+        ],
+        "outline": {
+          "style": "solid",
+          "width": "2px",
+          "offset": "-2px",
+          "color": "rgb(184, 92, 46)",
+          "focused": true
+        },
+        "stillDirty": true,
+        "eyebrowAfter": "Seat CW02 · Center West",
+        "postsDuring": 0,
+        "veto": {
+          "role": "dialog",
+          "heading": "Unsaved seat edits"
+        },
+        "saved": "pr5b smoke note",
+        "landed": "/admin/management"
+      },
+      "note": "Save continued the vetoed navigation to /admin/management",
+      "files": [
+        "06-inspector-guard-dark.png",
+        "06-inspector-guard-discarded-dark.png",
+        "06-inspector-guard-veto-dark.png"
+      ]
+    },
+    {
+      "step": "07-discard-draft",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "role": "alertdialog",
+        "labelledBy": "discard-draft-title",
+        "describedBy": "discard-draft-description",
+        "labelInside": true,
+        "descriptionInside": true,
+        "eyebrow": "Discard draft changes",
+        "heading": "Discard all draft changes?",
+        "bg": "rgb(57, 57, 57)",
+        "width": 480,
+        "radius": "0px",
+        "footerClass": "cds-modal-footer",
+        "buttons": [
+          {
+            "text": "Keep draft changes",
+            "cls": "cds-btn cds-btn--secondary",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(111, 111, 111)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          },
+          {
+            "text": "Discard everything",
+            "cls": "cds-btn cds-btn--danger",
+            "width": 240,
+            "height": 64,
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)",
+            "disabled": false,
+            "busy": null
+          }
+        ],
+        "overlayZ": "8500",
+        "alert": null,
+        "outline": {
+          "style": "none",
+          "width": "3px",
+          "offset": "0px",
+          "color": "rgb(255, 255, 255)",
+          "focused": true
+        },
+        "indicator": "Draft — no changes",
+        "publishDisabled": true,
+        "reason": "No changes to publish",
+        "reasonHit": "span.sp-control-reason:No changes to publish",
+        "note": ""
+      },
+      "note": "",
+      "files": [
+        "07-discard-draft-dark.png",
+        "07-discard-draft-converged-dark.png"
+      ]
+    },
+    {
+      "step": "08-stacking",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "tipState": {
+          "display": "none",
+          "visibility": "visible",
+          "opacity": "1",
+          "x": 0,
+          "y": 0
+        },
+        "tipHit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+        "markerHit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+        "slotHit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl",
+        "rowHit": "div.cds-modal-overlay:Vacate seatVacate CW01?This cl"
+      },
+      "note": "",
+      "files": [
+        "08-stacking-dark.png"
+      ]
+    },
+    {
+      "step": "09-brand",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "primaries": [
+          {
+            "theme": "dark",
+            "dialog": "vacate-seat-confirm-title",
+            "primary": "Vacate seat",
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "dark",
+            "dialog": "delete-seat-confirm-title",
+            "primary": "Delete seat",
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "dark",
+            "dialog": "swap-confirm-title",
+            "primary": "Confirm swap",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "dark",
+            "dialog": "move-employee-map-confirm-title",
+            "primary": "Move them",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "dark",
+            "dialog": "move-employee-map-confirm-title",
+            "primary": "Swap them",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "dark",
+            "dialog": "move-employee-confirm-title",
+            "primary": "Move them",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "dark",
+            "dialog": "inspector-unsaved-title",
+            "primary": "Save changes",
+            "bg": "rgb(184, 92, 46)",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "theme": "dark",
+            "dialog": "discard-draft-title",
+            "primary": "Discard everything",
+            "bg": "rgb(218, 30, 40)",
+            "color": "rgb(255, 255, 255)"
+          }
+        ],
+        "blueFiles": [
+          "app/styles/carbon-tokens.css"
+        ]
+      },
+      "note": "8 primaries; 0f62fe only in app/styles/carbon-tokens.css",
+      "files": []
+    }
+  ],
+  "failedResponses": {
+    "404 /_vercel/speed-insights/script.js": 42
+  },
+  "consoleErrors": 88,
+  "otherConsoleErrors": [
+    "TypeError: Failed to fetch\n    at n (http://localhost:3200/_next/static/chunks/232u-1-atavpd.js:2:35041)\n    at I (http://localhost:3200/_next/static/chunks/232u-1-atavpd.js:1:36690)",
+    "TypeError: Failed to fetch\n    at n (http://localhost:3200/_next/static/chunks/232u-1-atavpd.js:2:35041)\n    at I (http://localhost:3200/_next/static/chunks/232u-1-atavpd.js:1:36690)"
+  ]
+}

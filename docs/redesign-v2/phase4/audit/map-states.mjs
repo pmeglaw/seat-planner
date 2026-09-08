@@ -134,10 +134,11 @@ for (const theme of ["light", "dark"]) {
   await shot(`admin-pills-move-mode-${theme}-1920`, await pillsClip());
   // A valid destination → the move confirm modal over the slot; confirm it so the draft has changes.
   await firstOpen.dispatchEvent("click");
-  await page.getByRole("dialog", { name: /^Move / }).waitFor();
+  // PR 5b: the confirm is role="alertdialog" on the asset modal.
+  await page.getByRole("alertdialog", { name: /^Move / }).waitFor();
   await page.waitForTimeout(400);
   await shot(`admin-move-confirm-over-slot-${theme}-1920`);
-  await page.getByRole("dialog").getByRole("button", { name: /^Move them|^Confirm/ }).first().click().catch(() => {});
+  await page.getByRole("alertdialog").getByRole("button", { name: /^Move them|^Confirm/ }).first().click().catch(() => {});
   await page.waitForTimeout(1200);
   await escape();
   await shot(`admin-pills-draft-changed-${theme}-1920`, await pillsClip());
