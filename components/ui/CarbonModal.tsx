@@ -66,14 +66,16 @@ export function CarbonModal({
   /** The footer buttons, secondary first (50/50 bleed; 25/25/50 with `footerColumns={3}`). */
   footer: ReactNode;
 }) {
-  const dialogFocusRef = useDialogFocus<HTMLElement>();
+  const focusHookRef = useDialogFocus<HTMLElement>();
   const sectionRef = useRef<HTMLElement | null>(null);
-  const setSectionRef = useCallback(
+  // The section's ref: useDialogFocus's callback (open focus, trap, restore)
+  // composed with a plain ref the busy effect below reads.
+  const dialogFocusRef = useCallback(
     (node: HTMLElement | null) => {
       sectionRef.current = node;
-      dialogFocusRef(node);
+      focusHookRef(node);
     },
-    [dialogFocusRef]
+    [focusHookRef]
   );
   const wasBusyRef = useRef(busy);
   useEffect(() => {
@@ -104,7 +106,7 @@ export function CarbonModal({
           pulls focus out of the trap (PR 4 smoke, step 10). */}
       <div className="cds-modal-overlay" onMouseDown={event => event.preventDefault()}>
         <section
-          ref={setSectionRef}
+          ref={dialogFocusRef}
           tabIndex={-1}
           role={role}
           aria-modal="true"
