@@ -1,0 +1,387 @@
+{
+  "results": [
+    {
+      "step": "0 entry",
+      "frame": "both",
+      "ok": true,
+      "values": {
+        "buildId": "0caedc6e5813257838426b0bff5428868f7cfd8e",
+        "expectedSha": "0caedc6e5813257838426b0bff5428868f7cfd8e",
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        },
+        "signedInAs": "the owner, by hand"
+      },
+      "note": "signed in on the expected deployment; baseline recorded",
+      "files": []
+    },
+    {
+      "step": "theme light",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "attr": "white"
+      },
+      "note": "Account panel → Theme",
+      "files": []
+    },
+    {
+      "step": "1 band closed",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "slotOpen": false,
+        "slotOpenAttr": false,
+        "paddingRight": "8px",
+        "band": {
+          "x": 0,
+          "y": 1040,
+          "w": 1920
+        },
+        "host": null,
+        "countText": "68 seats",
+        "zoomCentre": {
+          "x": 1896,
+          "y": 1060
+        },
+        "zoomHit": {
+          "tag": "path",
+          "cls": "",
+          "inBand": true,
+          "inSlot": false
+        },
+        "fitLabel": "Fit map to view",
+        "clearanceToSlot": null,
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        }
+      },
+      "note": "no slot: the band spans the full canvas and its zoom control is its own",
+      "files": [
+        "01-band-closed-light.png"
+      ]
+    },
+    {
+      "step": "2 band under an open slot",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "slotOpen": true,
+        "slotOpenAttr": true,
+        "paddingRight": "408px",
+        "band": {
+          "x": 0,
+          "y": 1040,
+          "w": 1920
+        },
+        "host": {
+          "x": 1520,
+          "w": 400
+        },
+        "countText": "68 seats",
+        "zoomCentre": {
+          "x": 1496,
+          "y": 1060
+        },
+        "zoomHit": {
+          "tag": "path",
+          "cls": "",
+          "inBand": true,
+          "inSlot": false
+        },
+        "fitLabel": "Fit map to view",
+        "clearanceToSlot": -8,
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        },
+        "successNotices": 0
+      },
+      "note": "amendment G: the band's zoom group ends at or before the slot's left edge and hit-tests to itself",
+      "files": [
+        "02-band-slot-open-light.png"
+      ]
+    },
+    {
+      "step": "3 zoom clickable under the slot",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "scaleBefore": 1504,
+        "scaleZoomed": 1911,
+        "scaleAfterFit": 1504,
+        "newActionPosts": 0,
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        },
+        "successNotices": 0
+      },
+      "note": "the zoom group is operable while the inspector is open, and it writes nothing",
+      "files": [
+        "03-zoomed-under-slot-light.png",
+        "04-fit-under-slot-light.png"
+      ]
+    },
+    {
+      "step": "4 dismissed",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "slotOpen": false,
+        "slotOpenAttr": false,
+        "paddingRight": "8px",
+        "band": {
+          "x": 0,
+          "y": 1040,
+          "w": 1920
+        },
+        "host": null,
+        "countText": "68 seats",
+        "zoomCentre": {
+          "x": 1896,
+          "y": 1060
+        },
+        "zoomHit": {
+          "tag": "path",
+          "cls": "",
+          "inBand": true,
+          "inSlot": false
+        },
+        "fitLabel": "Fit map to view",
+        "clearanceToSlot": null,
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        },
+        "successNotices": 0
+      },
+      "note": "open and dismiss only — the indicator is unchanged from the walk's baseline",
+      "files": [
+        "05-dismissed-light.png"
+      ]
+    },
+    {
+      "step": "console light",
+      "frame": "light",
+      "ok": true,
+      "values": {
+        "errors": [],
+        "failedResponses": []
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "theme dark",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "attr": "g100"
+      },
+      "note": "Account panel → Theme",
+      "files": []
+    },
+    {
+      "step": "1 band closed",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "slotOpen": false,
+        "slotOpenAttr": false,
+        "paddingRight": "8px",
+        "band": {
+          "x": 0,
+          "y": 1040,
+          "w": 1920
+        },
+        "host": null,
+        "countText": "68 seats",
+        "zoomCentre": {
+          "x": 1896,
+          "y": 1060
+        },
+        "zoomHit": {
+          "tag": "path",
+          "cls": "",
+          "inBand": true,
+          "inSlot": false
+        },
+        "fitLabel": "Fit map to view",
+        "clearanceToSlot": null,
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        }
+      },
+      "note": "no slot: the band spans the full canvas and its zoom control is its own",
+      "files": [
+        "01-band-closed-dark.png"
+      ]
+    },
+    {
+      "step": "2 band under an open slot",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "slotOpen": true,
+        "slotOpenAttr": true,
+        "paddingRight": "408px",
+        "band": {
+          "x": 0,
+          "y": 1040,
+          "w": 1920
+        },
+        "host": {
+          "x": 1520,
+          "w": 400
+        },
+        "countText": "68 seats",
+        "zoomCentre": {
+          "x": 1496,
+          "y": 1060
+        },
+        "zoomHit": {
+          "tag": "path",
+          "cls": "",
+          "inBand": true,
+          "inSlot": false
+        },
+        "fitLabel": "Fit map to view",
+        "clearanceToSlot": -8,
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        },
+        "successNotices": 0
+      },
+      "note": "amendment G: the band's zoom group ends at or before the slot's left edge and hit-tests to itself",
+      "files": [
+        "02-band-slot-open-dark.png"
+      ]
+    },
+    {
+      "step": "3 zoom clickable under the slot",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "scaleBefore": 1504,
+        "scaleZoomed": 1911,
+        "scaleAfterFit": 1504,
+        "newActionPosts": 0,
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        },
+        "successNotices": 0
+      },
+      "note": "the zoom group is operable while the inspector is open, and it writes nothing",
+      "files": [
+        "03-zoomed-under-slot-dark.png",
+        "04-fit-under-slot-dark.png"
+      ]
+    },
+    {
+      "step": "4 dismissed",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "slotOpen": false,
+        "slotOpenAttr": false,
+        "paddingRight": "8px",
+        "band": {
+          "x": 0,
+          "y": 1040,
+          "w": 1920
+        },
+        "host": null,
+        "countText": "68 seats",
+        "zoomCentre": {
+          "x": 1896,
+          "y": 1060
+        },
+        "zoomHit": {
+          "tag": "path",
+          "cls": "",
+          "inBand": true,
+          "inSlot": false
+        },
+        "fitLabel": "Fit map to view",
+        "clearanceToSlot": null,
+        "indicator": "Draft — no changes",
+        "undo": {
+          "disabled": true,
+          "label": "No map changes to undo"
+        },
+        "successNotices": 0
+      },
+      "note": "open and dismiss only — the indicator is unchanged from the walk's baseline",
+      "files": [
+        "05-dismissed-dark.png"
+      ]
+    },
+    {
+      "step": "console dark",
+      "frame": "dark",
+      "ok": true,
+      "values": {
+        "errors": [],
+        "failedResponses": []
+      },
+      "note": "",
+      "files": []
+    },
+    {
+      "step": "5 wrote nothing",
+      "frame": "both",
+      "ok": true,
+      "values": {
+        "start": {
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          }
+        },
+        "end": {
+          "indicator": "Draft — no changes",
+          "undo": {
+            "disabled": true,
+            "label": "No map changes to undo"
+          },
+          "successNotices": 0
+        },
+        "actionPosts": [
+          {
+            "at": "2026-09-08T19:59:59.216Z",
+            "step": "entry",
+            "path": "/admin",
+            "body": "[]",
+            "status": 200
+          }
+        ]
+      },
+      "note": "the indicator and Undo are identical to the baseline; no success notice appeared",
+      "files": []
+    }
+  ],
+  "actionPosts": [
+    {
+      "at": "2026-09-08T19:59:59.216Z",
+      "step": "entry",
+      "path": "/admin",
+      "body": "[]",
+      "status": 200
+    }
+  ]
+}

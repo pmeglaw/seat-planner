@@ -140,7 +140,10 @@ Nothing below writes to production. Everything runs against the local Docker sta
 
 ---
 
-## 6. The preview walk — NOT POSSIBLE ON THIS PR; F-8 moves to production (owner ruling 2026-09-08)
+## 6. The preview walk — NOT POSSIBLE ON THIS PR; F-8 moved to production, and is now DONE (14 / 14)
+
+**Discharged 2026-09-08:** the production walk ran on the merge SHA `0caedc6`, both themes, 14 / 14, zero writes —
+`../screenshots/pr6-prod-walk/README.md`. The rest of this section is the record of why it had to move.
 
 **This PR's preview is not wired to production, and it cannot be signed into at all.** PR 6 carries a migration, so
 the Supabase GitHub integration created a **preview branch database** for it (`ynhqcykgkjslzjzkwisy` — the "Supabase
@@ -166,9 +169,12 @@ Everything the walk would have proven about the fix on a preview is already prov
 seeded data: `audit/pr6-smoke.mjs` step `05b` (hit-tested at 1920×1080 and 820×900, slot open and closed, both
 themes) plus the e2e-auth `page-frames` map block, which runs in CI.
 
-## 7. Merge, tag, prune
+## 7. Merge, tag, prune — DONE 2026-09-08
 
-In order, on the owner's "merge" (the preview walk is not a gate on this PR — §6):
+Squash **`0caedc6`** (#524) · annotated tag **v2.0.0** "Phase 4 — redesign complete" · production READY at the merge
+SHA (`dpl_6CG94vo3Bo32uUJqLeXRYWTMt4X9`) with `20260908120000_deactivate_employee_sqlstate` applied · the F-8 walk on
+production 14 / 14 · `chore/design-sync-2026-08-28`, `docs/redesign`, `fix/pass1-scrim-tokens` and
+`feat/phase4-closeout` pruned (remote now holds `main` alone). The sequence as it was run:
 
 1. Squash-merge the PR to `main`.
 2. Confirm the Supabase integration applied the migration and the Vercel production deployment reaches READY.
