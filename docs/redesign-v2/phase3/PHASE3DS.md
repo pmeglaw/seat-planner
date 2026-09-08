@@ -377,6 +377,11 @@ footer — **amendment F under §1.24**, the one place a three-button modal foot
 and the pending / error contracts are as shipped; the map's `Delete seat` confirm stays the modal (§1.38's "destructive =
 narrow tearsheet" ruling is scoped to `/admin/management`).
 
+**Phase 4 PR 6 (2026-09-08) — the slot's height meets the band: see §1.21 amendment G.** `.sp-slot-host` is absolute
+against the map STAGE, so an open slot runs the full stage height (PHASE2UX §1M.2 has it at y 96–889, x 1520–1920) —
+past the canvas column and over the band's row. The slot is right to do so; what was missing is the band's own push.
+Finding F-8, fixed in PR 6 (PHASE4BUILD §1.48).
+
 ### 1.18 Ask Planner — Map → `.sp-ai-label`, `.sp-ai-popover`, `.sp-textarea--ai`, drawer parts (§3 "Ask Planner drawer · Carbon-for-AI label")
 
 **Problem.** The one AI surface must be marked as AI and explain itself (`carbon-next.md`: the AI label
@@ -433,6 +438,20 @@ a status region (`role="status"`, top-left) for inline notifications — the MLS
 (inline and self-clearing, not a toast: it happened *to* the user), PUBLISH_BLOCKED, partial-load — and
 the empty states over the plan (published-empty in the viewer's and the admin's voice, draft-empty),
 skeleton plan, error + Retry, the 403 card. One narrow (1024) read-only frame.
+
+**Phase 4 PR 6 amendment G (2026-09-08; finding F-8, PHASE4BUILD §1.48).** The band takes the open slot's push:
+`.sp-band[data-slot-open] { padding-right: calc(var(--sp-slot-w) + var(--sp-space-03)) }`. PHASE2UX §1M.2 already
+ruled it — "the band spans the canvas, not the slot", with the band at y 849–889 and the slot at x 1520–1920 — and
+`MapStatusBand`'s own header said so, but nothing implemented it: the band is the canvas column's SIBLING inside the
+stage, and `.sp-slot-host` is absolute against that stage (`top/right/bottom: 0`), so an open slot painted over the
+band's right 400px. At 1920 the result count clipped mid-word and the zoom − / Fit / + group was unreachable — and
+D2-b keeps **Reset zoom** only on that control, so the loss landed exactly while a seat was being edited. The push is
+the same one the canvas column takes (`pr-[var(--sp-slot-w)]`) from the same slot-owner state, plus the band's own
+right inset so the group keeps its optical gap from the seam; the presence key (`data-slot-open`, never `="false"`)
+follows the slot host's convention. **This is conformance to a ruling already made, not a new deviation, and no token
+changed.** Evidence: `audit/pr6-smoke.mjs` step `05b` (hit-test on the band's Zoom-in button, slot open and closed, at
+1920×1080 and 820×900, both themes) and the e2e-auth `page-frames` map block; the browser tier pins the key that
+drives it (that harness ships no CSS). Cross-referenced from §1.17.
 
 ### 1.22 Page frame and tabs — Management / Settings / Reception → `.sp-page`, `.sp-tabs` (§3 "Page header (title + subtitle, no action) · exists", "Page header with tabs + one primary · tabs hand-built")
 

@@ -19,9 +19,9 @@ disagrees with one, it goes back to the owner as a ruling, never changed in code
 | | |
 |---|---|
 | Branch | `feat/phase4-closeout`, pushed, tracking `origin` |
-| Head | `517dfc2` (Task 11 docs) plus the reviewer's post-bump commit — the re-run recorded in §4, `audit/pr6-smoke.mjs` and `../screenshots/pr6-smoke/` |
+| Head | `517dfc2` (Task 11 docs), the reviewer's post-bump commit (§4, `audit/pr6-smoke.mjs`, `../screenshots/pr6-smoke/`), then the **F-8 fix** — sheet amendment G |
 | Base | `main` @ `072bffa` (v1.77.1, the Dependabot minor-and-patch group) |
-| Commits over `main` | 13 row/docs commits + 1 merge |
+| Commits over `main` | 14 row/docs commits + 1 merge |
 | Merges as | squash → tag **v2.0.0**, message "Phase 4 — redesign complete" |
 | `package.json` `version` | stays `0.1.0`; tags are git-only, as for every tag before |
 
@@ -49,6 +49,12 @@ The plan's §2 table carried a recommendation per row; the owner ruled all nine 
 | 5 | keep as landed | `726dc65` | `.sp-callout` is what the record already says it is; PHASE3DS §1.26 gains its "Built PR 4" line. No code |
 | — | docs | `726dc65`, `ba71d8e`, `f77c475` | PHASE4BUILD §1.48 / §2 / §3 / §4 / §5 / slice log; PHASE1IA §D delivered; PHASE2UX and PHASE3DS closed; DECISIONS reconciled (§6 no. 18, §7 and §8 closed, every D-entry's "Built" line); TEST-TRIAGE closed; `CLAUDE.md` "Design system" rewritten; `app/concepts/CLAUDE.md` and a new `docs/design-system/README.md` mark both superseded, **not deleted**; `screenshots/pr6/` |
 
+**One thing landed in this PR that is not a row:** the **F-8 fix** (sheet amendment G), on the owner's 2026-09-08
+ruling after the reviewer's smoke — `.sp-band[data-slot-open]` takes the open slot's push in both sheet copies,
+`MapStatusBand` gains `slotOpen`, `SeatMap` feeds it from `slotOwner`. It is conformance to PHASE2UX §1M.2, so it is
+**not** recorded as a deviation; no token changed. Its evidence is `audit/pr6-smoke.mjs` step `05b`, the e2e-auth
+`page-frames` map block and the real-browser tier's `data-slot-open` pins. See §9.
+
 **One production migration is in this PR.** Merging to `main` applies `20260908120000_deactivate_employee_sqlstate.sql`
 through the Supabase GitHub integration. It is a `create or replace` of `deactivate_employee(uuid)` with the body
 diffed verbatim against `20260702100000` — the only change is `using errcode = 'MLS03'` on the published-map raise,
@@ -56,25 +62,25 @@ with revoke/grant restated. Read that diff before approving.
 
 ---
 
-## 3. Verification re-run on the merged head (2026-09-08)
+## 3. Verification on the fixed head (2026-09-08)
 
-Every tier that does not need Docker, run after `origin/main` was merged in:
+Everything below was re-run after the **F-8 fix** (sheet amendment G) landed, on the merged head with the bumped
+lockfile installed:
 
 | Tier | Result | Plan's figure |
 |---|---|---|
-| `npm test` (unit + `test:db`) | 1457 pass · 0 fail | 1457 |
-| `npm run test:ct` | 326 pass · 0 fail | 326 |
-| `npm run gate` | exit 0 — lint 0 errors, typecheck clean, coverage 98.34 / 92.4 / 98.3 | 98.34 / 92.40 / 98.30 |
+| `npm test` (unit + `test:db`) | **1457 pass · 0 fail** | 1457 |
+| `npm run test:ct` | **326 pass · 0 fail** | 326 |
+| `npm run gate` | **exit 0** — lint 0 errors (warnings only), typecheck clean, coverage **98.34 / 92.40 / 98.30** | 98.34 / 92.40 / 98.30 |
 | `npm run build` | clean | clean |
-| `npm run test:browser` | 26 pass | 26 |
-| `npm run test:e2e` | 34 pass · 2 fail | 36 in CI |
+| `npm run test:browser` | **26 pass** (+ the two `data-slot-open` pins added with amendment G) | 26 |
+| `npm run test:e2e` | **36 pass · 0 fail** | 36 in CI |
 
-The two `test:e2e` failures are the known environment-only ones: both are self-tests of the `waitForColorSettle`
-helper in `tests/e2e/axe-helpers.spec.ts`, asserting a transition takes at least 300ms. They fail on the sandboxed
-box and pass unsandboxed on real Chrome and in CI — the same two PR 5 recorded (`screenshots/pr5/README.md`). No
-product test is among them.
+The two `waitForColorSettle` self-tests in `tests/e2e/axe-helpers.spec.ts` that failed on the sandboxed box in the
+earlier runs passed here — this run used real Chrome via `PW_CHROMIUM_PATH`, which is the condition the PR 5 note
+already recorded. No product test has failed on any run.
 
-## 4. Docker-stack verification — RE-RUN after the Dependabot merge (2026-09-08)
+## 4. Docker-stack verification — re-run after the bump, then again on the F-8 fix (2026-09-08)
 
 These first ran on `ba71d8e`, before `origin/main` came in, and this section used to argue they carried across the
 merge because only `package.json` / `package-lock.json` moved. **That reasoning was wrong** (reviewer correction
@@ -88,8 +94,13 @@ after `npm install` with the bumped lockfile, resetting and reseeding between ea
 | `audit/runtime-audit.mjs` | **0 undefined `var()`** — 6 routes × 2 themes + 1280 + the system state + the viewer pass | same |
 | `audit/pr5b-dialogs.mjs` | **29 / 29** both themes (`06b` PASS — R-5 closed, row 7) | same |
 | `audit/pr4-smoke.mjs` | **47 / 47** whole, light + dark — **step 11 carries the guard's reason verbatim** ("…still on the published map at CW01…"), so the `.code` shape survives 2.115.0 | same |
-| `npm run test:e2e:auth` | **53 / 53** on a reset + reseeded stack (2.4 min) | same |
-| Contrast | not re-run: no row in this PR changes a token and a dependency bump touches no stylesheet — **202 / 202** stands | 202 / 202 |
+| `npm run test:e2e:auth` | **55 / 55** on a reset + reseeded stack (2.3 min) — 53 plus the two `page-frames` map-band tests amendment G brought | 53 / 53 |
+| `audit/pr6-smoke.mjs` | **17 / 17**, both themes — the six reviewer steps, with `05b` now asserting the F-8 fix and `05c` pinning F-9's carried state | — |
+| Contrast | not re-run: no row in this PR changes a token, a dependency bump touches no stylesheet, and amendment G is a padding rule — **202 / 202** stands | 202 / 202 |
+
+**All five were run twice**: once on the merged head (the post-bump check above) and once on the head that carries
+the F-8 fix. The figures are the fixed-head run; only `test:e2e:auth` and `pr6-smoke` changed between them, both by
+the guards added with amendment G.
 
 Both arms of that refusal — the guard's reason returned, and a transport failure NOT rendering as one (F-2) — are
 smoked directly against the new client by `audit/pr6-smoke.mjs`, with the four other steps no rig reaches. Results,
@@ -163,16 +174,15 @@ Not Phase 4 obligations, recorded so they are not lost:
 - **The 400% zoom reflow** (DECISIONS §7) was never driven in Phase 4. Carried, not closed.
 - **`.design-sync/` on `main`** (F-7) holds previews and shims of components the redesign retired. Outside this PR's
   scope; worth a decision after v2.0.0.
-- **F-8 — the right slot covers the status band's right end.** `.sp-slot-host` (absolute, `bottom: 0`) is positioned
-  against the map **stage**, which holds the band as well as the map viewport, so an open slot spans the band's row
-  over its right 400px: at 1920×1080 the band's seat count and its −/Fit/+ zoom controls are under
-  `.sp-slot-body` (hit-tested at the Zoom-in button's own centre), and the same at 820×900. Pre-existing since PR 3b
-  and visible in `../screenshots/pr3b/admin-slot-inspector-light-1920.png`; `RightSlot.tsx`'s "the slot never covers
-  the band" is half true (the band does not reflow). Found by `audit/pr6-smoke.mjs` step `05b` — owner's ruling.
+- ~~**F-8 — the right slot covers the status band's right end.**~~ **FIXED IN PR 6** (owner ruling 2026-09-08): a
+  conformance defect against PHASE2UX §1M.2 ("the band spans the canvas, not the slot"), not a deviation. Built as
+  **sheet amendment G** — `.sp-band[data-slot-open] { padding-right: calc(var(--sp-slot-w) + var(--sp-space-03)) }`,
+  byte-identical in both sheet copies, `MapStatusBand` taking `slotOpen` from `SeatMap`'s `slotOwner`. It mattered
+  because D2-b keeps **Reset zoom** only on that control, so an open inspector took it away exactly while editing.
+  PHASE3DS §1.21 amendment G (cross-referenced from §1.17), PHASE4BUILD §1.48. No token change.
 - **F-9 — the below-900 palette sheet never spans.** `.sp-palette { width: var(--sp-palette-w) }` (560, the Phase 3
   sheet) beats the `left: 12` + `right-3` stretch `computeFrame` sets up below 900, so the palette is 560 wide at
   every width under the tier and at 390 runs 182px off-screen, clipping the row's trailing cell. The 900 rule itself
-  is intact (row 4 retired only `ViewerSeatFinder`'s constant, as ruled). Step `05c` — owner's ruling.
-
-Owner chores, unchanged and not this branch's work: revoke any live Vercel share links, reset the e2e fixture
-account's password in Supabase Auth, and set its production `profiles.role` back to viewer.
+  is intact (row 4 retired only `ViewerSeatFinder`'s constant, as ruled). **Owner ruling 2026-09-08: carried, not
+  fixed** — phone-width only, off the 1920 hardware target. Recorded in DECISIONS §7 beside the 400 % zoom reflow.
+  No code.

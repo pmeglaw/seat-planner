@@ -248,3 +248,64 @@ test.describe("Edit tooltip", () => {
     });
   }
 });
+
+// The map's status band under an open right slot (Phase 4 PR 6, finding F-8;
+// PHASE2UX §1M.2 "the band spans the canvas, not the slot"; sheet amendment G).
+// `.sp-slot-host` is absolute against the map STAGE, which holds the band as well
+// as the viewport, so without the band's own push the band's right end — the
+// result count and the zoom − / Fit / + group, D2-b's only home for Reset zoom —
+// is painted under the slot and unreachable while editing. Hit-tested, not
+// structure-tested: the DOM relationship (host inside the column, band its
+// sibling) stayed true the whole time the paint overlapped.
+const MAP_WIDTHS: Array<[number, number]> = [
+  [1920, 1080],
+  [820, 900]
+];
+
+test.describe("Map band under an open slot", () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page, SEEDED_ADMIN_EMAIL);
+  });
+
+  for (const [width, height] of MAP_WIDTHS) {
+    test(`${width}×${height}: the band's zoom control stays hit-testable with the inspector open`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto("/admin");
+      const band = page.locator("[data-map-status-band]");
+      await expect(band).toBeVisible();
+      const zoomIn = band.locator('button[aria-label="Zoom in"]');
+      await expect(zoomIn).toBeVisible();
+
+      // At 820 the band can sit below the fold — scroll it in before hit-testing.
+      const hitZoom = async () => zoomIn.evaluate(el => {
+        document.scrollingElement!.scrollTop = document.scrollingElement!.scrollHeight;
+        const box = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+        return {
+          inBand: Boolean(hit?.closest("[data-map-status-band]")),
+          inSlot: Boolean(hit?.closest("[data-slot-host]"))
+        };
+      });
+
+      expect(await hitZoom(), "closed: the zoom control is its own").toEqual({ inBand: true, inSlot: false });
+      await expect(band).not.toHaveAttribute("data-slot-open", "");
+
+      await page.locator("button[data-seat-id]").first().dispatchEvent("click");
+      await expect(page.locator("#seat-inspector-panel")).toBeVisible();
+      await expect(band).toHaveAttribute("data-slot-open", "");
+      expect(await hitZoom(), "open: the zoom control must not be under the slot").toEqual({ inBand: true, inSlot: false });
+
+      const clearance = await page.evaluate(() => {
+        const zoom = document.querySelector('[data-map-status-band] button[aria-label="Zoom in"]')!.getBoundingClientRect();
+        const host = document.querySelector("[data-slot-host][data-open]")!.getBoundingClientRect();
+        return Math.round(zoom.right - host.x);
+      });
+      expect(clearance, "the band's zoom group ends at or before the slot's left edge").toBeLessThanOrEqual(0);
+
+      await page.locator('button[aria-label="Close inspector"]').dispatchEvent("click");
+      await expect(page.locator("[data-slot-host][data-open]")).toHaveCount(0);
+      await expect(band).not.toHaveAttribute("data-slot-open", "");
+      expect(await hitZoom(), "closed again: the band takes its width back").toEqual({ inBand: true, inSlot: false });
+    });
+  }
+});

@@ -454,10 +454,13 @@ for (const T of THEMES) {
   });
 
   // -------------------------------------------------------------------------
-  // 05b — "the band is unobstructed": hit-test the band's own zoom control with
-  // the slot closed and open, at 820x900 and at the owner's 1920x1080 target.
+  // 05b — "the band spans the canvas, not the slot" (PHASE2UX §1M.2): hit-test the
+  // band's own zoom control with the slot closed and open, at 820x900 and at the
+  // owner's 1920x1080 target. This is finding F-8's fix under assertion (sheet
+  // amendment G): with the slot open the band takes the slot's push, so its right
+  // edge stops at the slot's left edge and the zoom group stays hit-testable.
   // -------------------------------------------------------------------------
-  await step("05b-band-under-slot", async () => {
+  await step("05b-band-slot-push", async () => {
     const probe = async () => page.evaluate(() => {
       // At 820x900 the band sits below the fold - scroll it into view before hit-testing.
       const scroller = document.scrollingElement;
@@ -469,12 +472,17 @@ for (const T of THEMES) {
       const b = band?.getBoundingClientRect();
       const z = zoomIn?.getBoundingClientRect();
       const at = (x, y) => describe(document.elementFromPoint(x, y));
+      const hostRect = host ? host.getBoundingClientRect() : null;
       return {
         band: b ? { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) } : null,
-        host: host ? { x: Math.round(host.getBoundingClientRect().x), bottom: Math.round(host.getBoundingClientRect().bottom) } : null,
+        host: hostRect ? { x: Math.round(hostRect.x), bottom: Math.round(hostRect.bottom) } : null,
         zoomInCentre: z ? { x: Math.round(z.x + z.width / 2), y: Math.round(z.y + z.height / 2) } : null,
         zoomInHit: z ? at(z.x + z.width / 2, z.y + z.height / 2) : null,
-        bandLeftHit: b ? at(b.x + 200, b.y + b.height / 2) : null
+        bandLeftHit: b ? at(b.x + 200, b.y + b.height / 2) : null,
+        // Amendment G: the band's content must end before the slot's left edge.
+        bandPaddingRight: band ? getComputedStyle(band).paddingRight : null,
+        slotOpenAttr: band ? band.hasAttribute("data-slot-open") : null,
+        zoomRightOfSlot: z && hostRect ? Math.round(z.right - hostRect.x) : null
       };
     });
     const measured = {};
@@ -482,6 +490,7 @@ for (const T of THEMES) {
     for (const [name, width, height] of [["at820", 820, 900], ["at1920", 1920, 1080]]) {
       await open(T, "/admin", width, height);
       measured[name] = { closed: await probe() };
+      files.push(await shot(`05b-band-${name}-slot-closed-${T}`));
       await page.keyboard.press("Control+k");
       await page.locator("#viewer-find-palette").waitFor({ timeout: 10000 });
       await page.locator('.sp-search input[type="search"]').first().fill(centreSeat.label);
@@ -493,9 +502,16 @@ for (const T of THEMES) {
       files.push(await shot(`05b-band-${name}-slot-open-${T}`));
       await escape();
     }
-    // The claim under test: with the slot open the band is still the band at its own controls.
-    const holds = ["at820", "at1920"].every(k => measured[k].closed.zoomInHit?.inBand === true && measured[k].open.zoomInHit?.inBand === true);
-    rec("05b-band-under-slot", T, holds, measured, holds ? "the band's zoom control is hit-testable with the slot open" : "FINDING: with the inspector slot open the band's right end (count + zoom controls) is under the slot at BOTH widths - the slot host runs to the viewport bottom, 40px past the map viewport. Pre-existing since PR 3b (visible in screenshots/pr3b/admin-slot-inspector-light-1920.png), not a PR 6 regression", files);
+    // The claim under test (PHASE2UX §1M.2, built as amendment G): with the slot open the band is
+    // still the band at its own controls, and its zoom group sits clear of the slot's left edge.
+    const holds = ["at820", "at1920"].every(k => {
+      const { closed, open } = measured[k];
+      return closed.zoomInHit?.inBand === true && closed.slotOpenAttr === false
+        && open.zoomInHit?.inBand === true && open.zoomInHit?.inSlot === false
+        && open.slotOpenAttr === true
+        && typeof open.zoomRightOfSlot === "number" && open.zoomRightOfSlot <= 0;
+    });
+    rec("05b-band-slot-push", T, holds, measured, holds ? "amendment G (F-8): with the slot open the band takes the slot's push — its zoom control hit-tests to itself and its right edge clears the slot" : "F-8: the band's zoom control is still under the slot while the slot is open", files);
   });
 
   // -------------------------------------------------------------------------
@@ -503,7 +519,7 @@ for (const T of THEMES) {
   // Below 900 computeFrame returns width:null and the element takes `right-3`,
   // meaning to span the viewport as a sheet; at 900+ it is 560 anchored.
   // -------------------------------------------------------------------------
-  await step("05c-viewer-palette-900", async () => {
+  await step("05c-viewer-palette-900-carried", async () => {
     const frameAt = async width => {
       await open(T, "/", width, 900);
       await page.keyboard.press("Control+k");
@@ -522,12 +538,18 @@ for (const T of THEMES) {
     const at1200 = await frameAt(1200);
     const at390 = await frameAt(390);
     const files = [await shot(`05c-viewer-palette-390-${T}`)];
-    const sheetSpans = at880.sheetClass && at880.x === 12 && Math.abs(at880.right - (880 - 12)) <= 1;
-    const anchored = at1200.w === 560;
-    const phoneFits = !at390.overflowsViewport;
-    const holds = sheetSpans && anchored && phoneFits;
-    rec("05c-viewer-palette-900", T, holds, { at880, at1200, at390, sheetSpans, anchored, phoneFits },
-      holds ? "below 900 the palette spans as a sheet; at 1200 it is 560 anchored" : "FINDING: the below-900 branch sets left:12 and adds `right-3` to span the viewport, but `.sp-palette { width: var(--sp-palette-w) }` (560, Phase 3 sheet) wins — the palette stays 560 wide at every width below 900, and at 390 it runs 182px off-screen (clipped, the row's trailing cell unreachable). Pre-existing: neither the sheet nor ViewerFindPalette changed in this PR; the 900 rule itself is intact (row 4 retired only ViewerSeatFinder's constant, as ruled)", files);
+    // F-9 is CARRIED, not fixed (owner ruling 2026-09-08, DECISIONS §7): phone-width only, off the
+    // 1920 hardware target. So this step pins the CARRIED state rather than the intent — a change
+    // here means the carried finding moved, which is what a future run needs to hear.
+    const sheetIntent = at880.sheetClass && at880.x === 12;         // the below-900 branch does fire…
+    const sheetWidthWins = at880.w === 560 && at880.right === 572;  // …and `.sp-palette`'s 560 wins
+    const anchored = at1200.w === 560 && at1200.x === 240;          // the >= 900 branch, correct
+    const phoneClip = at390.overflowsViewport && at390.clippedPx === 182;
+    const asCarried = sheetIntent && sheetWidthWins && anchored && phoneClip;
+    rec("05c-viewer-palette-900-carried", T, asCarried, { at880, at1200, at390, sheetIntent, sheetWidthWins, anchored, phoneClip },
+      asCarried
+        ? "F-9 as ruled CARRIED (DECISIONS §7): the below-900 branch fires (left 12, `right-3`) but `.sp-palette`'s 560 wins — 560 wide at 880, 560 anchored at 1200, 182px clipped at 390. Not a regression; not fixed by owner ruling"
+        : "F-9's measurement MOVED from the state DECISIONS §7 carries — re-read the ruling before treating this as a pass or a failure", files);
   });
 }
 

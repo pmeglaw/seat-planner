@@ -762,6 +762,15 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-band .cds-btn--icon { width: var(--sp-size-sm); }
 .sp-band .cds-btn--ghost { padding: 0 var(--sp-space-03); }
 .sp-band-note { color: var(--sp-text-secondary); }
+/* Phase 4 PR 6 amendment G (PHASE3DS §1.21; finding F-8, owner ruling 2026-09-08): the band spans the
+   CANVAS, not the slot — PHASE2UX §1M.2 (band y 849–889, slot x 1520–1920). `.sp-slot-host` is absolute
+   against the map stage, which holds the band as well as the viewport, so an open slot painted over the
+   band's right 400px: at 1920 the result count clipped mid-word and the zoom − / Fit / + group — D2-b's
+   only home for Reset zoom — was unreachable while editing. The band takes the SAME push the canvas
+   column takes (`pr-[var(--sp-slot-w)]`), from the same slot-owner state, plus the band's own right
+   inset so the group keeps its optical gap from the seam. Presence key, never ="false" (the slot host's
+   own convention). No token change. */
+.sp-band[data-slot-open] { padding-right: calc(var(--sp-slot-w) + var(--sp-space-03)); }
 
 /* -----------------------------------------------------------------------------
    19. CANVAS — mat, plan, status region (role=status, inline notifications

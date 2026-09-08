@@ -1381,7 +1381,19 @@ labelled triggers with the accepted type and the 5 MB limit stated up front, not
 
 ## 7. Not verified — deliberately deferred to the build
 
-**Closed at the Phase 4 close-out (PR 6, 2026-09-08)** — line by line: contrast is a generated suite gated at 202/202 (PHASE4BUILD §4); components, CSS and tokens are built (PHASE3DS, PHASE4BUILD); **both themes** are read on every surface by the runtime audit and the capture sets of every PR since PR 2 (6 routes × 2 themes + the system state); **the keyboard path** is driven by e2e-auth `accessibility`, `reception-keyboard`, `nav-shell` and the real-browser tier (skip link, landmarks, roving arrows on the markers, the Esc ladder); **the admin surfaces at 1920 / 1280 / 1024** by `viewport-matrix`, `page-frames` and the frames in every capture set. **Still unverified, carried: the 400 % zoom reflow** — no Phase 4 rig drove it; a chore after v2.0.0, not a Phase 4 obligation. The original text stands below as the record of what was deferred and why.
+**Closed at the Phase 4 close-out (PR 6, 2026-09-08)** — line by line: contrast is a generated suite gated at 202/202 (PHASE4BUILD §4); components, CSS and tokens are built (PHASE3DS, PHASE4BUILD); **both themes** are read on every surface by the runtime audit and the capture sets of every PR since PR 2 (6 routes × 2 themes + the system state); **the keyboard path** is driven by e2e-auth `accessibility`, `reception-keyboard`, `nav-shell` and the real-browser tier (skip link, landmarks, roving arrows on the markers, the Esc ladder); **the admin surfaces at 1920 / 1280 / 1024** by `viewport-matrix`, `page-frames` and the frames in every capture set. **Still unverified, carried: the 400 % zoom reflow** — no Phase 4 rig drove it; a chore after v2.0.0, not a Phase 4 obligation.
+
+**Carried beside it (owner ruling 2026-09-08, PR 6 finding F-9): the below-900 search palette never spans.**
+`ViewerFindPalette`'s `computeFrame` returns `width: null` below the 900 tier and the element takes `right-3`, meaning
+to stretch from left 12 to the viewport's right inset — but `.sp-palette { width: var(--sp-palette-w) }` (560, the
+Phase 3 sheet) sets a width, and an element with `left` + `right` + `width` uses `left + width`. Measured by
+`phase4/audit/pr6-smoke.mjs` step `05c` (real Chrome, both themes): **880 → 560 wide** at x 12 (the sheet class IS
+applied), 1200 → 560 anchored at x 240 (the ≥ 900 branch, correct), **390 → 560 wide, 182px off-screen** and clipped,
+so the row's trailing cell (seat code / count / Floor tag) is unreachable. The 900 rule itself is intact, and Phase 4
+PR 6 row 4 retired only `ViewerSeatFinder`'s own `VIEWER_PANEL_BREAKPOINT_PX`, as ruled. **Not fixed:** it is
+phone-width only and the hardware target is 1920 × 1080 desktop (owner, 2026-08-29). No code changed.
+
+The original text stands below as the record of what was deferred and why.
 
 Stated plainly so nothing here reads as more settled than it is:
 

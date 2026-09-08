@@ -216,9 +216,9 @@
     ]
   },
   {
-    "step": "05b-band-under-slot",
+    "step": "05b-band-slot-push",
     "theme": "light",
-    "ok": false,
+    "ok": true,
     "values": {
       "at820": {
         "closed": {
@@ -244,7 +244,10 @@
             "cls": "sp-seat-legend",
             "inBand": true,
             "inSlot": false
-          }
+          },
+          "bandPaddingRight": "8px",
+          "slotOpenAttr": false,
+          "zoomRightOfSlot": null
         },
         "open": {
           "band": {
@@ -258,21 +261,24 @@
             "bottom": 900
           },
           "zoomInCentre": {
-            "x": 796,
+            "x": 396,
             "y": 880
           },
           "zoomInHit": {
-            "tag": "div",
-            "cls": "sp-slot-body",
-            "inBand": false,
-            "inSlot": true
-          },
-          "bandLeftHit": {
-            "tag": "li",
-            "cls": "sp-seat-legend",
+            "tag": "path",
+            "cls": "",
             "inBand": true,
             "inSlot": false
-          }
+          },
+          "bandLeftHit": {
+            "tag": "span",
+            "cls": "sp-band-note",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "408px",
+          "slotOpenAttr": true,
+          "zoomRightOfSlot": -8
         }
       },
       "at1920": {
@@ -299,7 +305,10 @@
             "cls": "sp-seat-legend",
             "inBand": true,
             "inSlot": false
-          }
+          },
+          "bandPaddingRight": "8px",
+          "slotOpenAttr": false,
+          "zoomRightOfSlot": null
         },
         "open": {
           "band": {
@@ -313,34 +322,39 @@
             "bottom": 1080
           },
           "zoomInCentre": {
-            "x": 1896,
+            "x": 1496,
             "y": 1060
           },
           "zoomInHit": {
-            "tag": "div",
-            "cls": "sp-slot-body",
-            "inBand": false,
-            "inSlot": true
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
           },
           "bandLeftHit": {
             "tag": "li",
             "cls": "sp-seat-legend",
             "inBand": true,
             "inSlot": false
-          }
+          },
+          "bandPaddingRight": "408px",
+          "slotOpenAttr": true,
+          "zoomRightOfSlot": -8
         }
       }
     },
-    "note": "FINDING: with the inspector slot open the band's right end (count + zoom controls) is under the slot at BOTH widths - the slot host runs to the viewport bottom, 40px past the map viewport. Pre-existing since PR 3b (visible in screenshots/pr3b/admin-slot-inspector-light-1920.png), not a PR 6 regression",
+    "note": "amendment G (F-8): with the slot open the band takes the slot's push — its zoom control hit-tests to itself and its right edge clears the slot",
     "files": [
+      "05b-band-at820-slot-closed-light.png",
       "05b-band-at820-slot-open-light.png",
+      "05b-band-at1920-slot-closed-light.png",
       "05b-band-at1920-slot-open-light.png"
     ]
   },
   {
-    "step": "05c-viewer-palette-900",
+    "step": "05c-viewer-palette-900-carried",
     "theme": "light",
-    "ok": false,
+    "ok": true,
     "values": {
       "at880": {
         "innerWidth": 880,
@@ -372,11 +386,12 @@
         "overflowsViewport": true,
         "clippedPx": 182
       },
-      "sheetSpans": false,
+      "sheetIntent": true,
+      "sheetWidthWins": true,
       "anchored": true,
-      "phoneFits": false
+      "phoneClip": true
     },
-    "note": "FINDING: the below-900 branch sets left:12 and adds `right-3` to span the viewport, but `.sp-palette { width: var(--sp-palette-w) }` (560, Phase 3 sheet) wins — the palette stays 560 wide at every width below 900, and at 390 it runs 182px off-screen (clipped, the row's trailing cell unreachable). Pre-existing: neither the sheet nor ViewerFindPalette changed in this PR; the 900 rule itself is intact (row 4 retired only ViewerSeatFinder's constant, as ruled)",
+    "note": "F-9 as ruled CARRIED (DECISIONS §7): the below-900 branch fires (left 12, `right-3`) but `.sp-palette`'s 560 wins — 560 wide at 880, 560 anchored at 1200, 182px clipped at 390. Not a regression; not fixed by owner ruling",
     "files": [
       "05c-viewer-palette-390-light.png"
     ]
@@ -610,9 +625,9 @@
     ]
   },
   {
-    "step": "05b-band-under-slot",
+    "step": "05b-band-slot-push",
     "theme": "dark",
-    "ok": false,
+    "ok": true,
     "values": {
       "at820": {
         "closed": {
@@ -638,7 +653,10 @@
             "cls": "sp-seat-legend",
             "inBand": true,
             "inSlot": false
-          }
+          },
+          "bandPaddingRight": "8px",
+          "slotOpenAttr": false,
+          "zoomRightOfSlot": null
         },
         "open": {
           "band": {
@@ -652,21 +670,24 @@
             "bottom": 900
           },
           "zoomInCentre": {
-            "x": 796,
+            "x": 396,
             "y": 880
           },
           "zoomInHit": {
-            "tag": "div",
-            "cls": "sp-slot-body",
-            "inBand": false,
-            "inSlot": true
-          },
-          "bandLeftHit": {
-            "tag": "li",
-            "cls": "sp-seat-legend",
+            "tag": "path",
+            "cls": "",
             "inBand": true,
             "inSlot": false
-          }
+          },
+          "bandLeftHit": {
+            "tag": "span",
+            "cls": "sp-band-note",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "408px",
+          "slotOpenAttr": true,
+          "zoomRightOfSlot": -8
         }
       },
       "at1920": {
@@ -693,7 +714,10 @@
             "cls": "sp-seat-legend",
             "inBand": true,
             "inSlot": false
-          }
+          },
+          "bandPaddingRight": "8px",
+          "slotOpenAttr": false,
+          "zoomRightOfSlot": null
         },
         "open": {
           "band": {
@@ -707,34 +731,39 @@
             "bottom": 1080
           },
           "zoomInCentre": {
-            "x": 1896,
+            "x": 1496,
             "y": 1060
           },
           "zoomInHit": {
-            "tag": "div",
-            "cls": "sp-slot-body",
-            "inBand": false,
-            "inSlot": true
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
           },
           "bandLeftHit": {
             "tag": "li",
             "cls": "sp-seat-legend",
             "inBand": true,
             "inSlot": false
-          }
+          },
+          "bandPaddingRight": "408px",
+          "slotOpenAttr": true,
+          "zoomRightOfSlot": -8
         }
       }
     },
-    "note": "FINDING: with the inspector slot open the band's right end (count + zoom controls) is under the slot at BOTH widths - the slot host runs to the viewport bottom, 40px past the map viewport. Pre-existing since PR 3b (visible in screenshots/pr3b/admin-slot-inspector-light-1920.png), not a PR 6 regression",
+    "note": "amendment G (F-8): with the slot open the band takes the slot's push — its zoom control hit-tests to itself and its right edge clears the slot",
     "files": [
+      "05b-band-at820-slot-closed-dark.png",
       "05b-band-at820-slot-open-dark.png",
+      "05b-band-at1920-slot-closed-dark.png",
       "05b-band-at1920-slot-open-dark.png"
     ]
   },
   {
-    "step": "05c-viewer-palette-900",
+    "step": "05c-viewer-palette-900-carried",
     "theme": "dark",
-    "ok": false,
+    "ok": true,
     "values": {
       "at880": {
         "innerWidth": 880,
@@ -766,11 +795,12 @@
         "overflowsViewport": true,
         "clippedPx": 182
       },
-      "sheetSpans": false,
+      "sheetIntent": true,
+      "sheetWidthWins": true,
       "anchored": true,
-      "phoneFits": false
+      "phoneClip": true
     },
-    "note": "FINDING: the below-900 branch sets left:12 and adds `right-3` to span the viewport, but `.sp-palette { width: var(--sp-palette-w) }` (560, Phase 3 sheet) wins — the palette stays 560 wide at every width below 900, and at 390 it runs 182px off-screen (clipped, the row's trailing cell unreachable). Pre-existing: neither the sheet nor ViewerFindPalette changed in this PR; the 900 rule itself is intact (row 4 retired only ViewerSeatFinder's constant, as ruled)",
+    "note": "F-9 as ruled CARRIED (DECISIONS §7): the below-900 branch fires (left 12, `right-3`) but `.sp-palette`'s 560 wins — 560 wide at 880, 560 anchored at 1200, 182px clipped at 390. Not a regression; not fixed by owner ruling",
     "files": [
       "05c-viewer-palette-390-dark.png"
     ]

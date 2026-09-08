@@ -3233,6 +3233,10 @@ export function SeatMap({
             {statusBandVisible && (
               <MapStatusBand
                 ariaLabel="Seat status legend"
+                // The band is the canvas column's SIBLING inside the stage, so the absolute slot
+                // host runs over its right 400px unless it takes the same push the column takes
+                // (sheet amendment G / F-8; PHASE2UX §1M.2 "the band spans the canvas, not the slot").
+                slotOpen={slotOwner !== null}
                 totalLabel={`${floorMeta.tag} · ${stats.total} ${stats.total === 1 ? "seat" : "seats"}`}
                 entries={SEAT_STATUS_LEGEND
                   .filter(item => !item.draftOnly || legendCounts[item.key] > 0)
