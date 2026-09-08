@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { withQueryParam } from "@/lib/deepLink";
-import { CopyIcon } from "@/components/seat-map/mapIcons";
+import { CopyIcon } from "@/components/ui/icons";
 import type { FloorId } from "@/lib/floorIds";
 import { FLOORS, groupRosterByDepartment } from "@/lib/floors";
 import { formatDisplayName } from "@/lib/formatName";

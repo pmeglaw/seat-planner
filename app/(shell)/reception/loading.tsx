@@ -1,5 +1,5 @@
 import { ReceptionFrame } from "@/components/reception/ReceptionFrame";
-import { SearchIcon } from "@/components/seat-map/mapIcons";
+import { SearchIcon } from "@/components/ui/icons";
 
 // Content-pane loading state for /reception (PHASE2UX §1R.6 "Loading"; P2-5):
 // the skeleton sits on the REAL layout — the page header and the search are

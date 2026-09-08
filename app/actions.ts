@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchAllRows } from "@/lib/fetchAllRows";
 import { parseAssignmentCsv } from "@/lib/csv";
 import { isStaleDraftErrorCode, type DraftSeatExpectation, type EmployeeExpectation } from "@/lib/draftConcurrency";
+import { isPublishedEmployeeRefusal } from "@/lib/actionRefusals";
 import { applyFixedWindow, type RateLimitWindow } from "@/lib/rateLimit";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import { answerMapOperationsQuestion } from "@/lib/mapOperationsAgent";
@@ -714,9 +715,12 @@ export async function deleteEmployeeAction(targetEmployeeId: string): Promise<Em
   });
 
   // The RPC's published-map guard is an expected refusal with a written
-  // reason ("…still on the published map at CW01…"): return it so the panel's
-  // danger zone can show it with the seat link (PHASE2UX §1G.3).
-  if (error) return { ok: false, code: "REFUSED", message: error.message };
+  // reason ("…still on the published map at CW01…"), raised with its own
+  // SQLSTATE (lib/actionRefusals): return it so the panel's danger zone can
+  // show it with the seat link (PHASE2UX §1G.3). Anything else is not a
+  // refusal — thrown like every sibling action (Phase 4 PR 6, finding F-2).
+  if (error && isPublishedEmployeeRefusal(error)) return { ok: false, code: "REFUSED", message: error.message };
+  if (error) throw new Error(error.message);
   revalidatePath("/admin");
   return { ok: true, employeeId };
 }

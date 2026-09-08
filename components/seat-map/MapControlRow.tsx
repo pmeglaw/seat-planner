@@ -19,7 +19,7 @@ import type { FloorId } from "@/lib/floorIds";
 import { FloorMenuButton } from "@/components/seat-map/FloorMenuButton";
 import { MapSearch, type MapSearchProps } from "@/components/seat-map/MapSearch";
 import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
-import { CloseIcon, MoreIcon, PlusIcon, RedoIcon, UndoIcon } from "@/components/seat-map/mapIcons";
+import { CloseIcon, MoreIcon, PlusIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 
 export type MapControlRowDraft = {
   undo: { label: string; disabled: boolean; busy?: boolean; onClick: () => void };

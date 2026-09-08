@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 4: code
 
-**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 merged (v1.74.1). 1b #514 merged (v1.74.2). PR 2 #515 merged (v1.74.3). PR 3a #516 merged (v1.74.5 — v1.74.4 went to chore #517). PR 3b #518 merged (v1.74.6, 2026-09-05). PR 4 #519 merged (v1.75.0, 2026-09-05). PR 5 #522 merged (v1.76.0, 2026-09-07). PR 5b #523 merged (v1.77.0, 2026-09-07). 6 not started.** Inputs, in reading order:
+**Status: in progress — PR 0 #512 merged (v1.74.0). PR 1 #513 merged (v1.74.1). 1b #514 merged (v1.74.2). PR 2 #515 merged (v1.74.3). PR 3a #516 merged (v1.74.5 — v1.74.4 went to chore #517). PR 3b #518 merged (v1.74.6, 2026-09-05). PR 4 #519 merged (v1.75.0, 2026-09-05). PR 5 #522 merged (v1.76.0, 2026-09-07). PR 5b #523 merged (v1.77.0, 2026-09-07). **PR 6 — the close-out — built 2026-09-08 on `feat/phase4-closeout` (plan of record `plans/phase4-pr6-closeout.md`), v2.0.0 on merge: Phase 4 complete.** Inputs, in reading order:
 `CLAUDE.md` / `AGENTS.md`; `phase3/PHASE3DS.md` §5 (20 obligations with landing files, landing files by PR, retired
 names) and §7 (what Phase 3 learned); `PHASE2UX.md` §3 (component checklist), §5 (nine obligations), the per-screen
 decision logs and the wireframes under `wireframes/`; `PHASE1IA.md` §B–§C; `DECISIONS.md` D0–D6 + §6 (deviations
@@ -891,6 +891,156 @@ change); unit 1449 · ct 321 · `test:browser` 26 · e2e 36 · e2e-auth **53 / 5
 on the local stack only: one vacate through the delayed route (re-assigned through REST), one move + Discard everything
 for real (converged), custom seat R99 inserted through REST and deleted for real through the confirm.
 
+### 1.48 PR 6 — the close-out (plan approved with rulings 2026-09-08; built 2026-09-08)
+
+Plan of record: `plans/phase4-pr6-closeout.md` v1 — approved as written by the reviewer, the owner ruling on its §2
+rows the same day. Built on `feat/phase4-closeout` → **v2.0.0**. The docs half (the plan's §1) is this file's status
+line, §2 re-read, §3 row 6, §4 line, §5, the slice-log row; PHASE1IA §D's delivered line; PHASE2UX §1S.2 + the closed
+slice log; PHASE3DS §5 ticked, §6 "None", the §1.18 / §1.26 / §1.28 notes; DECISIONS reconciled (every D-entry's
+"Built" line, §6 no. 18, next free 19, §7 / §8 closed); TEST-TRIAGE's PR 6 outcomes + close-out; `CLAUDE.md`'s
+"Design system" paragraph for the finished state; the bridge header; `app/concepts/CLAUDE.md` + a new
+`docs/design-system/README.md` marking both superseded, not deleted; three remote branches pruned after merge
+(`chore/design-sync-2026-08-28` — PR #479 closed unmerged, `.design-sync/` previews of retired components;
+`docs/redesign` — no PR, the off-limits `shell-reference.html`; `fix/pass1-scrim-tokens` — PR #478 closed unmerged, two
+class edits onto a retired group-2 name, both surfaces rebuilt in 3b).
+
+**Owner rulings (2026-09-08), one line each, as built:**
+- **Row 1 → B.** The narrow tearsheet stays content-height; **DECISIONS §6 no. 18** (anchoring 3–8-line destructive
+  confirmations leaves ~650px of empty body above the danger primary at 1080 — reviewer render); PHASE3DS §1.28 note,
+  PHASE2UX §1S.2 "anchored top; height from content". No code, no sheet change; next free number 19.
+- **Row 2 → build.** Migration `20260908120000_deactivate_employee_sqlstate.sql`: `create or replace` of
+  `deactivate_employee(uuid)`, body verbatim (diffed against `20260702100000` — the one change is `using errcode =
+  'MLS03'` on the published-map raise; revoke / grant restated). `lib/actionRefusals.ts` (`PUBLISHED_EMPLOYEE_SQLSTATE`,
+  `isPublishedEmployeeRefusal`); `deleteEmployeeAction` returns `REFUSED` for that code only and throws anything else.
+  **Finding F-2 recorded as the reason:** the action returned EVERY RPC error as a refusal, so a transport failure
+  rendered in the panel's danger zone as if the database had refused. PGlite asserts the code; the source pins follow.
+- **Row 3 → build (owner override of the hand-off's file-count threshold).** `useAppShellPanels` (`AppShell.tsx`, the
+  `useAppShellLeftPanel` precedent) exposes the right panels to a surface; `SeatMap` feeds the drawer's `onOpenHelp`;
+  the popover's "How Ask Planner works" link opens Help — focus per the panel's own rule, Esc through the shell's ladder
+  back to the utility. `app-shell` ct + `ask-planner-ai-source` pin it. PHASE3DS §1.18's promise closed.
+- **Row 4 → retire.** The Tailwind `panel` screen, `SEAT_CENTER_PANEL_BREAKPOINT_PX` / `SEAT_CENTER_SHEET_ANCHOR`, both
+  map surfaces' dead `panelTier` state and the below-900 selection pan (written for the bottom sheet the slot replaced
+  in 3b) are gone; `centerSeatInMap` centres at 0.5 at every width. §1.29's "the shell still uses it" was stale —
+  nothing in the shell keyed on the screen; the viewer's phone-only zoom float keeps its safe-area inset (the
+  `accessibility-source` guardrail, its vestigial `panel:bottom-3` half retired). `ViewerFindPalette`'s own 900px
+  full-width rule (owner answer 3) is untouched. `seat-map.spec.ts` :372 (820×900) asserts the slot and the band, not
+  a pan — nothing re-pointed there.
+- **Row 5 → keep, record closed.** PHASE3DS §1.26 carries the built line.
+- **Row 6 → rename.** `components/seat-map/mapIcons.tsx` → `components/ui/icons.tsx`, 13 imports and one test comment
+  re-pointed; no glyph change.
+- **Row 7 → build, with the owner's addition.** `CarbonModal` owns the busy ⇄ idle focus seam: busy **true** with focus
+  dropped to `<body>` (Chrome, a primary disabling under the pointer) or on a control that has just disabled → the
+  section takes it, the trap keeps its anchor; busy **false** → in a frame, **only if** focus still sits on the
+  section, `<body>` or outside the dialog, the first visible enabled control takes it (`focusFirstControl`, exported
+  from `useDialogFocus` so open and refocus share one definition) — a consumer's error alert always wins, and **never on
+  a detached section** (`node.isConnected`; a dialog unmounting on success flips busy false as it leaves while
+  `useDialogFocus` restores the opener). Four ct pins in `dialog-initial-focus`. The rig: `pr5b-dialogs.mjs`
+  **29 / 29** — `06b-move-conflict-initial-focus` passes in both themes (the R-5 finding closed); the PR 4 smoke's
+  dirty close (8) and create modal (14) pass inside the whole twenty-step smoke — **47 / 47** on the patched rig (below).
+- **Row 8 → retire the file.** `components/ui/Button.tsx` had no importer (F-4 — the design-system `Button` carries
+  the same loading contract for every remaining consumer); `pending-state-source` and `touch-target-source` re-pointed.
+- **Row 9 → (c).** The four dark raster lightbox rules moved from the bridge into `globals.css` beside the light dim —
+  the raster app rules owner ruling Q1 names there — three-state shape and values unchanged, no later sheet or utility
+  sets `filter` on `.map-raster` (grepped); the runtime audit's dark `/` and `/admin` captures show the inverted raster
+  as before. `phase4-bridge.css` is the permanent font bridge only; `theme` + `ask-planner-ai-source` read `globals.css`.
+- **F-7 carried:** `.design-sync/` on `main` (previews and shims of components the redesign retired) is out of PR 6's
+  scope — a separate chore after v2.0.0.
+
+**What the code forced (one line each):** `CarbonModal`'s section ref is `useDialogFocus`'s callback composed with a
+plain ref for the busy effect, and keeps the `dialogFocusRef` name `accessibility-source` pins on every aria-modal
+element; `isPublishedEmployeeRefusal` stays a boolean (a type guard narrowed the else-arm to `never`), so the action
+checks `error && …`; the PR 4 smoke cannot run step 14 alone (it starts on the Departments tab step 13 opened), so the
+row-7 evidence is the whole twenty-step smoke on a reseeded stack; `management-actions-transaction-safety` reads the
+newest migration first so `extractFunctionSql` finds the live definition.
+
+**Rig-side finding, fixed in the rig (not a product change):** the first whole-smoke run failed steps 13–15 in both
+themes on a `locator.click` timeout with the dirty-close ask open over the panel — step 13 fills the department
+combobox the instant the panel appears, and `AdminManagementPanel` lands focus on Name in a frame after opening (the
+PR 4 row-open rule); when the fill beats that frame, focus snaps back to Name and the Escape meant for the list opens
+the ask (bisected: step 13 passes alone and after step 12, fails after step 8 — a warmed session opens the panel faster;
+the probe showed `activeElement` = Name after the fill in the failing run). Step 8's own `openEdit` waits 300 ms for
+exactly this; step 13's site now waits the same. A real user cannot type before the frame; the guardrail (row open
+focuses Name, `management-detail-source`) is untouched.
+
+**Evidence (build box, 2026-09-08 — `screenshots/pr6/README.md`):** unit **1457** · ct **326** · gate clean (lint 0
+errors, typecheck, coverage 98.34 / 92.40 / 98.30) · build clean · e2e **36** · `test:browser` **26** · Docker stack
+(reset + reseeded; the new migration confirmed applied — `MLS03` in `pg_proc`): runtime audit **0 undefined `var()`**
+on 6 routes × 2 themes + 1280 + the system state + the viewer pass (34 captures); `pr5b-dialogs.mjs` **29 / 29**;
+`pr4-smoke.mjs` **47 / 47** (whole, both themes, on the patched rig — the rig-side finding above); e2e-auth **53 / 53**; contrast **202 / 202** (no token change — the generator's JSON
+unchanged). Real mutations on the local stack only.
+
+**Post-bump re-run (2026-09-08, reviewer correction):** the Docker evidence was re-run after the Dependabot merge
+because the MLS03 refusal rides on the supabase-js error shape — runtime audit **0 undefined** · `pr5b-dialogs`
+**29 / 29** · `pr4-smoke` **47 / 47** (step 11 carries the guard's reason verbatim against 2.115.0) · e2e-auth
+**53 / 53**; the reviewer's own six-step smoke is `audit/pr6-smoke.mjs` → `screenshots/pr6-smoke/`. It surfaced two
+pre-existing defects, both ruled by the owner the same day.
+
+**F-8 — the right slot covered the status band's right end. FIXED IN PR 6 (owner ruling 2026-09-08).**
+`.sp-slot-host` is `position: absolute; top/right/bottom: 0` against the map **stage**, which holds the band as well
+as the map viewport, so an open slot painted over the band's right 400px. Hit-tested at the band's own Zoom-in button
+(1896, 1060 at 1920×1080): `div.sp-slot-body` with the slot open, the button itself with it closed; the same at
+820×900. Present since PR 3b and visible in `screenshots/pr3b/admin-slot-inspector-light-1920.png` (closed shows
+"60 seats − Fit +", open shows blank panel). **Not a deviation — a conformance defect against a ruling already made:**
+PHASE2UX §1M.2 says "the band spans the canvas, not the slot" (band y 849–889, slot x 1520–1920), and
+`MapStatusBand`'s own header repeated it. **Why it mattered enough to fix inside the close-out:** at 1920 the result
+count clipped mid-word and the zoom − / Fit / + group was unreachable — and D2-b keeps **Reset zoom** only on that
+control, so the loss fell exactly while a seat was being edited. **Built as sheet amendment G** (PHASE3DS §1.21,
+cross-referenced from §1.17), byte-identical in `app/styles/sp-components.css` and the Phase 3 copy:
+`.sp-band[data-slot-open] { padding-right: calc(var(--sp-slot-w) + var(--sp-space-03)) }`, with `MapStatusBand`
+taking a `slotOpen` prop that `SeatMap` feeds from the same `slotOwner` state the canvas column's
+`pr-[var(--sp-slot-w)]` push already uses. **No token change; contrast stays "no token change".** Evidence:
+`pr6-smoke.mjs` step `05b` is now a PASS assertion (hit-test open and closed, 1920 and 820, both themes, captures of
+all four states), the e2e-auth `page-frames` map block pins the geometry, and the real-browser tier pins the
+`data-slot-open` key (that harness ships no CSS).
+
+**The preview walk could not run on this PR (recorded, not skipped silently).** PR 6 carries a migration, so the
+Supabase integration gave its preview a **branch database** (`ynhqcykgkjslzjzkwisy`; the preview's client bundle
+inlines that host, not production's `wujsniclwzefvufavama`), and `[db.seed]` is disabled on purpose in
+`supabase/config.toml` — so the branch has no accounts and GoTrue answers any sign-in with `400 invalid_credentials`.
+PR 4 / 5 / 5b previews really did read and write production **because none of them carried a migration**; every future
+migration PR will be unwalkable the same way. Owner ruling 2026-09-08: **verify F-8 on production immediately after
+the merge, read-only** (`audit/pr6-preview-walk.mjs` against `seats.megeredchianlaw.com`, both themes at 1920 — the
+hand-off's §6 and §7 step 2b). The fix itself is already evidenced on real seeded data by `pr6-smoke` step `05b` and
+the e2e-auth `page-frames` map block, which runs in CI.
+
+**Re-verified on the fixed head (2026-09-08, after amendment G):** unit **1457** · ct **326** · gate exit 0 (lint 0
+errors, typecheck, coverage 98.34 / 92.40 / 98.30) · build clean · `test:browser` **26** · `test:e2e` **36 / 36** (the
+two `waitForColorSettle` self-tests pass on real Chrome) · Docker stack, reset + reseeded between each:
+`pr5b-dialogs` **29 / 29**, `pr4-smoke` **47 / 47** whole, runtime audit **0 undefined `var()`**, e2e-auth
+**55 / 55** (53 + the two `page-frames` map-band tests), `pr6-smoke` **17 / 17**. Contrast unchanged at 202 / 202 —
+amendment G is a padding rule and changes no token.
+
+**F-8, the below-band tier, settled by measurement (reviewer item, 2026-09-08).** `statusBandVisible` is
+`surface === "plan" && bandTier` and the floating zoom stack renders only when `!bandTier`, both keyed on the same
+`(min-width: 640px)` query — so the band and the floating control are mutually exclusive by construction. The real
+question was whether an **open slot** can co-occur with that floating control, and the answer differs by surface
+(driven at 500 / 639 / 641 / 820 on the local stack, real Chrome):
+
+- **`/admin` — cannot co-occur.** The slot DOES open below 640 (measured: 400 wide at x 100 on a 500 viewport), so
+  the first half of the offered wording would have been wrong; what prevents the clash is that the float is *hidden*
+  while a mobile interaction surface owns the screen — `mobileMapControlsHidden` (a selected seat, Ask Planner, the
+  publish review or any of the four confirms) puts `hidden sm:block` on the stack, and below 640 that is simply
+  hidden. Measured: the control's box collapses to 0×0 the moment the inspector opens.
+- **`/` — it CAN co-occur, and the slot covers the float.** The viewer's float carries no `mobileMapControlsHidden`
+  equivalent, so at 500 with the published inspector open both are mounted, their boxes overlap, and a hit-test at
+  the float's Zoom-in centre (456, 814) returns `div.sp-slot-body` — the control is present and unreachable. Capture:
+  `screenshots/pr6-smoke/tier-viewer-500-inspector-open.png`. **Follow-up row (not built here):** mirror the admin and
+  hide the viewer's float while its slot is open, or lift it above `.sp-slot-host` — a phone-width product call, off
+  the 1920 hardware target, so it goes to the owner rather than into the close-out.
+
+**The same probe found F-8 still live on the viewer, and PR 6 fixes it there too.** Amendment G was wired only into
+`SeatMap`; `ViewerSeatFinder` has its own `RightSlot` (the published inspector) and its own two `MapStatusBand` call
+sites, so at 1920 with a seat selected the viewer's band still read `padding-right: 8px` and its Zoom-in hit-tested
+into `div.sp-slot-body`. Both viewer bands (plan and roster — a selection survives a switch to a roster floor) now
+take `slotOpen`; measured after: `data-slot-open` present, padding-right **408px**, the Zoom-in centre 1880 → **1480**
+at 1920 and 601 → **201** at 641, hit-testing to itself. The e2e-auth `page-frames` map block gained the viewer arm so
+the surface cannot regress unguarded.
+
+**F-9 — the below-900 palette sheet never spans. CARRIED, not fixed (owner ruling 2026-09-08).** `.sp-palette`'s
+fixed 560 beats the computed frame's `left: 12` + `right-3` stretch: 560 wide at 880, 182px off-screen at 390. Real,
+but phone-width only and off the 1920 hardware target. Recorded in DECISIONS §7 beside the 400 % zoom reflow; the 900
+rule itself is intact and row 4 retired only `ViewerSeatFinder`'s constant, as ruled. No code.
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =
@@ -948,6 +1098,7 @@ allowlisted `/`; `nav-shell.spec.ts` walks `/` through the History switch.
 | 5 | `close-icon-source` (with `components/ui/CloseIcon.tsx` — the one glyph is `mapIcons.tsx`'s) | `reception-screen` (ct: 34 — the cursor / lock split, the Esc rungs, `?q=` landings + `replaceState`, the clear ×, Ctrl / ⌘ K, the platform hint, the readout tile / D3′ line / no-extension / Show on map, zero · empty · partial, fallback rows, recents outside the live region, Back to the list, no avatar) | `reception-source` (published-layer + D3′ pins verbatim; + the PR 5 contracts), `chunk-recovery-boundary-source` (+ the Reception boundary), `touch-target-source` (Reception comment block; the `/admin` 403 pin left with the card), `phase4-token-layer-source` (two permanent ledger rows; the `shadow-sp` ban; the font pin on `app/fonts/plex.ts` + both roots), e2e-auth `page-frames` (+ Reception), `header-geometry` (+ `/reception` viewer), `accessibility` (+ Reception rest / locked, the `/admin` 403) | added e2e-auth `reception-keyboard.spec.ts`; the rigs gained the Reception section (viewer), the 404, the `/admin` 403 and a viewer pass for `/my-seat`; unit 1445 (1443 pass + 2 environment-only fails on the sandboxed box — see the slice log) · ct 34 (reception) |
 | 5b | — | `dialog-error-placement` (role-agnostic open-dialog query; `aria-describedby` + the ruled role for all seven; Discard's error focusable; comment-stripped registry scan), `seat-map-escape-source` (+ the four pending guards) | `dialog-initial-focus` (alertdialog container), `accessibility-source` (SeatMapDialogs + SeatInspector off the aria-modal host loop; `titleId` pins; Delete's Cancel for the × pin; the inspector's z-index look-pin → `titleId` + `alertdialog` + no `Cancel moving employee`), `touch-target-source` (two × rows), `tailwind-arbitrary-alpha-source` (container scan follows `CarbonModal`, code only), `bulk-destructive-action-safety-source` (`titleId`), e2e-auth `draft-dialogs` (alertdialog; the dialog's Cancel), browser `seat-map` + `accessibility` (alertdialog) | unit 1449 · ct 321 · browser 26 · e2e 36 · e2e-auth **53 / 53** (reset + reseeded stack) |
 | 1 | `elevation-shadow-tokens-source`, `color-twin-drift-source`, `e2e/publish-ready-badge-contrast.spec.ts`, `marker-contrast.test.mjs` + `scripts/marker-contrast.mjs` (missed by the PR 0 survey: measured the old `--sp-marker-*` values from the deleted block; the obligation — marker contrast in both themes, non-hue pair distinction — is carried by the generated 192-pair suite and Phase 3's two-signal marks) | `auth-theme-source` (both-themes resolution against `sp-tokens.css` + `carbon-tokens.css`; class bans and ledger kept), `focus-brand-contrast-source` (one `--sp-focus` aliasing `$focus`, defined light + system-dark + forced-dark; tier-C panel focus; raw brand orange banned in code, not comments), `theme.test` (derivation function ↔ boot string; three states; toggle writes only through `applyTheme`) | `accessibility-source` (two kind-tag token pins: `pending-surface` → `draft-surface`, `--admin-diff-vacated-text` → `--sp-status-error-text`), `ask-planner-ai-source` (dim rules read from `globals.css` + the bridge), `phase4-token-layer-source` (`SWEPT` = {1}; ledger 4 rows; font-bridge, asset-identity, import-order and bridge-alias assertions added) | 1390 pass · 0 fail; `npm run gate` clean; `npm run build` clean |
+| 6 | — (`components/ui/Button.tsx` left with no test: both of its tests re-pointed) | `dialog-initial-focus` (+4: the busy ⇄ idle seam, the alert wins, the detached section), `app-shell` (+1: `useAppShellPanels` opens Help; the no-shell no-op), `ask-planner-ai-source` (+1: the Help link fed) | `pending-state-source` (the loading contract → the design-system `Button`), `touch-target-source` (the PINS row leaves with the file), `accessibility-source` (the zoom float keeps its safe-area inset; the `*DialogFocusRef` pin holds on the composed ref), `map-viewport` + `management-detail-source` (comments), `theme` + `ask-planner-ai-source` (the raster rules read from `globals.css`), `rpc-execution` (+ `code: "MLS03"`), `action-error-contract-source` (the guarded refusal; a bare `if (error) return REFUSED` banned), `management-actions-transaction-safety` (newest definition first + the errcode pin) | added `action-refusals` (unit); unit 1457 · ct 326 · browser 26 · e2e 36 · e2e-auth 53 |
 
 ---
 
@@ -1036,6 +1187,14 @@ product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs
 202/202 pass
 ```
 
+PR 6 (2026-09-08, **no token change** — no sheet change either: row 1 ruled B, row 9 moved four raster rules between
+app files; the generator's JSON is unchanged):
+
+```
+product-pairs.json: 202 pairs · surface-pairs-not-gated.json: 14 pairs
+202/202 pass
+```
+
 Marker states (`audit/marker-contrast.mjs`, local Docker stack, seed data, 2026-09-03 after the §1.6 fix) —
 worst text span per state, light / dark:
 
@@ -1090,7 +1249,35 @@ Marker states (`audit/marker-contrast.mjs`, local Docker stack, seed data): unch
 
 ## 5. What Phase 4 learned
 
-Filled at close-out (PR 6), ordered tokens → components → surfaces like PHASE3DS §7.
+Written at the close-out (PR 6, 2026-09-08), ordered tokens → components → surfaces like PHASE3DS §7.
+
+**Tokens.** The phased token test (a per-file hex ledger that only shrinks, retired names swept by group) let every PR
+land green while old components still consumed the old names — and its two permanent ledger rows are the honest end
+state, not an empty ledger: `/my-seat` has no Phase 2 or 3 design and stays byte-identical by ruling. The brand layer
+proved the semantic layer's purpose — one file overriding Carbon's interactive roles restyled every surface without a
+component naming a colour — and the two hues it pulled in (the hit tint, the Draft purple) were rulings, taken because
+a measurement (ΔE 5.3, 1.10:1) said the record's colour had stopped reading. Contrast is a generated suite, not a
+checklist: every hue change was caught by the pair run before a capture, and "no token change" is a line the run
+proves.
+
+**Components.** Zone rules must repeat the asset's element names or lose by specificity (the radio rings vanished on the
+dark panel in the light theme); the outlined-open trigger is four shadows, and a port that drops the outer one closes
+the outline; the sheet is the deliverable — every product change is a dated amendment in **both** copies,
+byte-identical, or the token test fails the build (six amendments, A–F, each with its paragraph in PHASE3DS). Hosts own
+behaviour so consumers cannot forget it: `CarbonModal`, the tearsheets and the side panel own focus, Esc and the inert
+overlay, and a host-level finding (busy → idle focus, the pointer on the overlay pulling focus out) is fixed once for
+every consumer family. A hand-built row is cheaper than an overridden asset row only when the asset has no equivalent;
+the callout, the narrow tearsheet and the count cards earned theirs.
+
+**Surfaces.** The tiers are not visual verification. Every PR's decisive findings came from the Docker-stack rigs and
+the owner's smokes — the indicator not following a people edit, the refusal that never reached the panel, the tooltip
+clipped by the asset's cell, the `null` history state, four dialogs closing on Esc mid-flight, the move-conflict
+dialog's invisible focus — each a hit-test in real Chrome, both themes, on a reseeded stack. Check the runtime at Task 0,
+not Task 10 (PR 5 lost an afternoon); measure inside `main`, never a class a `loading.tsx` shares; capture byte-compare
+baselines alone on a same-day seed; free the port by listener PID; run the owner's smoke whole — a step assumes the
+tab its predecessor opened. And the record works: every "what did not fit the documents" line became a dated owner
+ruling or a close-out row, and nothing was decided in code — which is what made a fresh session able to build the
+close-out from the hand-off alone.
 
 ---
 
@@ -1107,11 +1294,11 @@ Filled at close-out (PR 6), ordered tokens → components → surfaces like PHAS
 | 4 | #519 | `feat/phase4-pages` | v1.75.0 | Management + Settings (P3-7 Management half, 8 Deactivate, 15, 16, 17; P2-6, 7, 8): `ManagementFrame` (line tabs in the sections landmark, the primary follows the tab), `EmployeesTable` (`.cds-table`, toolbar count, ● / ○, seat-code link, one ghost Edit), `EmployeePanel` (480 layer-02 slide-over, 50/50 footer, no ×, one dirty check → `CarbonModal` ask), `OptionList` (Save · Cancel inline rename, blur validates, ⋯ Delete), `OptionCreateModal`, `ManagementConfirmSheet` (**owner ruling §1.38**, sheet amendment B), Publish History tab gone; Settings: `.sp-callout`, sections in the record's order, `FileTrigger` + `lib/fileGuard` (5 MB / type, inline before a sheet), `CsvImportSheet` / `SnapshotRestoreSheet` (D6-e done-state ghost; MLS02 keeps the restore review), Reset draft gone (one call site pinned), draft-only page; group-4 sweep (`SWEPT` {1,2,3,4}, bridge §2 empty); `lib/managementCounts` / `inlineRename` / `fileGuard` | built 2026-09-05: unit 1428 · ct 307 · gate clean · e2e 36 · **e2e-auth 39/39** (local stack) · runtime audit 0 undefined (6 routes × 2 themes + 1280 + system state) · page-states rig 63 captures (`screenshots/pr4/`) · contrast 202/202 (no token change) · build clean. **Owner's twenty-step smoke 2026-09-05: 47/47 after four fixes (§1.39 — the indicator seam, the returned deactivate refusal, the inert overlay keeping focus, sheet amendment C for the narrow frame); captures + `results.json` in `screenshots/pr4-smoke/`**; read-only preview walk 22/22 on the Vercel preview (`screenshots/pr4-preview/`, people data masked) → §1.23 **amendment D** (the Edit tooltip escaped the asset's clipped cell; smoke step 4 re-run 4/4, e2e-auth 42/42) | merged (v1.75.0) 2026-09-05 (squash, 18f855d) |
 | 5 | #522 | `feat/phase4-reception` | v1.76.0 | Reception on `.sp-recep` (P3-4 Reception half, 5 Reception half closed "no mark drawn", 18; P2-4 last half, 5): `ReceptionFrame`, `ReceptionScreen` (search lg + clear × + Ctrl / ⌘ K, the cursor / lock split, the Q-1 Esc rungs, `?q=` via `replaceState`, readout tile + D3′ line + "No extension on file" + Show on map, fallback rows, recents outside the live region, zero · empty · partial · loading · error), sheet **amendment E** (the 1024 fold); route cards on `.sp-route-card` (admin boundary, `/admin` 403 without its raster strip, root boundary + 404 by Q-2, `global-error` in the design system — fonts moved to `app/fonts/plex.ts`); carry-ins: `shadow-sp` 4 → 0 (+ the token ban, `boxShadow` gone from Tailwind), `components/ui/CloseIcon.tsx` retired for `mapIcons`, `HEX_LEDGER` two permanent rows (Q-3); `/login` + `/my-seat` confirmed unchanged by capture; O-8 → PR 5b (Q-5). Plan of record `plans/phase4-pr5-reception.md`; §1.40–§1.44 | built 2026-09-06 on `feat/phase4-reception`: unit 1445 (1443 pass; 2 environment-only fails — sandbox / box, `screenshots/pr5/README.md`) · ct 318 · gate clean (lint 0 errors, typecheck, coverage 98.33 / 92.35 / 98.29) · build clean · e2e 34 pass (+ 2 environment-only helper self-test fails) · contrast **202/202 (no token change)** · 404 + global-error captured both themes (the global-error theme fix, §1.42). **Docker-stack evidence (§1.45, colima + Chrome installed with the owner's go-ahead): runtime audit 0 undefined on 6 routes × 2 themes + 1280 + system state + the viewer pass · page-states 83 captures · `/login` + `/my-seat` byte-identical vs `main` (5/5) · e2e-auth 53/53 · the two environment-only tests pass unsandboxed on real Chrome**; **Owner's eighteen-step smoke 2026-09-06/07 (`audit/pr5-smoke.mjs`, `screenshots/pr5-smoke/`): 37/38 records in the final run — the one FAIL is the in-run step-17 compare flaking on two animated surfaces, 5/5 IDENTICAL standalone; three product fixes (§1.44 hint states the current key; §1.46 `replaceState` passes `history.state` + the cache-restored landing; the map's D1-d unique landing counts a person plus their own seat as one match) and e2e-auth 53/53 after them**. **Read-only preview walk 2026-09-07 (`audit/pr5-preview-walk.mjs`, `screenshots/pr5-preview/`): 29/29 on the `68e8b03` deployment as the fixture account (admin role in production — `/admin` shows the map, the 403 is proven on the local stack), people data masked; indicator identical before and after, 4 argument-less status POSTs, no other failed responses.** PR #522 CI green (verify · e2e · e2e-auth · CodeQL) | **merged (v1.76.0) 2026-09-07 (squash, 79b29d9)** — the row's build / smoke / walk facts stand |
 | 5b | — | `feat/phase4-map-dialogs` | v1.77.0 | the map's seven confirm dialogs (Vacate · Delete seat · Swap · Discard draft · the inspector guard · Move / Swap them · the inspector's move-conflict) onto the asset `.cds-modal` on the PR 4 `CarbonModal` host (PHASE2UX §3, a PR 3 landing found open — §1.43, owner ruling Q-5): `CarbonModal` `describedBy` / `footerColumns` / node title; sheet **amendment F** (the guard's 25/25/50; body paragraph spacing); `alertdialog` on the six confirms, `dialog` on the guard; danger primary on Vacate / Delete / Discard (R-2); no × (R-3); found in build — Esc closed four dialogs mid-flight (fixed, pinned). Plan of record `plans/phase4-pr5b-map-dialogs.md`; §1.47 | built 2026-09-07: unit 1449 · ct 321 · gate clean (lint 0 errors, typecheck, coverage 98.33 / 92.39 / 98.30) · build clean · browser 26 · e2e 36 · **Docker-stack evidence: `pr5b-dialogs.mjs` 27/29 (the 2 = one pre-existing focus finding, §1.47) · runtime audit 0 undefined · e2e-auth **53 / 53** (reset + reseeded stack) · contrast 202/202 (no token change)** (`screenshots/pr5b/`). **R-4 (eyebrows on all seven) + R-5 folded in 2026-09-07; owner's smoke `audit/pr5b-smoke.mjs` 22/22 light + dark (`screenshots/pr5b-smoke/`), no product change**. **PR #523 CI green (verify · e2e · e2e-auth · CodeQL). Read-only preview walk 2026-09-07 (`audit/pr5b-preview-walk.mjs`, `screenshots/pr5b-preview/`): 21/21 on the a30dcf1 deployment, the owner signed in by hand in headed Chrome, every dialog opened and dismissed only, people data masked; indicator "Draft — no changes" + Undo disabled before and after; 3 action POSTs (1 status read + the move-conflict's 2 refused Assign submits); Delete seat and Discard draft N/A on production (no custom seat, no draft change)** | **merged (v1.77.0) 2026-09-07 (squash, 0e1ba92)** — the row's build / smoke / walk facts stand |
-| 6 | — | — | v2.0.0 (after 5b) | close-out: this file complete; PHASE1IA §D delivered; DECISIONS reconciled; `CLAUDE.md` "Design system" rewritten; `app/concepts/` + `docs/design-system/` marked superseded (not deleted) | not started |
+| 6 | — | `feat/phase4-closeout` | v2.0.0 | close-out (plan of record `plans/phase4-pr6-closeout.md`; §1.48): the eight parked items + finding F-1 as ruled — the deactivate SQLSTATE migration (row 2), the Help-panel opener (3), the 900px tier retired (4), the glyph module → `components/ui/icons.tsx` (6), `CarbonModal`'s busy ⇄ idle focus seam (7), `Button.tsx` retired (8), the raster rules into `globals.css` + the bridge as the font bridge (9); rows 1 (→ DECISIONS §6 no. 18) and 5 recorded; docs: this file complete + §5, PHASE1IA §D delivered, PHASE2UX / PHASE3DS closed, DECISIONS reconciled, TEST-TRIAGE closed, `CLAUDE.md` "Design system" rewritten, `app/concepts/` + `docs/design-system/` marked superseded (not deleted); three remote branches pruned after merge | built 2026-09-08: unit 1457 · ct 326 · gate clean · build clean · e2e 36 · browser 26 · **Docker-stack evidence: runtime audit 0 undefined (6 routes × 2 themes + 1280 + system + viewer) · `pr5b-dialogs` 29/29 (R-5 closed) · `pr4-smoke` 47/47 · e2e-auth 53/53 · contrast 202/202 (no token change)** (`screenshots/pr6/`); reviewer pass 2026-09-08 re-ran all four rigs post-bump and added `audit/pr6-smoke.mjs` **17/17** (`screenshots/pr6-smoke/`), which found F-8 (fixed here as sheet amendment G — the band takes the open slot's push) and F-9 (carried, DECISIONS §7); fixed head: e2e-auth **55/55**, e2e **36/36**, the rest unchanged — awaiting PR, CI, the read-only preview walk, merge → tag v2.0.0, prune |
 
 PR 3b pre-merge smoke (2026-09-05, owner-ordered, thirteen steps, local Docker stack, real Chrome 1920×1080, both themes):
 **18/18 PASS** after one fix (§1.36); captures + `results.json` in `screenshots/pr3b-smoke/`; e2e-auth 32/32 on the
 same build; marker rig 58 measurements, 0 under floor, ledger empty (both planner-highlight passes SKIPPED on a
 broad answer this run — a model outcome, not a marker).
 
-Next: PR 6 (close-out, v2.0.0) — from a fresh session on a reviewer hand-off.
+Phase 4 ends with PR 6 (v2.0.0). Carried past it, not Phase 4 obligations: the 400 % zoom reflow (DECISIONS §7), `.design-sync/` on `main` (§1.48 F-7).

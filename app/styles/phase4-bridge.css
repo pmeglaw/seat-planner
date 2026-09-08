@@ -1,63 +1,30 @@
 /* =============================================================================
-   Seat Planner — Phase 4 bridge (TEMPORARY; redesign-v2 PR 1, 2026-09-03)
+   Seat Planner — the font bridge (PERMANENT; redesign-v2 PR 1, 2026-09-03;
+   header rewritten at the Phase 4 close-out, PR 6, 2026-09-08)
 
    Loads LAST: globals.css → carbon-tokens.css → sp-tokens.css →
-   carbon-components.css → sp-components.css → phase4-bridge.css.
+   brand/megeredchian-law-tokens.css → carbon-components.css →
+   sp-components.css → phase4-bridge.css.
 
-   Three things live here and nowhere else, each deleted piece by piece as the
-   Phase 4 PRs land (docs/redesign-v2/phase4/PHASE4BUILD.md §1):
+   One thing lives here and nowhere else. next/font/local emits a HASHED
+   family name and exposes it through --font-sans / --font-mono
+   (app/fonts/plex.ts, applied on both roots — app/layout.tsx and
+   app/global-error.tsx). The asset's --cds-font-sans names "IBM Plex Sans"
+   literally, which no @font-face declares, so the two Carbon font tokens are
+   re-pointed at the variables. This is the ONE sanctioned --cds-* reference
+   outside sp-tokens.css and the two vendored assets
+   (tests/phase4-token-layer-source.test.mjs allows exactly these two names in
+   this file, as declarations only). It stays in its own file so the rule
+   "assets untouched" holds; the file keeps its name because the token test
+   names it.
 
-   1. The font bridge. next/font/local emits a HASHED family name and exposes
-      it through --font-sans / --font-mono (app/layout.tsx). The asset's
-      --cds-font-sans names "IBM Plex Sans" literally, which no @font-face
-      declares, so the two Carbon font tokens are re-pointed at the variables.
-      This is the ONE sanctioned --cds-* reference outside sp-tokens.css and
-      the two assets (tests/phase4-token-layer-source.test.mjs allows exactly
-      these two names in this file). Permanent in effect, but it stays in
-      this file so the rule "assets untouched" holds.
-
-   2. Retired --sp-* names still consumed by the shipped components (PHASE3DS
-      §5 "Retired names", groups 2–4). Each alias points at its replacement so
-      no var() is undefined while old components sit on the new tokens. Group 2
-      (--sp-chrome-*) LEFT with PR 2, group 3 (marker / legend / selection /
-      ai / editor / publish / trail / wash) LEFT with PR 3b, group 4 (tag /
-      table / extension / identity) LEFT with PR 4 — the block is empty. The token test asserts every alias here
-      references a defined --sp-* name (or a literal) and is gone once its
-      group is swept.
-
-   3. Rules keyed on the theme that pre-date the three-state model. The raster
-      lightbox filter (owner decision 2026-08-19) used to key on
-      :root[data-theme="dark"] alone; with "nothing stored" now meaning
-      system, it takes the same three-state shape as the tokens — light on
-      bare :root, dark under the prefers-color-scheme guard, dark again under
-      the forced attribute. PR 3 rebuilds the raster and removes these.
+   History: the retired-name aliases the Phase 4 PRs consumed while old
+   components sat on the new tokens left group by group (PR 2, 3b, 4 —
+   PHASE4BUILD §1.2) and the dark raster lightbox rules moved to
+   app/globals.css with the raster app rules (PR 6, PHASE4BUILD §1.48).
    ========================================================================== */
 
-/* 1. Font bridge ----------------------------------------------------------- */
 :root {
   --cds-font-sans: var(--font-sans), "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
   --cds-font-mono: var(--font-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-/* 2. Retired-name aliases — EMPTY since PR 4: group 4 (tag / table / extension /
-   identity) swept mechanically in Reception (same resolved values, zero pixel
-   change); every retired --sp-* name now has a replacement in sp-tokens.css. */
-/* 3. Theme-keyed rules in the three-state shape ---------------------------- */
-/* Floor-plan raster on dark: CSS-only lightbox treatment (no dark asset, so no
-   ?v= bump). Applies to the <img> only; markers sit above it unfiltered. The
-   Ask-Planner dim restates the whole chain with the dim folded in
-   (0.45 × 0.8 = 0.36) — `filter` is a single property. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .map-raster {
-    filter: invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95);
-  }
-  :root:not([data-theme="light"]) .map-raster-dim {
-    filter: invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95);
-  }
-}
-:root[data-theme="dark"] .map-raster {
-  filter: invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95);
-}
-:root[data-theme="dark"] .map-raster-dim {
-  filter: invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95);
 }

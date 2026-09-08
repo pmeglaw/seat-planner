@@ -1195,7 +1195,9 @@ test("touch devices get visible destructive affordances, contained modals, and s
   // float, plus the palette's own height cap, whose bottom edge is the only
   // part of it that can reach the indicator.
   const viewerPaletteSource = await readSource("../components/seat-map/ViewerFindPalette.tsx");
-  assert.match(viewerSource, /bottom-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\] panel:bottom-3/);
+  // (PR 6: the `panel:bottom-3` half retired with the 900px screen — the
+  // safe-area inset is the guardrail and stays.)
+  assert.match(viewerSource, /bottom-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]"/);
   assert.match(viewerPaletteSource, /maxHeight: frame \? `calc\(\$\{frame\.maxHeight\}px - env\(safe-area-inset-bottom\)\)`/);
 
   // Tap ergonomics: interactive elements skip the double-tap zoom delay, and

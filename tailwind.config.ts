@@ -40,11 +40,6 @@ const config: Config = {
         sans: ["var(--font-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "IBM Plex Mono", "ui-monospace", "monospace"]
       },
-      // Panel-slot tiers: sheet ≤899 (bottom sheet, non-modal), floating panel ≥900
-      // over a full-bleed map (owner preference: no reserved dock gutter).
-      screens: {
-        panel: "900px"
-      },
       colors: {
         // Alpha modifiers (e.g. text-sp-secondary/50) are NOT supported here;
         // derive washes with color-mix(in srgb, var(--…) N%, transparent).

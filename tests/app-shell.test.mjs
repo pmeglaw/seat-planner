@@ -31,8 +31,9 @@ let useAppShellNavigation;
 let useAppShellLeftPanel;
 let useAppShellState;
 let useAppShellFilters;
+let useAppShellPanels;
 before(async () => {
-  ({ AppShell, useAppShellNavigation, useAppShellLeftPanel, useAppShellState, useAppShellFilters } = await loadComponent("@/components/ui/AppShell"));
+  ({ AppShell, useAppShellNavigation, useAppShellLeftPanel, useAppShellState, useAppShellFilters, useAppShellPanels } = await loadComponent("@/components/ui/AppShell"));
 });
 
 let pushed;
@@ -194,6 +195,26 @@ test("a surface opens the left panel through useAppShellLeftPanel and reads the 
   assert.equal(document.querySelector("[data-shell-tenants]"), null);
 });
 
+// Right-panel opener (Phase 4 PR 6, PHASE3DS §1.18): the Ask Planner popover's
+// "How Ask Planner works" link opens the shell's Help panel through
+// useAppShellPanels — the same panel the utility opens, same focus rule, same
+// Esc ladder.
+function HelpSurface() {
+  const panels = useAppShellPanels();
+  return React.createElement("button", { type: "button", onClick: () => panels?.open("help") }, "How Ask Planner works");
+}
+
+test("a surface opens the Help panel through useAppShellPanels; it is the utility's panel, Esc closes it and refocuses the utility", async () => {
+  await renderElement(shellElement({ pathname: "/admin", children: React.createElement(HelpSurface) }));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "How Ask Planner works" })));
+  const help = screen.getByRole("complementary", { name: "Help" });
+  assert.equal(screen.getByRole("button", { name: "Help" }).getAttribute("aria-expanded"), "true", "the utility reflects the open panel");
+  assert.ok(help.contains(document.activeElement), "focus lands inside the panel per its own rule");
+  await act(async () => fireEvent.keyDown(help, { key: "Escape" }));
+  assert.equal(screen.queryByRole("complementary", { name: "Help" }), null);
+  assert.equal(document.activeElement, screen.getByRole("button", { name: "Help" }), "Esc returns focus to the utility");
+});
+
 // --- Right panels ------------------------------------------------------------
 
 test("History opens from its utility as a complementary landmark; opening Account swaps; Esc closes and returns focus", async () => {
@@ -300,6 +321,7 @@ test("useAppShellNavigation, useAppShellLeftPanel, useAppShellState and useAppSh
   function Standalone() {
     assert.equal(useAppShellLeftPanel(), null);
     assert.equal(useAppShellState(), null);
+    assert.equal(useAppShellPanels(), null);
     return null;
   }
   await renderElement(

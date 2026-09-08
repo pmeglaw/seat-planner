@@ -75,7 +75,6 @@ const LABEL_CARRIED = [
 // that must ALL be present. Removing an expansion removes its substring and
 // fails here.
 const PINS = {
-  "components/ui/Button.tsx": ["after:absolute after:-inset-y-1"],
   "components/seat-map/SeatMap.tsx": [
     "after:absolute after:-inset-y-1.5",
     "after:absolute after:-inset-y-1.5"

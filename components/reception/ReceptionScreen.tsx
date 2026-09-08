@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
-import { CloseIcon, PinIcon, SearchIcon } from "@/components/seat-map/mapIcons";
+import { CloseIcon, PinIcon, SearchIcon } from "@/components/ui/icons";
 import { readQueryParam, withQueryParam } from "@/lib/deepLink";
 import { DEFAULT_FLOOR } from "@/lib/floorIds";
 import { floorLabel, floorTag } from "@/lib/floors";

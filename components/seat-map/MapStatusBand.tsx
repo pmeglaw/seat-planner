@@ -23,7 +23,7 @@ export type MapLegendEntry = {
   count: number;
 };
 
-export function MapStatusBand({ ariaLabel, totalLabel, entries, namesVisible = true, count, actions, note, noteAction, controls }: {
+export function MapStatusBand({ ariaLabel, totalLabel, entries, namesVisible = true, count, actions, note, noteAction, controls, slotOpen = false }: {
   ariaLabel: string;
   totalLabel: string;
   entries: MapLegendEntry[];
@@ -38,10 +38,13 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, namesVisible = t
   noteAction?: ReactNode;
   /** Surface-owned right cluster (zoom / fit) — absent on a roster floor. */
   controls?: ReactNode;
+  /** True while the surface's right slot is open: the band takes the slot's
+   *  push so it keeps spanning the canvas (sheet amendment G, F-8). */
+  slotOpen?: boolean;
 }) {
   const hasEntries = entries.length > 0;
   return (
-    <div data-map-status-band className="sp-band">
+    <div data-map-status-band data-slot-open={slotOpen ? "" : undefined} className="sp-band">
       {/* Focusable labelled group, not a bare div: at rest the region holds
           only text, so without tabindex a keyboard user could never scroll
           clipped counts into view (axe scrollable-region-focusable — the

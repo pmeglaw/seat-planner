@@ -1,5 +1,10 @@
 # app/concepts/ — prototype-only design surfaces
 
+**Superseded (Phase 4 close-out, v2.0.0, 2026-09-08).** The shipped surfaces are the `docs/redesign-v2/` system
+(PHASE3DS's sheets, PHASE4BUILD's build); these prototypes predate it and are kept as history — gated, `noindex`,
+never an input to design or code decisions (the Phase 4 hand-off listed them off-limits). Not deleted:
+`music-visualizer-source` keeps the directory untouched.
+
 None of these routes are part of the shipped viewer/admin flows:
 
 - `component-state-board` — design-system state matrix (has its own vendored fonts directory, see its README)

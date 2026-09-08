@@ -584,7 +584,7 @@ Would change if: a third recovery tool arrives (then a settings left-nav), or re
 | Page header | title `heading-04` "Settings" · subtitle "Import, export and recovery. Everything here changes the draft only." | **no primary** (D6-a) |
 | Callout | full content width, loads with the page, never dismissible, no status icon | "The published map is never touched until you publish. Restores replace the entire draft — review before confirming." |
 | Sections | `heading-03` + helper `body-01` + one action row (40px buttons, 8px gaps) + a `label-01` file line | 48px between sections |
-| Narrow tearsheet | 720 centred, top 112, anchored bottom; header · scrolling body · 64px footer | Cancel · primary, **right-aligned** in the footer bar (*Phase 3 PR 4 amendment: 50/50 bleed is the modal's and side panel's footer; tearsheets right-align so the containers read apart by their footers alone*); **no ×** |
+| Narrow tearsheet | 720 centred, top 112, ~~anchored bottom~~ **anchored top; height from content (deviation 18 — Phase 4 PR 6 ruling 2026-09-08)**; header · scrolling body · 64px footer | Cancel · primary, **right-aligned** in the footer bar (*Phase 3 PR 4 amendment: 50/50 bleed is the modal's and side panel's footer; tearsheets right-align so the containers read apart by their footers alone*); **no ×** |
 
 ### 1S.3 CSV assignments (D6-b)
 
@@ -842,3 +842,7 @@ it, and expect the hand-built rows (the export-first ghost with its in-place don
 summary rail among them) to need their own specimens. (6) Ask Planner shares the 400 slot with the inspector
 and must carry Carbon-for-AI labelling — a token and label decision Phase 2 deliberately left to you; the
 drawer's 408 → 400 width change is already a Phase 4 item in §5.
+
+**Closed — Phase 4 (v2.0.0, PR 6, 2026-09-08).** The nine §5 obligations are discharged, each with its landing file
+as merged, in `phase4/PHASE4BUILD.md` §2 (P2-1…9); the wireframes stay the record of the screens, amended in place
+where a ruling moved them (§1.7, §1M, §1R.2, §1S.2, §3). No Phase 2 item is open.

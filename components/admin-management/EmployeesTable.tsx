@@ -24,7 +24,7 @@ import { computeVirtualSegments, computeVirtualWindow } from "@/lib/virtualizedL
 import { formatDisplayName } from "@/lib/formatName";
 import { toolbarCount } from "@/lib/managementCounts";
 import { SeatMark } from "@/components/seat-map/SeatMark";
-import { ChevronIcon, CloseIcon, SearchIcon } from "@/components/seat-map/mapIcons";
+import { ChevronIcon, CloseIcon, SearchIcon } from "@/components/ui/icons";
 
 export type EmployeeSortKey = "name" | "department" | "position" | "extension" | "seat" | "status";
 export type SortDirection = "asc" | "desc";

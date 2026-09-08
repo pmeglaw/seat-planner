@@ -195,6 +195,15 @@ Phase 2 designs, per screen, in `senior-workflow.md` order (job → data → one
 
 **Delivered — Phase 3 (2026-09-03, `docs/redesign-v2/phase3/PHASE3DS.md`, tags v1.73.4–v1.73.8).** The UI system this hand-off asked Phase 2 to specify and Phase 3 to build: Carbon v11 tokens + the `--sp-*` semantic layer, the hand-built component layer for every PHASE2UX §3 row (shell, map, pages), six static specimens in both themes, a generated contrast suite (192/192), the conformance ledger (no new deviations; §6 stays at 1–15) and the Phase 4 obligations with landing files. Nothing under `app/`, `components/` or `lib/` changed; Phase 4 starts from PHASE3DS §5 and §7.
 
+**Delivered — Phase 4 (2026-09-08, `docs/redesign-v2/phase4/PHASE4BUILD.md`, tags v1.74.0–v1.77.0 and **v2.0.0**).** The
+code: every surface this hand-off names — the shell (header, left filter panel, Help / History / Account), the map in
+both modes with the mode indicator, Find me, Copy link, the `?q=` landing and the scoped search, Reception, Management
+(three tabs), Settings (CSV import, snapshot restore, no Reset draft) — on the Phase 3 system, login unchanged (D4) and
+`/my-seat` byte-identical (deviation 12). PHASE3DS §5's twenty obligations and PHASE2UX §5's nine are discharged with
+landing files (PHASE4BUILD §2); the record is reconciled (DECISIONS D0–D6 "built" lines, §6 at 1–18, §7 / §8 closed).
+No design decision was taken in code: every "what did not fit" line became a dated owner ruling or a close-out row
+(PHASE4BUILD §1).
+
 ---
 
 ## E. Carbon conformance of Phase 1 — what is true to IBM, what differs

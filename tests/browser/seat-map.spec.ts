@@ -377,6 +377,8 @@ test("the status band is the admin map's one zoom home and yields to the sheet",
   await page.locator('button[aria-label="Close inspector"]').dispatchEvent("click");
   await expect(page.locator("[data-slot-host][data-open]")).toHaveCount(0);
   await expect(band).toBeAttached();
+  // …and the band gives the width back when the slot closes (amendment G).
+  await expect(band).not.toHaveAttribute("data-slot-open", "");
 
   // Phones: no band, the floating zoom stack returns (owner call 2026-08-17).
   await page.setViewportSize({ width: 500, height: 850 });
@@ -398,6 +400,12 @@ test("the slot never covers the band: the inspector sits over the canvas column 
   expect(hostInsideColumn).toBe(true);
   const bandUnderHost = await page.locator("[data-map-status-band]").evaluate((band, hostEl) => hostEl!.contains(band), await host.elementHandle());
   expect(bandUnderHost).toBe(false);
+  // Being the column's sibling is NOT enough: the host is absolute against the
+  // stage, which holds the band too, so the band must also take the slot's push
+  // (sheet amendment G, finding F-8; PHASE2UX §1M.2 "the band spans the canvas,
+  // not the slot"). The push itself is CSS — pinned geometrically by the
+  // e2e-auth `page-frames` map block; here the key that drives it.
+  await expect(page.locator("[data-map-status-band]")).toHaveAttribute("data-slot-open", "");
 
   // Switch to Floor 2: the selection survives, the band does not, the slot stays.
   await page.locator('button[aria-label^="Change floor"]').first().dispatchEvent("click");

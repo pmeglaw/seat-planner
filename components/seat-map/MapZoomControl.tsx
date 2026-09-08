@@ -9,7 +9,7 @@
 // Reset zoom lives here, never in an overflow menu, D2-b); "vertical" is the
 // phone-only floating stack below the band tier. Group role, names and
 // disabled semantics are identical in both.
-import { FitIcon, MinusIcon, PlusIcon } from "@/components/seat-map/mapIcons";
+import { FitIcon, MinusIcon, PlusIcon } from "@/components/ui/icons";
 
 type MapZoomControlProps = {
   label: string;

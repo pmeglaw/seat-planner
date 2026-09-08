@@ -1,6 +1,6 @@
 # Seat Planner redesign — Phase 4 test triage
 
-**Status: PR 0 (2026-09-03, main @ c36f216 / v1.73.8).** Every `tests/*-source.test.mjs` (42), every jsdom component
+**Status: closed — Phase 4 complete (PR 6, v2.0.0, 2026-09-08; the "Close-out" section at the end is the final word).** *Written at PR 0 (2026-09-03, main @ c36f216 / v1.73.8):* Every `tests/*-source.test.mjs` (42), every jsdom component
 test in `test:ct` (18), every other test that reads `app/**`, `components/**`, `app/globals.css` or `tailwind.config.ts`
 as text, and every Playwright spec, classified before any component moves. Inputs: `CLAUDE.md` ("`lib/` is the tested
 business core" — the `*-source` scope note), the `test-tiers` skill, PHASE3DS §5 (landing files, retired names) and
@@ -131,7 +131,7 @@ dialog, side panel or tearsheet re-enumerates it.
 | 3 | — | `ask-planner-followup-source`, `focus-handoff-source`, `seat-creation-ui-source`, `seat-map-escape-source`, `session-expiry-source`, `viewer-keyboard-parity-source`, `dialog-initial-focus`, `names-visibility-toggle`, `seat-marker-memo`, `floors`, `draft-concurrency`, `virtualized-directory`, the three `browser/*` specs, `publish-flow.spec.ts`, `draft-dialogs.spec.ts` | `accessibility-source` (map half), `ask-planner-ai-source`, `desktop-seat-marker-system-source`, `filter-feedback-source` (control row), `pill-crowding-scale-source`, `tailwind-arbitrary-alpha-source`, `touch-target-source` (map rows), `type-floor-source` (rows), `viewer-find-palette-source`, `seat-inspector`, `seat-map-components`, `map-status-band`, `floor-roster`, `viewer-seat-finder`, `viewer-find-palette-component`, `dialog-error-placement` (census) | `office-room-wash` and `seat-clusters` **if** the owner confirms the PR 3 defaults; `close-icon-source` loses its two map consumers |
 | 4 | — | `action-input-validation-source`, `bulk-destructive-action-safety-source` (+ the single-call-site anchor from `settings-tiles`), `admin-management-panel`, `data-utilities-panel`, `draft-concurrency`, `virtualized-directory` | `management-detail-source`, `management-directory-map-link-source`, `settings-affordance-source`, `touch-target-source` / `type-floor-source` (rows), `dialog-error-placement` (census) | `settings-tiles-source`, `close-icon-source` |
 | 5 | — | `chunk-recovery-boundary-source`, `reception-source`, `reception-screen`, `e2e-auth/accessibility.spec.ts` | `touch-target-source` / `type-floor-source` (last rows) | — |
-| 6 | — | — | — | — (close-out verifies: no look-pinning test asserts the old look, no guardrail weakened, `HEX_LEDGER` empty, `SWEPT = {1,2,3,4}`) |
+| 6 | `action-refusals` (new) | `pending-state-source`, `touch-target-source`, `accessibility-source`, `map-viewport`, `management-detail-source`, `theme`, `ask-planner-ai-source`, `rpc-execution`, `action-error-contract-source`, `management-actions-transaction-safety`; `dialog-initial-focus` + `app-shell` (ct, pins added) | — | — (close-out verified: no look-pinning test asserts the old look, no guardrail weakened, ~~`HEX_LEDGER` empty~~ **`HEX_LEDGER` = its two permanent rows** (owner ruling Q-3, 2026-09-06 — amended here), `SWEPT = {1,2,3,4}`) |
 
 ### PR 3b outcomes (2026-09-05)
 
@@ -255,3 +255,49 @@ app are byte-identical to `docs/redesign-v2/phase3/` modulo the removed `@import
 - **PR 4 — a guardrail loses an anchor by ruling.** `bulk-destructive-action-safety-source` and `data-utilities-panel`
   drop their Settings Reset-draft assertions because ruling 22 removes the feature; `resetDraftToPublishedAction`'s
   single call site (SeatMap Discard) is pinned instead.
+
+### PR 6 outcomes (2026-09-08)
+
+- **Added:** `action-refusals` (unit: the deactivate guard's SQLSTATE `MLS03` is recognised by code only, never by
+  text); `dialog-initial-focus` +4 (a busy-mounted dialog lands on its first control when it settles; focus dropped to
+  `<body>` as the dialog goes busy re-anchors on the container; a consumer's error alert keeps focus through the
+  settle; a dialog that leaves as it settles never refocuses its detached section); `app-shell` +1 (a surface opens
+  the Help panel through `useAppShellPanels`; Esc closes it and refocuses the utility) and the hook in the no-shell
+  no-op test; `ask-planner-ai-source` +1 (the popover's Help link is fed from `SeatMap`).
+- **Re-pointed (never loosened):** `pending-state-source` (the Button loading contract → the design-system `Button`
+  every remaining consumer renders; `components/ui/Button.tsx` had no importer), `touch-target-source` (the retired
+  file's PINS row leaves with it), `accessibility-source` (the viewer's zoom float keeps its safe-area inset; the
+  vestigial `panel:bottom-3` half retired with the 900px screen; the aria-modal `*DialogFocusRef` pin holds on
+  `CarbonModal`'s composed ref), `map-viewport` (comment: the anchor is a lib capability with no shipped caller),
+  `management-detail-source` (comment: the glyph module is `components/ui/icons.tsx`), `theme` + `ask-planner-ai-source`
+  (the raster's three-state shape and the two `saturate` rules read from `globals.css` — the rules moved out of the
+  bridge), `rpc-execution` (the published-map refusal asserts `code: "MLS03"`), `action-error-contract-source` (the
+  returned refusal is guarded by `isPublishedEmployeeRefusal`; a bare `if (error) return … REFUSED` is banned),
+  `management-actions-transaction-safety` (reads the newest definition first; pins the errcode).
+- **Unchanged, verified:** `phase4-token-layer-source` (the bridge's two font names, the identity assertions, the
+  ledger's two rows), `dialog-error-placement` (focus in the alert after settle — the host's refocus never overrides
+  it), `seat-map-escape-source`, `pending-state-source` label registry.
+- **Retired:** nothing (a file left — `components/ui/Button.tsx` — but no test; both of its tests were re-pointed).
+
+## Close-out (PR 6, 2026-09-08) — final dispositions
+
+- **§5 row 6 amended:** the close-out verifies `HEX_LEDGER` = **two permanent rows** (`app/layout.tsx` 1 —
+  `themeColor`; `components/seat-map/SeatSheet.tsx` 12 — deviation 12), not empty: owner ruling Q-3 (2026-09-06)
+  superseded the PR 0 wording. `SWEPT = {1, 2, 3, 4}` as planned.
+- **Rows whose final PR differs from the plan column:** `close-icon-source` retired in PR 5, not 4 (the map's seven
+  confirms kept their × through 3b → 5b); `text-tier` and `use-inspector-nudge` retired in 3b with the text tier and
+  the pushing slot (not in the §2 table — the components were 3b's to retire); `office-room-wash` and `seat-clusters`
+  retired in 3a on the owner's D1-h / D1-i rulings (the §3 "decide in the PR 3 plan" defaults, confirmed);
+  `marker-contrast` + its script retired in PR 1 (missed by the PR 0 survey, §3); `settings-tiles-source` retired in
+  PR 4 as planned (both anchors re-homed). Every other row landed in its planned PR with the planned disposition.
+- **Guardrails:** none weakened across PR 0–6; every re-point recorded in the per-PR outcomes above and in
+  PHASE4BUILD §3. Two rulings reduced scope by removing a feature, never by loosening a test (ruling 22 — Settings
+  Reset draft; Q-4 — no status mark on Reception rows).
+- **`dialog-error-placement` census, final (14 ids):** `csv-import-review-title`, `delete-seat-confirm-title`,
+  `discard-draft-title`, `inspector-unsaved-title`, `json-restore-review-title`, `management-confirm-title`,
+  `management-discard-title`, `management-employee-title`, `management-option-create-title`,
+  `move-employee-confirm-title`, `move-employee-map-confirm-title`, `publish-review-title`, `swap-confirm-title`,
+  `vacate-seat-confirm-title` — every one with a resolving `aria-describedby` and its ruled role (six map confirms
+  `alertdialog`, the inspector guard and the Management ask `dialog` / `alertdialog` as recorded in PR 5b / PR 4).
+- **Final counts (PR 6 head):** unit **1457**, ct **326**, browser **26**, e2e **36**, e2e-auth **53**;
+  `npm run gate` clean (lint 0 errors, typecheck, coverage 98.34 / 92.40 / 98.30 against floors 90 / 95 / 80).

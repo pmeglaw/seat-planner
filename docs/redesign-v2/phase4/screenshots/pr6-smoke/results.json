@@ -1,0 +1,865 @@
+[
+  {
+    "step": "01-refusal",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "alertText": "Couldn’t deactivate Alex Shabazian. This employee is still on the published map at CW01. Remove them from draft and publish before deleting.Open CW01 on the map",
+      "linkText": "Open CW01 on the map",
+      "linkHref": "/admin?seat=CW01",
+      "linkHit": {
+        "tag": "a",
+        "cls": "cds-btn.cds-btn--ghost",
+        "text": "Open CW01 on the map",
+        "inBand": false,
+        "inSlot": false,
+        "inHelpPanel": false
+      },
+      "rowStillThere": 1,
+      "active": true,
+      "draftSeatKept": true,
+      "newErrors": 0
+    },
+    "note": "the reason text IS the proof the action returned rather than threw",
+    "files": [
+      "01-refusal-light.png"
+    ]
+  },
+  {
+    "step": "02-transport-not-refusal",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "alertText": "Couldn’t deactivate Alex Shabazian. Could not deactivate employee.Open CW01 on the map",
+      "showsRefusal": false,
+      "active": true
+    },
+    "note": "the generic error arm, not the guard's reason",
+    "files": [
+      "02-transport-light.png"
+    ]
+  },
+  {
+    "step": "03-help-link",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "linkHit": {
+        "tag": "button",
+        "cls": "cds-btn.cds-btn--ghost.cds-btn--sm",
+        "text": "How Ask Planner works",
+        "inBand": false,
+        "inSlot": true,
+        "inHelpPanel": false
+      },
+      "panelBox": {
+        "x": 1600,
+        "y": 48,
+        "w": 320,
+        "h": 1032
+      },
+      "panelHit": {
+        "tag": "div",
+        "cls": "sp-panel-body",
+        "text": "Keyboard shortcutsCtrl KFind a person or",
+        "inBand": false,
+        "inSlot": false,
+        "inHelpPanel": true
+      },
+      "focusOnOpen": {
+        "tag": "h2",
+        "id": "shell-panel-help-title",
+        "label": null,
+        "text": "Help"
+      },
+      "panelGone": true,
+      "drawerStillOpen": true,
+      "keptText": "PR 6 smoke — state that must survive Help",
+      "focusAfterEsc": {
+        "tag": "button",
+        "id": null,
+        "label": "Help",
+        "text": ""
+      }
+    },
+    "note": "focus lands on the panel's own heading (ShellPanels' rule); Esc closes it and leaves the drawer",
+    "files": [
+      "03-help-open-light.png",
+      "03-help-closed-drawer-intact-light.png"
+    ]
+  },
+  {
+    "step": "04-raster",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "expected": {
+        "base": "none",
+        "dim": "saturate(0.8)"
+      },
+      "measured": {
+        "/": {
+          "base": "none",
+          "dim": "saturate(0.8)",
+          "rasterBox": {
+            "x": 5,
+            "y": 135,
+            "w": 1911,
+            "h": 867
+          }
+        },
+        "/admin": {
+          "base": "none",
+          "dim": "saturate(0.8)",
+          "rasterBox": {
+            "x": 8,
+            "y": 136,
+            "w": 1904,
+            "h": 864
+          }
+        }
+      },
+      "withDrawerOpen": "none",
+      "liveDim": {
+        "filter": "saturate(0.8)",
+        "highlightedSeats": 1
+      }
+    },
+    "note": "the dim measured on a LIVE Ask Planner highlight",
+    "files": [
+      "04-raster-home-light.png",
+      "04-raster-admin-light.png",
+      "04-raster-admin-ask-open-light.png",
+      "04-raster-live-dim-light.png"
+    ]
+  },
+  {
+    "step": "05-below-900",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "paletteRowHit": {
+        "tag": "button",
+        "cls": "sp-palette-row.w-full.text-left",
+        "text": "Seat result. C01. Open seat. Open · No d",
+        "inBand": false,
+        "inSlot": false,
+        "inHelpPanel": false
+      },
+      "inspectorSeat": "Seat C01 · Center DesksOpen seatCopy link to this seatNo uns",
+      "slotBox": {
+        "x": 420,
+        "y": 144,
+        "w": 400,
+        "h": 804
+      },
+      "viewportBox": {
+        "x": 0,
+        "y": 144,
+        "w": 820,
+        "h": 764
+      },
+      "bandBox": {
+        "x": 0,
+        "y": 908,
+        "w": 820,
+        "h": 40
+      },
+      "bandHit": null,
+      "markerHit": {
+        "tag": "button",
+        "cls": "sp-seat-footprint.cds-touch-target.cursor-pointer",
+        "text": "C01 Unassigned. Open seat. Search result",
+        "inBand": false,
+        "inSlot": false,
+        "inHelpPanel": false
+      },
+      "anchor": {
+        "scrollTop": 202,
+        "scrollLeft": 560,
+        "maxTop": 230,
+        "maxLeft": 1370,
+        "ideal05Top": 202,
+        "ideal05Left": 560,
+        "retired028Top": 230,
+        "markerCentreY": 526,
+        "markerCentreX": 410,
+        "viewportCentreY": 526,
+        "viewportCentreX": 410
+      },
+      "overlaysRight": true,
+      "slotWidthOk": true,
+      "bandClear": false,
+      "bandBelowSlot": false,
+      "centred": true,
+      "scrollable": true,
+      "notUpperStrip": true,
+      "viewerPalette": {
+        "below880": {
+          "x": 12,
+          "y": 98,
+          "w": 560,
+          "h": 742
+        },
+        "above1200": {
+          "x": 240,
+          "y": 98,
+          "w": 560,
+          "h": 742
+        }
+      }
+    },
+    "note": "zoomed in 3 steps so the viewport can travel: the achieved scroll IS the 0.5 target and is NOT the retired 0.28 sheet anchor",
+    "files": [
+      "05-slot-820-light.png",
+      "05-viewer-palette-1200-light.png"
+    ]
+  },
+  {
+    "step": "05b-band-slot-push",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "at820": {
+        "closed": {
+          "band": {
+            "x": 0,
+            "y": 860,
+            "w": 820,
+            "h": 40
+          },
+          "host": null,
+          "zoomInCentre": {
+            "x": 796,
+            "y": 880
+          },
+          "zoomInHit": {
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandLeftHit": {
+            "tag": "li",
+            "cls": "sp-seat-legend",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "8px",
+          "slotOpenAttr": false,
+          "zoomRightOfSlot": null
+        },
+        "open": {
+          "band": {
+            "x": 0,
+            "y": 860,
+            "w": 820,
+            "h": 40
+          },
+          "host": {
+            "x": 420,
+            "bottom": 900
+          },
+          "zoomInCentre": {
+            "x": 396,
+            "y": 880
+          },
+          "zoomInHit": {
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandLeftHit": {
+            "tag": "span",
+            "cls": "sp-band-note",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "408px",
+          "slotOpenAttr": true,
+          "zoomRightOfSlot": -8
+        }
+      },
+      "at1920": {
+        "closed": {
+          "band": {
+            "x": 0,
+            "y": 1040,
+            "w": 1920,
+            "h": 40
+          },
+          "host": null,
+          "zoomInCentre": {
+            "x": 1896,
+            "y": 1060
+          },
+          "zoomInHit": {
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandLeftHit": {
+            "tag": "li",
+            "cls": "sp-seat-legend",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "8px",
+          "slotOpenAttr": false,
+          "zoomRightOfSlot": null
+        },
+        "open": {
+          "band": {
+            "x": 0,
+            "y": 1040,
+            "w": 1920,
+            "h": 40
+          },
+          "host": {
+            "x": 1520,
+            "bottom": 1080
+          },
+          "zoomInCentre": {
+            "x": 1496,
+            "y": 1060
+          },
+          "zoomInHit": {
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandLeftHit": {
+            "tag": "li",
+            "cls": "sp-seat-legend",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "408px",
+          "slotOpenAttr": true,
+          "zoomRightOfSlot": -8
+        }
+      }
+    },
+    "note": "amendment G (F-8): with the slot open the band takes the slot's push — its zoom control hit-tests to itself and its right edge clears the slot",
+    "files": [
+      "05b-band-at820-slot-closed-light.png",
+      "05b-band-at820-slot-open-light.png",
+      "05b-band-at1920-slot-closed-light.png",
+      "05b-band-at1920-slot-open-light.png"
+    ]
+  },
+  {
+    "step": "05c-viewer-palette-900-carried",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "at880": {
+        "innerWidth": 880,
+        "x": 12,
+        "w": 560,
+        "right": 572,
+        "cssWidth": "560px",
+        "sheetClass": true,
+        "overflowsViewport": false,
+        "clippedPx": 0
+      },
+      "at1200": {
+        "innerWidth": 1200,
+        "x": 240,
+        "w": 560,
+        "right": 800,
+        "cssWidth": "560px",
+        "sheetClass": false,
+        "overflowsViewport": false,
+        "clippedPx": 0
+      },
+      "at390": {
+        "innerWidth": 390,
+        "x": 12,
+        "w": 560,
+        "right": 572,
+        "cssWidth": "560px",
+        "sheetClass": true,
+        "overflowsViewport": true,
+        "clippedPx": 182
+      },
+      "sheetIntent": true,
+      "sheetWidthWins": true,
+      "anchored": true,
+      "phoneClip": true
+    },
+    "note": "F-9 as ruled CARRIED (DECISIONS §7): the below-900 branch fires (left 12, `right-3`) but `.sp-palette`'s 560 wins — 560 wide at 880, 560 anchored at 1200, 182px clipped at 390. Not a regression; not fixed by owner ruling",
+    "files": [
+      "05c-viewer-palette-390-light.png"
+    ]
+  },
+  {
+    "step": "01-refusal",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "alertText": "Couldn’t deactivate Alex Shabazian. This employee is still on the published map at CW01. Remove them from draft and publish before deleting.Open CW01 on the map",
+      "linkText": "Open CW01 on the map",
+      "linkHref": "/admin?seat=CW01",
+      "linkHit": {
+        "tag": "a",
+        "cls": "cds-btn.cds-btn--ghost",
+        "text": "Open CW01 on the map",
+        "inBand": false,
+        "inSlot": false,
+        "inHelpPanel": false
+      },
+      "rowStillThere": 1,
+      "active": true,
+      "draftSeatKept": true,
+      "newErrors": 0
+    },
+    "note": "the reason text IS the proof the action returned rather than threw",
+    "files": [
+      "01-refusal-dark.png"
+    ]
+  },
+  {
+    "step": "02-transport-not-refusal",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "alertText": "Couldn’t deactivate Alex Shabazian. Could not deactivate employee.Open CW01 on the map",
+      "showsRefusal": false,
+      "active": true
+    },
+    "note": "the generic error arm, not the guard's reason",
+    "files": [
+      "02-transport-dark.png"
+    ]
+  },
+  {
+    "step": "03-help-link",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "linkHit": {
+        "tag": "button",
+        "cls": "cds-btn.cds-btn--ghost.cds-btn--sm",
+        "text": "How Ask Planner works",
+        "inBand": false,
+        "inSlot": true,
+        "inHelpPanel": false
+      },
+      "panelBox": {
+        "x": 1600,
+        "y": 48,
+        "w": 320,
+        "h": 1032
+      },
+      "panelHit": {
+        "tag": "div",
+        "cls": "sp-panel-body",
+        "text": "Keyboard shortcutsCtrl KFind a person or",
+        "inBand": false,
+        "inSlot": false,
+        "inHelpPanel": true
+      },
+      "focusOnOpen": {
+        "tag": "h2",
+        "id": "shell-panel-help-title",
+        "label": null,
+        "text": "Help"
+      },
+      "panelGone": true,
+      "drawerStillOpen": true,
+      "keptText": "PR 6 smoke — state that must survive Help",
+      "focusAfterEsc": {
+        "tag": "button",
+        "id": null,
+        "label": "Help",
+        "text": ""
+      }
+    },
+    "note": "focus lands on the panel's own heading (ShellPanels' rule); Esc closes it and leaves the drawer",
+    "files": [
+      "03-help-open-dark.png",
+      "03-help-closed-drawer-intact-dark.png"
+    ]
+  },
+  {
+    "step": "04-raster",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "expected": {
+        "base": "invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95)",
+        "dim": "invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95)"
+      },
+      "measured": {
+        "/": {
+          "base": "invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95)",
+          "dim": "invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95)",
+          "rasterBox": {
+            "x": 5,
+            "y": 135,
+            "w": 1911,
+            "h": 867
+          },
+          "vsBaseline": {
+            "region": "5,135 1911×867",
+            "blocks": 6426,
+            "maxBlockDelta": 1.93,
+            "meanBlockDelta": 0.04
+          }
+        },
+        "/admin": {
+          "base": "invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95)",
+          "dim": "invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95)",
+          "rasterBox": {
+            "x": 8,
+            "y": 136,
+            "w": 1904,
+            "h": 864
+          },
+          "vsBaseline": {
+            "region": "8,136 1904×864",
+            "blocks": 6426,
+            "maxBlockDelta": 2.61,
+            "meanBlockDelta": 0.04
+          }
+        }
+      },
+      "withDrawerOpen": "invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95)",
+      "liveDim": {
+        "filter": "invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95)",
+        "highlightedSeats": 1
+      }
+    },
+    "note": "dark chain + block-mean compare against screenshots/pr6/runtime (≤8/255 per 16×16 block); the dim measured on a LIVE Ask Planner highlight",
+    "files": [
+      "04-raster-home-dark.png",
+      "04-raster-admin-dark.png",
+      "04-raster-admin-ask-open-dark.png",
+      "04-raster-live-dim-dark.png"
+    ]
+  },
+  {
+    "step": "05-below-900",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "paletteRowHit": {
+        "tag": "button",
+        "cls": "sp-palette-row.w-full.text-left",
+        "text": "Seat result. C01. Open seat. Open · No d",
+        "inBand": false,
+        "inSlot": false,
+        "inHelpPanel": false
+      },
+      "inspectorSeat": "Seat C01 · Center DesksOpen seatCopy link to this seatNo uns",
+      "slotBox": {
+        "x": 420,
+        "y": 144,
+        "w": 400,
+        "h": 804
+      },
+      "viewportBox": {
+        "x": 0,
+        "y": 144,
+        "w": 820,
+        "h": 764
+      },
+      "bandBox": {
+        "x": 0,
+        "y": 908,
+        "w": 820,
+        "h": 40
+      },
+      "bandHit": null,
+      "markerHit": {
+        "tag": "button",
+        "cls": "sp-seat-footprint.cds-touch-target.cursor-pointer",
+        "text": "C01 Unassigned. Open seat. Search result",
+        "inBand": false,
+        "inSlot": false,
+        "inHelpPanel": false
+      },
+      "anchor": {
+        "scrollTop": 202,
+        "scrollLeft": 560,
+        "maxTop": 230,
+        "maxLeft": 1370,
+        "ideal05Top": 202,
+        "ideal05Left": 560,
+        "retired028Top": 230,
+        "markerCentreY": 526,
+        "markerCentreX": 410,
+        "viewportCentreY": 526,
+        "viewportCentreX": 410
+      },
+      "overlaysRight": true,
+      "slotWidthOk": true,
+      "bandClear": false,
+      "bandBelowSlot": false,
+      "centred": true,
+      "scrollable": true,
+      "notUpperStrip": true,
+      "viewerPalette": {
+        "below880": {
+          "x": 12,
+          "y": 98,
+          "w": 560,
+          "h": 742
+        },
+        "above1200": {
+          "x": 240,
+          "y": 98,
+          "w": 560,
+          "h": 742
+        }
+      }
+    },
+    "note": "zoomed in 3 steps so the viewport can travel: the achieved scroll IS the 0.5 target and is NOT the retired 0.28 sheet anchor",
+    "files": [
+      "05-slot-820-dark.png",
+      "05-viewer-palette-1200-dark.png"
+    ]
+  },
+  {
+    "step": "05b-band-slot-push",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "at820": {
+        "closed": {
+          "band": {
+            "x": 0,
+            "y": 860,
+            "w": 820,
+            "h": 40
+          },
+          "host": null,
+          "zoomInCentre": {
+            "x": 796,
+            "y": 880
+          },
+          "zoomInHit": {
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandLeftHit": {
+            "tag": "li",
+            "cls": "sp-seat-legend",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "8px",
+          "slotOpenAttr": false,
+          "zoomRightOfSlot": null
+        },
+        "open": {
+          "band": {
+            "x": 0,
+            "y": 860,
+            "w": 820,
+            "h": 40
+          },
+          "host": {
+            "x": 420,
+            "bottom": 900
+          },
+          "zoomInCentre": {
+            "x": 396,
+            "y": 880
+          },
+          "zoomInHit": {
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandLeftHit": {
+            "tag": "span",
+            "cls": "sp-band-note",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "408px",
+          "slotOpenAttr": true,
+          "zoomRightOfSlot": -8
+        }
+      },
+      "at1920": {
+        "closed": {
+          "band": {
+            "x": 0,
+            "y": 1040,
+            "w": 1920,
+            "h": 40
+          },
+          "host": null,
+          "zoomInCentre": {
+            "x": 1896,
+            "y": 1060
+          },
+          "zoomInHit": {
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandLeftHit": {
+            "tag": "li",
+            "cls": "sp-seat-legend",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "8px",
+          "slotOpenAttr": false,
+          "zoomRightOfSlot": null
+        },
+        "open": {
+          "band": {
+            "x": 0,
+            "y": 1040,
+            "w": 1920,
+            "h": 40
+          },
+          "host": {
+            "x": 1520,
+            "bottom": 1080
+          },
+          "zoomInCentre": {
+            "x": 1496,
+            "y": 1060
+          },
+          "zoomInHit": {
+            "tag": "path",
+            "cls": "",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandLeftHit": {
+            "tag": "li",
+            "cls": "sp-seat-legend",
+            "inBand": true,
+            "inSlot": false
+          },
+          "bandPaddingRight": "408px",
+          "slotOpenAttr": true,
+          "zoomRightOfSlot": -8
+        }
+      }
+    },
+    "note": "amendment G (F-8): with the slot open the band takes the slot's push — its zoom control hit-tests to itself and its right edge clears the slot",
+    "files": [
+      "05b-band-at820-slot-closed-dark.png",
+      "05b-band-at820-slot-open-dark.png",
+      "05b-band-at1920-slot-closed-dark.png",
+      "05b-band-at1920-slot-open-dark.png"
+    ]
+  },
+  {
+    "step": "05c-viewer-palette-900-carried",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "at880": {
+        "innerWidth": 880,
+        "x": 12,
+        "w": 560,
+        "right": 572,
+        "cssWidth": "560px",
+        "sheetClass": true,
+        "overflowsViewport": false,
+        "clippedPx": 0
+      },
+      "at1200": {
+        "innerWidth": 1200,
+        "x": 240,
+        "w": 560,
+        "right": 800,
+        "cssWidth": "560px",
+        "sheetClass": false,
+        "overflowsViewport": false,
+        "clippedPx": 0
+      },
+      "at390": {
+        "innerWidth": 390,
+        "x": 12,
+        "w": 560,
+        "right": 572,
+        "cssWidth": "560px",
+        "sheetClass": true,
+        "overflowsViewport": true,
+        "clippedPx": 182
+      },
+      "sheetIntent": true,
+      "sheetWidthWins": true,
+      "anchored": true,
+      "phoneClip": true
+    },
+    "note": "F-9 as ruled CARRIED (DECISIONS §7): the below-900 branch fires (left 12, `right-3`) but `.sp-palette`'s 560 wins — 560 wide at 880, 560 anchored at 1200, 182px clipped at 390. Not a regression; not fixed by owner ruling",
+    "files": [
+      "05c-viewer-palette-390-dark.png"
+    ]
+  },
+  {
+    "step": "06-publish",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "buttonLabel": "Publish 1 change",
+      "facts": "Draft 60 seats · Published 60 seats · Total changes 1",
+      "primaryLabel": "Publish 1 change",
+      "eventsBefore": 0,
+      "eventsAfter": 1,
+      "publishedAfter": {
+        "label": "N03",
+        "employee_id": null,
+        "status": "available"
+      },
+      "publishStillOffered": 0
+    },
+    "note": "one real publish on the LOCAL stack — the draft change was made through the service role, the publish through the UI",
+    "files": [
+      "06-publish-review.png",
+      "06-publish-done.png"
+    ]
+  },
+  {
+    "step": "06b-brand",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "primaryBg": "rgb(184, 92, 46)",
+      "primaryHover": "rgb(143, 69, 33)",
+      "focusRing": "solid 2px rgb(184, 92, 46) -2px",
+      "linkColor": "rgb(143, 69, 33)",
+      "expectedLink": "rgb(143, 69, 33)",
+      "currentBar": "rgb(184, 92, 46) 0px -3px 0px 0px inset | rgb(198, 198, 198) | rgb(198, 198, 198) | rgb(244, 244, 244) | rgba(0, 0, 0, 0) | rgba(0, 0, 0, 0)"
+    },
+    "note": "brand-system checklist: primary · hover · focus ring · link · current-section bar",
+    "files": [
+      "06b-brand-light.png"
+    ]
+  },
+  {
+    "step": "06b-brand",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "primaryBg": "rgb(184, 92, 46)",
+      "primaryHover": "rgb(143, 69, 33)",
+      "focusRing": "solid 2px rgb(184, 92, 46) -2px",
+      "linkColor": "rgb(232, 160, 122)",
+      "expectedLink": "rgb(232, 160, 122)",
+      "currentBar": "rgb(184, 92, 46) 0px -3px 0px 0px inset | rgb(82, 82, 82) | rgb(82, 82, 82) | rgb(244, 244, 244) | rgba(0, 0, 0, 0) | rgba(0, 0, 0, 0)"
+    },
+    "note": "brand-system checklist: primary · hover · focus ring · link · current-section bar",
+    "files": [
+      "06b-brand-dark.png"
+    ]
+  }
+]

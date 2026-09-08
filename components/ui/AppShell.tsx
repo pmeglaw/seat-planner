@@ -79,6 +79,21 @@ export function useAppShellLeftPanel(): AppShellLeftPanel | null {
   return useContext(AppShellLeftPanelContext);
 }
 
+/**
+ * The shell's right panels (Help · History · Account), openable from a
+ * surface — Phase 4 PR 6 (owner ruling on the 3b §1.35 item): the Ask Planner
+ * explainability popover's "How Ask Planner works" link opens Help
+ * (PHASE3DS §1.18). Focus lands per the panel's own rule; Esc closes it
+ * through the shell's existing ladder and returns focus to the utility.
+ * Null outside a shell ancestor.
+ */
+export type AppShellPanels = { open: (panel: ShellPanelId) => void };
+const AppShellPanelsContext = createContext<AppShellPanels | null>(null);
+
+export function useAppShellPanels(): AppShellPanels | null {
+  return useContext(AppShellPanelsContext);
+}
+
 export type AppShellState = { email: string; isAdmin: boolean; mySeat: ShellServerState["mySeat"] };
 const AppShellStateContext = createContext<AppShellState | null>(null);
 
@@ -323,11 +338,13 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
     [closeLeft, leftPanelOpen]
   );
   const shellState = useMemo<AppShellState>(() => ({ email, isAdmin, mySeat: initialShell.mySeat }), [email, isAdmin, initialShell.mySeat]);
+  const panelsApi = useMemo<AppShellPanels>(() => ({ open: panel => setOpenPanel(panel) }), []);
 
   return (
     <AppShellContext.Provider value={contextValue}>
       <AppShellLeftPanelContext.Provider value={leftPanelApi}>
       <AppShellStateContext.Provider value={shellState}>
+      <AppShellPanelsContext.Provider value={panelsApi}>
         <AppTopBar
           isAdmin={isAdmin}
           pathname={pathname}
@@ -379,6 +396,7 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
         >
           <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         </div>
+      </AppShellPanelsContext.Provider>
       </AppShellStateContext.Provider>
       </AppShellLeftPanelContext.Provider>
     </AppShellContext.Provider>

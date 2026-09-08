@@ -115,11 +115,12 @@ test("the design system renders all three theme states", async () => {
   assert.match(carbon, /:root\s*\{[^}]*--cds-background\s*:/);
   assert.match(carbon, /@media \(prefers-color-scheme: dark\)\s*\{\s*:root:not\(\[data-carbon-theme="white"\]\)/);
   assert.match(carbon, /:root\[data-carbon-theme="g100"\]\s*\{/);
-  // App rules keyed on the theme take the same shape (styles/phase4-bridge.css
-  // carries the raster lightbox until PR 3).
-  const bridge = (await readFile(new URL("../app/styles/phase4-bridge.css", import.meta.url), "utf8")).replace(/\/\*[\s\S]*?\*\//g, "");
-  assert.match(bridge, /@media \(prefers-color-scheme: dark\)\s*\{\s*:root:not\(\[data-theme="light"\]\) \.map-raster/);
-  assert.match(bridge, /:root\[data-theme="dark"\] \.map-raster\s*\{/);
+  // App rules keyed on the theme take the same shape (app/globals.css carries
+  // the raster lightbox — the raster app rules, owner ruling Q1; moved out of
+  // the bridge in Phase 4 PR 6).
+  const globals = (await readFile(new URL("../app/globals.css", import.meta.url), "utf8")).replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.match(globals, /@media \(prefers-color-scheme: dark\)\s*\{\s*:root:not\(\[data-theme="light"\]\) \.map-raster/);
+  assert.match(globals, /:root\[data-theme="dark"\] \.map-raster\s*\{/);
 });
 
 test("dark-mode seams: raster parity and toggle mounts", async () => {

@@ -804,7 +804,10 @@ test("deactivate_employee: blocks an employee still on the published map", async
   const alice = await db.seedEmployee({ fullName: "Alice" });
   await db.seedSeat({ label: "N01", status: "assigned", employeeId: alice, layer: "published" });
 
-  await expectThrow(db.query("select public.deactivate_employee($1)", [alice]), { match: /published map/ });
+  // Phase 4 PR 6: the guard raises its own SQLSTATE (lib/actionRefusals
+  // PUBLISHED_EMPLOYEE_SQLSTATE) so the action can tell it from a transport
+  // or permission failure.
+  await expectThrow(db.query("select public.deactivate_employee($1)", [alice]), { code: "MLS03", match: /published map/ });
 });
 
 // ---------------------------------------------------------------------------

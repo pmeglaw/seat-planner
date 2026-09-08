@@ -64,14 +64,23 @@ test("the map's AI emphasis only engages while seats are actually highlighted", 
 
   // The dim itself lives in CSS so the dark lightbox filter can restate it —
   // `filter` is one property, so an inline saturate() would erase the invert.
-  // The light dim rule lives in globals.css; the dark variants (the lightbox
-  // chain with the dim folded in) sit in the Phase 4 bridge until PR 3
-  // rebuilds the raster — read both.
-  const globalsSource =
-    (await readSource("../app/globals.css")) + (await readSource("../app/styles/phase4-bridge.css"));
+  // The light dim rule and the dark variants (the lightbox chain with the dim
+  // folded in) all live in globals.css — the raster app rules (owner ruling
+  // Q1; the dark rules moved out of the bridge in Phase 4 PR 6).
+  const globalsSource = await readSource("../app/globals.css");
   const dimRules = globalsSource.match(/\.map-raster-dim\s*{[^}]*saturate\([^}]*}/g) ?? [];
   assert.ok(dimRules.length >= 2,
     "globals.css must define .map-raster-dim saturate rules for BOTH themes (light + dark restatement)");
+});
+
+// Explainability (PHASE3DS §1.18): the popover's "How Ask Planner works" link
+// opens the shell's Help panel — fed from SeatMap through useAppShellPanels
+// (Phase 4 PR 6); a drawer rendered without the feed shows no dead link.
+test("the explainability popover's Help link is fed by the shell's panel opener", async () => {
+  const drawerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  assert.match(drawerSource, /onOpenHelp \? \([\s\S]{0,200}?onClick=\{onOpenHelp\}>How Ask Planner works<\/button>/);
+  assert.match(seatMapSource, /onOpenHelp=\{shellPanels \? \(\) => shellPanels\.open\("help"\) : undefined\}/);
 });
 
 // The AI highlight chip retired with PR 3a: the control row's Ask Planner

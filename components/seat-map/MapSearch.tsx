@@ -14,7 +14,7 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from "react";
 import { SEARCH_SCOPE_LABELS, type SearchScope } from "@/lib/mapSearchScope";
-import { ChevronIcon, CloseIcon, SearchIcon } from "@/components/seat-map/mapIcons";
+import { ChevronIcon, CloseIcon, SearchIcon } from "@/components/ui/icons";
 
 export type MapSearchProps = {
   value: string;

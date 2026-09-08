@@ -1,6 +1,6 @@
 # Shell redesign v2 — decision document
 
-**Branch:** `redesign-v2` (from `main` @ 8f925db) · **Date:** 2026-08-31 · **Status:** for owner review, nothing built
+**Branch:** `redesign-v2` (from `main` @ 8f925db) · **Date:** 2026-08-31 · **Status:** ~~for owner review, nothing built~~ **built through Phase 4 (v2.0.0, PR 6 close-out 2026-09-08) — every D-entry carries its dated "Built" line; §6 next free number 19; §7 and §8 closed below**
 
 Method: decisions derived from the `ibm-design-language` skill (design-system v1.3.0) plus the shipped
 code and measured production data. Every ruling below traces to a named rule in that skill or to a
@@ -472,6 +472,7 @@ defining complexity, and `ui-shell.md` puts it in the header by name. It survive
 ## 5. Decision log
 
 ### D0 — Shell configuration
+*Built PR 2 (2026-09-04): `AppTopBar` (48px header, links, indicator, utilities), `AppShell` (one mount for the chrome; `app/page.tsx` moved into `app/(shell)/`), `LeftPanel`, `ShellPanels`; the two width regimes as `.sp-page` 1584 and the fluid canvas.*
 
 ```
 Screen: Shell (spans /, /admin, /admin/*, /reception; absent on /login)
@@ -618,12 +619,14 @@ the per-breakpoint design mandate is withdrawn. Reopens on first laptop use. (PH
 **Phase 3 confirmation (2026-09-03, PR 2):** settled at 320 and built as `--sp-panel-right-w`. The 72px three-line History event (what changed 14/18 · date 12/16 · who 12/16, with the long `12 seats changed · 5 people updated · 1 department renamed` summary wrapping to two lines only inside 288) needs the 288 content column, and Help / History / Account share the one width `ui-shell.md` requires. Not a deviation — the skill text says "consistent width", no number.
 
 #### D0-g · History panel depth: 10 events, then Show more to 25
+*Built PR 2 (2026-09-04): the History panel in `ShellPanels.tsx` — 10 events, one ghost Show more to the action's 25 cap.*
 **Problem:** `publish_events` is unbounded; ui-shell forbids unbounded content in a side panel; patterns prefers "Show more" over scrolling, gradients or fades.
 **Choice:** the panel lists the 10 newest events (the shipped `getPublishHistoryAction` default) and offers one ghost **Show more** that fetches to the action's 25 cap; after that the panel says "Showing the 25 most recent publishes." No paging, no infinite scroll — positions in a publish log are not addressable.
 **Trade-off:** older history is unreachable from the UI. Accepted: it was already capped at 25 on the retired Management tab.
 **Would change if:** anyone asks for a publish older than the 25th — then the log becomes a Management tab with pagination.
 
 #### D0-h · Hamburger only where the left panel has content; its slot is always reserved
+*Built PR 2 (2026-09-04, the reserved slot; PHASE4BUILD §1.11) — the map registers its filters in PR 3a, so the hamburger appears on `/` and `/admin` only; below the header-nav fold the panel carries the section links everywhere.*
 **Screen:** shell, every route.
 **Problem:** the hamburger toggles the *filter* panel (D0-c), and filters belong to the map. Reception, Management and Settings have no left-panel content at `lg`+; ui-shell puts a hamburger "only when there's a collapsible left panel".
 **Options considered:** (A) hamburger only where the panel has content — `/` and `/admin` at every width, every route below `lg` (the panel then carries the section links) — with the 48px slot **reserved and empty** elsewhere so the header name never moves; (B) hamburger everywhere, the panel on non-map routes holding only the section links — a duplicate of the header links at `lg`+; (C) hamburger on map routes only, header name flush left elsewhere.
@@ -644,6 +647,7 @@ the per-breakpoint design mandate is withdrawn. Reopens on first laptop use. (PH
 ---
 
 ### D1 — Map (`/`, viewer)
+*Built PR 3a + 3b (2026-09-04 / 05): the control row (`MapControlRow`, `MapSearch`, `FloorMenuButton`), `.sp-pill` name pills with the seat code on the tooltip, `SeatMark`, the band (`MapStatusBand`), the roster, the palette; D1-h / D1-i retired the washes and clusters.*
 
 ```
 Screen: Map — the viewer's seat finder
@@ -834,11 +838,13 @@ and below `lg` it resolves into the plain archetype the table does have.
 ### D1 — amendments (2026-09-02)
 
 #### D1-a · Find me and Copy link
+*Built PR 3a / 3b — see D1-e (Copy link) and D1-f (Find me).*
 Find me: viewer affordance on the map that lands on the viewer's floor and selects their seat (email
 match already exists). Copy link: on a selected seat → `?seat=<label>`; on a person → `?q=<name>`.
 Closes backlog DIR-1. (Answers 7, 9.)
 
 #### D1-b · Focused search with a scope control
+*Built PR 3a (2026-09-04): the scope segment inside the field (`MapSearch`), both counts in the palette header, a unique cross-floor match switches the floor (`lib/mapSearchScope`).*
 Search stays on the map surface, not in the header. Scope control "This floor / Whole building" with a
 count per scope ("7 on this floor · 11 in building"); a unique cross-floor match auto-switches floor,
 which is what `?q=` landing relies on. No global header search. (Ruling 17; E2.4 resolved, deviation 13
@@ -847,6 +853,7 @@ not taken.)
 ### D1 — Phase 2 amendments (2026-09-02, map PR)
 
 #### D1-c · One right-edge slot on the map surface; shell panels float above it
+*Built PR 3b (2026-09-05): `RightSlot` at `--sp-slot-w` 400, one owner at a time (INV-4), the shell panels float over it at 320.*
 **Screen:** map, both modes (`/`, `/admin`).
 **Problem:** the seat inspector, the mode card (Move / Swap / Add seat), the Ask Planner drawer and the shell's Help / History / Account panels all want the right edge.
 **Options considered:** (A) one in-surface slot, slide-in, pushes the canvas, owned by exactly one of inspector / mode card / Ask Planner, last opened wins; shell panels float over it at 320; (B) inspector and drawer side by side (400 + 408 = 808px, canvas 1112 < `lg`, D2's pitch floor breaks); (C) Ask Planner as a bottom drawer (height binds at 1920 × 889 — §2.3 — so a bottom drawer shrinks the plan directly).
@@ -855,6 +862,7 @@ not taken.)
 **Would change if:** admins report round-tripping between the drawer and the inspector many times per task.
 
 #### D1-d · Focused search — field, palette, scope, `?q=` landing
+*Built PR 3a (2026-09-04): `lib/mapUrlState` (`?q=`, `?names=`), the palette anchored to the field, the `?q=` landing on both map surfaces; the unique-landing rule counts a person plus their own seat as one match since PR 5 (PHASE4BUILD §1.46).*
 Field in the control row (320px, never labelled, magnifier + placeholder, Ctrl/⌘ K). Results open in the existing 560px palette anchored to the field's left edge — a disclosure, results in place. A trailing scope segment **"This floor ▾ / Whole building"** sits inside the field; the results header always carries both counts ("7 on this floor · 11 in building"), zero included. Typing never changes the floor; opening a result on the other floor does (status-role announcement, D1′). `?q=` landing: field pre-filled and results open; a unique match auto-selects (seat → inspector; unseated person → roster row) and auto-switches floor; several matches stay a list; zero shows the zero state with the query kept. (Ruling 17; closes E2.4 for good.)
 
 #### D1-e · Copy link
@@ -868,6 +876,7 @@ Copy icon with a "Copied" confirmation (patterns: Copy) on the inspector header 
 Ghost button in the control row, every role. Seated → own floor, own seat selected, inspector open. Unseated → roster floor, own row highlighted. Not in the published directory → inline notification in the map region: "Your account isn't in the published directory. Ask an admin." Own seat comes from the email match already in `app/page.tsx`.
 
 #### D1-g · Status band kept; names toggle moves to the control row
+*Built PR 3a (2026-09-04): `.sp-band` (`MapStatusBand`), the Names toggle in the control row, the legend following it (P3-13).*
 The 40px band (legend · counts · zoom/fit) already ships and Q2 dissolved its geometric objection. It stays as the map's footer; the names toggle moves up to the control row (PHASE1IA B4). Height budget at 1920 × 889: 48 header + 48 control row + 40 band → plan 753px tall, 1660 wide, wholly visible.
 
 ### D1 — Phase 4 amendments (2026-09-03, owner rulings on the PR 0 triage flags)
@@ -887,6 +896,7 @@ design content. **Built 2026-09-04 (PR 3a).**
 ---
 
 ### D2 — Admin (`/admin`)
+*Built PR 3a + 3b + 5b (2026-09-04 → 07): the draft control row tenants (D2-b), the slot inspector / mode card / Ask Planner (D2-a), the publish review as the wide tearsheet, the seven confirm dialogs on the asset modal (the PR 5b amendment below).*
 
 ```
 Screen: Admin — the draft seat-map editor
@@ -1056,6 +1066,7 @@ canvas; its band clearance follows the band, not the floor it left.
 D2's measured paragraph is the evidence: at a 480 push the tightest marker gap on the 1440px canvas falls to 42.3px and two 44px hit regions overlap; the floor holds to a 420 panel; the measured content (22-character longest name, 17-character department, 4-character label, notes on 1 of 68 seats) does not need 480. **Ruled 400** (owner, 2026-09-02); the alternative — 480 with hit regions held at unpushed size — is **not** taken. The inspector's overflow state must carry the ≤ 22-character name constraint so Phase 3 sizes the type for it. Slide-in, pushes; below the control row (top 96), full remaining height. Recorded as **deviation 15** (§6).
 
 #### D2-b · Draft-mode control row order (owner ruling Q2)
+*Built PR 3a (2026-09-04): `MapControlRow` in this order; the overflow holds Discard draft changes only; Reset zoom stays with the canvas control.*
 After the shared controls (floor selector · search · "Filters N ×" · result count · Find me) and a divider: **Undo · Redo** as ghost icon buttons (tooltips carry the shortcuts; Redo disabled when its stack is empty) · **Add seat** as a ghost button *with its label* (creation, low frequency — not icon-only) · **Ask Planner** (tertiary) · **Publish N changes** (the row's one primary) · **⋯ overflow** · **Names** toggle. The overflow holds **Discard draft changes only**, last item, danger styling, divider above, disabled when nothing to discard (parity with what ships). Reset zoom is **not** in the overflow — it stays with the zoom/fit control on the canvas (a viewport action does not belong in a menu of document actions). Owner-approved mockups: "Seat Planner Shell Mockups" canvas, page "Phase 2 Q1–Q2". Recorded as PHASE1IA.md B4 amendment.
 
 ### D2 — Phase 4 PR 5b amendment (2026-09-07; owner rulings R-1…R-3, PHASE4BUILD §1.47)
@@ -1071,6 +1082,7 @@ D5-b); the map's Delete seat stays the modal.
 ---
 
 ### D3 — Reception (`/reception`)
+*Built PR 5 (2026-09-07): `ReceptionFrame` + `ReceptionScreen` on the `.sp-recep` family (PHASE3DS §1.29); plan of record `phase4/plans/phase4-pr5-reception.md`.*
 
 ```
 Screen: Reception — front-desk call routing
@@ -1120,6 +1132,7 @@ published-only.
 ### D3 — Phase 2 amendments (2026-09-02, Reception PR)
 
 #### D3-a · Reception sits on the 1584 live area; list 1072 · readout 480; no primary action
+*Built PR 5 (2026-09-07): 1584 live area, readout 480 sticky, no page primary; the list is **1008** at 1920 — the `.sp-page` padding sits inside the 1584 (owner ruling Q-6, PHASE2UX §1R.2 amended).*
 **Problem:** the shipped page is a bespoke 1060px frame with a 372px sidebar; D0 puts every text-dense
 surface on the 1584 document regime.
 **Options:** keep 1060 (one less reflow to build, one more frame to learn); 1584 with the width spent on
@@ -1131,6 +1144,7 @@ with tabular figures and a 48px pitch. **Would change if:** Reception gains a ta
 directory passes ~300 people (D3).
 
 #### D3-b · Reception keeps its own search; clear × and Ctrl/⌘ K added for parity with the map
+*Built PR 5 (2026-09-07): the search `lg` field with the clear × and Ctrl / ⌘ K from anywhere on the page; the count always shown, zero included.*
 Unlabelled, magnifier + placeholder, autofocus on entry, active search as shipped (ranking, highlight-preview,
 Enter locks, Esc clears, arrows clamp, rows never steal focus). Additions: a clear × when the field is
 non-empty (patterns: Clear = close icon at the right of the field — today only Esc clears, which a
@@ -1138,11 +1152,13 @@ receptionist on the phone does not discover) and Ctrl/⌘ K to focus, the same k
 shown: "68 people" / "7 matches" / "0 matches". Not a header search (ruling 17).
 
 #### D3-c · `?q=` on Reception
+*Built PR 5 (2026-09-07): the landing locks a unique match; `replaceState` writes `?q=<name>` on lock and removes it on unlock, passing `history.state` through (PHASE4BUILD §1.46).*
 Landing pre-fills the field and filters; a unique match locks the readout; locking writes `?q=<name>` with
 `replaceState`, clearing removes it. A lookup becomes linkable and survives a reload — today the URL never
 changes. Recents stay in-memory (ruled 2026-08-05, not re-asked). No other URL state.
 
 #### D3-d · Readout order and the no-extension state
+*Built PR 5 (2026-09-07): name → role → the tile (`heading-06` 300 tabular) → the seat line → the fallbacks → Show on map → Recent lookups; "No extension on file" as a stated state.*
 Name block → extension in display type (`heading-06` 42/50, tabular; weight set in Phase 3 for arm's-length
 reading) → seat line with the D3′ copy → "If no answer — same department" (≤ 3, as shipped) → recents.
 **No extension** is a stated state — "No extension on file" with the fallback list as the next step — never
@@ -1223,6 +1239,7 @@ on `main` (v1.75.0) — `phase4/screenshots/pr5/README.md`.
 ### D5 / D6 — new entries (2026-09-02)
 
 #### D5 · Management
+*Built PR 4 (2026-09-05): `ManagementFrame` (real tablist, `?tab=`, the primary follows the tab), the Publish History tab gone; plan of record `~/.claude/plans/spicy-hopping-axolotl.md` v2 (PHASE4BUILD §1.37).*
 `/admin/management?tab=employees|departments|zones`. In-page tabs, no third tier (ui-shell; answer 5).
 Page header: title + one primary action on the 1584px centred live area. The `publishHistory` tab is
 removed — history lives in the History panel (D0-a).
@@ -1237,6 +1254,8 @@ the Employees toolbar count ("68 employees · 56 assigned · 12 unassigned", rep
 filtering); draft-seat and zone counts already live on the map band and in the History panel. **Would change
 if** a tab grows a second create action.
 
+*Built PR 4 (2026-09-05): `ManagementFrame` — title, subtitle, the tablist, the current tab's create as the one primary; the tiles gone, the counts in the Employees toolbar (`lib/managementCounts`).*
+
 **D5-b · Employees is an index page; create/edit is a 480px slide-over side panel.** Compact sortable table
 (32px rows — scanned), kebab per row, name links to the map seat. The form moves out of the modal into a side
 panel because **the admin must keep referencing the table behind it** — the neighbours, the department
@@ -1250,6 +1269,8 @@ on top of the side panel with the consequences spelled out (a side panel may ope
 not); the published-map refusal becomes an inline error in the panel with a link to the seat. No reactivate,
 bulk actions or delete are added.
 
+*Built PR 4 (2026-09-05): `EmployeesTable` (`.cds-table`, 32px rows, one ghost Edit, the seat link) + `EmployeePanel` (480 slide-over, focus trap, dirty-close ask on `CarbonModal`); Deactivate as the narrow tearsheet per the amendment below; the published-map refusal inline with the seat link (its SQLSTATE since PR 6).*
+
 *Phase 4 PR 4 amendment (owner ruling 2026-09-05; PHASE4BUILD §1.38).* The Deactivate confirmation is the **narrow
 tearsheet** (`.sp-tearsheet--narrow`, right-aligned Cancel · danger primary, no ×) opening OVER the still-open panel —
 not a confirm modal on top. The dirty-close ask stays the modal (PHASE3DS §1.24). Nothing else in D5-b changes.
@@ -1262,6 +1283,8 @@ danger primary (D2, Phase 4 PR 5b amendment) — not a reversal of §1.38, a bou
 keyboard-undiscoverable and a taste tell. Create = the header primary opening a one-field modal. Delete keeps
 the shipped confirm copy (moderate impact, no typed confirmation). Names only; zone geometry stays on the map.
 
+*Built PR 4 (2026-09-05): `OptionList` (inline rename Save · Cancel, ⋯ Delete), `OptionCreateModal`, `ManagementConfirmSheet` for Delete per the amendment below.*
+
 *Phase 4 PR 4 amendment (owner ruling 2026-09-05; PHASE4BUILD §1.38).* Delete department / zone confirm in the
 **narrow tearsheet** with the shipped copy, not a modal. Rename keeps its Save · Cancel (blur validates, never commits;
 the duplicate helper quotes the name and names the next step). Create keeps the one-field modal.
@@ -1270,7 +1293,10 @@ the duplicate helper quotes the name and names the next step). Create keeps the 
 action the shipped body-only variant lacks; the route error keeps its own admin voice; loading is skeleton
 rows under real column headers.
 
+*Built PR 4 + PR 5 (2026-09-05 / 07): the 403 card with its action (PR 4), the route cards on `.sp-route-card` (PR 5, PHASE3DS §1.29), skeleton rows under real headers.*
+
 #### D6 · Settings
+*Built PR 4 (2026-09-05): `DataUtilitiesPanel` draft-only — CSV import, snapshot export / restore; Reset draft gone (P2-8).*
 `/admin/settings`. Settings archetype: single-column forms grouped by section. Contents: CSV import,
 JSON snapshot restore. **Reset draft is retired** (ruling 22) — too destructive to keep; undo history and
 snapshot restore cover the need. Snapshot restore is moderate impact: confirm with consequences spelled
@@ -1286,6 +1312,8 @@ primaries live in their sections). The standing guidance banner becomes a proper
 page, never dismissible, no status (patterns: guidance before a task). **Would change if** a third recovery
 tool arrives (then a settings left-nav) or restores become frequent.
 
+*Built PR 4 (2026-09-05): `.sp-settings` 776 column, `.sp-callout` first, one primary per section (`.sp-section`).*
+
 **D6-b · CSV section: primary Import CSV; review in a narrow tearsheet.** Labelled trigger stating the type and
 limit up front ("Import CSV · .csv up to 5 MB"), columns and an example row on a file line under the actions.
 The review leaves the modal: the blocking-error list scrolls, and a scrolling list is complex data
@@ -1293,12 +1321,16 @@ The review leaves the modal: the blocking-error list scrolls, and a scrolling li
 Unhappy paths written in — wrong type, too large (5 MB guard, none ships today), empty, missing columns,
 MLS02 with the refreshed-directory note. All-or-nothing stays (as shipped).
 
+*Built PR 4 (2026-09-05): `FileTrigger` + `lib/fileGuard` (type + 5 MB, inline before any sheet), `CsvImportSheet` (count cards, the blocked state with the reason above the footer).*
+
 **D6-c · Snapshots section: primary Export draft snapshot; Restore is tertiary and reviewed.** The backup is
 the frequent act; restore is rare. Restore = moderate impact (D6): a narrow tearsheet with counts, the file's
 name and export date, and a **consequences list** — every draft assignment replaced; custom seats not in the
 file deleted; employee details updated, never deleted; the published map untouched until publish; Undo
 history cleared — then Cancel · Restore draft snapshot. No typed confirmation. MLS02 keeps the review open
 with the refreshed-draft note.
+
+*Built PR 4 (2026-09-05): `SnapshotRestoreSheet` (counts, the file line, the consequences list; MLS02 keeps the review open with Retry).*
 
 **D6-d · Reset draft gone from Settings** (ruling 22; Q7 keeps the map's Discard). The snapshots section loses
 its danger styling — nothing destructive remains on the page. Not-admin uses the shared 403 card with the
@@ -1312,6 +1344,8 @@ publish flow (PR 3b); `resetDraftToPublishedAction` has one call site (`usePubli
 button** (an action, not a link) in the review body: downloads the current draft snapshot, does **not** close
 the tearsheet or reset the review, and shows its own done-state in place — "Exported 14:02" — so the admin
 can see it happened before pressing Restore. Reuses the section's export; nothing new is written.
+
+*Built PR 4 (2026-09-05): the ghost with its in-place done-state ("Exported 14:02") inside `SnapshotRestoreSheet`, never disabled.*
 
 **Frame invariants (owner, 2026-09-03):** tearsheets exit via Cancel only — no close ×; file inputs get
 labelled triggers with the accepted type and the 5 MB limit stated up front, not only in the error.
@@ -1341,10 +1375,25 @@ labelled triggers with the accepted type and the 5 MB limit stated up front, not
 | 15 | Seat inspector side panel is **400px**, not Carbon's 480 side-panel default | At 480 the pushed canvas's tightest marker gap falls to 42.3px and two 44px hit regions overlap; the floor holds to a 420 panel (D2, measured; D2-a). **Would change if** the marker pitch changes (a new floor plan) or the inspector gains content that cannot be read at 400. Ruled 2026-09-02 |
 | 16 | **Primary-action colour is the firm's terracotta #B85C2E, not Blue 60** (`SKILL.md` non-negotiable: "Blue 60 is the only primary action colour"). Hover #8F4521, active #7A3A1C; links #8F4521 light / #E8A07A dark; focus ring, interactive border, current-section bar and AI label follow. | Owner ruling 2026-09-03 (brand hand-off, `docs/brand/`): the app carries the law firm's identity, and the logo's orange (#EB7C35, 2.81:1) cannot be a UI colour, so a darker terracotta that clears AA on white (4.56:1) and 3:1 on gray 100 (3.97:1) takes the interactive role. Expressed in ONE file — `app/styles/brand/megeredchian-law-tokens.css`, loaded after the token layers — by overriding Carbon's interactive `--cds-*` roles and the three tier-C zone tokens that bypass them, so every `--sp-*` alias inherits it and no component names the colour; the two vendored assets stay untouched and Carbon's grays, type, spacing, motion and status families are unchanged. Cost: white on #B85C2E is 4.56:1, so button labels stay ≥ 14px regular; ~~`--cds-highlight` (blue 20 / blue 90) is the one blue still in use for the search/filter hit surface, pending a terracotta-tint ruling~~ **ruled 2026-09-04 (O2), built in PR 3b:** the hit surface is a terracotta tint — light fill #FBE8DC + edge #B85C2E (`--cds-highlight` overridden, light only), dark = neutral `layer-02` fill + edge #E8A07A (terracotta on #393939 is 2.53:1, under the graphic floor — the dark LINK colour carries the hue on dark, as for links); no blue is painted anywhere now. ~~The Draft mark (orange 40) now sits near the brand hue — the two-signal rule (shape + colour) keeps it distinct, re-check in the PR 3 marker rig~~ **measured 2026-09-04: one hue in the light theme → no. 17.** **Would change if** the firm's brand changes, or a measured legibility problem appears at 4.56:1 on the primary. Gated by `tests/phase4-token-layer-source.test.mjs` (terracotta in all three theme states; no IBM blue in the brand layer; #EB7C35 never a UI colour) |
 | 17 | **The Draft family is Carbon purple 60 (light) / purple 40 (dark; the gray-100 header's ◇ too), not the status hue the skill assigns** — `status-and-dataviz.md` fixes *Draft, not started* to **Gray 60**, *serious warning* to Orange 40/60, and Purple 60 to *outlier / undefined status*. Phase 3 had already departed from the gray (PHASE3DS §1 "Mode indicator": orange 40 caution — a draft is *changed, not yet published*, and gray 60 is helper text and the quiet pill on a gray-dominant map, so it cannot carry a mode identity); the brand primary then took the orange hue. | Owner ruling 2026-09-04 (O3), measured: light Draft mark orange 60 `#ba4e00` vs terracotta `#B85C2E` is **ΔE2000 5.3, 1.10:1**, same hue angle (54° vs 51°) and lightness — one colour at 8px beside a terracotta focus ring, interactive edge or Publish primary; the two-signal rule keeps the ◇ *legible* (shape) but the family no longer *read* as its own colour. Purple 60/40 is ΔE ≈ 47 from terracotta, sits on the same contrast ladder as orange 60/40 (white 5.00 · layer-01 4.55 · layer-02-dark 4.91 · gray-100 7.70), is not a blue, and carries no other meaning in the app (no data-viz palette, no "undefined" status exists; teal was retired with the old markers, magenta neighbours error red). Expressed in the brand file only, by overriding the three tier-B/C tokens `--sp-status-draft-mark`, `--sp-pill-badge`, `--sp-mode-draft-mark` in all theme states — Carbon's caution role itself is unchanged for genuine warnings. Cost: purple is a deliberate non-Carbon reading of "draft"; the legend and inspector text ("Changed in draft") stay the third signal. **Would change if** the firm's brand leaves the orange hue (then Carbon's orange caution or gray 60 would be reconsidered), or a user study shows purple read as an error/undefined state. Gated by `tests/phase4-token-layer-source.test.mjs`; pairs in `generate-pairs.mjs` |
+| 18 | **Narrow tearsheet is content-height, not viewport-anchored** — `.sp-tearsheet--narrow { bottom: auto }` where `composition.md` anchors a tearsheet to the bottom of the viewport and PHASE2UX §1S.2 drew it anchored; landed content-height in PHASE3DS §1.28 (PR 4 smoke step 12: top 160 / bottom 490 at 1080). | Owner ruling 2026-09-08 (Phase 4 PR 6, row 1 → B): by the §1.38 ruling the narrow sheet hosts 3–8-line destructive confirmations; anchoring them leaves ~650px of empty body between the consequences and the danger primary at 1080 (reviewer render, 2026-09-08). The sheet keeps the tearsheet identity — top 112 below the header, 720, overlay, right-aligned footer, no × — and the reviews scroll inside `max-height`. **Would change if** a narrow sheet gains a sectioned form. No code, no sheet change; recorded in PHASE3DS §1.28 and PHASE2UX §1S.2 |
 
 ---
 
 ## 7. Not verified — deliberately deferred to the build
+
+**Closed at the Phase 4 close-out (PR 6, 2026-09-08)** — line by line: contrast is a generated suite gated at 202/202 (PHASE4BUILD §4); components, CSS and tokens are built (PHASE3DS, PHASE4BUILD); **both themes** are read on every surface by the runtime audit and the capture sets of every PR since PR 2 (6 routes × 2 themes + the system state); **the keyboard path** is driven by e2e-auth `accessibility`, `reception-keyboard`, `nav-shell` and the real-browser tier (skip link, landmarks, roving arrows on the markers, the Esc ladder); **the admin surfaces at 1920 / 1280 / 1024** by `viewport-matrix`, `page-frames` and the frames in every capture set. **Still unverified, carried: the 400 % zoom reflow** — no Phase 4 rig drove it; a chore after v2.0.0, not a Phase 4 obligation.
+
+**Carried beside it (owner ruling 2026-09-08, PR 6 finding F-9): the below-900 search palette never spans.**
+`ViewerFindPalette`'s `computeFrame` returns `width: null` below the 900 tier and the element takes `right-3`, meaning
+to stretch from left 12 to the viewport's right inset — but `.sp-palette { width: var(--sp-palette-w) }` (560, the
+Phase 3 sheet) sets a width, and an element with `left` + `right` + `width` uses `left + width`. Measured by
+`phase4/audit/pr6-smoke.mjs` step `05c` (real Chrome, both themes): **880 → 560 wide** at x 12 (the sheet class IS
+applied), 1200 → 560 anchored at x 240 (the ≥ 900 branch, correct), **390 → 560 wide, 182px off-screen** and clipped,
+so the row's trailing cell (seat code / count / Floor tag) is unreachable. The 900 rule itself is intact, and Phase 4
+PR 6 row 4 retired only `ViewerSeatFinder`'s own `VIEWER_PANEL_BREAKPOINT_PX`, as ruled. **Not fixed:** it is
+phone-width only and the hardware target is 1920 × 1080 desktop (owner, 2026-08-29). No code changed.
+
+The original text stands below as the record of what was deferred and why.
 
 Stated plainly so nothing here reads as more settled than it is:
 
@@ -1397,6 +1446,8 @@ Stated plainly so nothing here reads as more settled than it is:
 ---
 
 ## 8. Open questions for you
+
+**Closed at the Phase 4 close-out (PR 6, 2026-09-08):** Q1, Q2, Q6 resolved 2026-08-31 / 2026-09-01, Q3–Q5 2026-09-01, Q7 ruled 2026-09-02 (the table at the end); nothing open. Later questions were raised and ruled inside the phases' own logs (PHASE1IA rulings, PHASE2UX / PHASE3DS "Open for the owner", PHASE4BUILD §1) and never re-entered this list.
 
 1. ~~**The visual target.**~~ **RESOLVED 2026-08-31 — the skill-derived direction is the target.**
    `shell-reference.html` does not re-enter the process; the `docs/redesign` branch stays off-limits

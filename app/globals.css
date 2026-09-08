@@ -107,11 +107,32 @@ input[type="search"]::-webkit-search-cancel-button {
   appearance: none;
 }
 
-/* Ask-Planner dim while seats are highlighted (light theme; the dark variants
-   fold the dim into the raster lightbox chain in styles/phase4-bridge.css
-   until PR 3 rebuilds the raster). */
+/* Floor-plan raster app rules (owner ruling Q1, PR 3b: globals.css is Tailwind
+   base + resets and the raster filter app rules — never a product component;
+   moved here from styles/phase4-bridge.css in Phase 4 PR 6, rules unchanged).
+   Light theme: the Ask-Planner dim while seats are highlighted. Dark: the
+   CSS-only lightbox treatment on the <img> (no dark asset, so no ?v= bump);
+   markers sit above it unfiltered. The dim restates the whole chain with the
+   dim folded in (0.45 × 0.8 = 0.36) — `filter` is a single property. Both
+   dark rules take the three-state shape the tokens use: bare :root is light,
+   dark under the prefers-color-scheme guard, dark again under the forced
+   attribute (tests/theme.test.mjs). */
 .map-raster-dim {
   filter: saturate(0.8);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .map-raster {
+    filter: invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95);
+  }
+  :root:not([data-theme="light"]) .map-raster-dim {
+    filter: invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95);
+  }
+}
+:root[data-theme="dark"] .map-raster {
+  filter: invert(0.93) hue-rotate(180deg) saturate(0.45) contrast(0.95);
+}
+:root[data-theme="dark"] .map-raster-dim {
+  filter: invert(0.93) hue-rotate(180deg) saturate(0.36) contrast(0.95);
 }
 
 /* Login motion (D4, unchanged): a one-shot rise-in for the form column, plus

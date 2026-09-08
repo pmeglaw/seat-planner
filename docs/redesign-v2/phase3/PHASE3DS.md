@@ -377,6 +377,11 @@ footer — **amendment F under §1.24**, the one place a three-button modal foot
 and the pending / error contracts are as shipped; the map's `Delete seat` confirm stays the modal (§1.38's "destructive =
 narrow tearsheet" ruling is scoped to `/admin/management`).
 
+**Phase 4 PR 6 (2026-09-08) — the slot's height meets the band: see §1.21 amendment G.** `.sp-slot-host` is absolute
+against the map STAGE, so an open slot runs the full stage height (PHASE2UX §1M.2 has it at y 96–889, x 1520–1920) —
+past the canvas column and over the band's row. The slot is right to do so; what was missing is the band's own push.
+Finding F-8, fixed in PR 6 (PHASE4BUILD §1.48).
+
 ### 1.18 Ask Planner — Map → `.sp-ai-label`, `.sp-ai-popover`, `.sp-textarea--ai`, drawer parts (§3 "Ask Planner drawer · Carbon-for-AI label")
 
 **Problem.** The one AI surface must be marked as AI and explain itself (`carbon-next.md`: the AI label
@@ -396,6 +401,10 @@ next step — Try again · Ask something shorter · Ask the office manager; `rol
 five that stop the task, `role="status"` for question-too-long and the fallback; owner ruling) /
 broad-answer info note / Clear highlights. **Would change if** Carbon ships AI tokens in the asset (then the palette reference
 retires).
+
+**Phase 4 PR 6 (owner ruling 2026-09-08, row 3):** the popover's "How Ask Planner works" link is fed — `SeatMap` opens
+the shell's Help panel through `useAppShellPanels` (`AppShell.tsx`); focus lands per the panel's own rule, Esc closes
+it through the shell's ladder. Recorded open since 3b (PHASE4BUILD §1.35); closed in §1.48.
 
 ### 1.19 Publish review — Map → `.sp-tearsheet` wide (§3 "Wide tearsheet (publish review) · hand-built")
 
@@ -429,6 +438,20 @@ a status region (`role="status"`, top-left) for inline notifications — the MLS
 (inline and self-clearing, not a toast: it happened *to* the user), PUBLISH_BLOCKED, partial-load — and
 the empty states over the plan (published-empty in the viewer's and the admin's voice, draft-empty),
 skeleton plan, error + Retry, the 403 card. One narrow (1024) read-only frame.
+
+**Phase 4 PR 6 amendment G (2026-09-08; finding F-8, PHASE4BUILD §1.48).** The band takes the open slot's push:
+`.sp-band[data-slot-open] { padding-right: calc(var(--sp-slot-w) + var(--sp-space-03)) }`. PHASE2UX §1M.2 already
+ruled it — "the band spans the canvas, not the slot", with the band at y 849–889 and the slot at x 1520–1920 — and
+`MapStatusBand`'s own header said so, but nothing implemented it: the band is the canvas column's SIBLING inside the
+stage, and `.sp-slot-host` is absolute against that stage (`top/right/bottom: 0`), so an open slot painted over the
+band's right 400px. At 1920 the result count clipped mid-word and the zoom − / Fit / + group was unreachable — and
+D2-b keeps **Reset zoom** only on that control, so the loss landed exactly while a seat was being edited. The push is
+the same one the canvas column takes (`pr-[var(--sp-slot-w)]`) from the same slot-owner state, plus the band's own
+right inset so the group keeps its optical gap from the seam; the presence key (`data-slot-open`, never `="false"`)
+follows the slot host's convention. **This is conformance to a ruling already made, not a new deviation, and no token
+changed.** Evidence: `audit/pr6-smoke.mjs` step `05b` (hit-test on the band's Zoom-in button, slot open and closed, at
+1920×1080 and 820×900, both themes) and the e2e-auth `page-frames` map block; the browser tier pins the key that
+drives it (that harness ships no CSS). Cross-referenced from §1.17.
 
 ### 1.22 Page frame and tabs — Management / Settings / Reception → `.sp-page`, `.sp-tabs` (§3 "Page header (title + subtitle, no action) · exists", "Page header with tabs + one primary · tabs hand-built")
 
@@ -536,6 +559,10 @@ no close and no status colour. The edge is a decorative border on a non-interact
 no 3:1 obligation — so it is measured (3.02 / 3.01) and **not gated** (§3); a token nudge must not fail the build over it.
 **Would change if** the callout ever carries a status; then it is a notification.
 
+**Built PR 4 (2026-09-05; recorded closed at the Phase 4 close-out, PR 6, 2026-09-08 — owner ruling row 5):**
+`DataUtilitiesPanel.tsx` and the Settings skeleton (`app/(shell)/admin/settings/loading.tsx`) render `.sp-callout` as
+specified — loads with the page, no button inside (`settings-affordance-source`), no status. Kept as landed.
+
 ### 1.27 Settings sections and the file trigger — `.sp-settings`, `.sp-section` (§3 "Section with one primary + file line · exists")
 
 Column 776, left-aligned; callout first; 48 between sections. Section = `heading-03` · helper body-01 ·
@@ -573,6 +600,12 @@ versions of those confirmations (`03-panels-and-sheets.html` lines 194, 204) are
 **Phase 4 PR 4 amendment C (the smoke's step 20, 2026-09-05).** Below the asset's 1055 fold the narrow sheet is the
 viewport minus 32 (`width: calc(100vw − 2 × 16)`) — PHASE2UX §1S.5; the 720 is the 1920-frame width. Both copies,
 byte-identical; no token change.
+
+**Phase 4 PR 6 (owner ruling 2026-09-08, row 1 → B): the narrow sheet stays content-height.** `bottom: auto` is kept
+where `composition.md` anchors a tearsheet to the viewport bottom and PHASE2UX §1S.2 drew it anchored: by the §1.38
+ruling this sheet hosts 3–8-line destructive confirmations, and anchoring them leaves ~650px of empty body between the
+consequences and the danger primary at 1080 (reviewer render). Top 112 below the header, 720, overlay, right-aligned
+footer, no ×; the reviews scroll inside `max-height`. Recorded as **DECISIONS §6 no. 18**. No code, no sheet change.
 
 ### 1.29 Reception — `.sp-recep` family (§3 "Search input lg with clear ×", "Listbox rows", "Readout tile with display numeral", "Row-buttons", "Error boundary card"); route cards
 
@@ -844,63 +877,65 @@ into a departure from skill text gets ledgered as 16+ in DECISIONS §6, not here
 ## 5. Phase 4 hand-off — obligations (each with its landing file), landing files by PR, retired names
 
 Appends PHASE2UX §5's nine items. **An obligation without a landing spot gets skipped**, so every item below names
-the file Phase 4 touches. The specimens' HTML is reference; the CSS files are the deliverable (§7).
+the file Phase 4 touches. The specimens' HTML is reference; the CSS files are the deliverable (§7). **All twenty
+built — ticked per item at the Phase 4 close-out (PR 6, 2026-09-08) from PHASE4BUILD §2, which carries each landing
+file as merged.**
 
-1. **Tokens land in `app/globals.css`** — `tokens/sp-tokens.css` replaces the shipped `--sp-*` block wholesale, and
+1. **Tokens land in `app/globals.css`** ✔ built PR 1 — — `tokens/sp-tokens.css` replaces the shipped `--sp-*` block wholesale, and
    `tokens/carbon-tokens.css` lands beside it with its Google `@import` line removed (the `next/font/local` class from
    `app/layout.tsx` + `app/fonts/` supplies IBM Plex). `tailwind.config.ts` re-points its theme extension at the new
    names; the retired names (end of this section) are swept from `app/**` and `components/**` in the same PR.
-2. **Theme attribute** — the boot script in `app/layout.tsx` derives `data-carbon-theme` from `data-theme` (light →
+2. **Theme attribute** ✔ built PR 1 (boot) + PR 2 (radio) — — the boot script in `app/layout.tsx` derives `data-carbon-theme` from `data-theme` (light →
    `white`, dark → `g100`, absent → removed); `components/ui/ThemeToggle.tsx` retires into the Account panel's radio
    (`components/ui/ShellPanels.tsx`), which sets both attributes through the same function.
-3. **Component CSS lands in `app/globals.css`** (or a sibling `components.css` imported from `app/layout.tsx`):
+3. **Component CSS lands in `app/globals.css`** ✔ built PR 1 — (or a sibling `components.css` imported from `app/layout.tsx`):
    `components/carbon-components.css` verbatim, then `components/sp-components.css`. Nothing in the two asset files is
    edited; every product change is an override in the `sp-*` file (§2 inventory, "asset-overridden").
-4. **Platform-aware shortcut hint** — `Ctrl K` on Windows / Linux, `⌘ K` on Mac, decided at hydration from
+4. **Platform-aware shortcut hint** ✔ built PR 3a (map, Help) + PR 5 (Reception) — — `Ctrl K` on Windows / Linux, `⌘ K` on Mac, decided at hydration from
    `navigator.platform` / UA-CH, never in the server render: the control-row search in `components/seat-map/SeatMap.tsx`
    and the Reception search in `components/reception/ReceptionScreen.tsx`.
-5. **`SeatMark` inlining** — a `components/seat-map/SeatMark.tsx` that emits the four symbols' paths (○ ring, lock,
+5. **`SeatMark` inlining** ✔ built PR 3a (band) · 3b (marker, inspector) · 2 (Account) · 4 (Management); Reception half closed "no mark drawn" (Q-4) — — a `components/seat-map/SeatMark.tsx` that emits the four symbols' paths (○ ring, lock,
    hatch, the ● / mini-pill legend forms) with their `data-stroke` / `data-fill` / `data-hatch` parts; never a sprite
    `<use>` (CSS cannot reach a use's shadow tree, §7). Consumers: the legend in `MapStatusBand`, `SeatMarker.tsx`
    footprints, the inspector header, the Account panel, the Management status column, ~~Reception rows~~ (struck
    2026-09-06, Phase 4 PR 5 — owner ruling Q-4: §1.29 governs; Reception rows draw the seat code and the Floor tag only,
    no status mark).
-6. **Tier-C zone rules** — every asset class restyled inside `.sp-panel` (Help / History / Account in
+6. **Tier-C zone rules** ✔ built PR 2 — — every asset class restyled inside `.sp-panel` (Help / History / Account in
    `components/ui/ShellPanels.tsx`) repeats the asset selector's element names or exceeds its specificity, and each
    gets a light-theme render of the dark panel before it is called done (§7 item 5).
-7. **Hover-surface text-step** — any link or blue-60 text on a hoverable row steps to `link-primary-hover` on the ROW's
+7. **Hover-surface text-step** ✔ built PR 3b + PR 4 — — any link or blue-60 text on a hoverable row steps to `link-primary-hover` on the ROW's
    hover: the Management seat link (`components/admin-management/` — the employees table component), the Ask Planner label
    (`components/seat-map/AskPlannerDrawer.tsx`); roster rows stay static (`components/seat-map/` roster). Any red text on a
    dark layer is `text-error` (§3, four instances).
-8. **Danger ghost override** — the global `.cds-btn--danger-ghost` / `.cds-overflow-menu .cds-danger` rule ships in the
+8. **Danger ghost override** ✔ built PR 3b (Delete seat) + PR 4 (Deactivate) — — the global `.cds-btn--danger-ghost` / `.cds-overflow-menu .cds-danger` rule ships in the
    component CSS (item 3) and covers Delete seat in the inspector and Deactivate in the employee side panel.
-9. **Outlined-open trigger** — the four-shadow technique (`.sp-mode`, utilities) in `components/ui/AppTopBar.tsx`; a
+9. **Outlined-open trigger** ✔ built PR 2 — — the four-shadow technique (`.sp-mode`, utilities) in `components/ui/AppTopBar.tsx`; a
    CSS-in-JS port that drops the outer shadow closes the outline (§7).
-10. **`--sp-event-pad` 10px** stays 10 in the History panel (`ShellPanels.tsx`) — the symmetric remainder of 72 − 52.
-11. **Seat code via the tier-C tooltip** on hover / focus only (`components/seat-map/SeatMarker.tsx`); selection shows
+10. **`--sp-event-pad` 10px** ✔ built PR 2 — stays 10 in the History panel (`ShellPanels.tsx`) — the symmetric remainder of 72 − 52.
+11. **Seat code via the tier-C tooltip** ✔ built PR 3b — on hover / focus only (`components/seat-map/SeatMarker.tsx`); selection shows
     the code in the inspector eyebrow; the code never renders inline in the pill.
-12. **Pill width from the label; the nudge reasons about height 28** (`SeatMarker.tsx` and `lib/` nudge helper) —
+12. **Pill width from the label; the nudge reasons about height 28** ✔ built PR 3b — (`SeatMarker.tsx` and `lib/` nudge helper) —
     never set a width on a pill.
-13. **Legend follows the Names toggle** (`components/seat-map/MapStatusBand.tsx`): mini pill when names are on, ● when off.
-14. **"Changed in draft"** in the inspector derives from the publish diff (`lib/publishSummary.ts`); the ◇ badge on the
+13. **Legend follows the Names toggle** ✔ built PR 3a — (`components/seat-map/MapStatusBand.tsx`): mini pill when names are on, ● when off.
+14. **"Changed in draft"** ✔ built PR 3b (`lib/draftChanges`) — in the inspector derives from the publish diff (`lib/publishSummary.ts`); the ◇ badge on the
     pill reads the same source (`SeatMarker.tsx`).
-15. **Sticky tab strip** offsets by `--sp-shell-header-h` and paints `--sp-tabs-bg`
+15. **Sticky tab strip** ✔ built PR 4 — offsets by `--sp-shell-header-h` and paints `--sp-tabs-bg`
     (`app/(shell)/admin/management/page.tsx`); the primary follows `?tab=`.
-16. **File trigger** — the labelled button forwards its click to a hidden `<input type=file>` with the same `name`
+16. **File trigger** ✔ built PR 4 — — the labelled button forwards its click to a hidden `<input type=file>` with the same `name`
     (`tabindex=-1`, `aria-hidden`), so focus stays on the button (`app/(shell)/admin/settings/page.tsx`); every unhappy
     path renders inline under the section before the tearsheet opens.
-17. **Side panel behaviour** — focus trap, Esc-asks-when-dirty (the confirm modal on top), scrim click = Cancel
+17. **Side panel behaviour** ✔ built PR 4 (the §1.38 amendment) — — focus trap, Esc-asks-when-dirty (the confirm modal on top), scrim click = Cancel
     (employee editor in `components/admin-management/`); **destructive confirmations are the narrow tearsheet over the
     panel** (owner ruling 2026-09-05, PHASE4BUILD §1.38 — amended from "confirm modal on top"); the tearsheets never
     open a modal from inside (the review dialogs in `components/admin-settings/`).
-18. **Reception keyboard** — ↑ ↓ move `[data-highlight]`, ↵ sets `aria-selected` (lock), ~~Esc unlocks then clears~~
+18. **Reception keyboard** ✔ built PR 5 (Q-1 rungs) — — ↑ ↓ move `[data-highlight]`, ↵ sets `aria-selected` (lock), ~~Esc unlocks then clears~~
     **Esc clears a typed query; on an empty field it unlocks** (re-worded 2026-09-06, Phase 4 PR 5 — owner ruling Q-1:
     PHASE2UX §1R.6's readout keeps the last locked person because the call may still be live; the specimen's two
     hints, "↵ to lock" while typing and "Esc to unlock" at rest, already read that order); the readout is `aria-live`
     (`components/reception/ReceptionScreen.tsx`).
-19. **Contrast regression** — after every token change, rerun the two commands in §3; a Phase 4 `tests/*.test.mjs` may
+19. **Contrast regression** ✔ built PR 1 (192/192) → 202/202 through 5b + PR 6 — — after every token change, rerun the two commands in §3; a Phase 4 `tests/*.test.mjs` may
     wrap them (the generator is plain Node; the checker needs Python on the box or a JS port of its WCAG formula).
-20. **The specimens do not ship** — `specimens/*.html` and `screenshots/` stay in `docs/`; the four CSS files and the
+20. **The specimens do not ship** ✔ built PR 1 — — `specimens/*.html` and `screenshots/` stay in `docs/`; the four CSS files and the
     generator are the only artefacts that move.
 
 
@@ -1007,7 +1042,7 @@ links) driven by `useAppShellNavigation`; `.sp-skeleton*` → `loading.tsx` skel
 
 ## 6. Open for the owner
 
-None at close-out. None after PR 4. Ruled on the PR 4 proposal and folded in: `heading-06` at 300, verified at 50% (§1.29);
+**None (Phase 4 close-out, PR 6, 2026-09-08).** None at Phase 3 close-out. None after PR 4. Ruled on the PR 4 proposal and folded in: `heading-06` at 300, verified at 50% (§1.29);
 line tabs at 40 with a 2px bar (§1.22); seat code as plain `code-01` text (§1.29); count cards as a reading
 surface (§1.28); ● / ○ for Assigned / Unassigned (§1.23); one row action, no kebab (§1.23); tearsheet footer
 right-aligned (§1.28); no avatar (§1.29). Found and fixed during the build, recorded not asked: the asset's
