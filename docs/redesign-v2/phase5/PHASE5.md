@@ -70,8 +70,15 @@ deliverable" (PHASE3DS §7).
 190px, the publisher 201px, and Changes **113px — the header, not the number, being the binding constraint**.
 The fix is a measured `min-width: 1216px` with **16 / 17 / 10**, so below that width the table scrolls inside
 `.sp-table-scroll` — which is §1G.5's own rule for this page's narrow frame — instead of ellipsing a column
-label. A truncated column LABEL is a defect; a truncated sentence is the design, because the count carries the
-magnitude and `title` carries the words.
+label.
+
+> **The label-vs-sentence rule (reusable beyond this table).** In a fixed-layout table, a truncated column
+> **label** is a defect and a truncated **cell sentence** is a design choice. The label is the only thing that
+> makes the column readable at all, and no `title` restores it — nothing hovers a header looking for its own
+> name. A sentence, by contrast, has a `title`, and a well-chosen neighbouring column can carry the part of its
+> meaning that must survive truncation (here, the magnitude). So size a column from **max(header, data)** and
+> give the table a `min-width` from the sum, rather than trusting percentages that always fit their container:
+> percentages guarantee a fit, not a reading.
 
 Rendered after the revision (`screenshots/phase5-pr1/`):
 
@@ -108,3 +115,13 @@ close-out plus this slice's three frame tests) · runtime audit **0 undefined `v
 moved** · `sp-components.css` byte-identical to the docs copy · capture + measure rig
 `audit/pr1-publish-history.mjs` **32/32** plus **7/7** for the empty state, captures and `results.json` under
 `screenshots/phase5-pr1/`.
+
+**Reviewer's pre-merge smoke** (`audit/pr1-smoke.mjs`, ten steps × two themes, real Chrome at 1024 and 1920 on
+the local Docker stack, every geometric claim a hit-test): **22/22**, captures + `results.json` + README under
+`screenshots/phase5-pr1-smoke/`. It proved the narrow frame unclipped at the 1216 minimum, the whole-log Changes
+sort surviving a page change, pagination's disabled ends and total-not-page count, the error state **in
+isolation** (only `getPublishLogAction` aborted, so the shell status stays healthy — which closes the caveat the
+capture pass had to carry), the History panel untouched at 10 → Show more → 25 + caption, the retired redirect,
+the unsaved-edits veto still covering the destination, and the brand sweep. **One number is corrected by it:**
+the Changes column's right edge is **854px**, not the 838 quoted before amendment H's revision — the edges still
+agree exactly, only the geometry moved.

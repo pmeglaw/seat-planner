@@ -37,10 +37,11 @@ real people. **No firm data is shown.**
 | `results.json` | — | The rig's 32 checks, the measured column widths per frame, and the console errors |
 | `results-empty.json` | — | The empty-state pass, 7 checks |
 
-**Read `state-error-1920-light.png` with one caveat:** the rig produces that state by aborting *every* POST on
+**Read `state-error-1920-light.png` with one caveat:** this rig produces that state by aborting *every* POST on
 the route, which also fails the shell's own `getDraftStatusAction` — hence the header reading "Publish state
-unavailable". That is the rig, not a coupling: in the product only the tab's own read has failed, and the
-notification says so ("The rest of Management still works").
+unavailable". That is the rig, not a coupling. **The caveat is closed next door:** the pre-merge smoke
+(`../phase5-pr1-smoke/06-error-isolated-*.png`) aborts **only** `getPublishLogAction`, and there the header reads
+"Draft — no changes" while the tab alone shows its notification — which is the product's real behaviour.
 
 The empty-state pair was captured by emptying the local `publish_events` table, running the rig with `EMPTY=1`,
 and restoring the 30 rows immediately after.
