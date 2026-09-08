@@ -7,9 +7,14 @@ import type { DepartmentOption, Employee, SeatWithEmployee, ZoneOption } from "@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// D5: Publish History left this page for the History panel (PR 2); a legacy
-// ?tab=publishHistory link lands on Employees.
-const managementTabIds = ["employees", "departments", "zones"] as const;
+// Phase 5 PR 1 (the dated D0-a / D5 amendments, 2026-09-08): Publish history
+// is a real tab again, so the Phase 4 redirect that landed ?tab=publishHistory
+// on Employees retires here — adding the id IS the retirement.
+//
+// Deliberately a second literal beside ManagementFrame's MANAGEMENT_TABS
+// rather than a derivation: importing the client module here to share one list
+// would pull it into the server page for no behavioural gain.
+const managementTabIds = ["employees", "departments", "zones", "publishHistory"] as const;
 type ManagementTabId = (typeof managementTabIds)[number];
 
 function parseTabParam(value: string | string[] | undefined): ManagementTabId | undefined {

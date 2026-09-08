@@ -16,7 +16,7 @@ export default function AdminManagementLoading() {
         <div className="cds-page-header">
           <div>
             <h1 className="cds-page-title">Management</h1>
-            <p className="cds-page-subtitle">People, departments and zones.</p>
+            <p className="cds-page-subtitle">People, departments, zones and publish history.</p>
           </div>
           <div className="sp-page-actions">
             <span className="cds-btn cds-btn--primary cds-btn--md" aria-hidden="true">Add employee</span>
@@ -27,6 +27,7 @@ export default function AdminManagementLoading() {
             <li role="presentation"><span className="sp-tab" role="tab" aria-selected="true">Employees</span></li>
             <li role="presentation"><span className="sp-tab" role="tab" aria-selected="false">Departments</span></li>
             <li role="presentation"><span className="sp-tab" role="tab" aria-selected="false">Zones</span></li>
+            <li role="presentation"><span className="sp-tab" role="tab" aria-selected="false">Publish history</span></li>
           </ul>
         </div>
         <div className="sp-table">

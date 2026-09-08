@@ -282,11 +282,13 @@ test("a search matching nobody still blames the search and suggests adjusting it
 // ask, inline rename, the create modal (PHASE2UX §1G; PHASE3DS §1.22–§1.25).
 // ---------------------------------------------------------------------------
 
-test("tabs: one real tablist in a named navigation landmark; arrows move and select; the primary follows the tab; ?tab= mirrors it", async () => {
+test("tabs: one real tablist in a named navigation landmark; arrows move and select; the primary follows the tab and DISAPPEARS on the record tab; ?tab= mirrors it", async () => {
   await renderPanel();
   const nav = screen.getByRole("navigation", { name: "Management sections" });
   const tablist = within(nav).getByRole("tablist");
-  assert.deepEqual(within(tablist).getAllByRole("tab").map(el => el.textContent), ["Employees", "Departments", "Zones"]);
+  // Publish history came back in Phase 5 PR 1 (the dated D0-a / D5 amendments,
+  // 2026-09-08): the panel keeps the ten-newest glance, the record is a page.
+  assert.deepEqual(within(tablist).getAllByRole("tab").map(el => el.textContent), ["Employees", "Departments", "Zones", "Publish history"]);
   assert.equal(tab("Employees").getAttribute("aria-selected"), "true");
   assert.equal(screen.getByRole("button", { name: "Add employee" }).className.includes("cds-btn--primary"), true);
   assert.equal(screen.getAllByRole("button").filter(el => el.className.includes("cds-btn--primary")).length, 1, "one primary per section");
@@ -300,12 +302,31 @@ test("tabs: one real tablist in a named navigation landmark; arrows move and sel
   assert.equal(new URLSearchParams(window.location.search).get("tab"), "departments");
 
   await act(async () => {
-    fireEvent.keyDown(tab("Departments"), { key: "End" });
+    fireEvent.keyDown(tab("Departments"), { key: "ArrowRight" });
   });
   assert.equal(tab("Zones").getAttribute("aria-selected"), "true");
   assert.ok(screen.getByRole("button", { name: "Add zone" }));
-  // Publish History left this page for the History panel (D5).
-  assert.equal(screen.queryByRole("tab", { name: /history/i }), null);
+
+  // Owner ruling R1 (2026-09-08, the dated D5-a amendment): a record has
+  // nothing to create, so the header's action area is EMPTY — not a disabled
+  // button, which would promise an action that does not exist.
+  await act(async () => {
+    fireEvent.keyDown(tab("Zones"), { key: "End" });
+  });
+  assert.equal(tab("Publish history").getAttribute("aria-selected"), "true");
+  assert.equal(
+    screen.queryAllByRole("button").filter(el => el.className.includes("cds-btn--primary")).length,
+    0,
+    "the record tab carries no primary at all"
+  );
+  assert.equal(new URLSearchParams(window.location.search).get("tab"), "publishHistory");
+
+  // …and it comes back, in its permanent position, on a tab that creates.
+  await act(async () => {
+    fireEvent.keyDown(tab("Publish history"), { key: "Home" });
+  });
+  assert.equal(tab("Employees").getAttribute("aria-selected"), "true");
+  assert.ok(screen.getByRole("button", { name: "Add employee" }));
 });
 
 test("a ?tab= deep link lands on that section", async () => {
