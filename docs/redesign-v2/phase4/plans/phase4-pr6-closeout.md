@@ -202,6 +202,10 @@ record works: every "what did not fit" line became a dated ruling or a PR 6 row 
 
 ## 9. State at pause (2026-09-08, end of Task 10) — resume here
 
+**Superseded 2026-09-08 by `phase4-pr6-handoff.md`** — `origin/main` (v1.77.1, the Dependabot group)
+was merged into the branch and the six non-Docker tiers were re-run on the merged head, unchanged. Read the hand-off
+for the branch current state and the reviewer sequence; this section stays as the record of the pause.
+
 **Branch `feat/phase4-closeout` @ `ba71d8e`, pushed, in sync with `origin`, working tree clean.** Eleven commits over
 `main` @ `764fb39` (v1.77.0), one per row, docs last:
 
