@@ -83,11 +83,6 @@ type ViewerPanState = {
   moved: boolean;
 } | null;
 
-// v12 slice 4 nudge (interaction contract #1): the `panel` tier minimum width
-// (tailwind.config.ts) — the float exists only there. The viewer has no
-// SeatMap-style seat-centering breakpoint constant of its own to reuse.
-const VIEWER_PANEL_BREAKPOINT_PX = 900;
-
 // Deliberately a separate key from the admin map's "seat-planner:names-visible":
 // the surfaces are different densities and audiences, so one preference must
 // not leak into the other's default.
@@ -240,11 +235,9 @@ export function ViewerSeatFinder({
   // stack carry the SAME control roles — both mounted at once would be two
   // "Zoom in" buttons in the accessibility tree.
   const [bandTier, setBandTier] = useState(true);
-  const [panelTier, setPanelTier] = useState(true);
   useEffect(() => {
     function updateBandTiers() {
       setBandTier(window.matchMedia("(min-width: 640px)").matches);
-      setPanelTier(window.matchMedia(`(min-width: ${VIEWER_PANEL_BREAKPOINT_PX}px)`).matches);
     }
 
     updateBandTiers();
@@ -1476,12 +1469,12 @@ export function ViewerSeatFinder({
                 "Showing Floor 2 · Litigation". */}
             <p className="sr-only" aria-live="polite">{mapAnnouncement}</p>
             {/* Phones only (band >=640 owns zoom there — owner call
-                2026-08-17): the shipped floating stack, unchanged. Flat
-                bottom-3 at the panel tier is vestigial while this is
-                phone-gated but harmless; the home-indicator inset is the part
-                that matters — the safe area is still an obstruction (#198). */}
+                2026-08-17): the shipped floating stack, unchanged. The
+                home-indicator inset is the part that matters — the safe area
+                is still an obstruction (#198). (The 900px `panel:` screen it
+                once keyed on retired in Phase 4 PR 6 with the bottom sheet.) */}
             {surface === "plan" && !bandTier && (
-              <div className="absolute right-3 z-30 flex flex-col items-end gap-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] panel:bottom-3">
+              <div className="absolute right-3 z-30 flex flex-col items-end gap-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))]">
                 {/* The Names toggle lives in the control row at every width
                     (PR 3a) — exactly one names control is mounted. */}
                 <MapZoomControl

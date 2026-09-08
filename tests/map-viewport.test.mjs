@@ -57,8 +57,9 @@ test("scrollTargetForPoint centers a normalized point by default", () => {
 });
 
 test("scrollTargetForPoint lifts the point when given a smaller vertical anchor", () => {
-  // The bottom-sheet case: a 0.28 anchor should land the seat higher up the
-  // viewport than centering would, leaving room for the sheet below it.
+  // An explicit anchor (the lib capability; no shipped caller passes one since
+  // PR 6 retired the bottom-sheet pan) lands the seat higher up the viewport
+  // than centering would.
   const centered = scrollTargetForPoint({ x: 0.5, y: 0.5 }, map(), viewport());
   const lifted = scrollTargetForPoint({ x: 0.5, y: 0.5 }, map(), viewport(), 0.28);
 

@@ -195,14 +195,6 @@ const EMPTY_SEAT_ID_SET: ReadonlySet<string> = new Set<string>();
 // scales the rendered frame width and never touches stored seat coordinates.
 // MAP_ZOOM_STEP itself is imported from lib/mapViewport, single-sourced with
 // the admin/viewer clamp bounds.
-// Below this width the inspector overlays as a fixed bottom sheet (max-h 60vh,
-// SeatInspector.tsx) instead of docking as a width-reserving side panel — the
-// `panel` breakpoint referenced throughout the seat-centering logic below.
-const SEAT_CENTER_PANEL_BREAKPOINT_PX = 900;
-// Default vertical anchor (fraction of viewport height from the top) used to
-// center a selected seat below the panel breakpoint, so the seat lands in the
-// visible strip above the 60vh bottom sheet instead of underneath it.
-const SEAT_CENTER_SHEET_ANCHOR = 0.28;
 // Keys the browser translates into native scrolling of the focused viewport
 // (per its own aria-label: "wheel, trackpad, touch, or arrow keys to pan").
 // Native scroll fights an in-flight inspector nudge the same way wheel scroll
@@ -359,18 +351,15 @@ export function SeatMap({
   // results panel) — marked with aria-current while that person is listed.
   const [rosterHighlightedPersonId, setRosterHighlightedPersonId] = useState<string | null>(null);
   // Status-band tiers (Option A parity with the viewer, owner call
-  // 2026-08-17): the band renders from sm (640) up, and below the panel tier
-  // it yields to the bottom sheets. Desktop-first defaults keep SSR and the
+  // 2026-08-17): the band renders from sm (640) up. Desktop-first defaults keep SSR and the
   // first client render in agreement; the mount effect corrects both before
   // interaction. JS state rather than hidden/sm: classes because the band and
   // the phone-only floating zoom stack carry the SAME control roles — both
   // mounted at once would be two "Zoom in" buttons in the accessibility tree.
   const [bandTier, setBandTier] = useState(true);
-  const [panelTier, setPanelTier] = useState(true);
   useEffect(() => {
     function updateBandTiers() {
       setBandTier(window.matchMedia("(min-width: 640px)").matches);
-      setPanelTier(window.matchMedia(`(min-width: ${SEAT_CENTER_PANEL_BREAKPOINT_PX}px)`).matches);
     }
 
     updateBandTiers();
@@ -1792,18 +1781,15 @@ export function SeatMap({
   // and the selection-change effect below) funnels through this one function,
   // so they all resolve the same anchor for the same selection — that's what
   // makes two callers racing to center the same seat harmless (they land on
-  // the same target instead of fighting over it). Callers only need to pass
-  // an explicit verticalViewportAnchor when they want to override the default.
+  // the same target instead of fighting over it). The anchor is the viewport
+  // centre at every width (Phase 4 PR 6: the below-900 bottom-sheet anchor
+  // retired with the sheet the slot replaced in 3b); callers pass an explicit
+  // verticalViewportAnchor only to override it.
   const centerSeatInMap = useCallback((seatId: string, options?: { verticalViewportAnchor?: number }) => {
     const seat = localSeats.find(item => item.id === seatId);
     if (!seat) return;
     const point = savedPointToVisualPoint({ x: seat.x, y: seat.y }, seat);
-    const verticalViewportAnchor = options?.verticalViewportAnchor ?? (
-      window.matchMedia(`(min-width: ${SEAT_CENTER_PANEL_BREAKPOINT_PX}px)`).matches
-        ? 0.5
-        : SEAT_CENTER_SHEET_ANCHOR
-    );
-    scrollMapToPoint(point.x, point.y, { verticalViewportAnchor });
+    scrollMapToPoint(point.x, point.y, options);
   }, [localSeats, scrollMapToPoint]);
 
   function fitSeatsInMap(seatsToFit: SeatWithEmployee[]) {
@@ -1823,36 +1809,6 @@ export function SeatMap({
       window.requestAnimationFrame(() => centerSeatInMap(seatId));
     });
   }, [centerSeatInMap]);
-
-  // At >=900px (the `panel` breakpoint) the inspector docks and reserves layout
-  // width, so a selected seat can never sit hidden under it — no pan needed
-  // there, so this effect stays a no-op (guarded below). Below that width the
-  // inspector overlays as a fixed bottom sheet (max-h 60vh, SeatInspector.tsx),
-  // so pan the seat into the visible strip above it on selection change.
-  //
-  // No anchor is passed here: centerSeatInMap resolves the default itself
-  // (matchMedia against the same panel breakpoint) so this effect and every
-  // other seat-centering caller (queueCenterSeatInMap — used by results "Show
-  // on map" and the guard-action "select-seat" branch) agree on the same
-  // target for the same seat. That's what makes it safe for two of these
-  // callers to race on the same selection: whichever `scrollTo` lands last
-  // still lands on the identical anchor, so the race is harmless instead of
-  // silently overriding one caller's intended anchor with another's.
-  useEffect(() => {
-    if (!selectedSeatId) return;
-    if (window.matchMedia(`(min-width: ${SEAT_CENTER_PANEL_BREAKPOINT_PX}px)`).matches) return;
-    const frame = requestAnimationFrame(() => {
-      centerSeatInMap(selectedSeatId);
-    });
-    return () => cancelAnimationFrame(frame);
-    // Pan on selection change only. centerSeatInMap is intentionally omitted:
-    // it's a useCallback that closes over localSeats, so its identity churns
-    // on unrelated seat edits — depending on it would re-run this effect (and
-    // re-pan the viewport) mid-edit whenever localSeats changes, not just when
-    // the selection changes. centerSeatInMap re-resolves the current seat by
-    // id at fire time, so omitting it from deps doesn't risk staleness.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSeatId]);
 
   function requestSwapTarget(targetSeatId: string) {
     if (!swapSourceSeatId) return false;
