@@ -969,6 +969,13 @@ on 6 routes × 2 themes + 1280 + the system state + the viewer pass (34 captures
 `pr4-smoke.mjs` **47 / 47** (whole, both themes, on the patched rig — the rig-side finding above); e2e-auth **53 / 53**; contrast **202 / 202** (no token change — the generator's JSON
 unchanged). Real mutations on the local stack only.
 
+**Post-bump re-run (2026-09-08, reviewer correction):** the Docker evidence was re-run after the Dependabot merge
+because the MLS03 refusal rides on the supabase-js error shape — runtime audit **0 undefined** · `pr5b-dialogs`
+**29 / 29** · `pr4-smoke` **47 / 47** (step 11 carries the guard's reason verbatim against 2.115.0) · e2e-auth
+**53 / 53**; the reviewer's own six-step smoke is `audit/pr6-smoke.mjs` → `screenshots/pr6-smoke/` (13 / 17, the four
+failures being two **pre-existing** findings carried to the owner as F-8 the slot over the band's right end and F-9 the
+below-900 palette sheet that never spans — `plans/phase4-pr6-handoff.md` §9).
+
 ## 2. Obligations checklist
 
 Ticked in the PR that discharges it, with the landing file as merged. **P3-n** = PHASE3DS §5 item n; **P2-n** =

@@ -144,7 +144,10 @@ bridge assertions still hold on the rewritten header).
 - Captures under `screenshots/pr6/` with a provenance README: the four narrow sheets × 2 themes + 1024 (row 1A); the
   move-conflict dialog idle after a busy mount, both themes (row 7); the dark `/` and `/admin` map (row 9); the
   runtime-audit set.
-- Greps at the end: `mapIcons` = 0; `panel:` in `components app` = 0; `SEAT_CENTER_PANEL_BREAKPOINT_PX` = 0;
+- Greps at the end: `mapIcons` = 0; `grep -c panel tailwind.config.ts` = 0 and
+  `grep -rnE '\bpanel:[a-z][a-z0-9-]*' app components --include=*.tsx` = 0 (the loose `panel:` grep this plan first
+  wrote matches row 3's `(panel: ShellPanelId)` type annotations — 6 hits, none of them the retired Tailwind screen;
+  reviewer correction 2026-09-08); `SEAT_CENTER_PANEL_BREAKPOINT_PX` = 0;
   `components/ui/Button.tsx` gone; `--cds-` in the bridge = the two font names; brand checklist from the
   `brand-system` skill (primary `rgb(184, 92, 46)`, hover `rgb(143, 69, 33)`, focus ring, current bar, links, no
   `0f62fe` outside `carbon-tokens.css`).
@@ -233,7 +236,8 @@ unit 1457 · ct 326 · gate clean (lint 0 errors, typecheck, coverage 98.34 / 92
 `test:browser` 26 · **e2e-auth 53 / 53** · runtime audit **0 undefined `var()`** (6 routes × 2 themes + 1280 +
 system + viewer) · `pr5b-dialogs` **29 / 29** (the R-5 finding closed) · `pr4-smoke` **47 / 47** whole · contrast
 **202 / 202**, no token change · `sp-components.css` byte-identical to the Phase 3 copy · end-of-plan greps all clean
-(`mapIcons` 0, `panel:` 0, `SEAT_CENTER_PANEL_BREAKPOINT_PX` 0, `Button.tsx` gone, the bridge's only `--cds-*` are
+(`mapIcons` 0, the `panel` Tailwind screen 0 and the `panel:` utility 0, `SEAT_CENTER_PANEL_BREAKPOINT_PX` 0,
+`Button.tsx` gone, the bridge's only `--cds-*` are
 the two font names, no `0f62fe` outside `carbon-tokens.css`).
 
 **Machine state at the pause.** colima + the local Supabase stack are UP; the `:3200` server is stopped (freed by

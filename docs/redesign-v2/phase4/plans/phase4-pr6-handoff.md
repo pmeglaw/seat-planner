@@ -1,9 +1,13 @@
-# Phase 4 · PR 6 — reviewer hand-off (`feat/phase4-closeout` → v2.0.0)
+# Phase 4 · PR 6 — branch state and resume note (`feat/phase4-closeout` → v2.0.0)
 
-The last item of the plan's §6 Task 11. The plan of record is `phase4-pr6-closeout.md`; its §9 recorded the state at
-the pause after Task 10, and this file supersedes that §9 as the branch's current state. Rows 1–9 are built and
-evidenced; nothing in the plan's §1–§3 is half-done. What remains is a reviewer pass, the PR, CI, a read-only preview
-walk, then merge → tag → prune.
+**What this file is** (retitled 2026-09-08 on the reviewer's correction): the branch's current state and the recipe a
+resuming session runs — not the reviewer's hand-off. The plan of record is `phase4-pr6-closeout.md`; its §9 recorded
+the state at the pause after Task 10, and this file supersedes that §9. The reviewer's own smoke hand-off (the six
+steps no rig reaches) is recorded separately with its evidence, in `../screenshots/pr6-smoke/README.md`; §5 below
+stays what it always was — the run recipe.
+
+Rows 1–9 are built and evidenced; nothing in the plan's §1–§3 is half-done. What remains is the PR, CI, a read-only
+preview walk, then merge → tag → prune.
 
 Phase 4 makes no design decisions. Every row below cites a dated owner ruling from PHASE4BUILD §1.48; if the reviewer
 disagrees with one, it goes back to the owner as a ruling, never changed in code here.
@@ -15,9 +19,9 @@ disagrees with one, it goes back to the owner as a ruling, never changed in code
 | | |
 |---|---|
 | Branch | `feat/phase4-closeout`, pushed, tracking `origin` |
-| Head | `c181615` — the merge of `origin/main` described below |
+| Head | `517dfc2` (Task 11 docs) plus the reviewer's post-bump commit — the re-run recorded in §4, `audit/pr6-smoke.mjs` and `../screenshots/pr6-smoke/` |
 | Base | `main` @ `072bffa` (v1.77.1, the Dependabot minor-and-patch group) |
-| Commits over `main` | 12 row/docs commits + 1 merge |
+| Commits over `main` | 13 row/docs commits + 1 merge |
 | Merges as | squash → tag **v2.0.0**, message "Phase 4 — redesign complete" |
 | `package.json` `version` | stays `0.1.0`; tags are git-only, as for every tag before |
 
@@ -70,23 +74,28 @@ helper in `tests/e2e/axe-helpers.spec.ts`, asserting a transition takes at least
 box and pass unsandboxed on real Chrome and in CI — the same two PR 5 recorded (`screenshots/pr5/README.md`). No
 product test is among them.
 
-## 4. Verification carried from the pre-merge head
+## 4. Docker-stack verification — RE-RUN after the Dependabot merge (2026-09-08)
 
-These ran on `ba71d8e` before the merge, on the local Docker stack. They stand because the merge changed only
-`package.json` and `package-lock.json` — no source, SQL, token or sheet — so nothing they measure moved. CI re-runs
-e2e-auth on the merged head regardless.
+These first ran on `ba71d8e`, before `origin/main` came in, and this section used to argue they carried across the
+merge because only `package.json` / `package-lock.json` moved. **That reasoning was wrong** (reviewer correction
+2026-09-08): the group moved `@supabase/supabase-js` 2.112.3 → **2.115.0** and `next` 16.3.3 → **16.3.4**, and row 2's
+refusal rides on the supabase-js error object exposing the guard's SQLSTATE as `.code` (`lib/actionRefusals.ts`) — the
+only end-to-end proof of that shape is `pr4-smoke.mjs` step 11. So every Docker rig was re-run on the merged head,
+after `npm install` with the bumped lockfile, resetting and reseeding between each:
 
-| Rig / tier | Result |
-|---|---|
-| `npm run test:e2e:auth` | **53 / 53** on a reset + reseeded stack |
-| `audit/runtime-audit.mjs` | **0 undefined `var()`** — 6 routes × 2 themes + 1280 + the system state + the viewer pass |
-| `audit/pr5b-dialogs.mjs` | **29 / 29** both themes — `06b` now PASS, closing R-5 (row 7) |
-| `audit/pr4-smoke.mjs` | **47 / 47** whole, light + dark — steps 8 and 14 are row 7's other two `CarbonModal` consumer families; step 12 records the narrow sheet at top 160 / bottom 490 (row 1 → B) |
-| Contrast | `202 pairs · 14 not gated` — **202 / 202**, no token change |
+| Rig / tier | Post-bump re-run | Pre-merge figure |
+|---|---|---|
+| `audit/runtime-audit.mjs` | **0 undefined `var()`** — 6 routes × 2 themes + 1280 + the system state + the viewer pass | same |
+| `audit/pr5b-dialogs.mjs` | **29 / 29** both themes (`06b` PASS — R-5 closed, row 7) | same |
+| `audit/pr4-smoke.mjs` | **47 / 47** whole, light + dark — **step 11 carries the guard's reason verbatim** ("…still on the published map at CW01…"), so the `.code` shape survives 2.115.0 | same |
+| `npm run test:e2e:auth` | **53 / 53** on a reset + reseeded stack (2.4 min) | same |
+| Contrast | not re-run: no row in this PR changes a token and a dependency bump touches no stylesheet — **202 / 202** stands | 202 / 202 |
 
-Captures and provenance: `../screenshots/pr6/README.md`.
+Both arms of that refusal — the guard's reason returned, and a transport failure NOT rendering as one (F-2) — are
+smoked directly against the new client by `audit/pr6-smoke.mjs`, with the four other steps no rig reaches. Results,
+the one finding it surfaced, and provenance: `../screenshots/pr6-smoke/README.md`.
 
----
+Captures and provenance for the rigs above: `../screenshots/pr6/README.md`.
 
 ## 5. What the reviewer runs
 
@@ -112,8 +121,11 @@ Nothing below writes to production. Everything runs against the local Docker sta
 8. The brand checklist from the `brand-system` skill: primary `rgb(184, 92, 46)`, hover `rgb(143, 69, 33)`, the
    terracotta focus ring and current-section bar, links `#8F4521` light / `#E8A07A` dark, and
    `grep -rn "0f62fe" app components lib` returning only the vendored `carbon-tokens.css`.
-9. End-of-plan greps, all expected to be zero or gone: `mapIcons`, `panel:` under `components` and `app`,
-   `SEAT_CENTER_PANEL_BREAKPOINT_PX`, `components/ui/Button.tsx`. The bridge's only `--cds-*` are the two font names.
+9. End-of-plan greps, all expected to be zero or gone: `mapIcons`; the retired Tailwind screen,
+   `grep -c panel tailwind.config.ts` = 0, **and** the utility itself,
+   `grep -rnE '\bpanel:[a-z][a-z0-9-]*' app components --include=*.tsx` = 0 — a loose `panel:` grep is NOT the check
+   (it matches row 3's `(panel: ShellPanelId)` type annotations, 6 hits; reviewer correction 2026-09-08);
+   `SEAT_CENTER_PANEL_BREAKPOINT_PX`; `components/ui/Button.tsx`. The bridge's only `--cds-*` are the two font names.
 
 ---
 
@@ -151,6 +163,16 @@ Not Phase 4 obligations, recorded so they are not lost:
 - **The 400% zoom reflow** (DECISIONS §7) was never driven in Phase 4. Carried, not closed.
 - **`.design-sync/` on `main`** (F-7) holds previews and shims of components the redesign retired. Outside this PR's
   scope; worth a decision after v2.0.0.
+- **F-8 — the right slot covers the status band's right end.** `.sp-slot-host` (absolute, `bottom: 0`) is positioned
+  against the map **stage**, which holds the band as well as the map viewport, so an open slot spans the band's row
+  over its right 400px: at 1920×1080 the band's seat count and its −/Fit/+ zoom controls are under
+  `.sp-slot-body` (hit-tested at the Zoom-in button's own centre), and the same at 820×900. Pre-existing since PR 3b
+  and visible in `../screenshots/pr3b/admin-slot-inspector-light-1920.png`; `RightSlot.tsx`'s "the slot never covers
+  the band" is half true (the band does not reflow). Found by `audit/pr6-smoke.mjs` step `05b` — owner's ruling.
+- **F-9 — the below-900 palette sheet never spans.** `.sp-palette { width: var(--sp-palette-w) }` (560, the Phase 3
+  sheet) beats the `left: 12` + `right-3` stretch `computeFrame` sets up below 900, so the palette is 560 wide at
+  every width under the tier and at 390 runs 182px off-screen, clipping the row's trailing cell. The 900 rule itself
+  is intact (row 4 retired only `ViewerSeatFinder`'s constant, as ruled). Step `05c` — owner's ruling.
 
 Owner chores, unchanged and not this branch's work: revoke any live Vercel share links, reset the e2e fixture
 account's password in Supabase Auth, and set its production `profiles.role` back to viewer.
