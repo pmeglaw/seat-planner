@@ -993,6 +993,16 @@ taking a `slotOpen` prop that `SeatMap` feeds from the same `slotOwner` state th
 all four states), the e2e-auth `page-frames` map block pins the geometry, and the real-browser tier pins the
 `data-slot-open` key (that harness ships no CSS).
 
+**The preview walk could not run on this PR (recorded, not skipped silently).** PR 6 carries a migration, so the
+Supabase integration gave its preview a **branch database** (`ynhqcykgkjslzjzkwisy`; the preview's client bundle
+inlines that host, not production's `wujsniclwzefvufavama`), and `[db.seed]` is disabled on purpose in
+`supabase/config.toml` — so the branch has no accounts and GoTrue answers any sign-in with `400 invalid_credentials`.
+PR 4 / 5 / 5b previews really did read and write production **because none of them carried a migration**; every future
+migration PR will be unwalkable the same way. Owner ruling 2026-09-08: **verify F-8 on production immediately after
+the merge, read-only** (`audit/pr6-preview-walk.mjs` against `seats.megeredchianlaw.com`, both themes at 1920 — the
+hand-off's §6 and §7 step 2b). The fix itself is already evidenced on real seeded data by `pr6-smoke` step `05b` and
+the e2e-auth `page-frames` map block, which runs in CI.
+
 **Re-verified on the fixed head (2026-09-08, after amendment G):** unit **1457** · ct **326** · gate exit 0 (lint 0
 errors, typecheck, coverage 98.34 / 92.40 / 98.30) · build clean · `test:browser` **26** · `test:e2e` **36 / 36** (the
 two `waitForColorSettle` self-tests pass on real Chrome) · Docker stack, reset + reseeded between each:

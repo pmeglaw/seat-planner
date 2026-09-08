@@ -140,19 +140,41 @@ Nothing below writes to production. Everything runs against the local Docker sta
 
 ---
 
-## 6. The preview walk — read-only
+## 6. The preview walk — NOT POSSIBLE ON THIS PR; F-8 moves to production (owner ruling 2026-09-08)
 
-After CI is green, walk the Vercel preview. **Open and dismiss only.** Never Publish, Discard, Restore, Import or
-Delete on a preview: the preview deployment reads and writes the production database. Mask people data in every
-capture. Prove the walk wrote nothing the way PR 5b did — the draft indicator and Undo state identical before and
-after, and the POST log showing only status reads and refused submits.
+**This PR's preview is not wired to production, and it cannot be signed into at all.** PR 6 carries a migration, so
+the Supabase GitHub integration created a **preview branch database** for it (`ynhqcykgkjslzjzkwisy` — the "Supabase
+Preview" check on #524). Proven, not assumed: the preview's own client bundle inlines
+`https://ynhqcykgkjslzjzkwisy.supabase.co`, not production's `wujsniclwzefvufavama`. And that branch has **no
+accounts**: `supabase/config.toml` disables `[db.seed]` on purpose — "do not flip this back to true", after PR #251
+put committed passwords on an internet-reachable database — so neither the owner's production account nor the seeded
+fixture exists there. A sign-in attempt returns `400 invalid_credentials` from the branch's own GoTrue.
+
+So the earlier rule — "the preview deployment reads and writes the production database" — was true for PR 4, PR 5 and
+PR 5b, **because none of them carried a migration**. It is false here, and any future PR with a migration will be the
+same: a branch database, and therefore an unwalkable preview.
+
+**Owner ruling 2026-09-08: verify the F-8 fix on production immediately after the merge, read-only.** The step is
+already in §7 (confirm the migration applied and the deployment is READY); it gains the F-8 check:
+`audit/pr6-preview-walk.mjs` against `https://seats.megeredchianlaw.com` (pass the base URL twice — the second
+argument is the share link, which production does not need), the owner signing in by hand, at 1920 in **both themes**:
+open the inspector, confirm the band's result count and the zoom − / Fit / + group are visible and clickable, click
+zoom in and Fit, close the inspector. The rig records the draft indicator, the Undo state, every server-action POST
+and the success-notice count before and after every step as its zero-write proof, and masks people data in captures.
+
+Everything the walk would have proven about the fix on a preview is already proven on the local stack against real
+seeded data: `audit/pr6-smoke.mjs` step `05b` (hit-tested at 1920×1080 and 820×900, slot open and closed, both
+themes) plus the e2e-auth `page-frames` map block, which runs in CI.
 
 ## 7. Merge, tag, prune
 
-In order, and only after the owner has walked the preview:
+In order, on the owner's "merge" (the preview walk is not a gate on this PR — §6):
 
 1. Squash-merge the PR to `main`.
 2. Confirm the Supabase integration applied the migration and the Vercel production deployment reaches READY.
+2b. **The F-8 check on production, read-only** (owner ruling 2026-09-08, §6): `audit/pr6-preview-walk.mjs` against
+   `https://seats.megeredchianlaw.com`, the owner signing in by hand, 1920 in both themes — the inspector open, the
+   band's count and zoom group visible and clickable, zero writes proven by the indicator / Undo / POST log.
 3. Annotated tag **v2.0.0** on the merge commit, message "Phase 4 — redesign complete".
 4. Prune the three stale remote branches named in PHASE4BUILD §1.48: `chore/design-sync-2026-08-28` (PR #479 closed
    unmerged), `docs/redesign` (no PR, the off-limits `shell-reference.html`), `fix/pass1-scrim-tokens` (PR #478 closed
