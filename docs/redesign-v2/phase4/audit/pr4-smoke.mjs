@@ -529,6 +529,12 @@ for (const theme of ["light", "dark"]) {
     // Unmanaged department via the combobox free text.
     await page.getByRole("button", { name: "Edit Alex Shabazian", exact: true }).click();
     await panel().waitFor();
+    // PR 6 rig fix: the panel lands focus on Name in a frame after it opens
+    // (AdminManagementPanel's rAF, PR 4). A fill that beats that frame is
+    // undone — focus snaps back to Name and the Escape below opens the
+    // dirty-close ask instead of closing the list. Step 8's openEdit already
+    // waits; this site did not.
+    await page.waitForTimeout(300);
     await panel().locator(".sp-combobox input[role='combobox']").fill("Marketing");
     await page.keyboard.press("Escape");
     await panel().getByRole("button", { name: "Save employee" }).click();
