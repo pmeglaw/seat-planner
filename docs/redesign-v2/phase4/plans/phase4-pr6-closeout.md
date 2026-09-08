@@ -197,3 +197,50 @@ the returned refusal, the clipped tooltip, the `null` history state, the four di
 hit-test on the real Chrome, both themes. Check the runtime at Task 0, not Task 10; measure inside `main`, never a class
 a `loading.tsx` shares; capture byte-compare baselines alone on a same-day seed; free the port by listener PID. And the
 record works: every "what did not fit" line became a dated ruling or a PR 6 row — nothing was decided in code.
+
+---
+
+## 9. State at pause (2026-09-08, end of Task 10) — resume here
+
+**Branch `feat/phase4-closeout` @ `ba71d8e`, pushed, in sync with `origin`, working tree clean.** Eleven commits over
+`main` @ `764fb39` (v1.77.0), one per row, docs last:
+
+| # | Commit | What |
+|---|---|---|
+| 1 | `d93488a` | this plan (Task 0) |
+| 2 | `7448d5d` | row 8 — `components/ui/Button.tsx` retired; `pending-state-source` + `touch-target-source` re-pointed |
+| 3 | `f786d4f` | row 6 — the glyph module → `components/ui/icons.tsx` (13 imports, one comment) |
+| 4 | `738e362` | row 4 — the 900px `panel` tier retired (Tailwind screen, both constants, the dead `panelTier` state, the below-900 pan) |
+| 5 | `0a162fc` | row 9 — the dark raster lightbox rules → `app/globals.css`; `phase4-bridge.css` is the font bridge |
+| 6 | `65b4f4f` | row 7 — `CarbonModal` busy ⇄ idle focus seam + four `dialog-initial-focus` pins |
+| 7 | `c9be518` | row 2 — migration `20260908120000`, `lib/actionRefusals.ts`, the guarded refusal in `deleteEmployeeAction` |
+| 8 | `a834ea2` | row 3 — `useAppShellPanels`; the Ask Planner popover's Help link fed |
+| 9 | `c06452c` | row 7 follow-up — the modal section keeps the `dialogFocusRef` name `accessibility-source` pins |
+| 10 | `726dc65` | rows 1 / 3 / 5 recorded; DECISIONS, PHASE3DS, PHASE2UX, PHASE1IA closed |
+| 11 | `ba71d8e` | Task 10 — PHASE4BUILD §1.48 / §3 / §4 / §5 / slice log, TEST-TRIAGE closed, `CLAUDE.md`, the two superseded notes, `screenshots/pr6/`, the rig patch |
+
+**Tasks 1–10 of §6 are done. Task 11 is what remains**, in order: the reviewer's rig / smoke hand-off → the PR →
+CI (verify · e2e · e2e-auth · CodeQL) → the **read-only** preview walk (open-and-dismiss only; never Publish /
+Discard / Restore / Import / Delete on a preview) → "merge" → squash → tag **v2.0.0** "Phase 4 — redesign complete"
+→ prune the three branches (§1) → prod READY. Nothing in §1–§3 is left half-done; every ruled row landed.
+
+**Verification, run on the final head** (the tables live in PHASE4BUILD §1.48 and `../screenshots/pr6/README.md`):
+unit 1457 · ct 326 · gate clean (lint 0 errors, typecheck, coverage 98.34 / 92.40 / 98.30) · build clean · e2e 36 ·
+`test:browser` 26 · **e2e-auth 53 / 53** · runtime audit **0 undefined `var()`** (6 routes × 2 themes + 1280 +
+system + viewer) · `pr5b-dialogs` **29 / 29** (the R-5 finding closed) · `pr4-smoke` **47 / 47** whole · contrast
+**202 / 202**, no token change · `sp-components.css` byte-identical to the Phase 3 copy · end-of-plan greps all clean
+(`mapIcons` 0, `panel:` 0, `SEAT_CENTER_PANEL_BREAKPOINT_PX` 0, `Button.tsx` gone, the bridge's only `--cds-*` are
+the two font names, no `0f62fe` outside `carbon-tokens.css`).
+
+**Machine state at the pause.** colima + the local Supabase stack are UP; the `:3200` server is stopped (freed by
+listener PID). The stack currently carries the **e2e-auth tier's** leftovers (publish-flow leaves a published layer
+the seed refuses) — **`npx supabase db reset` + `npm run db:seed` before any rig or smoke re-run**. `.env.local` was
+never edited; the local URL + anon key were passed inline to `next build` / `next start -p 3200`.
+
+**Gotchas a resuming session needs** (also in the build-box memory): `gh` fails under the Claude sandbox with an x509
+TLS error — run it unsandboxed; `git push` works sandboxed but writing the upstream to `.git/config` does not; a
+sandboxed shell cannot `kill -0` a process started unsandboxed, so wait on a log line, never on the PID; run
+`pr4-smoke.mjs` **whole** (step 14 starts on the tab step 13 opened).
+
+**Owner chores, unchanged and not this branch's work:** revoke any live Vercel share links; reset the e2e fixture
+account's password in Supabase Auth and set its production `profiles.role` back to viewer.
