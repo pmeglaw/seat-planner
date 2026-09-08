@@ -522,3 +522,164 @@ test("the header primary opens the one-field create modal, which only calls the 
   assert.match(visibleStatus().textContent, /Department Compliance added\./);
   assert.ok(screen.getByRole("button", { name: "More actions for Compliance" }));
 });
+
+// ---------------------------------------------------------------------------
+// Publish history (Phase 5 PR 1): the record tab's four states and the two
+// contracts that make it a record rather than a longer panel — a sort that
+// ranks the WHOLE log, and pagination instead of D0-g's 25 cap.
+// ---------------------------------------------------------------------------
+
+const publishEvent = (createdAt, summary, email = "admin@example.com", seatCount = 61) => ({
+  created_at: createdAt,
+  seat_count: seatCount,
+  published_by: "user-1",
+  published_by_email: email,
+  change_summary: summary
+});
+
+const logRows = () => [...document.querySelectorAll(".sp-log tbody tr")];
+const columnHeaders = () => [...document.querySelectorAll(".sp-log thead th")].map(th => th.textContent.trim());
+const rangeText = () => document.querySelector(".sp-log .cds-range")?.textContent;
+const countText = () => document.querySelector(".sp-log .cds-toolbar-count")?.textContent;
+
+async function openPublishHistory(logAction, props = defaultProps()) {
+  configureContext({ actions: { getPublishLogAction: logAction } });
+  await renderPanel(props);
+  await act(async () => {
+    fireEvent.click(tab("Publish history"));
+  });
+}
+
+test("publish history while loading: skeleton rows under REAL column headers, and the count says so", async () => {
+  await openPublishHistory(() => new Promise(() => {}));
+
+  assert.deepEqual(columnHeaders(), ["Published", "Published by", "Changes", "What changed"]);
+  assert.equal(document.querySelectorAll(".sp-log .cds-skeleton-row").length, 4);
+  assert.equal(countText(), "Loading publish history…");
+  assert.equal(document.querySelector(".sp-log [aria-busy='true']") !== null, true);
+});
+
+test("publish history that fails names the failure inline, keeps the rest of Management, and Retry re-reads", async () => {
+  let attempts = 0;
+  await openPublishHistory(async () => {
+    attempts += 1;
+    if (attempts === 1) throw new Error("network");
+    return [publishEvent("2026-09-08T21:12:00.000Z", { seats_added: 2 })];
+  });
+
+  const alert = screen.getByRole("alert");
+  assert.match(alert.textContent, /Publish history couldn't load/);
+  // Task-generated failure, inline in the region the reader is working in —
+  // never a toast, and never a dialog that blocks the other tabs.
+  assert.equal(screen.queryByRole("dialog"), null);
+  assert.ok(tab("Employees"), "the tab strip still works");
+
+  await act(async () => {
+    fireEvent.click(within(alert).getByRole("button", { name: "Retry" }));
+  });
+  assert.equal(attempts, 2);
+  assert.equal(logRows().length, 1);
+});
+
+test("an empty log names the real state and where publishing happens — not a failed search", async () => {
+  await openPublishHistory(async () => []);
+
+  assert.match(document.body.textContent, /Nothing published yet/);
+  assert.match(document.body.textContent, /Publishing happens on the seat map/);
+  assert.equal(countText(), "No publishes yet", "the count is published at zero too");
+  assert.equal(rangeText(), undefined, "no pagination over an empty log");
+});
+
+test("a publish row reads date · person · count · sentence, with seat_count only inside the sentence that names it", async () => {
+  await openPublishHistory(async () => [
+    publishEvent("2026-09-08T21:12:00.000Z", { assignments_changed: 2, employee_edits: 1 }),
+    // No summary: the one row that carries the map SIZE, and only inside a
+    // sentence that says "seats" — never as a bare column that reads as a delta.
+    publishEvent("2026-09-07T21:12:00.000Z", null, "sarah@example.com", 58),
+    // A real publisher whose profile did not resolve — the §1.4 partial state.
+    publishEvent("2026-09-06T21:12:00.000Z", { seats_moved: 4 }, null)
+  ]);
+
+  const [newest, initial, orphan] = logRows();
+
+  assert.equal(newest.querySelector(".sp-col-when").textContent, "Sep 8, 2026, 2:12 PM");
+  assert.equal(newest.querySelector(".sp-col-who").textContent, "admin@example.com");
+  assert.equal(newest.querySelector(".sp-col-count").textContent, "3");
+  assert.match(newest.textContent, /2 assignments changed · 1 employee edit/);
+
+  assert.equal(initial.querySelector(".sp-col-count").textContent, "—", "unreadable is a dash, not a zero");
+  assert.match(initial.textContent, /Initial publish · 58 seats/);
+  assert.equal(document.querySelector(".sp-log thead").textContent.includes("Seats"), false, "there is no Seats column");
+
+  assert.equal(orphan.querySelector(".sp-col-who").textContent, "an admin", "a raw publisher id is never shown");
+  assert.match(countText(), /^3 publishes · most recent Sep 8, 2026, 2:12 PM$/);
+});
+
+test("Changes sorts the WHOLE log, not the visible page, and pagination replaces D0-g's 25 cap", async () => {
+  // 30 publishes: more than the panel's cap, and the biggest one is deliberately
+  // the OLDEST, so it only surfaces if the sort ranks every page.
+  const events = Array.from({ length: 30 }, (_, index) =>
+    publishEvent(
+      `2026-08-${String(index + 1).padStart(2, "0")}T21:12:00.000Z`,
+      { seats_added: index === 0 ? 99 : 1 }
+    )
+  );
+  await openPublishHistory(async () => events);
+
+  assert.match(countText(), /^30 publishes/);
+  assert.equal(rangeText(), "1–25 of 30", "the default page is 25, and the log is not capped there");
+  assert.equal(logRows().length, 25);
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+  });
+  assert.equal(rangeText(), "26–30 of 30");
+  assert.equal(logRows().length, 5);
+
+  // Sorting by Changes returns to page 1 (a re-sort changes what "page 2"
+  // means) and surfaces the 99-change publish that lived on the last page.
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Changes" }));
+  });
+  assert.equal(rangeText(), "1–25 of 30");
+  assert.equal(logRows()[0].querySelector(".sp-col-count").textContent, "99");
+  assert.equal(
+    document.querySelector(".sp-log th.sp-col-count").getAttribute("aria-sort"),
+    "descending",
+    "the column that finds big publishes leads with the biggest"
+  );
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Changes" }));
+  });
+  assert.equal(document.querySelector(".sp-log th.sp-col-count").getAttribute("aria-sort"), "ascending");
+  assert.equal(logRows()[0].querySelector(".sp-col-count").textContent, "1");
+});
+
+test("the page-size select re-pages the log and never strands the reader past the end", async () => {
+  const events = Array.from({ length: 12 }, (_, index) =>
+    publishEvent(`2026-08-${String(index + 1).padStart(2, "0")}T21:12:00.000Z`, { seats_added: 1 })
+  );
+  await openPublishHistory(async () => events);
+
+  assert.equal(rangeText(), "1–12 of 12");
+  assert.equal(screen.getByRole("button", { name: "Next page" }).disabled, true);
+  assert.equal(screen.getByRole("button", { name: "Previous page" }).disabled, true);
+
+  await act(async () => {
+    fireEvent.change(screen.getByLabelText("Publishes per page"), { target: { value: "10" } });
+  });
+  assert.equal(rangeText(), "1–10 of 12");
+  assert.equal(screen.getByRole("button", { name: "Next page" }).disabled, false);
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+  });
+  assert.equal(rangeText(), "11–12 of 12");
+
+  // Growing the page from the last page lands on a page that exists.
+  await act(async () => {
+    fireEvent.change(screen.getByLabelText("Publishes per page"), { target: { value: "50" } });
+  });
+  assert.equal(rangeText(), "1–12 of 12");
+});

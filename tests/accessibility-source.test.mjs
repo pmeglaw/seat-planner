@@ -1393,3 +1393,45 @@ test("the floor roster is a focusable read-only region with exactly one control"
   assert.match(adminSource, /tabIndex=\{canEdit && surface === "plan" \? 0 : undefined\}/);
   assert.match(adminSource, /focusFloorRoster\(ADMIN_ROSTER_REGION_ID\)/);
 });
+
+// Publish history (Phase 5 PR 1): the record tab adds a second sortable table
+// and the app's first pagination, so the guardrails that already hold for the
+// directory must hold here too — a sort you can reach and hear, controls with
+// names, and a count that is announced when it changes.
+test("the publish log's sort, pagination and count are keyboard-reachable and announced", async () => {
+  const source = await readSource("../components/admin-management/PublishLogTable.tsx");
+
+  // Sortable headers are BUTTONS carrying the sort state on the th, exactly as
+  // the directory does — never a click handler on a bare <th>.
+  assert.match(source, /aria-sort=\{isSorted \? \(sortDirection === "asc" \? "ascending" : "descending"\) : undefined\}/);
+  assert.match(source, /<button type="button" className="cds-sort"/);
+  // The one column that cannot be ordered meaningfully takes a static header,
+  // not a disabled button (there is no action to enable).
+  assert.match(source, /<span className="cds-th-static">What changed<\/span>/);
+  assert.doesNotMatch(source, /<th[^>]*onClick/);
+
+  // Every pagination control has an accessible name; the select is labelled
+  // rather than placeholder-named.
+  assert.match(source, /aria-label="Previous page"/);
+  assert.match(source, /aria-label="Next page"/);
+  assert.match(source, /<label className="cds-visually-hidden" htmlFor="publish-log-page-size">/);
+  assert.match(source, /id="publish-log-page-size"/);
+
+  // The count is the tab's live region and is published at zero (SKILL.md:
+  // "Always publish the number of results, zero included"); the loading and
+  // unavailable states speak through the SAME region rather than adding a
+  // second announcement channel.
+  assert.equal((source.match(/aria-live="polite"/g) ?? []).length, 2, "one live count per branch, no extra channels");
+  assert.doesNotMatch(source, /role="status"/);
+  assert.match(source, /aria-busy="true"/);
+
+  // A failure is inline in the region being worked in, never a dialog or a
+  // toast, and it says what still works.
+  assert.match(source, /className="cds-notification cds-notification--error" role="alert"/);
+  assert.doesNotMatch(source, /role="dialog"/);
+
+  // Rows are not tab stops and carry no row action: this is a record, and
+  // drill-in is out of scope — so the table has no interactive cell at all.
+  assert.doesNotMatch(source, /<tr[^>]*tabIndex/);
+  assert.doesNotMatch(source, /onClick=\{\(\) => on/);
+});
