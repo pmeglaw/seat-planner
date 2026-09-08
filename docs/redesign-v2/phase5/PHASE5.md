@@ -100,9 +100,13 @@ Rendered after the revision (`screenshots/phase5-pr1/`):
   evidence to keep a manual rig green is the wrong trade (reviewer ruling). The assertion is inside the rig's
   **step 1 (Frame)**, which reads the Management page header; a future re-run fails there for this reason and no
   other — the heading, the primary and its brand colours in the same block still hold.
-- **Today's `publish_events` row count is unmeasured.** A read-only `select count(*)` against production was
-  blocked by the session's tool classifier. It bears only on the ~5,000-event ceiling in D5-e, not on any
-  decision taken here.
+- **The `publish_events` row count, measured 2026-09-08: 44 events**, most recent Aug 31, 2026, 6:23 PM — read
+  from the tab's own count line during the read-only preview walk, not from a query. A direct
+  `select count(*)` against production was blocked by the session's tool classifier, and the point of this entry
+  is that it no longer needs to run: the surface reports the number continuously. That is **two orders of
+  magnitude** of headroom against D5-e's ~5,000-event ceiling — 113× under it, below 1% — so the client-side
+  whole-log sort R3 forces is not near its limit. A dated measurement, not a standing fact: it is the log on
+  2026-09-08 and it only grows.
 
 ### Verification, on the final head
 

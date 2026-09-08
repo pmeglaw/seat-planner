@@ -1357,7 +1357,10 @@ visible page cannot answer "find the large publishes", which is its only purpose
 and sorts it client-side, through a second read-only action (`getPublishLogAction`, paged internally by
 `fetchAllRows`) rather than a widening of `getPublishHistoryAction`, whose diff stays empty.
 **Would change if** the log passes ~5,000 events — then it returns to server-side paging and the Changes sort is
-re-ruled. `select count(*) from public.publish_events` is the query that says when.
+re-ruled. The tab's own count line reads the whole log through `getPublishLogAction`, so it **is** the row count
+and now reports it continuously; `select count(*) from public.publish_events` stays the out-of-band check, no
+longer the only instrument. **Standing measurement: 44 events on 2026-09-08** (preview walk, most recent
+Aug 31, 2026) — two orders of magnitude under the ceiling.
 
 **Confirmed, not a deviation (2026-09-08):** PHASE4BUILD §1.9's "the ONE sanctioned new server action" was
 scoped to the Phase 4 build. `getPublishLogAction` keeps that same contract — read-only, admin-only, no RPC, no
