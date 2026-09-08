@@ -3142,9 +3142,17 @@ export function SeatMap({
             )}
             </div>
             {/* The right slot (PHASE3DS §1.17, D2-a): one owner at a time —
-                mode card · Ask Planner · inspector (INV-4). It
-                sits over the canvas column only, so the band below stays
-                uncovered; the column's padding is what pushes the plan. */}
+                mode card · Ask Planner · inspector (INV-4). `.sp-slot-host` is
+                ABSOLUTE against the map STAGE (top / right / bottom: 0), and the
+                stage holds the status band as well as the canvas column — so an
+                open slot does run over the band's row. What keeps the band clear
+                is the band's OWN push (`data-slot-open`, sheet amendment G /
+                finding F-8; PHASE2UX §1M.2 "the band spans the canvas, not the
+                slot"). The canvas column's `pr-[var(--sp-slot-w)]` pushes the
+                PLAN only; the band is that column's sibling, so the padding
+                never reaches it. (This comment said the opposite until PR 6 —
+                a false comment believed by the next session is what produced
+                F-3 in this same PR.) */}
             <RightSlot open={slotOwner !== null}>
               {slotOwner === "mode" && activeMode && (
                 <ModeCard
@@ -3222,9 +3230,13 @@ export function SeatMap({
             </RightSlot>
             {/* The status band (Option A parity with the viewer, owner call
                 2026-08-17): the in-flow bottom row that replaced the floating
-                legend card + zoom stack from sm up. It narrows with the stage
-                when a docking panel reserves its column (the canvas column padding
-                wraps this whole column), so the dock never overlaps it. Counts
+                legend card + zoom stack from sm up. It is the canvas column's
+                SIBLING inside the stage, not a child of it, so the column's
+                `pr-[var(--sp-slot-w)]` never reaches it: with a slot open the
+                band narrows by taking its OWN push instead (`data-slot-open`,
+                sheet amendment G / F-8). Before PR 6 it took none, and the open
+                slot covered its right 400px — the count and the zoom group.
+                Counts
                 come from legendCounts, which follows the active filters — the
                 number row must never contradict a filtered map. Gated to
                 the plan surface (an unmapped floor renders the roster, where

@@ -309,3 +309,34 @@ test.describe("Map band under an open slot", () => {
     });
   }
 });
+
+// The VIEWER carries the same pair — its own RightSlot (the published inspector) and its own band —
+// and amendment G was wired there only after a PR 6 tier probe caught it uncovered. Guarded here so
+// the surface cannot regress on its own.
+test.describe("Viewer band under an open slot", () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page, SEEDED_ADMIN_EMAIL);
+  });
+
+  test("1920×1080 /: the band's zoom control stays hit-testable with the published inspector open", async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto("/");
+    const band = page.locator("[data-map-status-band]");
+    await expect(band).toBeVisible();
+    const zoomIn = band.locator('button[aria-label="Zoom in"]');
+    await expect(zoomIn).toBeVisible();
+    const hitZoom = async () => zoomIn.evaluate(el => {
+      const box = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+      return { inBand: Boolean(hit?.closest("[data-map-status-band]")), inSlot: Boolean(hit?.closest("[data-slot-host]")) };
+    });
+
+    expect(await hitZoom(), "closed: the zoom control is its own").toEqual({ inBand: true, inSlot: false });
+    await expect(band).not.toHaveAttribute("data-slot-open", "");
+
+    await page.locator("button[data-seat-id]").first().dispatchEvent("click");
+    await expect(page.locator("#seat-inspector-panel")).toBeVisible();
+    await expect(band).toHaveAttribute("data-slot-open", "");
+    expect(await hitZoom(), "open: the zoom control must not be under the slot").toEqual({ inBand: true, inSlot: false });
+  });
+});

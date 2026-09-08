@@ -1010,6 +1010,32 @@ two `waitForColorSettle` self-tests pass on real Chrome) · Docker stack, reset 
 **55 / 55** (53 + the two `page-frames` map-band tests), `pr6-smoke` **17 / 17**. Contrast unchanged at 202 / 202 —
 amendment G is a padding rule and changes no token.
 
+**F-8, the below-band tier, settled by measurement (reviewer item, 2026-09-08).** `statusBandVisible` is
+`surface === "plan" && bandTier` and the floating zoom stack renders only when `!bandTier`, both keyed on the same
+`(min-width: 640px)` query — so the band and the floating control are mutually exclusive by construction. The real
+question was whether an **open slot** can co-occur with that floating control, and the answer differs by surface
+(driven at 500 / 639 / 641 / 820 on the local stack, real Chrome):
+
+- **`/admin` — cannot co-occur.** The slot DOES open below 640 (measured: 400 wide at x 100 on a 500 viewport), so
+  the first half of the offered wording would have been wrong; what prevents the clash is that the float is *hidden*
+  while a mobile interaction surface owns the screen — `mobileMapControlsHidden` (a selected seat, Ask Planner, the
+  publish review or any of the four confirms) puts `hidden sm:block` on the stack, and below 640 that is simply
+  hidden. Measured: the control's box collapses to 0×0 the moment the inspector opens.
+- **`/` — it CAN co-occur, and the slot covers the float.** The viewer's float carries no `mobileMapControlsHidden`
+  equivalent, so at 500 with the published inspector open both are mounted, their boxes overlap, and a hit-test at
+  the float's Zoom-in centre (456, 814) returns `div.sp-slot-body` — the control is present and unreachable. Capture:
+  `screenshots/pr6-smoke/tier-viewer-500-inspector-open.png`. **Follow-up row (not built here):** mirror the admin and
+  hide the viewer's float while its slot is open, or lift it above `.sp-slot-host` — a phone-width product call, off
+  the 1920 hardware target, so it goes to the owner rather than into the close-out.
+
+**The same probe found F-8 still live on the viewer, and PR 6 fixes it there too.** Amendment G was wired only into
+`SeatMap`; `ViewerSeatFinder` has its own `RightSlot` (the published inspector) and its own two `MapStatusBand` call
+sites, so at 1920 with a seat selected the viewer's band still read `padding-right: 8px` and its Zoom-in hit-tested
+into `div.sp-slot-body`. Both viewer bands (plan and roster — a selection survives a switch to a roster floor) now
+take `slotOpen`; measured after: `data-slot-open` present, padding-right **408px**, the Zoom-in centre 1880 → **1480**
+at 1920 and 601 → **201** at 641, hit-testing to itself. The e2e-auth `page-frames` map block gained the viewer arm so
+the surface cannot regress unguarded.
+
 **F-9 — the below-900 palette sheet never spans. CARRIED, not fixed (owner ruling 2026-09-08).** `.sp-palette`'s
 fixed 560 beats the computed frame's `left: 12` + `right-3` stretch: 560 wide at 880, 182px off-screen at 390. Real,
 but phone-width only and off the 1920 hardware target. Recorded in DECISIONS §7 beside the 400 % zoom reflow; the 900

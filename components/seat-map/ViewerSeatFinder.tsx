@@ -1488,8 +1488,12 @@ export function ViewerSeatFinder({
               </div>
             )}
             </div>
-            {/* The right slot (PHASE3DS §1.17): the published inspector, over
-                the canvas column only — the band below stays uncovered. */}
+            {/* The right slot (PHASE3DS §1.17): the published inspector.
+                `.sp-slot-host` is ABSOLUTE against the map STAGE, which holds the
+                band as well as the canvas column, so an open slot runs over the
+                band's row; the band stays clear by taking its own
+                `data-slot-open` push (sheet amendment G / F-8). The column's
+                `lg:pr-[var(--sp-slot-w)]` pushes the PLAN only. */}
             <RightSlot open={slotOpen}>
               {slotOpen && (
               <SeatInspector
@@ -1519,6 +1523,12 @@ export function ViewerSeatFinder({
             {statusBandVisible && surface === "plan" && (
               <MapStatusBand
                 ariaLabel="Seat status summary"
+                // The band is the canvas column's SIBLING inside the stage, so the absolute slot
+                // host runs over its right 400px unless it takes the same push the column takes
+                // (sheet amendment G / F-8; PHASE2UX §1M.2 "the band spans the canvas, not the
+                // slot"). The viewer's published inspector is a slot owner too — found by the
+                // PR 6 tier probe, which caught this surface still uncovered.
+                slotOpen={slotOpen}
                 totalLabel={`${floorMeta.tag} · ${statusCountSeats.length} ${statusCountSeats.length === 1 ? "seat" : "seats"}`}
                 entries={[
                   { key: "assigned", label: STATUS_LABELS.assigned, mark: "assigned", count: assignedCount },
@@ -1557,6 +1567,9 @@ export function ViewerSeatFinder({
             {statusBandVisible && surface === "roster" && (
               <MapStatusBand
                 ariaLabel="Floor summary"
+                // A selection survives a switch to a roster floor, and the slot with it — so this
+                // band takes the push as well (amendment G / F-8).
+                slotOpen={slotOpen}
                 totalLabel={`${floorMeta.label} · ${rosterRows.length} ${rosterRows.length === 1 ? "person" : "people"}`}
                 entries={[]}
               />
