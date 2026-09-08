@@ -12,7 +12,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { FloorId } from "@/lib/floorIds";
 import { FLOORS, listFloors } from "@/lib/floors";
-import { ChevronIcon, PinIcon } from "@/components/seat-map/mapIcons";
+import { ChevronIcon, PinIcon } from "@/components/ui/icons";
 
 export type { FloorId };
 

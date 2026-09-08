@@ -1,4 +1,4 @@
-// The map's 16px line icons, inlined from the Phase 3 specimen's <symbol>s
+// The product's 16px line icons (every surface; PR 5 O-14, renamed here in PR 6), inlined from the Phase 3 specimen's <symbol>s
 // (docs/redesign-v2/phase3/specimens/02-map.html). Inlined, never <use>d —
 // PHASE3DS §7 item 6: CSS cannot reach a use's shadow tree, and the asset's
 // .cds-btn--icon svg / .sp-search > svg rules size and colour these by

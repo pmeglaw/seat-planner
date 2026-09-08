@@ -26,7 +26,7 @@ test("Management icons stay in the house family", async () => {
   const source = await read("../components/admin-management/EmployeesTable.tsx");
 
   // Every icon is drawn on the 16-viewBox grid like the map's line icons
-  // (mapIcons) — no stock 24-viewBox/stroke-2 library icon. The Edit glyph is
+  // (components/ui/icons) — no stock 24-viewBox/stroke-2 library icon. The Edit glyph is
   // the one icon this file draws itself.
   assert.match(source, /const EditIcon = \(\) => \([\s\S]{0,120}viewBox="0 0 16 16"/);
   assert.doesNotMatch(source, /viewBox="0 0 2[04] 2[04]"/);

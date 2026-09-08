@@ -13,7 +13,7 @@ import { buildContactRows, employeeAssignmentFields, type ContactFactRow } from 
 import { formatDisplayName, formatSeatCode } from "@/lib/formatName";
 import { CarbonModal } from "@/components/ui/CarbonModal";
 import { SeatMark, seatMarkKindFor } from "@/components/seat-map/SeatMark";
-import { CheckIcon, CloseIcon, CopyIcon } from "@/components/seat-map/mapIcons";
+import { CheckIcon, CloseIcon, CopyIcon } from "@/components/ui/icons";
 import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
 import { withQueryParam, withSeatParam } from "@/lib/deepLink";
 

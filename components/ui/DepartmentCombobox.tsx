@@ -9,7 +9,7 @@
 // ↵ picks, Esc closes; blur closes after the click on an option lands.
 
 import { useId, useState, type KeyboardEvent } from "react";
-import { ChevronIcon } from "@/components/seat-map/mapIcons";
+import { ChevronIcon } from "@/components/ui/icons";
 
 export type DepartmentChoice = { name: string; count: number };
 

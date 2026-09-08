@@ -15,7 +15,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { resolveInlineRename, type OptionKind } from "@/lib/inlineRename";
-import { MoreIcon } from "@/components/seat-map/mapIcons";
+import { MoreIcon } from "@/components/ui/icons";
 
 export type OptionRow = {
   key: string;

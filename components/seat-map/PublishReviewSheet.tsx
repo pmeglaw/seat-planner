@@ -17,7 +17,7 @@
 import { groupByFloor } from "@/lib/floors";
 import type { PublishChangeSummary, PublishDiffRow, PublishDiffRowKind } from "@/lib/publishSummary";
 import { NotificationGlyph } from "@/components/seat-map/CanvasStatus";
-import { CheckIcon } from "@/components/seat-map/mapIcons";
+import { CheckIcon } from "@/components/ui/icons";
 import { useDialogFocus } from "@/components/ui/useDialogFocus";
 
 const PUBLISH_DIFF_TAG_LABELS: Record<PublishDiffRowKind, string> = {
