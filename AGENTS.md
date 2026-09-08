@@ -6,9 +6,34 @@ This repo is a private office seat-planning app. Authenticated viewers see the p
 
 ## Commands
 
-Package manager: npm. Use the existing `package-lock.json`. The script names are in `package.json`; the non-obvious parts are the test tiers — see the `test-tiers` skill for how each is wired.
+Use npm and the existing `package-lock.json`; match the Node version in `package.json` (also pinned in CI). Install with `npm ci`. Framework versions belong in `package.json`, not duplicated here.
 
-`npm test` runs `node --test tests/*.test.mjs`. It requires installed dependencies because some tests import `typescript`, and `tests/rpc-execution.test.mjs` (`npm run test:db`) applies the real `supabase/migrations` to an in-process Postgres (`@electric-sql/pglite`) to exercise the atomic RPCs.
+| Task | Command / prerequisite |
+| --- | --- |
+| Develop locally | `npm run dev` (port 3000); configure the local database first for routine mutation testing |
+| Start / seed local database | Docker running, then `npm run db:start` and `npm run db:seed`; use its local URL and anon key as described in `README.md` |
+| Node behavior tests | `npm test`; requires installed dependencies and includes the SQL and jsdom component tiers |
+| SQL subset | `npm run test:db`; real migrations in in-process PGlite, no hosted database required |
+| jsdom component subset | `npm run test:ct` |
+| Real-browser SeatMap tests | `npm run test:browser`; Chromium required, no Next build or app server |
+| Backend-free smoke tests | `npm run build`, then `npm run test:e2e`; Chromium required |
+| Authenticated flows | `npm run test:e2e:auth`; local Supabase and Chromium required; the harness seeds locally and builds with local database settings |
+| CI verification gate | `npm run gate` (lint, typecheck, coverage thresholds), then `npm run build`; browser tiers are separate |
+
+For focused changes, run the relevant test file or tier. `npm run coverage:check` already runs the Node suite; do not also run `npm test` on the same unchanged tree just to duplicate it.
+
+## Project Map And Workflow Guides
+
+- `app/`: routes, layouts, and server actions; `components/`: shared UI; `lib/`: shared business rules and service helpers.
+- `supabase/migrations/`: database history; `tests/`: behavior tests, with `tests/browser/`, `tests/e2e/`, and `tests/e2e-auth/` for browser tiers.
+- Read `CLAUDE.md` for cross-file architecture before non-trivial work; consult `README.md` for setup and operational details.
+- Test harness details: read `.claude/skills/test-tiers/SKILL.md` before writing or debugging framework-coupled tests.
+- Local UI workflow: read `.claude/skills/run-seat-planner/SKILL.md` when running or visually checking the app. These are explicit file paths even if the skills are not listed in the current tool session.
+- UI changes need a browser check of affected routes and relevant loading, empty, error, and role-specific states; report blocked coverage accurately.
+
+## Deployment
+
+Production is hosted on Vercel. Per the repository deployment documentation, changes to `main` deploy to production and the Supabase GitHub integration applies migrations. Keep deployment work explicit; use a branch and preview for risky or visual changes. Do not manually apply migrations to production.
 
 ## Supabase And Env
 
@@ -16,7 +41,7 @@ Package manager: npm. Use the existing `package-lock.json`. The script names are
 - Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - Set `OPENAI_API_KEY` (server-only — never `NEXT_PUBLIC_`-prefixed) to enable Ask Planner; optional `OPENAI_MODEL` overrides `ASK_PLANNER_DEFAULT_MODEL` in `lib/mapOperationsAgent.ts`.
 - Never add service-role keys to browser-accessible env vars or client code.
-- Apply `supabase/migrations/*.sql` in numeric order.
+- Add new database changes as timestamped migrations in `supabase/migrations/`; preserve existing migration history. Use the local stack for routine testing.
 - After creating the first user, promote the admin in `public.profiles`.
 - For local auth, configure Supabase redirect URLs such as `http://localhost:3000/**` and `http://localhost:3000/auth/confirm`.
 - `/auth/confirm` is the primary magic-link route; `/auth/callback` stays supported for older links and PKCE callbacks.
