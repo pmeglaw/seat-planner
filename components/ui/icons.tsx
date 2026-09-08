@@ -22,6 +22,12 @@ export const SearchIcon = (p: IconProps) => (
   <Icon {...p}><circle cx="7" cy="7" r="4.5" {...stroke} /><path d="M10.5 10.5L14 14" {...stroke} /></Icon>
 );
 export const ChevronIcon = (p: IconProps) => <Icon {...p}><path d="M4 6l4 4 4-4" {...stroke} /></Icon>;
+/* The pagination arrows (Phase 5 PR 1). The down chevron above marks a sortable
+   column and a select; these two step through pages, so they are their own
+   glyphs rather than a rotated ChevronIcon — a transform would fight the
+   asset's .cds-btn--icon svg sizing rule. */
+export const ChevronLeftIcon = (p: IconProps) => <Icon {...p}><path d="M10 4L6 8l4 4" {...stroke} /></Icon>;
+export const ChevronRightIcon = (p: IconProps) => <Icon {...p}><path d="M6 4l4 4-4 4" {...stroke} /></Icon>;
 export const PinIcon = (p: IconProps) => (
   <Icon {...p}><path d="M8 14s4-4.2 4-7.5a4 4 0 0 0-8 0C4 9.8 8 14 8 14z" {...stroke} /><circle cx="8" cy="6.5" r="1.5" fill="currentColor" /></Icon>
 );

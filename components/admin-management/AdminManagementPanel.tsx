@@ -40,6 +40,7 @@ import { EmployeePanel } from "@/components/admin-management/EmployeePanel";
 import { EmployeesTable, type EmployeeSortKey, type SortDirection } from "@/components/admin-management/EmployeesTable";
 import { ManagementConfirmSheet } from "@/components/admin-management/ManagementConfirmSheet";
 import { ManagementFrame, type ManagementTab } from "@/components/admin-management/ManagementFrame";
+import { PublishLogTable } from "@/components/admin-management/PublishLogTable";
 import { OptionCreateModal } from "@/components/admin-management/OptionCreateModal";
 import { OptionList, type OptionRow } from "@/components/admin-management/OptionList";
 import { emptyEmployeeForm, formFromEmployee, isFormDirty, type EmployeeForm } from "@/components/admin-management/employeeForm";
@@ -575,9 +576,11 @@ export function AdminManagementPanel({
   }
 
   function handlePrimary() {
+    // Unreachable on publishHistory: that tab renders no primary at all (R1),
+    // so this is only ever called by a button the frame decided to show.
     if (activeTab === "employees") openAddEmployee();
     else if (activeTab === "departments") setCreateModal("department");
-    else setCreateModal("zone");
+    else if (activeTab === "zones") setCreateModal("zone");
   }
 
   const selectedPersonName = selectedEmployee ? formatDisplayName(selectedEmployee.full_name) : employeeForm.fullName.trim();
@@ -660,6 +663,17 @@ export function AdminManagementPanel({
               emptyTitle="No zones yet"
               emptyBody="Add a zone to organize map filters and custom-seat labels."
             />
+          </section>
+        )}
+
+        {/* The record surface (Phase 5 PR 1). It mounts only while its tab is
+            open, which is what keeps its fetch off every other Management
+            visit — and it holds no page state of its own, so leaving and
+            returning re-reads the log rather than showing a stale one. */}
+        {activeTab === "publishHistory" && (
+          <section aria-labelledby="management-publish-history-heading">
+            <h2 id="management-publish-history-heading" className="cds-visually-hidden">Publish history</h2>
+            <PublishLogTable />
           </section>
         )}
       </ManagementFrame>

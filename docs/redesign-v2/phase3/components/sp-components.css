@@ -792,7 +792,8 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
    PR 4 (pages) blocks — Management, Settings, Reception. PHASE2UX §1G / §1S / §1R.
      20. .sp-page, .sp-tabs      — page frame, page-header overrides, LINE tabs (40, 2px bar)
      21. .sp-table               — Management table: 40 header / 32 rows, ● ○ status,
-                                   mono seat link (hover-row step), one row action + tooltip
+                                   mono seat link (hover-row step), one row action + tooltip;
+                                   + .sp-log (amendment H) — the publish log's four columns
      22. .sp-side-panel          — asset .cds-side-panel as a slide-OVER: scrim, fact row,
                                    danger ghost above the footer, confirm modal on top
      23. .sp-list                — structured list 48: name · count · ghost Rename · ⋯;
@@ -874,6 +875,20 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-page .cds-notification { max-width: none; margin: var(--sp-space-03) 0 0; }
 .sp-page .cds-empty { padding: var(--sp-space-07) var(--sp-space-05) var(--sp-space-07); }
 .sp-table .cds-table + .cds-empty { background: var(--sp-layer-01); max-width: none; }
+
+/* Phase 5 PR 1 amendment H (2026-09-08, owner ruling R3) — the PUBLISH LOG's columns.
+   `.sp-log` rides `.sp-table`, so the 40 header / 32 rows above come in unchanged; only the
+   column shapes differ. `.cds-table` is `table-layout: fixed` and the directory above lets its
+   seven LIKE columns distribute themselves — the log's four are unlike: a date, a person, a
+   count, and a sentence that must own the rest of the row. Even distribution at the 1584 live
+   area gives the count 396px it cannot use and leaves the sentence short of the longest shipped
+   summary. Percentages, so one rule holds at 1584 and inside `.sp-table-scroll` at 1024.
+   The count pair mirrors `.sp-col-ext` above (right + tabular + the sort button following it)
+   rather than inventing a second way to right-align a number. */
+.sp-log .cds-table :is(th, td).sp-col-when { width: 13%; }
+.sp-log .cds-table :is(th, td).sp-col-who { width: 20%; }
+.sp-log .cds-table :is(th, td).sp-col-count { width: 9%; text-align: right; font-variant-numeric: tabular-nums; }
+.sp-log .cds-table th.sp-col-count .cds-sort { justify-content: flex-end; }
 
 /* -----------------------------------------------------------------------------
    22. SIDE PANEL 480 SLIDE-OVER — §3 "Side panel 480, slide-over (focus-trapped) ·

@@ -86,7 +86,10 @@ function defaultProps() {
 }
 
 beforeEach(() => {
-  configureContext({ actions: {} });
+  // The Publish history tab reads the log on mount (Phase 5 PR 1), so every
+  // render needs the action stubbed; an empty log is the quiet default and the
+  // tests that care about rows pass their own.
+  configureContext({ actions: { getPublishLogAction: async () => [] } });
 });
 
 async function renderPanel(props = defaultProps()) {
