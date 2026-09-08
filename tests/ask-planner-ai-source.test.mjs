@@ -73,6 +73,16 @@ test("the map's AI emphasis only engages while seats are actually highlighted", 
     "globals.css must define .map-raster-dim saturate rules for BOTH themes (light + dark restatement)");
 });
 
+// Explainability (PHASE3DS §1.18): the popover's "How Ask Planner works" link
+// opens the shell's Help panel — fed from SeatMap through useAppShellPanels
+// (Phase 4 PR 6); a drawer rendered without the feed shows no dead link.
+test("the explainability popover's Help link is fed by the shell's panel opener", async () => {
+  const drawerSource = await readSource("../components/seat-map/AskPlannerDrawer.tsx");
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  assert.match(drawerSource, /onOpenHelp \? \([\s\S]{0,200}?onClick=\{onOpenHelp\}>How Ask Planner works<\/button>/);
+  assert.match(seatMapSource, /onOpenHelp=\{shellPanels \? \(\) => shellPanels\.open\("help"\) : undefined\}/);
+});
+
 // The AI highlight chip retired with PR 3a: the control row's Ask Planner
 // button carries the highlight count (D1-c re-entry point) and the drawer's
 // "Clear highlights" is the labelled way out of the AI state.

@@ -82,7 +82,7 @@ import {
   buildSwapSummary,
   seatPersonLabel
 } from "@/components/seat-map/SeatMapDialogs";
-import { useAppShellFilters, useAppShellLeftPanel, useAppShellNavigation, useAppShellState, type ShellFilterSpec } from "@/components/ui/AppShell";
+import { useAppShellFilters, useAppShellLeftPanel, useAppShellNavigation, useAppShellPanels, useAppShellState, type ShellFilterSpec } from "@/components/ui/AppShell";
 import { focusRingClass } from "@/components/ui/design-system";
 import { returnFocusAfterClose } from "@/components/ui/returnFocus";
 import { SEAT_SEARCH_PLACEHOLDER, buildViewerSeatSearch, type ViewerSearchResult, uniqueLandingResult } from "@/lib/viewerSeatSearch";
@@ -621,6 +621,9 @@ export function SeatMap({
   // "Find me" (D1-f — the published layer on every surface).
   const shellLeftPanel = useAppShellLeftPanel();
   const shellState = useAppShellState();
+  // The Ask Planner popover's "How Ask Planner works" link opens the shell's
+  // Help panel (PHASE3DS §1.18; fed in Phase 4 PR 6).
+  const shellPanels = useAppShellPanels();
 
   // ?ask-planner=open contract (v12): a sub-page's AI rail item falls back to
   // <Link href="/admin?ask-planner=open"> when onOpenAskPlanner is absent
@@ -3167,6 +3170,7 @@ export function SeatMap({
                   highlightedSeatIds={plannerHighlightedSeatIds}
                   floorTagForSeat={plannerFloorTagForSeat}
                   onClose={closeAskPlannerDrawer}
+                  onOpenHelp={shellPanels ? () => shellPanels.open("help") : undefined}
                   onHighlightSeats={setPlannerHighlightedSeatIds}
                   onClearHighlights={() => setPlannerHighlightedSeatIds([])}
                   onSelectSeat={selectPlannerHighlightedSeat}
