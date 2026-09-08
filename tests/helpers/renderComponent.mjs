@@ -172,6 +172,7 @@ const ACTION_EXPORTS = [
   "publishSeatMapAction",
   "restoreDraftSnapshotAction",
   "getPublishHistoryAction",
+  "getPublishLogAction",
   "getDraftStatusAction",
   "askPlannerAction",
   "createEmployeeAction",

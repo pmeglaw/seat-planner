@@ -1066,6 +1066,70 @@ export async function getPublishHistoryAction(limit = 10) {
   return resolvePublishHistoryProfiles(events, (profiles ?? []) as Array<{ id: string; email: string | null }>);
 }
 
+// The publish LOG behind Management's Publish history tab (Phase 5 PR 1;
+// DECISIONS D0-a / D5 amendments 2026-09-08). Deliberately a SECOND action
+// beside getPublishHistoryAction rather than a widening of it: the History
+// panel's ten-newest glance is unchanged by this slice, and its call site must
+// keep both its argument and its bare-array return.
+//
+// PLACEMENT IS LOAD-BEARING — this function must stay AFTER
+// getPublishHistoryAction. tests/restore-draft-snapshot-transaction-safety and
+// tests/seat-creation-ui-source both match the source span ending at that
+// export, and an insertion above it breaks two tests for an unrelated reason.
+//
+// Same contract as getDraftStatusAction (PHASE4BUILD §1.9): read-only,
+// admin-only, no RPC, no migration, no revalidatePath. Unpaged reads are
+// silently truncated at the project row cap, so this pages through
+// fetchAllRows — a log that stops at 1000 with no error would read as "we
+// never published before that", which is the one thing a record must not do.
+//
+// The whole log, not a page: the Changes column sorts on a sum of nine jsonb
+// buckets, which PostgREST cannot order without a generated column or RPC
+// (a migration, out of scope). Would change if the log passes ~5,000 events —
+// then it returns to server-side paging and the Changes sort is re-ruled.
+// `select count(*) from public.publish_events` is the query that confirms it.
+export async function getPublishLogAction() {
+  const supabase = await requireAdmin();
+
+  const rows = await fetchAllRows<{
+    created_at: string;
+    seat_count: number | string | null;
+    published_by: string | null;
+    change_summary?: unknown;
+  }>(
+    (from, to) =>
+      supabase
+        .from("publish_events")
+        .select("created_at,seat_count,published_by,change_summary", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to),
+    { label: "publish events" }
+  );
+
+  const events = rows.map(record => {
+    const seatCount = Number(record.seat_count ?? 0);
+
+    return {
+      created_at: record.created_at,
+      seat_count: Number.isFinite(seatCount) ? seatCount : 0,
+      published_by: record.published_by,
+      change_summary: record.change_summary ?? null
+    };
+  }) satisfies PublishEventRecord[];
+
+  const publisherIds = Array.from(new Set(events.map(event => event.published_by).filter((id): id is string => Boolean(id))));
+  if (publisherIds.length === 0) return resolvePublishHistoryProfiles(events, []);
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id,email")
+    .in("id", publisherIds);
+
+  if (profilesError) throw new Error(profilesError.message);
+
+  return resolvePublishHistoryProfiles(events, (profiles ?? []) as Array<{ id: string; email: string | null }>);
+}
+
 // Shell mode indicator on admin sub-pages (redesign-v2 PR 2, PHASE2UX §1.5
 // / D2 "the count travels"): /admin/management and /admin/settings load no
 // seat data, so the persistent shell asks for the draft's pending change

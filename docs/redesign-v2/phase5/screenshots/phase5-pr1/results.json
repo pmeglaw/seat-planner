@@ -1,0 +1,288 @@
+{
+  "base": "http://localhost:3300",
+  "when": "2026-09-08T21:28:09.927Z",
+  "results": [
+    {
+      "name": "sign-in",
+      "ok": true,
+      "detail": "seeded local admin"
+    },
+    {
+      "name": "1920-light: the legacy ?tab= link selects the record tab",
+      "ok": true,
+      "detail": "aria-selected=true"
+    },
+    {
+      "name": "1920-light: the header action area is empty",
+      "ok": true,
+      "detail": "0 primaries"
+    },
+    {
+      "name": "1920-light: the ruled subtitle",
+      "ok": true,
+      "detail": "\"People, departments, zones and publish history.\""
+    },
+    {
+      "name": "1920-light: four tabs in the strip",
+      "ok": true,
+      "detail": "4 tabs"
+    },
+    {
+      "name": "1920-light: the document never scrolls sideways",
+      "ok": true,
+      "detail": "1920 ≤ 1920"
+    },
+    {
+      "name": "1920-dark: the legacy ?tab= link selects the record tab",
+      "ok": true,
+      "detail": "aria-selected=true"
+    },
+    {
+      "name": "1920-dark: the header action area is empty",
+      "ok": true,
+      "detail": "0 primaries"
+    },
+    {
+      "name": "1920-dark: the ruled subtitle",
+      "ok": true,
+      "detail": "\"People, departments, zones and publish history.\""
+    },
+    {
+      "name": "1920-dark: four tabs in the strip",
+      "ok": true,
+      "detail": "4 tabs"
+    },
+    {
+      "name": "1920-dark: the document never scrolls sideways",
+      "ok": true,
+      "detail": "1920 ≤ 1920"
+    },
+    {
+      "name": "1024-light: the legacy ?tab= link selects the record tab",
+      "ok": true,
+      "detail": "aria-selected=true"
+    },
+    {
+      "name": "1024-light: the header action area is empty",
+      "ok": true,
+      "detail": "0 primaries"
+    },
+    {
+      "name": "1024-light: the ruled subtitle",
+      "ok": true,
+      "detail": "\"People, departments, zones and publish history.\""
+    },
+    {
+      "name": "1024-light: four tabs in the strip",
+      "ok": true,
+      "detail": "4 tabs"
+    },
+    {
+      "name": "1024-light: the document never scrolls sideways",
+      "ok": true,
+      "detail": "1024 ≤ 1024"
+    },
+    {
+      "name": "1024-dark: the legacy ?tab= link selects the record tab",
+      "ok": true,
+      "detail": "aria-selected=true"
+    },
+    {
+      "name": "1024-dark: the header action area is empty",
+      "ok": true,
+      "detail": "0 primaries"
+    },
+    {
+      "name": "1024-dark: the ruled subtitle",
+      "ok": true,
+      "detail": "\"People, departments, zones and publish history.\""
+    },
+    {
+      "name": "1024-dark: four tabs in the strip",
+      "ok": true,
+      "detail": "4 tabs"
+    },
+    {
+      "name": "1024-dark: the document never scrolls sideways",
+      "ok": true,
+      "detail": "1024 ≤ 1024"
+    },
+    {
+      "name": "default sort is newest first",
+      "ok": true,
+      "detail": "aria-sort=descending"
+    },
+    {
+      "name": "pagination replaces the 25 cap",
+      "ok": true,
+      "detail": "1–25 of 30"
+    },
+    {
+      "name": "Changes ranks the whole log, not the page",
+      "ok": true,
+      "detail": "top row 1 → 41 (the 41-change publish is 12 days back, on page 1 only after sorting)"
+    },
+    {
+      "name": "page 2 of the log",
+      "ok": true,
+      "detail": "26–30 of 30"
+    },
+    {
+      "name": "an unreadable summary reads a dash, not 0 (page 2, the oldest publish)",
+      "ok": true,
+      "detail": "1 dash row(s)"
+    },
+    {
+      "name": "seat_count appears ONLY inside the sentence that names it",
+      "ok": true,
+      "detail": "Aug 9, 2026, 8:19 PMe2e-admin@example.test—Initial publish · 60 seats"
+    },
+    {
+      "name": "an unresolved publisher reads 'an admin'",
+      "ok": true,
+      "detail": "3 rows on page 1"
+    },
+    {
+      "name": "there is no Seats column",
+      "ok": true,
+      "detail": "seat_count lives only in the sentence"
+    },
+    {
+      "name": "loading: skeleton rows under REAL headers",
+      "ok": true,
+      "detail": "Published · Published by · Changes · What changed"
+    },
+    {
+      "name": "error: inline, with Retry, tab strip alive",
+      "ok": true,
+      "detail": "Publish history couldn't loadThe rest of Management still works. The published map is unaffected.Retry"
+    },
+    {
+      "name": "error: no dialog blocks the page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "widths": [
+    {
+      "label": "1920-light",
+      "tableWidth": 1520,
+      "cols": [
+        {
+          "label": "Published",
+          "className": "sp-col-when",
+          "width": 243
+        },
+        {
+          "label": "Published by",
+          "className": "sp-col-who",
+          "width": 258
+        },
+        {
+          "label": "Changes",
+          "className": "sp-col-count",
+          "width": 152
+        },
+        {
+          "label": "What changed",
+          "className": "(sentence)",
+          "width": 866
+        }
+      ],
+      "sentenceCells": 25,
+      "truncated": 0,
+      "widestSentenceContent": 866
+    },
+    {
+      "label": "1920-dark",
+      "tableWidth": 1520,
+      "cols": [
+        {
+          "label": "Published",
+          "className": "sp-col-when",
+          "width": 243
+        },
+        {
+          "label": "Published by",
+          "className": "sp-col-who",
+          "width": 258
+        },
+        {
+          "label": "Changes",
+          "className": "sp-col-count",
+          "width": 152
+        },
+        {
+          "label": "What changed",
+          "className": "(sentence)",
+          "width": 866
+        }
+      ],
+      "sentenceCells": 25,
+      "truncated": 0,
+      "widestSentenceContent": 866
+    },
+    {
+      "label": "1024-light",
+      "tableWidth": 1216,
+      "cols": [
+        {
+          "label": "Published",
+          "className": "sp-col-when",
+          "width": 195
+        },
+        {
+          "label": "Published by",
+          "className": "sp-col-who",
+          "width": 207
+        },
+        {
+          "label": "Changes",
+          "className": "sp-col-count",
+          "width": 122
+        },
+        {
+          "label": "What changed",
+          "className": "(sentence)",
+          "width": 693
+        }
+      ],
+      "sentenceCells": 25,
+      "truncated": 0,
+      "widestSentenceContent": 693
+    },
+    {
+      "label": "1024-dark",
+      "tableWidth": 1216,
+      "cols": [
+        {
+          "label": "Published",
+          "className": "sp-col-when",
+          "width": 195
+        },
+        {
+          "label": "Published by",
+          "className": "sp-col-who",
+          "width": 207
+        },
+        {
+          "label": "Changes",
+          "className": "sp-col-count",
+          "width": 122
+        },
+        {
+          "label": "What changed",
+          "className": "(sentence)",
+          "width": 693
+        }
+      ],
+      "sentenceCells": 25,
+      "truncated": 0,
+      "widestSentenceContent": 693
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Refused to execute script from 'http://localhost:3300/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled."
+  ]
+}

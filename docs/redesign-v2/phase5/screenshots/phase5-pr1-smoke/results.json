@@ -1,0 +1,714 @@
+[
+  {
+    "step": "1 narrow-1024",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "widths": [
+        {
+          "label": "Published",
+          "className": "sp-col-when",
+          "ariaSort": "descending",
+          "width": 195,
+          "right": 227,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "Published by",
+          "className": "sp-col-who",
+          "ariaSort": null,
+          "width": 207,
+          "right": 433,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "Changes",
+          "className": "sp-col-count",
+          "ariaSort": null,
+          "width": 122,
+          "right": 555,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "What changed",
+          "className": "(sentence)",
+          "ariaSort": null,
+          "width": 693,
+          "right": 1248,
+          "clipped": false,
+          "innerClipped": false
+        }
+      ],
+      "tableWidth": 1216,
+      "scroller": {
+        "scrolls": true,
+        "overflowX": "auto"
+      },
+      "docScrolls": false,
+      "hits": {
+        "header": "button.cds-sort:Changes",
+        "cell": "td.sp-col-count:1"
+      },
+      "align": {
+        "cellAlign": "right",
+        "cellNumeric": "tabular-nums",
+        "headerJustify": "flex-end"
+      }
+    },
+    "note": "",
+    "files": [
+      "01-narrow-1024-light.png"
+    ]
+  },
+  {
+    "step": "2 ruling-1920",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "widths": [
+        {
+          "label": "Published",
+          "className": "sp-col-when",
+          "ariaSort": "descending",
+          "width": 243,
+          "right": 443,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "Published by",
+          "className": "sp-col-who",
+          "ariaSort": null,
+          "width": 258,
+          "right": 702,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "Changes",
+          "className": "sp-col-count",
+          "ariaSort": null,
+          "width": 152,
+          "right": 854,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "What changed",
+          "className": "(sentence)",
+          "ariaSort": null,
+          "width": 866,
+          "right": 1720,
+          "clipped": false,
+          "innerClipped": false
+        }
+      ],
+      "tableWidth": 1520,
+      "sortButtonRight": 854,
+      "countColumnRight": 854,
+      "hits": {
+        "header": "button.cds-sort:Changes",
+        "cell": "td.sp-col-count:1"
+      }
+    },
+    "note": "",
+    "files": [
+      "02-ruling-1920-light.png"
+    ]
+  },
+  {
+    "step": "3 no-primary",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "onRecord": {
+        "primaries": 0,
+        "focusableInHeader": 0,
+        "primaryText": null,
+        "primaryRight": null,
+        "primaryTop": null,
+        "subtitle": "People, departments, zones and publish history."
+      },
+      "tabChain": [
+        {
+          "desc": "div[region]:Management",
+          "isTab": false,
+          "inPageHeader": false
+        },
+        {
+          "desc": "button[tab]:Publish history",
+          "isTab": true,
+          "inPageHeader": false
+        }
+      ],
+      "afterMarker": "div[region]:Management → button[tab]:Publish history",
+      "onEmployees": {
+        "primaries": 1,
+        "focusableInHeader": 1,
+        "primaryText": "Add employee",
+        "primaryRight": 1720,
+        "primaryTop": 94,
+        "subtitle": "People, departments, zones and publish history."
+      },
+      "onZones": {
+        "primaries": 1,
+        "focusableInHeader": 1,
+        "primaryText": "Add zone",
+        "primaryRight": 1720,
+        "primaryTop": 94,
+        "subtitle": "People, departments, zones and publish history."
+      }
+    },
+    "note": "",
+    "files": [
+      "03-no-primary-light.png",
+      "03-primary-returns-light.png"
+    ]
+  },
+  {
+    "step": "4 sorting",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "firstBefore": {
+        "when": "Sep 8, 2026, 2:12 PM",
+        "who": "an admin",
+        "count": "1",
+        "what": "1 status change"
+      },
+      "firstDesc": {
+        "when": "Aug 28, 2026, 7:25 AM",
+        "who": "e2e-admin@example.test",
+        "count": "41",
+        "what": "2 seats added · 14 assignments changed · 18 seats moved · 1 status change · 6 employee edits"
+      },
+      "page1Min": 2,
+      "page2Max": 2,
+      "firstAsc": {
+        "when": "Sep 8, 2026, 2:12 PM",
+        "who": "an admin",
+        "count": "1",
+        "what": "1 status change"
+      },
+      "firstByDate": {
+        "when": "Sep 8, 2026, 2:12 PM",
+        "who": "an admin",
+        "count": "1",
+        "what": "1 status change"
+      }
+    },
+    "note": "",
+    "files": [
+      "04-sorted-changes-light.png"
+    ]
+  },
+  {
+    "step": "5 pagination",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "p1": {
+        "range": "1–25 of 30",
+        "first": "Sep 8, 2026, 2:12 PM",
+        "count": "30 publishes · most recent Sep 8, 2026, 2:12 PM"
+      },
+      "p2": {
+        "range": "26–30 of 30",
+        "first": "Aug 13, 2026, 10:47 PM",
+        "count": "30 publishes · most recent Sep 8, 2026, 2:12 PM"
+      },
+      "prevDisabled1": true,
+      "nextDisabled2": true,
+      "prevDisabled2": false
+    },
+    "note": "",
+    "files": [
+      "05-page-2-light.png"
+    ]
+  },
+  {
+    "step": "6 error-isolated",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "logActionId": "006f431655cf…",
+      "alert": "Publish history couldn't loadThe rest of Management still works. The published map is unaffected.Retry",
+      "indicator": "Draft — no changes",
+      "retryHit": "button.cds-btn.cds-btn--ghost:Retry",
+      "recoveredRows": 25,
+      "recoveredRange": "1–25 of 30"
+    },
+    "note": "",
+    "files": [
+      "06-error-isolated-light.png"
+    ]
+  },
+  {
+    "step": "7a empty",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "heading": "Nothing published yet",
+      "buttons": 0,
+      "count": "No publishes yet",
+      "hasPagination": false
+    },
+    "note": "",
+    "files": [
+      "07a-empty-light.png"
+    ]
+  },
+  {
+    "step": "7b loading",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "skeletonRows": 4,
+      "headers": [
+        "Published",
+        "Published by",
+        "Changes",
+        "What changed"
+      ],
+      "count": "Loading publish history…"
+    },
+    "note": "",
+    "files": [
+      "07b-loading-light.png"
+    ]
+  },
+  {
+    "step": "8 panel-untouched",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "first": {
+        "segments": [
+          "Published",
+          "Draft"
+        ],
+        "status": "Draft matches the published map",
+        "events": 10,
+        "showMore": [
+          "Show more"
+        ],
+        "caption": null,
+        "eventLines": 3
+      },
+      "after": {
+        "events": 25,
+        "caption": "Showing the 25 most recent publishes.",
+        "showMore": []
+      }
+    },
+    "note": "",
+    "files": [
+      "08-panel-10-light.png",
+      "08-panel-25-light.png"
+    ]
+  },
+  {
+    "step": "9 deeplink-veto",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "landed": "true",
+      "directoryRows": 0,
+      "guarded": {
+        "open": true,
+        "text": "Seat C01 · Center DesksUnsaved seat editsSave or discard changes to C01 before opening Management.Keep editingDiscardSav",
+        "path": "/admin"
+      }
+    },
+    "note": "",
+    "files": [
+      "09-veto-light.png"
+    ]
+  },
+  {
+    "step": "10 sweep",
+    "theme": "light",
+    "ok": true,
+    "values": {
+      "sheetIdentical": true,
+      "primaryBg": "rgb(184, 92, 46)",
+      "primaryHoverBg": "rgb(143, 69, 33)",
+      "selectedTabBar": "rgb(184, 92, 46) 0px -2px 0px 0px inset",
+      "navCurrentBar": "rgb(184, 92, 46) 0px -3px 0px 0px inset",
+      "focusToken": "#b85c2e",
+      "linkToken": "#8f4521",
+      "focusRing": {
+        "label": "Published",
+        "color": "rgb(184, 92, 46)",
+        "width": "2px",
+        "focusVisible": true
+      },
+      "consoleTotal": 74,
+      "rigInduced": 6,
+      "unknownConsole": []
+    },
+    "note": "",
+    "files": [
+      "10-sweep-light.png"
+    ]
+  },
+  {
+    "step": "1 narrow-1024",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "widths": [
+        {
+          "label": "Published",
+          "className": "sp-col-when",
+          "ariaSort": "descending",
+          "width": 195,
+          "right": 227,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "Published by",
+          "className": "sp-col-who",
+          "ariaSort": null,
+          "width": 207,
+          "right": 433,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "Changes",
+          "className": "sp-col-count",
+          "ariaSort": null,
+          "width": 122,
+          "right": 555,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "What changed",
+          "className": "(sentence)",
+          "ariaSort": null,
+          "width": 693,
+          "right": 1248,
+          "clipped": false,
+          "innerClipped": false
+        }
+      ],
+      "tableWidth": 1216,
+      "scroller": {
+        "scrolls": true,
+        "overflowX": "auto"
+      },
+      "docScrolls": false,
+      "hits": {
+        "header": "button.cds-sort:Changes",
+        "cell": "td.sp-col-count:1"
+      },
+      "align": {
+        "cellAlign": "right",
+        "cellNumeric": "tabular-nums",
+        "headerJustify": "flex-end"
+      }
+    },
+    "note": "",
+    "files": [
+      "01-narrow-1024-dark.png"
+    ]
+  },
+  {
+    "step": "2 ruling-1920",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "widths": [
+        {
+          "label": "Published",
+          "className": "sp-col-when",
+          "ariaSort": "descending",
+          "width": 243,
+          "right": 443,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "Published by",
+          "className": "sp-col-who",
+          "ariaSort": null,
+          "width": 258,
+          "right": 702,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "Changes",
+          "className": "sp-col-count",
+          "ariaSort": null,
+          "width": 152,
+          "right": 854,
+          "clipped": false,
+          "innerClipped": false
+        },
+        {
+          "label": "What changed",
+          "className": "(sentence)",
+          "ariaSort": null,
+          "width": 866,
+          "right": 1720,
+          "clipped": false,
+          "innerClipped": false
+        }
+      ],
+      "tableWidth": 1520,
+      "sortButtonRight": 854,
+      "countColumnRight": 854,
+      "hits": {
+        "header": "button.cds-sort:Changes",
+        "cell": "td.sp-col-count:1"
+      }
+    },
+    "note": "",
+    "files": [
+      "02-ruling-1920-dark.png"
+    ]
+  },
+  {
+    "step": "3 no-primary",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "onRecord": {
+        "primaries": 0,
+        "focusableInHeader": 0,
+        "primaryText": null,
+        "primaryRight": null,
+        "primaryTop": null,
+        "subtitle": "People, departments, zones and publish history."
+      },
+      "tabChain": [
+        {
+          "desc": "div[region]:Management",
+          "isTab": false,
+          "inPageHeader": false
+        },
+        {
+          "desc": "button[tab]:Publish history",
+          "isTab": true,
+          "inPageHeader": false
+        }
+      ],
+      "afterMarker": "div[region]:Management → button[tab]:Publish history",
+      "onEmployees": {
+        "primaries": 1,
+        "focusableInHeader": 1,
+        "primaryText": "Add employee",
+        "primaryRight": 1720,
+        "primaryTop": 94,
+        "subtitle": "People, departments, zones and publish history."
+      },
+      "onZones": {
+        "primaries": 1,
+        "focusableInHeader": 1,
+        "primaryText": "Add zone",
+        "primaryRight": 1720,
+        "primaryTop": 94,
+        "subtitle": "People, departments, zones and publish history."
+      }
+    },
+    "note": "",
+    "files": [
+      "03-no-primary-dark.png",
+      "03-primary-returns-dark.png"
+    ]
+  },
+  {
+    "step": "4 sorting",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "firstBefore": {
+        "when": "Sep 8, 2026, 2:12 PM",
+        "who": "an admin",
+        "count": "1",
+        "what": "1 status change"
+      },
+      "firstDesc": {
+        "when": "Aug 28, 2026, 7:25 AM",
+        "who": "e2e-admin@example.test",
+        "count": "41",
+        "what": "2 seats added · 14 assignments changed · 18 seats moved · 1 status change · 6 employee edits"
+      },
+      "page1Min": 2,
+      "page2Max": 2,
+      "firstAsc": {
+        "when": "Sep 8, 2026, 2:12 PM",
+        "who": "an admin",
+        "count": "1",
+        "what": "1 status change"
+      },
+      "firstByDate": {
+        "when": "Sep 8, 2026, 2:12 PM",
+        "who": "an admin",
+        "count": "1",
+        "what": "1 status change"
+      }
+    },
+    "note": "",
+    "files": [
+      "04-sorted-changes-dark.png"
+    ]
+  },
+  {
+    "step": "5 pagination",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "p1": {
+        "range": "1–25 of 30",
+        "first": "Sep 8, 2026, 2:12 PM",
+        "count": "30 publishes · most recent Sep 8, 2026, 2:12 PM"
+      },
+      "p2": {
+        "range": "26–30 of 30",
+        "first": "Aug 13, 2026, 10:47 PM",
+        "count": "30 publishes · most recent Sep 8, 2026, 2:12 PM"
+      },
+      "prevDisabled1": true,
+      "nextDisabled2": true,
+      "prevDisabled2": false
+    },
+    "note": "",
+    "files": [
+      "05-page-2-dark.png"
+    ]
+  },
+  {
+    "step": "6 error-isolated",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "logActionId": "006f431655cf…",
+      "alert": "Publish history couldn't loadThe rest of Management still works. The published map is unaffected.Retry",
+      "indicator": "Draft — no changes",
+      "retryHit": "button.cds-btn.cds-btn--ghost:Retry",
+      "recoveredRows": 25,
+      "recoveredRange": "1–25 of 30"
+    },
+    "note": "",
+    "files": [
+      "06-error-isolated-dark.png"
+    ]
+  },
+  {
+    "step": "7a empty",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "heading": "Nothing published yet",
+      "buttons": 0,
+      "count": "No publishes yet",
+      "hasPagination": false
+    },
+    "note": "",
+    "files": [
+      "07a-empty-dark.png"
+    ]
+  },
+  {
+    "step": "7b loading",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "skeletonRows": 4,
+      "headers": [
+        "Published",
+        "Published by",
+        "Changes",
+        "What changed"
+      ],
+      "count": "Loading publish history…"
+    },
+    "note": "",
+    "files": [
+      "07b-loading-dark.png"
+    ]
+  },
+  {
+    "step": "8 panel-untouched",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "first": {
+        "segments": [
+          "Published",
+          "Draft"
+        ],
+        "status": "Draft matches the published map",
+        "events": 10,
+        "showMore": [
+          "Show more"
+        ],
+        "caption": null,
+        "eventLines": 3
+      },
+      "after": {
+        "events": 25,
+        "caption": "Showing the 25 most recent publishes.",
+        "showMore": []
+      }
+    },
+    "note": "",
+    "files": [
+      "08-panel-10-dark.png",
+      "08-panel-25-dark.png"
+    ]
+  },
+  {
+    "step": "9 deeplink-veto",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "landed": "true",
+      "directoryRows": 0,
+      "guarded": {
+        "open": true,
+        "text": "Seat C01 · Center DesksUnsaved seat editsSave or discard changes to C01 before opening Management.Keep editingDiscardSav",
+        "path": "/admin"
+      }
+    },
+    "note": "",
+    "files": [
+      "09-veto-dark.png"
+    ]
+  },
+  {
+    "step": "10 sweep",
+    "theme": "dark",
+    "ok": true,
+    "values": {
+      "sheetIdentical": true,
+      "primaryBg": "rgb(184, 92, 46)",
+      "primaryHoverBg": "rgb(143, 69, 33)",
+      "selectedTabBar": "rgb(184, 92, 46) 0px -2px 0px 0px inset",
+      "navCurrentBar": "rgb(184, 92, 46) 0px -3px 0px 0px inset",
+      "focusToken": "#b85c2e",
+      "linkToken": "#e8a07a",
+      "focusRing": {
+        "label": "Published",
+        "color": "rgb(184, 92, 46)",
+        "width": "2px",
+        "focusVisible": true
+      },
+      "consoleTotal": 74,
+      "rigInduced": 6,
+      "unknownConsole": []
+    },
+    "note": "",
+    "files": [
+      "10-sweep-dark.png"
+    ]
+  }
+]

@@ -25,6 +25,7 @@ const ACTION_EXPORTS = [
   "resetDraftToPublishedAction",
   "restoreDraftSnapshotAction",
   "getPublishHistoryAction",
+  "getPublishLogAction",
   "getDraftStatusAction",
   "askPlannerAction",
   "createEmployeeAction",

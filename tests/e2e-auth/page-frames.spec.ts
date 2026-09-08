@@ -91,6 +91,54 @@ test.describe("Management frame", () => {
       await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? "")).toBe("admin-subpage-main");
     });
   }
+
+  // Phase 5 PR 1: the fourth tab is the RECORD. Its invariants hold whatever
+  // the seeded log contains — four tabs, a header action area that is EMPTY
+  // (owner ruling R1: a record has nothing to create), a count published at
+  // zero, and no sideways document scroll at any frame.
+  for (const [width, height] of WIDTHS) {
+    test(`${width}×${height}: the publish history tab is a record — four tabs, NO primary, a live count`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto("/admin/management?tab=publishHistory");
+
+      // The Phase 4 redirect that landed this legacy link on Employees is gone.
+      const tablist = page.getByRole("navigation", { name: "Management sections" }).getByRole("tablist");
+      await expect(tablist.getByRole("tab")).toHaveCount(4);
+      await expect(page.getByRole("tab", { name: "Publish history" })).toHaveAttribute("aria-selected", "true");
+
+      // The first tab whose header action area is empty. Not a disabled
+      // button — there is no action to enable (D5-a amendment, 2026-09-08).
+      await expect(page.locator(".sp-page .cds-page-header .cds-btn--primary")).toHaveCount(0);
+      await expect(page.locator(".sp-page .cds-page-subtitle")).toHaveText("People, departments, zones and publish history.");
+
+      // The log is read on mount; wait for the fetch to settle before reading
+      // anything else off the tab.
+      const count = page.locator(".sp-log .cds-toolbar-count");
+      await expect(count).not.toHaveText("Loading publish history…", { timeout: 15_000 });
+      await expect(count).not.toHaveText("Publish history unavailable");
+
+      const rows = page.locator(".sp-log tbody tr");
+      if ((await rows.count()) > 0) {
+        // Real headers, the four columns, and pagination instead of D0-g's cap.
+        await expect(page.locator(".sp-log thead th")).toHaveCount(4);
+        await expect(page.locator(".sp-log th.sp-col-when")).toHaveAttribute("aria-sort", "descending");
+        await expect(page.locator(".sp-log .cds-pagination")).toBeVisible();
+        await expect(page.locator(".sp-log .cds-range")).not.toBeEmpty();
+        // seat_count is the map size at publish: no column may be named for it.
+        await expect(page.locator(".sp-log thead")).not.toContainText("Seats");
+        await expect(count).toContainText("most recent");
+      } else {
+        await expect(page.getByRole("heading", { name: "Nothing published yet" })).toBeVisible();
+        await expect(count).toHaveText("No publishes yet");
+      }
+
+      await expectNoHorizontalScroll(page, `publish history ${width}`);
+
+      // Back to a tab that creates: the primary returns to its permanent slot.
+      await page.getByRole("tab", { name: "Employees" }).click();
+      await expect(page.locator(".sp-page .cds-page-header .cds-btn--primary")).toHaveText("Add employee");
+    });
+  }
 });
 
 test.describe("Settings frame", () => {

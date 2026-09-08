@@ -7,7 +7,22 @@
 // focus the inset ring). Tabs: `<nav aria-label="Management sections">` is
 // the navigation landmark (PHASE2UX §1G.6); inside it `ul[role=tablist]` of
 // `li > button[role=tab]`; ← → Home End move AND select; Tab leaves into the
-// tabpanel. Publish History is gone (D5): the History panel owns it.
+// tabpanel.
+//
+// Publish history came BACK as a fourth tab (Phase 5 PR 1; the dated D0-a and
+// D5 amendments, 2026-09-08). D0-a bundled two jobs under "publish events":
+// orientation — which mode am I in, what is unpublished, when did this last go
+// live — which the History panel still owns unchanged, and the RECORD, a
+// scanning task on a data set that a 320px panel serves badly. The record is a
+// page again.
+//
+// That tab carries NO primary (owner ruling R1, 2026-09-08 — the dated D5-a
+// amendment): D5-a promised the primary "never changes position, only its
+// verb", and here it changes PRESENCE, because a record has nothing to create.
+// Zero primaries is allowed on this page header (PHASE2UX §3; Reception ships
+// one). Rejected: a Publish primary pointing at /admin — publish lives on the
+// map, and a second entry point to it is exactly the confusion the map's one
+// primary avoids; and an Export CSV primary — a new feature nobody asked for.
 //
 // Sticky offset: the sheet's `.sp-tabs-host { top: var(--sp-shell-header-h) }`
 // assumes a scrolling document. In the shell the content pane is the scroll
@@ -18,12 +33,15 @@
 
 import type { KeyboardEvent, ReactNode } from "react";
 
-export type ManagementTab = "employees" | "departments" | "zones";
+export type ManagementTab = "employees" | "departments" | "zones" | "publishHistory";
 
-export const MANAGEMENT_TABS: Array<{ id: ManagementTab; label: string; primary: string }> = [
+/** `primary: null` = this tab has nothing to create, so the header's action
+ *  area is empty (R1). Not a disabled button: there is no action to enable. */
+export const MANAGEMENT_TABS: Array<{ id: ManagementTab; label: string; primary: string | null }> = [
   { id: "employees", label: "Employees", primary: "Add employee" },
   { id: "departments", label: "Departments", primary: "Add department" },
-  { id: "zones", label: "Zones", primary: "Add zone" }
+  { id: "zones", label: "Zones", primary: "Add zone" },
+  { id: "publishHistory", label: "Publish history", primary: null }
 ];
 
 export function tabPanelId(tab: ManagementTab) {
@@ -68,13 +86,15 @@ export function ManagementFrame({
       <div className="cds-page-header">
         <div>
           <h1 className="cds-page-title">Management</h1>
-          <p className="cds-page-subtitle">People, departments and zones.</p>
+          <p className="cds-page-subtitle">People, departments, zones and publish history.</p>
         </div>
-        <div className="sp-page-actions">
-          <button type="button" className="cds-btn cds-btn--primary cds-btn--md" onClick={onPrimary} disabled={primaryDisabled}>
-            {current.primary}
-          </button>
-        </div>
+        {current.primary === null ? null : (
+          <div className="sp-page-actions">
+            <button type="button" className="cds-btn cds-btn--primary cds-btn--md" onClick={onPrimary} disabled={primaryDisabled}>
+              {current.primary}
+            </button>
+          </div>
+        )}
       </div>
 
       <nav aria-label="Management sections" className="sp-tabs-host lg:[--sp-shell-header-h:0px]">

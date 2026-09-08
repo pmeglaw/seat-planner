@@ -17,6 +17,7 @@ export const deleteEmployeeAction = disabled("deleteEmployeeAction");
 export const deleteSeatAction = disabled("deleteSeatAction");
 export const deleteZoneAction = disabled("deleteZoneAction");
 export const getPublishHistoryAction = disabled("getPublishHistoryAction");
+export const getPublishLogAction = disabled("getPublishLogAction");
 export const importAssignmentsCsvAction = disabled("importAssignmentsCsvAction");
 export const publishSeatMapAction = disabled("publishSeatMapAction");
 export const renameDepartmentAction = disabled("renameDepartmentAction");

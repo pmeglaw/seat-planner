@@ -644,6 +644,30 @@ the per-breakpoint design mandate is withdrawn. Reopens on first laptop use. (PH
 - **Skip-link copy (2026-09-04):** the shipped per-route labels stay (PHASE2UX §1.7 amendment; PHASE4BUILD §1.10).
 - **`getDraftStatusAction` (2026-09-04):** the one sanctioned new server action — read-only, admin-only, no RPC / migration / revalidatePath (PHASE4BUILD §1.9).
 
+### D0 — Phase 5 amendment (2026-09-08, PR 1; owner ruling — an amendment, not a deviation)
+
+#### D0-a′ · The History panel keeps the glance; the record returns to a page
+*Built Phase 5 PR 1 (2026-09-08): `PublishLogTable` on Management's fourth tab. The panel is untouched — `ShellPanels.tsx` and `getPublishHistoryAction` have an empty diff.*
+**Problem.** D0-a bundled two jobs under "publish events" and gave them one home. **Orientation** — which mode
+am I in, what is unpublished, when did this last go live — is glanced at from the map beside the mode switch,
+and the panel serves it well. **The record** — what went out over months, who published it, which publish moved
+the west pod — is a scanning task on a data set, and the panel serves it badly. Its own spec is the evidence
+(PHASE2UX §1.4): the list caps at 25 with a caption saying so, the events are "static rows, not links", and the
+date and the person had to go on separate lines because together they "would wrap unevenly at any panel width".
+D0-g wrote the trigger itself: *"Would change if anyone asks for a publish older than the 25th — then the log
+becomes a Management tab with pagination."*
+**Choice.** Both, each where it belongs. The panel keeps the mode switch, the status line and the ten newest
+publishes with its one **Show more** to the 25 cap — unchanged, including its `getPublishHistoryAction(limit)`
+call. The record becomes a fourth Management tab: the whole log, sortable, paginated, no cap. **No drill-in** —
+opening a publish to see its seat-level diff needs a container and a stored per-publish diff the schema does not
+keep; that is a separate, larger slice.
+**Trade-off.** The same facts now have two surfaces, and a reader could ask which is authoritative. Accepted:
+they answer different questions and are visibly different shapes (three-line events in a 320px dark panel; a
+four-column table on the 1584 live area), and both read the same rows through the same formatter.
+**Would change if** the panel's recent list starts being used as a record — then it loses the list and keeps
+only the switch and the status line.
+
+
 ---
 
 ### D1 — Map (`/`, viewer)
@@ -1294,6 +1318,56 @@ action the shipped body-only variant lacks; the route error keeps its own admin 
 rows under real column headers.
 
 *Built PR 4 + PR 5 (2026-09-05 / 07): the 403 card with its action (PR 4), the route cards on `.sp-route-card` (PR 5, PHASE3DS §1.29), skeleton rows under real headers.*
+
+##### D5 — Phase 5 amendment (2026-09-08, PR 1; owner rulings R1–R3 from rendered mockups)
+
+**D5-e · The `publishHistory` tab returns, and it is the first tab with NO primary.**
+*Built Phase 5 PR 1 (2026-09-08): `MANAGEMENT_TABS` gains `{ id: "publishHistory", label: "Publish history", primary: null }`; `PublishLogTable`; the Phase 4 redirect retires with the tab id.*
+
+D5 removed the tab because "history lives in the History panel (D0-a)". D0-a′ above splits that: the panel keeps
+the glance, the record comes back here. `/admin/management?tab=publishHistory` is a real tab again, so the
+redirect that landed the legacy link on Employees (`app/(shell)/admin/management/page.tsx`) retires with it.
+
+**R1 — the header action area is empty on this tab (owner, 2026-09-08).** D5-a promised the primary "never
+changes position, only its verb". On the record tab it changes **presence**: a record has nothing to create, so
+the header's right side is empty. That sentence is the amendment. It is expressible in the system — PHASE2UX §3
+lists a page header with title + subtitle and no action as an existing shape, and D3-a ships Reception with no
+primary — but it is a departure from D5-a's symmetry, so it is recorded here. Not a **disabled** primary: a
+disabled control promises an action that would exist under some condition, and none does.
+*Rejected:* a **Publish** primary pointing at `/admin` — publish lives on the map, and a second entry point to
+it is exactly the confusion the map's one primary avoids; and an **Export CSV** primary — a new feature nobody
+asked for, and out of this slice's scope.
+
+**R2 — the subtitle becomes "People, departments, zones and publish history."** It enumerates the four tabs in
+tab order and stays tab-invariant: the subtitle describes the page, and one that followed the tab would also
+have to be guessed by `loading.tsx`, which renders before the tab is known.
+
+**R3 — one sortable Changes column, the sum of all nine `CHANGE_SUMMARY_BUCKETS`.** Right-aligned tabular, and
+"—" when the summary is unreadable — the same cases `formatPublishChangeSummary` returns null for, so the number
+and the sentence never disagree about what "unreadable" means. `seat_count` is the map SIZE at publish, never a
+delta: **there is no Seats column**, and the number survives only inside `Initial publish · N seats`, on the one
+kind of row that has no summary. The column earns its place because `.cds-table` cells truncate
+(`white-space: nowrap; text-overflow: ellipsis`) and §1G.5's overflow rule for this page is "truncate with
+`title`" — so the sentence ellipses on exactly the rows with the most changes, and the count is the part of the
+magnitude that cannot.
+
+**The coupling the owner accepted with R3.** A sortable sum of nine jsonb keys cannot be ordered by PostgREST
+without a generated column, view or RPC — a migration, out of scope — and a Changes sort that only ranks the
+visible page cannot answer "find the large publishes", which is its only purpose. So the tab holds the whole log
+and sorts it client-side, through a second read-only action (`getPublishLogAction`, paged internally by
+`fetchAllRows`) rather than a widening of `getPublishHistoryAction`, whose diff stays empty.
+**Would change if** the log passes ~5,000 events — then it returns to server-side paging and the Changes sort is
+re-ruled. The tab's own count line reads the whole log through `getPublishLogAction`, so it **is** the row count
+and now reports it continuously; `select count(*) from public.publish_events` stays the out-of-band check, no
+longer the only instrument. **Standing measurement: 44 events on 2026-09-08** (preview walk, most recent
+Aug 31, 2026) — two orders of magnitude under the ceiling.
+
+**Confirmed, not a deviation (2026-09-08):** PHASE4BUILD §1.9's "the ONE sanctioned new server action" was
+scoped to the Phase 4 build. `getPublishLogAction` keeps that same contract — read-only, admin-only, no RPC, no
+migration, no `revalidatePath` — and must stay declared AFTER `getPublishHistoryAction`, because
+`restore-draft-snapshot-transaction-safety` and `seat-creation-ui-source` both match the source span ending at
+that export.
+
 
 #### D6 · Settings
 *Built PR 4 (2026-09-05): `DataUtilitiesPanel` draft-only — CSV import, snapshot export / restore; Reset draft gone (P2-8).*
