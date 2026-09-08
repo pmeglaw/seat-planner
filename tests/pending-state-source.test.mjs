@@ -42,7 +42,10 @@ const OPTION_CREATE = "components/admin-management/OptionCreateModal.tsx";
 const CSV_SHEET = "components/admin-settings/CsvImportSheet.tsx";
 const SNAPSHOT_SHEET = "components/admin-settings/SnapshotRestoreSheet.tsx";
 const SETTINGS = "components/admin-settings/DataUtilitiesPanel.tsx";
-const BUTTON = "components/ui/Button.tsx";
+// PR 6: the Tailwind `Button.tsx` primitive retired (no importer since PR 5b);
+// the loading contract lives on the design-system Button every remaining
+// consumer (LoginForm, SeatMap, the palette, the viewer) renders.
+const BUTTON = "components/ui/design-system.tsx";
 
 // Each entry: which file must carry which pending-state tokens. `patterns`
 // are matched against the file's full source.
@@ -240,9 +243,10 @@ test("SeatMap, Management, and Settings each mount the shared sr-only in-flight 
 
 test("Button loading prop disables, marks aria-busy, and renders the leading spinner", () => {
   const source = read(BUTTON);
-  assert.match(source, /disabled=\{disabled \|\| loading\}/);
+  assert.match(source, /const isDisabled = disabled \|\| loading;[\s\S]{0,400}?disabled=\{isDisabled\}/);
   assert.match(source, /aria-busy=\{loading \? "true" : undefined\}/);
-  assert.match(source, /loading \? \([\s\S]{0,300}?motion-safe:animate-spin/);
+  assert.match(source, /loading \? <span className=\{loadingSpinnerClass\} aria-hidden="true" \/>/);
+  assert.match(source, /loadingSpinnerClass =[\s\S]{0,200}?motion-safe:animate-spin/);
 });
 
 // ---------------------------------------------------------------------------
