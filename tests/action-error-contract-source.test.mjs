@@ -55,8 +55,12 @@ test("deleteEmployeeAction returns the database's refusal instead of throwing", 
   // shows the returned message with the "Open <seat> on the map" link.
   const source = await readSource("../app/actions.ts");
   const slice = actionSlice(source, "deleteEmployeeAction");
-  assert.doesNotMatch(slice, /throw new Error/, "deleteEmployeeAction must not throw the RPC's refusal — production digest-strips it.");
-  assert.match(slice, /code: "REFUSED", message: error\.message/);
+  // Phase 4 PR 6 (finding F-2): the refusal is recognised by the guard's own
+  // SQLSTATE and returned; any OTHER error is not a refusal and is thrown like
+  // every sibling action — so the returned arm must be guarded, never bare.
+  assert.match(slice, /if \(error && isPublishedEmployeeRefusal\(error\)\) return \{ ok: false, code: "REFUSED", message: error\.message \};/);
+  assert.doesNotMatch(slice, /if \(error\) return \{ ok: false, code: "REFUSED"/, "a bare `if (error)` would render transport failures as refusals");
+  assert.match(source, /from "@\/lib\/actionRefusals"/);
   assert.match(slice, /ok:\s*true/);
 });
 

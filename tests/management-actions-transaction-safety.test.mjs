@@ -3,11 +3,13 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 // 20260702100000 re-issues all five management RPCs (department matchers became
-// case-insensitive for audit finding E1) and therefore holds the live definitions.
-const migrationSql = await readFile(
-  new URL("../supabase/migrations/20260702100000_department_integrity_normalization.sql", import.meta.url),
-  "utf8"
-);
+// case-insensitive for audit finding E1); 20260908120000 (Phase 4 PR 6)
+// re-creates deactivate_employee verbatim with a SQLSTATE on its refusal and
+// therefore holds THAT live definition — later file first, so the extractor
+// finds the newest definition of each function.
+const migrationSql =
+  (await readFile(new URL("../supabase/migrations/20260908120000_deactivate_employee_sqlstate.sql", import.meta.url), "utf8")) +
+  (await readFile(new URL("../supabase/migrations/20260702100000_department_integrity_normalization.sql", import.meta.url), "utf8"));
 const actionsSource = await readFile(new URL("../app/actions.ts", import.meta.url), "utf8");
 
 const rpcContracts = [
@@ -63,6 +65,9 @@ test("employee deactivation keeps published assignments protected before mutatio
   assert.notEqual(publishedCheckIndex, -1, "employee deactivation should check the published map");
   assert.ok(publishedCheckIndex < firstMutationIndex, "published-map guard should run before any mutation");
   assert.match(deactivateEmployeeSql, /This employee is still on the published map at %\. Remove them from draft and publish before deleting\./);
+  // Phase 4 PR 6: the refusal carries its own SQLSTATE, the one the action
+  // keys on (lib/actionRefusals PUBLISHED_EMPLOYEE_SQLSTATE).
+  assert.match(deactivateEmployeeSql, /publish before deleting\.', published_label\s+using errcode = 'MLS03';/);
 
   const seatUpdates = deactivateEmployeeSql.match(/update public\.seats[\s\S]+?;/g) ?? [];
   assert.equal(seatUpdates.length, 1);
