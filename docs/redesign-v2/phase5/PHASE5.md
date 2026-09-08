@@ -10,7 +10,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 
 | Slice | What | Tag | State |
 |---|---|---|---|
-| PR 1 | The publish-history record surface returns to Management as a fourth tab | v2.1.0 | built 2026-09-08 |
+| PR 1 | The publish-history record surface returns to Management as a fourth tab | v2.1.0 | **merged 2026-09-08** — #525 squashed as `524c087`, tagged `v2.1.0`, production READY at that SHA |
 
 ---
 
