@@ -26,6 +26,22 @@ const FOCUSABLE_SELECTOR = [
 // - Close: focus is handed back to the opener. Any focus set later by the
 //   closing flow (e.g. focusSeatMarker, the drawer's own restore) wins,
 //   because it runs after this restore.
+/** The dialog's first visible, enabled control in DOM order — null when
+ *  nothing inside is focusable (every control disabled while busy). */
+export function firstVisibleControl(node: HTMLElement): HTMLElement | null {
+  return (
+    Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).find(element => element.getClientRects().length > 0) ??
+    null
+  );
+}
+
+/** Land focus on the first visible enabled control, else on the container —
+ *  the one definition the open path and CarbonModal's busy → idle refocus
+ *  (Phase 4 PR 6) share. */
+export function focusFirstControl(node: HTMLElement) {
+  (firstVisibleControl(node) ?? node).focus();
+}
+
 export function useDialogFocus<T extends HTMLElement = HTMLElement>() {
   const restoreTargetRef = useRef<HTMLElement | null>(null);
   const detachTrapRef = useRef<(() => void) | null>(null);
@@ -33,9 +49,7 @@ export function useDialogFocus<T extends HTMLElement = HTMLElement>() {
   return useCallback((node: T | null) => {
     if (node) {
       restoreTargetRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      const firstControl = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
-        .find(element => element.getClientRects().length > 0);
-      (firstControl ?? node).focus();
+      focusFirstControl(node);
 
       const trapTab = (event: KeyboardEvent) => {
         if (event.key !== "Tab") return;

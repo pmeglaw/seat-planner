@@ -18,9 +18,24 @@
 // (25 / 25 / 50 — sheet amendment F, PHASE3DS §1.24) and exists for the one
 // modal that carries two secondaries: the inspector's unsaved-edits guard.
 // No ×, no danger variant on the host — the danger lives on the primary.
+//
+// Phase 4 PR 6 (owner ruling on the 5b R-5 finding): the host owns the
+// busy ⇄ idle focus seam for every consumer. `busy` flips TRUE → Chrome drops
+// focus from a primary that disables under the pointer, leaving
+// document.activeElement on <body> outside the Tab trap; the section takes
+// it (the trap's anchor, as on a busy mount). `busy` flips FALSE → a dialog
+// that mounted busy (the inspector's move-conflict) or went busy with focus on
+// the section is left on an invisibly-focused container; the first visible
+// enabled control takes it — but only if focus still sits on the section,
+// <body>, or outside the dialog, so a consumer that lands focus on its error
+// alert (an effect on the settle, or a rAF queued when the error was set)
+// always wins, and never on a section that has left the document (a dialog
+// unmounting on success flips busy false as it leaves, while useDialogFocus is
+// restoring the opener — tests/dialog-initial-focus.test.mjs pins all three).
 
 import type { ReactNode } from "react";
-import { useDialogFocus } from "@/components/ui/useDialogFocus";
+import { useCallback, useEffect, useRef } from "react";
+import { focusFirstControl, useDialogFocus } from "@/components/ui/useDialogFocus";
 
 export function CarbonModal({
   titleId,
@@ -52,13 +67,44 @@ export function CarbonModal({
   footer: ReactNode;
 }) {
   const dialogFocusRef = useDialogFocus<HTMLElement>();
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const setSectionRef = useCallback(
+    (node: HTMLElement | null) => {
+      sectionRef.current = node;
+      dialogFocusRef(node);
+    },
+    [dialogFocusRef]
+  );
+  const wasBusyRef = useRef(busy);
+  useEffect(() => {
+    const node = sectionRef.current;
+    const wasBusy = wasBusyRef.current;
+    wasBusyRef.current = busy;
+    if (!node || wasBusy === busy) return;
+    const active = document.activeElement;
+    const activeInside = active instanceof HTMLElement && active !== node && node.contains(active);
+    if (busy) {
+      // Focus already dropped (body / outside), or sits on a control that has
+      // just disabled and is about to drop: anchor the trap on the section.
+      const onDisabledControl = activeInside && (active as HTMLButtonElement).disabled === true;
+      if (!activeInside || onDisabledControl) node.focus();
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      if (!node.isConnected) return;
+      const now = document.activeElement;
+      if (now instanceof HTMLElement && now !== node && node.contains(now)) return;
+      focusFirstControl(node);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [busy]);
   return (
     <div data-modal="">
       {/* The overlay is inert; mousedown is cancelled so a pointer on it never
           pulls focus out of the trap (PR 4 smoke, step 10). */}
       <div className="cds-modal-overlay" onMouseDown={event => event.preventDefault()}>
         <section
-          ref={dialogFocusRef}
+          ref={setSectionRef}
           tabIndex={-1}
           role={role}
           aria-modal="true"
