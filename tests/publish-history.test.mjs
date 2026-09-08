@@ -321,6 +321,19 @@ test("sortPublishEvents breaks every tie with newest-first", () => {
   );
 });
 
+test("sortPublishEvents breaks a same-person tie with newest-first too", () => {
+  const events = [
+    logEvent("2026-09-01T10:00:00.000Z", { seats_added: 1 }, "sam@example.com"),
+    logEvent("2026-09-04T10:00:00.000Z", { seats_added: 2 }, "sam@example.com"),
+    logEvent("2026-09-02T10:00:00.000Z", { seats_added: 3 }, "sam@example.com")
+  ];
+
+  assert.deepEqual(
+    publishHistory.sortPublishEvents(events, "who", "asc").map(event => event.created_at),
+    ["2026-09-04T10:00:00.000Z", "2026-09-02T10:00:00.000Z", "2026-09-01T10:00:00.000Z"]
+  );
+});
+
 test("sortPublishEvents orders people by the displayed label, case-insensitively", () => {
   const events = [
     logEvent("2026-09-01T10:00:00.000Z", {}, "Zoe@example.com"),

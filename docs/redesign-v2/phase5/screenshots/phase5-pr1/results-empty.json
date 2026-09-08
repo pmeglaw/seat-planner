@@ -1,0 +1,41 @@
+{
+  "base": "http://localhost:3300",
+  "when": "2026-09-08T21:23:34.998Z",
+  "results": [
+    {
+      "name": "sign-in",
+      "ok": true,
+      "detail": "seeded local admin"
+    },
+    {
+      "name": "empty light: the count is published at zero",
+      "ok": true,
+      "detail": "No publishes yet"
+    },
+    {
+      "name": "empty light: names the real state, not a failed search",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "empty light: no pagination over an empty log",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "empty dark: the count is published at zero",
+      "ok": true,
+      "detail": "No publishes yet"
+    },
+    {
+      "name": "empty dark: names the real state, not a failed search",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "empty dark: no pagination over an empty log",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}
