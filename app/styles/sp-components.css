@@ -1182,7 +1182,9 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
   .sp-recep-band .sp-readout { order: -1; flex: 0 0 auto; padding: 0; }
   .sp-recep-band .sp-recep-who { flex: 1 1 224px; min-width: 0; }
   .sp-recep-band .sp-recep-seatline, .sp-recep-band .sp-recep-waiting { flex: 1 1 100%; }
-  .sp-recep-header, .sp-recep-rows, .sp-recep-list > .cds-empty { order: 2; }
+  /* The loading skeleton's rows carry the list's order too, or they render between the search and
+     the band while the directory streams (pre-merge smoke step 14, 2026-09-09). */
+  .sp-recep-header, .sp-recep-rows, .sp-recep-skeleton-row, .sp-recep-list > .cds-empty { order: 2; }
   .sp-recep-row { scroll-margin-top: 232px; }
   .sp-recep-tail, .sp-recep-recent { order: 3; margin-top: var(--sp-space-05); }
 }
