@@ -12,7 +12,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 |---|---|---|---|
 | PR 1 | The publish-history record surface returns to Management as a fourth tab | v2.1.0 | **merged 2026-09-08** — #525 squashed as `524c087`, tagged `v2.1.0`, production READY at that SHA |
 | PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **merged 2026-09-09** — #526 squashed as `740fd57`, tagged `v2.2.0`, production READY at that SHA; pre-merge smoke 67/67 on `763d489` |
-| PR 3 | The names-off marker becomes ● in the footprint: one status-mark language on the plan | v2.3.0 | **in review** — branch `feat/phase5-names-off-marker`, PR #TBD |
+| PR 3 | The names-off marker becomes ● in the footprint: one status-mark language on the plan | v2.3.0 | **in review** — branch `feat/phase5-names-off-marker`, PR #527 |
 
 ---
 
@@ -407,4 +407,4 @@ Names-ON pill's rect and computed style **byte-equal to a build of `main`**. The
 named: the block's `overflow: hidden` also clipped the 44px touch pseudo, so `elementFromPoint` at ±21px hit the
 layer beneath. Amendment J removes that with the rest.
 
-**Brand checklist on the Vercel preview:** <PREVIEW>
+**Brand checklist on the Vercel preview:** **10/10** on the Vercel preview of #527 (`seat-planner-git-feat-phase5-a5adc2-…vercel.app`, behind Vercel Authentication via a 23h share link; read-only, computed colours only, both themes): primary `rgb(184, 92, 46)`, hover `rgb(143, 69, 33)`, focus ring 2px inset `rgb(184, 92, 46)`, links `--cds-link-primary` `rgb(143, 69, 33)` light / `rgb(232, 160, 122)` dark, the header's current-section bar a 3px inset `rgb(184, 92, 46)` in both themes, no `#0f62fe` painted by any rule outside the Carbon token declarations — and on `/` with Names off, **58 of 58** assigned seats carry ● in `rgb(22, 22, 22)` on `rgb(255, 255, 255)` light / `rgb(244, 244, 244)` on `rgb(57, 57, 57)` dark. Captures of production data stay out of the repo.
