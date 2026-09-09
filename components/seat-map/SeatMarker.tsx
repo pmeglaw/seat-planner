@@ -27,7 +27,8 @@ import { SeatMark, seatMarkKindFor } from "@/components/seat-map/SeatMark";
 // States are CSS modifiers, one silhouette each (the grayscale strip in the
 // specimen): --search (search / filter hit, Ask Planner highlight), --quiet
 // (filtered out — replaces the opacity dim PR 1 ledgered), --origin,
-// --target, --invalid, --names-off (the filled 28 footprint). Selection is
+// --target, --invalid, --names-off (the empty-seat footprint carrying the
+// legend's ● — Phase 5 PR 3, PHASE3DS §1.16 amendment 3). Selection is
 // data-state="selected" (2px inverse edge); the ◇ badge (SeatMark
 // "draft-badge") marks changed-in-draft. Position: the calibration transform
 // stays (left/top % from pointToStyle) and the collision nudge is an inline
@@ -136,7 +137,7 @@ function SeatMarkerComponent({
   const plannerHighlighted = highlighted && !activeMarker;
   const hit = (searchProminent || plannerHighlighted) && !origin && !target && !invalidTarget;
   const quiet = dimmed && !origin && !target && !invalidTarget && !hit;
-  // Names off = the filled 28 footprint; in a move/swap every seat shows its
+  // Names off = the footprint carrying ● (PR 3); in a move/swap every seat shows its
   // label so the origin and the destinations can be told apart.
   const namesOff = !showNames && hasEmployee && !modeRunning;
   const asPill = hasEmployee || modeRunning;
@@ -223,7 +224,7 @@ function SeatMarkerComponent({
       >
         {asPill ? (
           <>
-            {hasEmployee ? visibleLabel : <span translate="no">{visibleLabel}</span>}
+            {namesOff ? <SeatMark kind="assigned-dot" /> : hasEmployee ? visibleLabel : <span translate="no">{visibleLabel}</span>}
             {draftChanged ? <SeatMark kind="draft-badge" /> : null}
           </>
         ) : (

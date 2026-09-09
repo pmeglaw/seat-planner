@@ -1307,8 +1307,11 @@ test("axe findings stay fixed: allowed roles, single main landmark, marker name 
   // spans WITHOUT whitespace (#223). Phase 4 PR 3b: the pill renders ONE
   // visible text node (the short name, or the code for an empty seat in a
   // move/swap) followed only by the aria-hidden ◇ badge — nothing to join,
-  // and the aria-label opens with that exact text.
-  assert.match(markerSource, /\{hasEmployee \? visibleLabel : <span translate="no">\{visibleLabel\}<\/span>\}\s*\{draftChanged \? <SeatMark kind="draft-badge" \/> : null\}/);
+  // and the aria-label opens with that exact text. Phase 5 PR 3: with names
+  // off the text node is REPLACED by the aria-hidden ● (SeatMark
+  // "assigned-dot"), so the pill's only text is still one node or none — the
+  // guardrail holds and the pin follows the ternary.
+  assert.match(markerSource, /\{namesOff \? <SeatMark kind="assigned-dot" \/> : hasEmployee \? visibleLabel : <span translate="no">\{visibleLabel\}<\/span>\}\s*\{draftChanged \? <SeatMark kind="draft-badge" \/> : null\}/);
   assert.match(markerSource, /const accessibleSeatName = !hasEmployee \|\| shortName === displayName \|\| namesOff \? displayName : `\$\{shortName\} \$\{displayName\}`/);
 });
 

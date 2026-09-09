@@ -154,14 +154,17 @@ test("an empty seat's accessible label reflects available status, not an occupan
 });
 
 // F4 (read-path assessment 2026-08-25): with names off the pill renders no
-// text (the filled 28 footprint), so the full name alone is announced —
-// concatenating short + full name would be pure stutter ("Alice Alice Smith")
-// on every occupied seat, at rest, on every arrow-key step.
-test("with names hidden, the pill is the filled footprint and the label carries the full name once", async () => {
+// text — Phase 5 PR 3: it is the empty-seat footprint carrying the legend's ●
+// — so the full name alone is announced; concatenating short + full name
+// would be pure stutter ("Alice Alice Smith") on every occupied seat, at
+// rest, on every arrow-key step.
+test("with names hidden, the pill is the footprint carrying ● and the label carries the full name once", async () => {
   await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { showNames: false })));
   const button = pill();
   assert.ok(button.classList.contains("sp-pill--names-off"));
   assert.equal(button.textContent, "", "no visible text with names off");
+  assert.ok(button.querySelector("svg.sp-seat-mark circle[data-fill]"), "the legend's ● is inlined in the footprint (PR 3)");
+  assert.equal(button.querySelector("svg.sp-seat-mark").getAttribute("aria-hidden"), "true");
   const label = button.getAttribute("aria-label");
   assert.match(label, /Alice Smith/, "full name still announced");
   assert.ok(!/Alice Alice Smith/.test(label), "no doubled first name");
@@ -238,7 +241,9 @@ test("one modifier per state — search hit, quiet, origin, target, invalid — 
   assert.match(pill().getAttribute("aria-label"), / Draft changed\./);
   cleanup();
   await renderElement(React.createElement(SeatMarker, markerProps(makeSeat(), { draftChanged: true, showNames: false })));
-  assert.ok(pill().querySelector("svg.sp-pill-badge"), "names off keeps the ◇ on the filled footprint");
+  assert.ok(pill().querySelector("svg.sp-pill-badge"), "names off keeps the ◇ on the footprint");
+  assert.ok(pill().querySelector("svg.sp-seat-mark circle[data-fill]"), "…beside the ●");
+  assert.equal(pill().textContent, "", "no text to hide — the sheet declares no overflow: hidden (pinned in desktop-seat-marker-system-source)");
 });
 
 test("in a move or swap every seat is a pill: empty seats show their code so targets read as one set", async () => {
