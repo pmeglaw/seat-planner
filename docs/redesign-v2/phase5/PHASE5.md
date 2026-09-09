@@ -12,6 +12,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 |---|---|---|---|
 | PR 1 | The publish-history record surface returns to Management as a fourth tab | v2.1.0 | **merged 2026-09-08** — #525 squashed as `524c087`, tagged `v2.1.0`, production READY at that SHA |
 | PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **merged 2026-09-09** — #526 squashed as `740fd57`, tagged `v2.2.0`, production READY at that SHA; pre-merge smoke 67/67 on `763d489` |
+| PR 3 | The names-off marker becomes ● in the footprint: one status-mark language on the plan | v2.3.0 | **in review** — branch `feat/phase5-names-off-marker`, PR #TBD |
 
 ---
 
@@ -281,3 +282,129 @@ extension-holder in it has a same-department colleague with one.
 **The ≥1056 proof** additionally rides in CI: `page-frames`' wide branch is unchanged and still asserts the
 480 / 32 / 1008, and the four new `accessibility` frames prove the labelled "Caller detail" landmark survives
 `display: contents` at every narrow width (reviewer condition O-1(c)).
+
+---
+
+## PR 3 — the names-off marker becomes ● in the footprint
+
+**Plan of record:** `plans/phase5-pr3-names-off-marker.md` (hand-off `…-HANDOFF.md`, committed `05778a2` as Task 0;
+the plan `1289fde`), cleared with owner ruling **R1** (Option B), reviewer defaults **R2–R4** confirmed by the owner,
+owner rulings **P-1 / P-2 / P-3** on the plan's findings and reviewer rulings **A–D** on the plan, all 2026-09-09.
+**Rulings landed in DECISIONS:** none — a PHASE3DS §1.16 conformance amendment (3), with §1.4 cross-amended; the §6
+header carries one line, next free stays 19.
+**Skill fingerprint:** `f997ee525800e755`, verified before reading anything.
+
+### What the slice is
+
+"Why is it just a black box when the names are off?" With Names off every assigned seat on `/admin` and `/` was a
+solid 28×28 block in `--sp-icon-primary` — PHASE3DS §1.16 as ruled in Phase 3. Drawn beside the legend in both
+themes, the block shipped three defects: **F-1** the selected state was invisible with Names off, **F-2** the ◇
+changed-in-draft badge was clipped to a corner nick, **F-3** the band's legend showed ● while the plan painted ■.
+Root cause: §1.16 minted a *second* visual language for "assigned, names off" instead of reusing the status-mark
+language every other seat already speaks — a 28px footprint with a 16px symbol inside — so hover, focus, selected,
+quiet and the badge all had to be re-solved for the block, and three of those re-solutions were wrong. **R1:** the
+assigned pill with Names off is now the empty-seat footprint carrying the legend's own ●, and the legend's ● carries
+the same colour (P-1). Names on is untouched; nothing at 1920 with Names on changes.
+
+### Engineering calls the code forced, one line each
+
+- **F-1's cause was the colour, not the cascade** (the hand-off read it as `.sp-pill--names-off`'s `box-shadow:
+  none` out-cascading the selected rule). `.sp-pill[data-state="selected"]` is (0,2,0) and outranks the (0,1,0)
+  modifier in either order; the edge was invisible because `--sp-pill-selected-edge` = border-inverse **is** the
+  block's fill in both themes (gray-100 on gray-100, gray-10 on gray-10). The footprint fill removes the collision,
+  so no rule is restated — corrected by the build, recorded in §1.16 amendment (3).
+- **The base `.sp-pill` rules already are the footprint.** `--sp-pill-fill` / `--sp-pill-edge` /
+  `--sp-pill-fill-hover` alias layer-02 / icon-secondary / layer-hover-02 — the same Carbon roles as
+  `--sp-seat-footprint-fill` / `-border` / `--sp-layer-hover-02`. Amendment J is therefore three rules, not the
+  hand-off's five-plus-restated-selected (owner ruling P-2): width, no pads, the ● colour; the ● inherits; the quiet
+  ● steps.
+- **`currentColor` alone never reached the ●.** `.sp-seat-mark` sets its own `color` (the stroke colour), so the
+  pill's colour needs `.sp-pill--names-off .sp-seat-mark { color: inherit; }` — the hand-off's "no new selector"
+  was wrong.
+- **The quiet ● needs one combined rule.** `.sp-pill--quiet` and `.sp-pill--names-off` are both (0,1,0) and
+  names-off is declared later, so its `color` would win and the ● would stay gray-100 on the quiet fill;
+  `.sp-pill--names-off.sp-pill--quiet { color: var(--sp-pill-quiet-text); }` makes the step order-independent and
+  pinnable.
+- **The badge override goes, not moves.** The base `.sp-pill-badge` fill is `--sp-pill-fill` = layer-02, which is
+  now the surface the ◇ sits on; the PR 3b inversion existed only for the block.
+- **The legend's ● was the wrong colour all along.** `MapStatusBand` rendered `assigned-dot` without
+  `sp-seat-mark--assigned`, so the legend's ● painted icon-secondary while §1.4 specifies icon-primary (the
+  Management table already passes the class). One attribute, owner ruling P-1.
+- **The rig measures the edge on the mat now.** The names-off branch of the marker rig read fill-on-mat; with the
+  footprint that pair is layer-02 on layer-01 — a surface step, not a mark — so it reads the footprint's edge
+  instead, and the ● on the fill comes through the generic mark branch once the svg exists.
+- **One a11y pin followed the ternary.** `accessibility-source`'s "one visible text node, then only aria-hidden
+  marks" guardrail pinned the old render expression; with names off the aria-hidden ● replaces the text node, so the
+  guardrail holds and the regex now matches `namesOff ? <SeatMark kind="assigned-dot" /> : …`.
+
+### Sheet amendment J (2026-09-09)
+
+One dated amendment, byte-identical in both copies; **no new tokens, no token value moved** — `--sp-pill-names-off`
+is **retired** from both `sp-tokens.css` copies (its only consumers were the block and the specimen swatch). Three
+rules replace the nine-line block group; `overflow: hidden`, `color: transparent`, `box-shadow: none`, the hover
+restatement, the quiet fill/hover pair and the badge inversion are gone. The sheet's §2 and §12 header comments
+stop saying "● never appears on the map". `desktop-seat-marker-system-source` pins the three rules and, against
+the comment-stripped sheet, the absence of every retired declaration and of the token.
+
+### Contrast — the footprint's four pairs
+
+Static gate (`phase3/contrast/generate-pairs.mjs` — the five filled-block rows replaced by the footprint's four ×
+two themes; `check_contrast.py` run with `PYTHONUTF8=1`, the Windows console codec otherwise chokes on the ●):
+
+| Pair | Light | Dark |
+|---|---|---|
+| ● on the footprint (layer-02) | gray 100 on white **18.10** | gray 10 on gray 80 **10.50** |
+| ● on the quiet fill (layer-01) | gray 70 on gray 10 **7.10** | gray 30 on gray 90 **8.86** |
+| ◇ on the footprint (layer-02) | purple 60 on white **5.00** | purple 40 on gray 80 **4.91** |
+| footprint edge on the mat (layer-01) | gray 70 on gray 10 **7.10** | gray 30 on gray 90 **8.86** |
+
+```
+product-pairs.json: 206 pairs · surface-pairs-not-gated.json: 14 pairs
+206/206 pass
+```
+
+Live (`audit/marker-contrast.mjs`, real Chrome on the local Docker stack, the states `names-off`,
+`names-off-quiet`, `names-off-draft` added): **69 measurements, 0 under their floor, 0 outside the ledger. Ledger: empty** (`screenshots/phase5-pr3/contrast/summary.txt`). The names-off states, light / dark: ● on the footprint **18.1 / 10.5**; the footprint edge on the rendered mat **7.81 / 10.59** (the rig reads the canvas behind the marker — white / #161616 — not the layer-01 token the static pair assumes; both clear 3:1); quiet ● **7.1 / 8.86**; ◇ on the footprint **5.00 / 4.91**. The quiet pill's subtle edge is deliberately not gated: it is every quiet pill's and quiet footprint's edge (PR 3b's own 1.7 on the mat), and the ● is that state's mark.
+
+### A closed-record edit the hand-off asked for, and the build declined
+
+Hand-off §5/§6 asked for edits to `phase4/audit/marker-contrast.mjs` and a dated block in PHASE4BUILD §3. `phase4/`
+is closed record — this document's PR 1 section carried `pr4-smoke.mjs:109`'s stale assertion rather than edit it —
+so the rig was **copied** to `phase5/audit/marker-contrast.mjs` and re-pointed there, the table lives above, and
+`git diff main -- docs/redesign-v2/phase4` is empty. Reviewer ruling A (2026-09-09) confirmed the decline.
+
+### Carried, not fixed
+
+- **The working tree on `main` carried `CLAUDE.md` / `skills-lock.json` edits and untracked `.agents/skills/*`
+  before this slice** (a skills install). Not in this PR; every commit used explicit `git add`; the owner rules on
+  them separately.
+- **`npm run test:e2e:auth` still needs `npx supabase db reset --no-seed` between runs** — PR 2's note, unchanged.
+- **The ◇-painted claim is a pixel sample, not a hit test.** `.cds-touch-target::after` (44×44, absolute, painted
+  after the badge svg) answers every `elementFromPoint` over the marker — by design (deviation 7) — so the rig
+  decodes the 3x capture and counts Draft-purple pixels in the badge rect, including the ones outside the 28×28 box
+  (reviewer ruling B).
+
+### Verification, on the final head
+
+`npm test` **1488/1488** (incl. `test:db`) · `npm run test:ct` **336/336** · `npm run gate` **exit 0** (lint 0 errors /
+84 warnings, none in a file this slice touched; typecheck clean; coverage **98.36 lines / 92.44 branches / 98.33
+functions** against floors 90 / 80 / 95) · `npm run build` clean · `npm run test:e2e` **36/36** · `npm run test:browser`
+**26/26** · **`npm run test:e2e:auth` 63/63** on the local Docker stack (after `npx supabase db reset --no-seed`) ·
+runtime audit **0 undefined `var()`** on 6 routes × 2 themes + the system state + the viewer routes, so nothing
+still references the retired token · static contrast **206/206** (four names-off pairs × two themes replace the
+block's five) · live contrast **69 measurements, 0 under floor** · `sp-components.css` byte-identical to the docs
+copy · `git diff main -- app/styles` is one deleted token line · `git diff main -- docs/redesign-v2/phase4` empty ·
+no `#0f62fe` outside `carbon-tokens.css`.
+
+**The capture + hit-test rig** `audit/pr3-names-off-marker.mjs` — **38/38**, twelve claims × two themes × `/admin`
+and `/`, captures + `results.json` + README under `screenshots/phase5-pr3/`. It proves every names-off pill a 28×28
+footprint carrying ● with no text; rest fill and edge equal to an open footprint's; hover lifting to layer-hover-02
+(R2); the 2px terracotta focus ring; **selected visible** by click and by keyboard (F-1); the quiet ● stepped to the
+quiet text colour; the **◇ painted beyond the 28px box** — 50 purple pixels inside and 148 outside at 3x (F-2); the
+44px touch target answering on all four diagonals; the **legend's ● in the marker's colour** (P-1, F-3); and the
+Names-ON pill's rect and computed style **byte-equal to a build of `main`**. The same rig on `main`
+(`results-baseline-main.json`) scores **7/38**, failing on exactly the block's defects — and on a fourth nobody had
+named: the block's `overflow: hidden` also clipped the 44px touch pseudo, so `elementFromPoint` at ±21px hit the
+layer beneath. Amendment J removes that with the rest.
+
+**Brand checklist on the Vercel preview:** <PREVIEW>
