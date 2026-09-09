@@ -12,7 +12,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 |---|---|---|---|
 | PR 1 | The publish-history record surface returns to Management as a fourth tab | v2.1.0 | **merged 2026-09-08** — #525 squashed as `524c087`, tagged `v2.1.0`, production READY at that SHA |
 | PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **merged 2026-09-09** — #526 squashed as `740fd57`, tagged `v2.2.0`, production READY at that SHA; pre-merge smoke 67/67 on `763d489` |
-| PR 3 | The names-off marker becomes ● in the footprint: one status-mark language on the plan | v2.3.0 | **in review** — branch `feat/phase5-names-off-marker`, PR #527 |
+| PR 3 | The names-off marker becomes ● in the footprint: one status-mark language on the plan | v2.3.0 | **merged 2026-09-09** — #527 squashed as `bedecbb`, tagged `v2.3.0`, production READY at that SHA; CI green on `6efe9d6`, read-only preview walk 8/8 (step 6 N/A) on `2f7e262` |
 
 ---
 
