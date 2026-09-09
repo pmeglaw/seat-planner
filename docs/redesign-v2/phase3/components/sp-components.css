@@ -1095,6 +1095,11 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-recep-readout { position: sticky; top: calc(var(--sp-shell-header-h) + var(--sp-space-05)); padding: var(--sp-space-07); background: var(--sp-background); box-shadow: inset 1px 0 0 var(--sp-border-subtle-00); display: flex; flex-direction: column; gap: var(--sp-space-05); min-height: 400px; }
 .sp-recep-readout h2 { font: var(--sp-type-heading-03); overflow-wrap: anywhere; }
 .sp-recep-readout .sp-recep-role { color: var(--sp-text-secondary); margin-top: var(--sp-space-02); }
+/* The readout's two groups (amendment I): the BAND — name, tile, seat line — and the TAIL — the
+   same-department fallbacks and Show on map. Above the fold they are plain flex children of the
+   column and carry its own 16 rhythm, so the wide frame reads exactly as it did when this was one
+   block; below it they part company around the list. */
+.sp-recep-band, .sp-recep-tail { display: flex; flex-direction: column; gap: var(--sp-space-05); }
 .sp-readout { background: var(--sp-readout-bg); padding: var(--sp-readout-pad); display: flex; flex-direction: column; gap: var(--sp-space-02); }
 .sp-readout .sp-readout-eyebrow { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-readout-eyebrow); }
 .sp-readout .sp-readout-numeral { font: var(--sp-type-heading-06); letter-spacing: var(--sp-tracking-none); color: var(--sp-readout-numeral); font-variant-numeric: tabular-nums; }
@@ -1126,12 +1131,60 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 
 /* Phase 4 PR 5 amendment E (PHASE2UX §1R.6 narrow frame; specimen #narrow): below the asset's 1055
    fold Reception is one column — the readout follows the list, static, ruled above, with the
-   "Back to the list" ghost (the explicit back path, D3) shown only there. */
-.sp-recep-back { display: none; }
+   "Back to the list" ghost (the explicit back path, D3) shown only there.
+   The one column stands. The single readout block and the back path are SUPERSEDED by amendment I. */
+
+/* Phase 5 PR 2 amendment I (PHASE2UX §1R.6 rewritten; DECISIONS D3-f; owner ruling R1, 2026-09-08):
+   below the fold the readout splits BY JOB. Amendment E stacked the WHOLE readout under the list,
+   which cost nothing while the row extension was 20px semibold and the list answered the question by
+   itself; at --sp-type-code-02 (400 14/20) it does not, so the one number the front desk reads aloud
+   sat below the fold and every lookup became a scroll down and back up — and that loop is the whole
+   job. The receptionist keeps this window about a third of a 1920 monitor wide, dragged, so the fix
+   has to hold across widths, not at one of them. The BAND — name, tile, seat line — is pinned under
+   the search and the list scrolls beneath it; the TAIL — the fallbacks and Show on map — and Recent
+   lookups follow the list, in PHASE2UX §1R.4's shipped order (the hand-off's map-first R3 was
+   withdrawn at plan review: these are focusable controls and CSS never reorders those).
+   The list column and the readout section go display:contents so the band can be ordered between the
+   search and the count header. The section keeps its box, its 480 width and its aria-label above the
+   fold, so nothing at >=1056 moves. Sticky needs no new class: the band inherits the readout's
+   lg:[--sp-shell-header-h:0px] through the DOM, which is exactly what the 1024-1055 seam wants —
+   there the shell pane already scrolls while the sheet is still below its fold, so the offset must be
+   0, not 48. D3-f retires the "Back to the list" ghost along with the drill-down it belonged to (the
+   list is never left now), which is also what leaves the band with ZERO focusable elements — the
+   condition the CSS-only mechanism rests on: WCAG 2.4.3 focus order holds at both frames, and C27 is
+   a sufficient technique, not a success criterion (reviewer ruling O-1, 2026-09-08).
+   Measured on the live band, 320-1055, light, against the seeded directory and against injected
+   worst-case name / role / seat-line text (the hand-off predicted the wrap at ~560; the pixels say
+   otherwise, and the pixels win — amendment H's rule):
+     - the name block wraps under the numeral at 420 and below, NOT at 560. The numeral is only
+       87-101px wide, so on a 224px basis the two sit side by side with room to spare across the
+       whole of R2's 480-1055 range (at 480: 101 + 32 + 224 = 357 in a 416 frame). The wrap is
+       therefore not a designed reflow inside R2's range at all — it is the safety valve that keeps
+       DECISIONS §2's 320 floor working, and 224 is the basis that makes it engage there;
+     - the band is 232px tall wrapped (320) and a flat 170px side by side (460 up) — the tile column
+       dominates, so a name wrapping to two lines inside its own block costs nothing. Hence
+       scroll-margin-top: 232px on the rows, the worst case across the whole fold, which keeps the
+       arrow cursor from parking under the pinned band. That one constant is exact in BOTH scroll
+       models: below 1024 the document scrolls and html's scroll-padding-top adds the 48 header,
+       while in the 1024-1055 seam the pane scrolls and has no scroll-padding.
+     - no horizontal scroll and nothing off-edge at 320, 360, 390, 420, 460 or 480 (F-9's failure
+       mode was a fixed width beating the computed frame; there is no fixed width here).
+   No token change. The band's tint is the tile's own --sp-readout-bg, so the tile drops its padding
+   inside the band and the two read as ONE surface — the tile grown to hold the name and the seat
+   line — instead of a 16 + 24 nested box. */
 @media (max-width: 1055px) {
   .sp-recep { grid-template-columns: minmax(0, 1fr); }
-  .sp-recep-readout { position: static; min-height: 0; padding-left: 0; padding-right: 0; box-shadow: inset 0 1px 0 var(--sp-border-subtle-00); }
-  .sp-recep-back { display: inline-flex; align-self: flex-start; height: var(--sp-size-md); padding: 0 var(--sp-space-05); }
+  .sp-recep-list, .sp-recep-readout { display: contents; }
+  .sp-recep-band { order: 1; position: sticky; top: var(--sp-shell-header-h); z-index: 20; align-self: start;
+    flex-direction: row; flex-wrap: wrap; align-items: flex-start;
+    column-gap: var(--sp-space-07); row-gap: var(--sp-space-03); padding: var(--sp-space-05);
+    background: var(--sp-readout-bg); box-shadow: inset 0 -1px 0 var(--sp-border-subtle-00); }
+  .sp-recep-band .sp-readout { order: -1; flex: 0 0 auto; padding: 0; }
+  .sp-recep-band .sp-recep-who { flex: 1 1 224px; min-width: 0; }
+  .sp-recep-band .sp-recep-seatline, .sp-recep-band .sp-recep-waiting { flex: 1 1 100%; }
+  .sp-recep-header, .sp-recep-rows, .sp-recep-list > .cds-empty { order: 2; }
+  .sp-recep-row { scroll-margin-top: 232px; }
+  .sp-recep-tail, .sp-recep-recent { order: 3; margin-top: var(--sp-space-05); }
 }
 
 /* -----------------------------------------------------------------------------

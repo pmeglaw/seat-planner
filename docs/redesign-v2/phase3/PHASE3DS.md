@@ -641,6 +641,26 @@ fold, `inline-flex` at the 40 `--sp-size-md` under it). The specimen's `#narrow`
 inline CSS; the app needs it in the sheet. Same fold as amendment C (1055). Both copies, byte-identical; no token
 change.
 
+**Phase 5 PR 2 amendment I (the narrow frame splits by job, 2026-09-08; owner ruling R1, DECISIONS D3-f).** Amendment E's
+single stacked readout is superseded — the one column stands, the one block does not. It was free while the row extension
+was 20px semibold and the list answered by itself; at `--sp-type-code-02` (400 14/20) it is not, so the number the front
+desk reads aloud sat below the fold. Below the fold `.sp-recep-list` and `.sp-recep-readout` now go `display: contents`
+so the readout's two groups can be ordered around the list: `.sp-recep-band` (name · tile · seat line) is
+`position: sticky` under the search at `top: var(--sp-shell-header-h)`, tinted `--sp-readout-bg` with a bottom rule,
+and `.sp-recep-tail` (fallbacks, Show on map, in §1R.4's shipped order) plus `.sp-recep-recent` follow the rows. Above
+the fold both groups are plain flex children carrying the column's own 16 rhythm, so the 480 column, its 1px rule, its
+padding and its sticky box are untouched — the `page-frames` spec's 480 / 32 / 1008 still hold. The tile drops its
+padding inside the band so the two read as ONE surface (the tile grown to hold the name and the seat line), and
+`.sp-recep-back` is **deleted** with the drill-down it belonged to — which is also what leaves the band with no
+focusable element, the condition WCAG 2.4.3 rests on once it is shown above the list. Measured on the live band, not
+estimated: the name block wraps under the numeral **at 420 and below** — not the ~560 the hand-off predicted — because
+the numeral is only 87–101px wide, so the wrap is the safety valve for §2's 320 floor rather than a reflow inside R2's
+480–1055 range; and the band is **232px** tall wrapped (320) against a flat **170px** side by side (460 up), which sets
+the rows' `scroll-margin-top` so the ↑ cursor never parks under the pinned band. Sticky needs no new class: the band
+inherits the readout's `lg:[--sp-shell-header-h:0px]`, which is exactly what the 1024–1055 seam wants — there the shell
+pane already scrolls while the sheet is still below its fold. Both copies, byte-identical; **no token change**, so
+contrast was not re-run.
+
 ---
 
 ## 2. Component inventory (PHASE2UX §3 → kind → class → specimen anchor)

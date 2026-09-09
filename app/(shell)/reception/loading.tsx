@@ -43,10 +43,19 @@ export default function ReceptionLoading() {
                 </div>
               ))}
             </div>
+            {/* The readout's two groups, so the skeleton reflows where the real
+                screen does (Phase 5 PR 2, sheet amendment I): under the fold the
+                band pins between the search and the count header and the tail
+                follows the list, so a skeleton that stayed one block would jump
+                by the band's height when the directory lands. */}
             <div className="sp-recep-readout">
-              <span className="sp-skeleton sp-skeleton--w3" />
-              <span className="sp-skeleton sp-skeleton--w2" />
-              <span className="sp-skeleton" />
+              <div className="sp-recep-band">
+                <span className="sp-skeleton sp-skeleton--w3" />
+                <span className="sp-skeleton sp-skeleton--w2" />
+              </div>
+              <div className="sp-recep-tail">
+                <span className="sp-skeleton" />
+              </div>
             </div>
           </div>
         </ReceptionFrame>

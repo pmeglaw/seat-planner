@@ -173,7 +173,12 @@ test.describe("Reception keyboard loop (viewer)", () => {
     await expect(page).toHaveURL(/\?q=Litigation$/);
   });
 
-  test("1024: one column, the readout under the list, Back to the list focuses the field", async ({ page }) => {
+  // Phase 5 PR 2 (owner ruling R1, sheet amendment I, DECISIONS D3-f) re-points
+  // this from amendment E's stacked readout. The one column stands; the single
+  // readout block and the back path do not. What the keyboard tier owns here is
+  // the loop: the answer is pinned above the list, the field never loses focus,
+  // and the ↑ cursor is never left underneath the pinned band.
+  test("1024: one column, the band pinned above the list, the field never lost", async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto("/reception?q=201");
     await expect(lockedRows(page)).toHaveCount(1);
@@ -182,15 +187,53 @@ test.describe("Reception keyboard loop (viewer)", () => {
     // grid inside <main> once it is visible, never the skeleton's.
     await expect(page.locator("main .sp-recep")).toBeVisible();
     const grid = await page.locator("main .sp-recep").evaluate(el => ({ columns: getComputedStyle(el).gridTemplateColumns.trim(), innerWidth: window.innerWidth }));
-    expect(grid.columns.split(/\s+/).length, `one grid column under the 1055 fold (sheet amendment E) — got "${grid.columns}" at innerWidth ${grid.innerWidth}`).toBe(1);
-    const listBox = (await page.locator("main .sp-recep-list").boundingBox())!;
-    const readoutBox = (await readout(page).boundingBox())!;
-    expect(readoutBox.y, "the readout follows the list").toBeGreaterThanOrEqual(listBox.y + listBox.height - 1);
-    expect(await readout(page).evaluate(el => getComputedStyle(el).position)).toBe("static");
-    const back = readout(page).getByRole("button", { name: "Back to the list" });
-    await expect(back).toBeVisible();
-    await back.focus();
-    await back.click();
+    expect(grid.columns.split(/\s+/).length, `one grid column under the 1055 fold (sheet amendment I) — got "${grid.columns}" at innerWidth ${grid.innerWidth}`).toBe(1);
+
+    // The labelled landmark has to survive `display: contents` on the section
+    // (reviewer condition O-1(c)); it has no box there, so the band is what is
+    // measured.
+    await expect(readout(page)).toBeAttached();
+    const band = page.locator("main .sp-recep-band");
+    const searchBox = (await page.locator("main .sp-search-lg").boundingBox())!;
+    const bandBox = (await band.boundingBox())!;
+    const firstRowBox = (await page.locator('li[role="option"]').first().boundingBox())!;
+    expect(bandBox.y, "the band sits under the search").toBeGreaterThanOrEqual(searchBox.y + searchBox.height - 1);
+    expect(bandBox.y + bandBox.height, "the band sits above the list").toBeLessThanOrEqual(firstRowBox.y + 1);
+    expect(await band.evaluate(el => getComputedStyle(el).position)).toBe("sticky");
+    // D3-f: the back path retires with the drill-down it belonged to, which is
+    // what leaves the band with nothing focusable (WCAG 2.4.3, ruling O-1).
+    await expect(page.getByRole("button", { name: "Back to the list" })).toHaveCount(0);
+    expect(await band.evaluate(el => el.querySelectorAll("a, button, input, select, textarea, [tabindex]").length)).toBe(0);
+
+    // The loop (reviewer ruling O-4): the field keeps focus through a lock, so
+    // the next lookup is typed without scrolling back up — and the band, with
+    // the list scrolled to its end, is still fully on screen.
+    await field(page).focus();
+    await page.keyboard.type("Litigation");
+    await expect(cursorRows(page)).toHaveCount(1);
+    await page.keyboard.press("Enter");
     await expect(field(page)).toBeFocused();
+    await page.evaluate(() => {
+      const pane = document.querySelector('[aria-label="Reception directory"]');
+      if (pane && pane.scrollHeight > pane.clientHeight) pane.scrollTop = pane.scrollHeight;
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+    // Which colleague "Litigation" locks is a property of the seed, so hit-test
+    // the extension SLOT: §1R.4 item 4 makes "No extension on file" a stated
+    // state, and either way it is the thing that must not end up under the band
+    // or off the bottom of the viewport.
+    await expect(page.locator(".sp-recep-band .sp-readout-numeral, .sp-recep-band .sp-readout-none")).toHaveCount(1);
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const slot = document.querySelector(".sp-recep-band .sp-readout-numeral, .sp-recep-band .sp-readout-none");
+          if (!slot) return false;
+          const r = slot.getBoundingClientRect();
+          if (r.top < 0 || r.bottom > window.innerHeight) return false;
+          const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+          return Boolean(hit && (hit === slot || slot.contains(hit)));
+        })
+      , "the extension is painted on screen with the list scrolled to its end")
+      .toBe(true);
   });
 });

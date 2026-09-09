@@ -11,6 +11,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 | Slice | What | Tag | State |
 |---|---|---|---|
 | PR 1 | The publish-history record surface returns to Management as a fourth tab | v2.1.0 | **merged 2026-09-08** — #525 squashed as `524c087`, tagged `v2.1.0`, production READY at that SHA |
+| PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **built 2026-09-08** on `feat/phase5-reception-narrow`; full gate green, awaiting the reviewer's branch check |
 
 ---
 
@@ -129,3 +130,125 @@ capture pass had to carry), the History panel untouched at 10 → Show more → 
 the unsaved-edits veto still covering the destination, and the brand sweep. **One number is corrected by it:**
 the Changes column's right edge is **854px**, not the 838 quoted before amendment H's revision — the edges still
 agree exactly, only the geometry moved.
+
+---
+
+## PR 2 — Reception's narrow frame
+
+**Plan of record:** `plans/phase5-pr2-reception-narrow.md` (hand-off `…-HANDOFF.md`, committed as Task 0),
+cleared with owner rulings **R1** / **R2** and five reviewer rulings on the plan's findings (O-1…O-4 and the
+record addition, all granted).
+**Rulings landed in DECISIONS:** **D3-f** — the narrow frame is a pinned band, not a drill-down, and the back
+path retires with it.
+**Skill fingerprint:** `f997ee525800e755`, verified before reading anything.
+
+### What the slice is
+
+`/reception` has one job: take the call, find the person, read the extension aloud. The receptionist runs it
+in a **dragged narrow window**, routinely about a third of a 1920 monitor. Amendment E stacked the whole
+readout under the list below the 1055 fold, which cost nothing while the row extension was 20px semibold — the
+list answered by itself. The redesign set it to `--sp-type-code-02` (400 14/20), so the list stopped answering
+and the one number she reads aloud moved below the fold: locking scrolled down to it and left the search
+above, and the next lookup meant scrolling back up. That loop is the whole job.
+
+The readout now **splits by job** under the fold. The **band** — name, extension tile, seat line — pins under
+the search and the list scrolls beneath it; the **tail** — the same-department fallbacks and Show on map — and
+Recent lookups follow the list. The `heading-06` numeral survives, the list stays dense, and **nothing at 1920
+changes**. Two of the three obvious hypotheses about the regression were wrong and the hand-off had already
+disproved them: the pre-redesign layout stacked below 1024 too, and amendment E's 1055 fold is a faithful
+reading of §1R.6. The type change was the regression.
+
+### Engineering calls the code forced, one line each
+
+- **CSS-only, `display: contents` + `order`, no JS.** The alternative — two trees from `matchMedia` — has no
+  viewport on the server, so every narrow load would flip layout after hydration on the width she always uses,
+  and it would reintroduce a JS breakpoint constant weeks after PR 6 retired `SEAT_CENTER_PANEL_BREAKPOINT_PX`.
+- **Constraint 2 had to move, and the reviewer moved it.** The hand-off asked for WCAG **C27** (DOM order
+  matches visual order) *and* an unchanged ≥1056 frame; no mechanism satisfies both, because the band needs one
+  DOM position at each frame. C27 is a **sufficient technique, not a success criterion**: 1.3.2 holds (search →
+  results → detail → tail is the list-then-detail sequence D3 chose) and **2.4.3 holds because the band carries
+  zero focusable elements** — which is true only because D3-f retires "Back to the list", its one control.
+  Asserted at all four widths, not argued.
+- **The sticky offset needed no new class.** The band is a DOM descendant of the readout, and custom properties
+  inherit through the DOM regardless of `display: contents`, so it picks up `lg:[--sp-shell-header-h:0px]` —
+  which is exactly what the **1024–1055 seam** wants, where the shell pane already scrolls (Tailwind `lg` is
+  1024) while the sheet is still below its 1055 fold. Measured: `top: 48px` below 1024, `0px` at 1024.
+- **The pinned band would have swallowed the ↑ cursor.** `scrollIntoView({ block: "nearest" })` counts a row
+  hidden behind a sticky band as visible. One `scroll-margin-top` fixes it and is exact in *both* scroll
+  models: below 1024 the document scrolls and `html`'s `scroll-padding-top` adds the 48 header; in the seam the
+  pane scrolls and has none.
+- **The tail must not render empty.** An empty flex child still takes one of the readout column's 16px gaps at
+  wide, so `hasTail` gates it — the "wide unchanged" claim is that literal.
+- **The loading skeleton got the same two groups**, or the frame would jump by the band's height at narrow —
+  which is the one thing `loading.tsx` exists to prevent.
+
+### Sheet amendment I — and the measurement that contradicted the brief
+
+One dated amendment, byte-identical in both copies; **no new tokens**, so `sp-tokens.css`, `carbon-tokens.css`,
+`carbon-components.css` and `app/styles/brand/` are untouched and **contrast was not re-run**. Both constants
+were read off the live band, and one of them disagreed with the hand-off:
+
+- §4.2 predicted the name block would wrap under the numeral "below roughly 560". **It wraps at 420 and below.**
+  The numeral is only 87–101px wide, so on a 224px basis the two sit side by side across the whole of R2's
+  480–1055 range (at 480: 101 + 32 + 224 = 357 in a 416 frame). The wrap is therefore **not a designed reflow
+  inside R2's range at all** — it is the safety valve that keeps DECISIONS §2's 320 floor working, and 224 is
+  the basis that makes it engage there.
+- The band is **232px** tall wrapped (320) and a flat **170px** side by side (460 up) — measured against
+  injected worst-case name, role and seat-line text as well as the seed's longest. The tile column dominates,
+  so a name wrapping to two lines inside its own block costs nothing. 232 is the `scroll-margin-top`.
+- No horizontal scroll and nothing off-edge at 320 / 360 / 390 / 420 / 460 / 480. F-9's failure mode was a
+  fixed width beating the computed frame; there is no fixed width here.
+
+> **The prediction-vs-pixels rule, again.** Amendment H learned it on column widths; this slice learned it on a
+> reflow threshold. A width predicted from the *content* ("a name needs room by 560") was out by 140px because
+> the binding term was the *other* item's width, not the name's. Measure the pair, not the part.
+
+### Two clarifications the build asked for
+
+- **Constraint 1 says "exactly one `aria-live` region on the page"; the page has two, and always did.** The
+  second is the list's result count, which PHASE2UX §1R.2 and D3-b require ("the result count is always
+  published, zero included"). The constraint is about the **readout**: the answer is announced once, from one
+  place. `reception-source` pins both — one live region inside the readout, and the count as the only other.
+- **§5's "the search field is still reachable without scrolling up" is about the loop, not the pixels**
+  (ruling O-4). `lock()` clears the query and returns focus to the field, so the next lookup is typed straight
+  away; the search is never pinned, and pinning it would stack 48 + 64 + band on an 800-tall window and eat the
+  list. Asserted as: after a lock with the list scrolled to its end, focus is in the field, typing filters, and
+  the band is still fully inside the viewport.
+
+### Carried, not fixed
+
+- **`npm run test:e2e:auth` cannot be run twice without a database reset**, and this is **pre-existing** — the
+  tier's own `publish-flow` spec performs a real publish, so the next run's global-setup seed dies on
+  `duplicate key value violates unique constraint "one_published_seat_per_employee"`. Nothing in this slice
+  writes to the database. The recipe between runs is `npx supabase db reset --no-seed` (the tier seeds itself).
+  Recorded here rather than "fixed" by making the seed idempotent, which would quietly change what the seed
+  means; it is a hand-off note for the next session, not a defect in the tier's coverage.
+- **Two rig findings, fixed in the rig, both easy to repeat.** "The band stays pinned" was first asserted as
+  "the band does not move" — pinning is precisely the band moving up to its offset and stopping. And the
+  tail-order claim ran on whichever person happened to be locked, so someone who is simply the only extension
+  in their department read as an O-2 regression; the rig now locks a person who *has* fallbacks first.
+- **The local `next start` console carries Speed Insights 404s and a MIME refusal** — the same local-only noise
+  PHASE4BUILD §1.46 recorded for the PR 5 smoke. Nothing else on any route.
+
+### Verification, on the final head
+
+`npm test` **1488/1488** (incl. `test:db`) · `npm run test:ct` **336/336** · `npm run gate` **exit 0**
+(lint 0 errors / 81 pre-existing warnings, typecheck clean, coverage **98.36 lines / 92.44 branches / 98.33
+functions** against floors 90 / 80 / 95) · `npm run build` clean · `npm run test:e2e` **36/36** ·
+`npm run test:browser` **26/26** · **`npm run test:e2e:auth` 63/63** on the local Docker stack (59 at the PR 1
+close-out, plus this slice's four narrow-fold axe frames) · runtime audit **0 undefined `var()`** across 6
+routes × 2 themes + the system state + the viewer routes · **contrast not re-run — no token moved** ·
+`sp-components.css` byte-identical to the docs copy.
+
+**The audit rig** `audit/pr2-reception-narrow.mjs` — **148/148**, four widths × two themes, every geometric
+claim a hit test (`document.elementFromPoint`, all four corners against the viewport), captures +
+`results.json` + README under `screenshots/phase5-pr2/`. It proves the band pinned under the search and above
+the list at 480 / 640 / 800 / 1024, the numeral still painted **with the list scrolled to its end**, the sticky
+offset switching correctly across the 1024 seam, zero focusable elements in the band, the tab order never
+entering it, the ↑ cursor never parking under it, one live region and one extension slot, "Waiting for a call"
+and "No extension on file" both held by the band, no sideways scroll, and — at 1920, both themes — the wide
+frame untouched at **readout 480 · gutter 32 · list 1008**.
+
+**The ≥1056 proof** additionally rides in CI: `page-frames`' wide branch is unchanged and still asserts the
+480 / 32 / 1008, and the four new `accessibility` frames prove the labelled "Caller detail" landmark survives
+`display: contents` at every narrow width (reviewer condition O-1(c)).

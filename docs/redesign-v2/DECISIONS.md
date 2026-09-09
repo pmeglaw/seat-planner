@@ -1107,6 +1107,10 @@ D5-b); the map's Delete seat stays the modal.
 
 ### D3 — Reception (`/reception`)
 *Built PR 5 (2026-09-07): `ReceptionFrame` + `ReceptionScreen` on the `.sp-recep` family (PHASE3DS §1.29); plan of record `phase4/plans/phase4-pr5-reception.md`.*
+> **Read the option-A block below through D3-f (2026-09-08).** Its "drill-down below lg", its "explicit back
+> path" and its accepted trade-off — *"below lg the readout replaces the list … so the receptionist loses the
+> queue while reading a number aloud"* — are all superseded there. The archetype, the density-by-zone split
+> and everything at 1920 stand unchanged.
 
 ```
 Screen: Reception — front-desk call routing
@@ -1203,6 +1207,46 @@ boundary's stale-chunk recovery verbatim (`tests/chunk-recovery-boundary-source.
 `.sp-recep` layout (header + search real, six skeleton rows, one readout block). The partial state (seats failed alone)
 is one warning notification above the list — "Seat locations didn't load" / "Extensions are up to date. Seat and floor
 details will show after a reload." (owner ruling Q-7). Plan of record: `phase4/plans/phase4-pr5-reception.md`.
+
+#### D3-f · The narrow frame is a pinned band, not a drill-down — and the back path retires with it
+*Ruled 2026-09-08 (Phase 5 PR 2, owner rulings R1 / R2). Built in the same slice: sheet amendment I,
+PHASE2UX §1R.6 rewritten. **Not** a §6 deviation — next free stays 19 — and the 1920 primary target is not
+reopened; this is DECISIONS §2 as amended by D0-e, honoured at the width the surface is actually used.*
+
+**Problem.** D3 chose option A, *"single-column list with drill-down below lg"*, specified **an explicit back
+path**, and **accepted** the trade-off *"below lg the readout replaces the list rather than sitting beside it,
+so the receptionist loses the queue while reading a number aloud"*. That trade was survivable while the list
+answered the question by itself — the row extension was 20px semibold. The redesign set it to
+`--sp-type-code-02` (400 14/20), and the front desk runs this page in a **dragged narrow window**, routinely
+about a third of a 1920 monitor. So the one number she reads aloud moved below the fold: locking scrolled
+down to it and left the search above, and the next lookup meant scrolling back up. That loop is the whole job.
+
+**Choice (owner, from four mocked options).** The readout **splits by job** below the 1055 fold. The **band**
+— name, extension, seat line — is pinned under the search; the **tail** — the same-department fallbacks and
+Show on map — and Recent lookups follow the list. The `heading-06` numeral survives, the list stays dense,
+and nothing at 1920 changes. Options "the whole readout above the list" and "a loud row extension at every
+width" were **not** taken: Carbon's productive type set is fixed across breakpoints, so a narrow-only row-type
+bump is not available, and the owner declined the all-widths version.
+
+**What this supersedes in D3, explicitly.** The drill-down is replaced by the band; the queue is **no longer
+lost** while a number is read aloud, so D3's accepted trade-off is retired rather than merely mitigated; and
+the **explicit back path is retired at narrow** — the list is never left, so there is nothing to go back from.
+That last point is load-bearing beyond the copy: it leaves the band with **zero focusable elements**, which is
+what keeps WCAG **2.4.3 focus order** matching visual order once the band is shown above the list.
+
+**Trade-off.** The band's DOM position stays after the list — at wide it is the top of the 480 column, and no
+single DOM order can serve both frames without either breaking the ≥1056 geometry or putting the readout's
+focusable controls ahead of the search field. So at narrow the band is *read* after the list and *seen* above
+it. **C27 is a sufficient technique, not a success criterion**; 1.3.2 Meaningful Sequence holds (search →
+results → detail → tail is the list-then-detail sequence D3 itself chose) and 2.4.3 holds because nothing in
+the band takes focus. Recorded as a deliberate deviation from C27, not from WCAG (reviewer ruling O-1,
+2026-09-08). **One further deliberate change above the fold:** the live region narrows to the band, so a lock
+announces name · extension · seat line and stops — the fallback roster and Show on map leave it, continuous
+with O-9's reason for keeping recents outside it (reviewer ruling O-3; pinned by `reception-screen`).
+
+**Would change if:** the band's height starts crowding the list at the widths actually used — it is 232px
+wrapped at 320 and a flat 170px from 460 up, against a list whose rows are 48 — or the directory passes ~300
+people, at which point D3's own "faceted filters replace the persistent readout" line arrives first.
 
 ---
 

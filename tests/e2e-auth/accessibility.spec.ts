@@ -467,6 +467,26 @@ test.describe("Reception has no WCAG A/AA violations", () => {
     const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
     expect(formatAxeViolations(results.violations)).toEqual([]);
   });
+
+  // Phase 5 PR 2, reviewer condition O-1(c): under the 1055 fold the list
+  // column and the readout section are `display: contents` so the band can be
+  // ordered between the search and the count header (sheet amendment I). That
+  // used to drop a labelled section from the accessibility tree in some
+  // engines, so the narrow frame is scanned in its own right AND the landmark
+  // is asserted through a real a11y-tree query, not a class lookup.
+  for (const width of [480, 640, 800, 1024]) {
+    test(`at the ${width} narrow fold, with a person locked`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/reception?q=201");
+      await expect(page.locator('li[role="option"][aria-selected="true"]')).toHaveCount(1);
+      await expect(page.getByRole("region", { name: "Caller detail" })).toBeAttached();
+      await expect(page.locator(".sp-recep-band")).toBeVisible();
+      await waitForOneShotAnimations(page);
+      const results = await new AxeBuilder({ page }).withTags(WCAG_A_AA_TAGS).analyze();
+      expect(formatAxeViolations(results.violations)).toEqual([]);
+      expect(results.passes.map(rule => rule.id)).toContain("color-contrast");
+    });
+  }
 });
 
 // Phase 4 PR 5: the /admin 403 card (a signed-in viewer) on the route card —
