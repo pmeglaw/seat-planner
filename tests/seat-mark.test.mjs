@@ -30,7 +30,7 @@ test("open = a hollow ring drawn with data-stroke; reserved = shackle stroke + f
   assert.ok(unavailable.querySelector("rect[data-stroke]") && unavailable.querySelector("path[data-hatch]"));
 });
 
-test("assigned = the mini-pill span; assigned-dot = the filled ● the legend shows with names off", async () => {
+test("assigned = the mini-pill span; assigned-dot = the filled ● the legend AND the plan show with names off", async () => {
   const pill = await render("assigned");
   assert.equal(pill.tagName, "SPAN");
   assert.ok(pill.classList.contains("sp-seat-mark--pill"));
