@@ -97,7 +97,7 @@
       lacks is the symbol set itself and the constant 28px footprint the map
       needs. Four states (lib/types.ts SeatStatus), one symbol each, grays
       only — the symbol is the signal and survives grayscale:
-        assigned    a miniature name pill (the real mark — ● never appears on the map)
+        assigned    a miniature name pill while names are on; ● on the plan AND in the legend while names are off (amendment J)
         available   ○ hollow ring, 2px
         reserved    lock — hollow shackle, filled body
         unavailable hatched square, 2px edge
@@ -526,7 +526,7 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
        the tier-C tooltip (PR 2); selection shows it in the inspector eyebrow.
        States: rest · hover · focus · selected · search hit · quiet (filtered
        out) · move origin · move target · invalid target · changed-in-draft ◇
-       · names off (filled footprint). 44px hit region: .cds-touch-target.
+       · names off (footprint carrying ●, amendment J). 44px hit region: .cds-touch-target.
        Move target / invalid target share one construction — 2px edge + subtle
        tint — in the success and error families, and differ by SHAPE too:
        target solid, invalid dashed. Both are transient interaction states.
@@ -553,15 +553,23 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-pill-badge { position: absolute; top: calc(-1 * var(--sp-space-02)); right: calc(-1 * var(--sp-space-02)); width: var(--sp-pill-badge-size); height: var(--sp-pill-badge-size); overflow: visible;
   color: var(--sp-pill-badge); fill: var(--sp-pill-fill); stroke: currentColor; stroke-width: var(--sp-pill-badge-stroke); stroke-linejoin: miter; }
 .sp-pill--search .sp-pill-badge { fill: var(--sp-pill-search-fill); }
-.sp-pill--names-off .sp-pill-badge { fill: var(--sp-pill-names-off); color: var(--sp-pill-fill); }   /* PR 3b rig: purple 40 on the gray-10 square is 2.14 — the ◇ inverts on the filled footprint (§1.16 amendment) */
-/* names off: assigned collapses to the filled 28 footprint; empty seats keep their symbols */
-.sp-pill--names-off { width: var(--sp-seat-footprint); padding: 0; justify-content: center; background: var(--sp-pill-names-off); box-shadow: none; color: transparent; overflow: hidden; }
-.sp-pill--names-off:is(:hover, [data-state="hover"]) { background: var(--sp-pill-names-off); }
-/* names off + quiet (filtered out): the filled footprint steps to the quiet TEXT colour (gray 70 / gray 30)
-   — still filled (= assigned), lighter than a match, 5.7 / 10 on the mat (the quiet EDGE was 1.7); no opacity
-   (PHASE3DS §1.16 amendment, PR 3b) */
-.sp-pill--names-off.sp-pill--quiet { background: var(--sp-pill-quiet-text); }
-.sp-pill--names-off.sp-pill--quiet:is(:hover, [data-state="hover"]) { background: var(--sp-pill-quiet-text); }
+/* Phase 5 PR 3 amendment J (PHASE3DS §1.16 amendment 3, §1.4 cross-amended; owner ruling R1 = B, 2026-09-09):
+   names off = the assigned pill takes the EMPTY-SEAT FOOTPRINT and carries the legend's ● — one status-mark
+   language on the plan (○ open · ● assigned · lock · hatch), and the legend is what the marker is. The base
+   .sp-pill rules already ARE the footprint (--sp-pill-fill / -edge / -fill-hover alias layer-02 / icon-secondary /
+   layer-hover-02, the footprint's own roles), so the modifier only fixes the width, drops the pads and colours
+   the ●; hover, focus, selected and quiet come from the pill rules above — nothing restated, nothing to
+   out-cascade. The ● inherits the pill's colour (`.sp-seat-mark` sets its own, so currentColor alone never
+   reached it) and steps to the quiet text colour with the quiet pill: both modifiers are (0,1,0) and names-off
+   is declared later, so the step is one combined rule. Supersedes PR 3b's filled --sp-pill-names-off block:
+   F-1 selected was invisible because border-inverse IS the block's fill in both themes (not a cascade loss —
+   .sp-pill[data-state="selected"] outranks the modifier); F-2 the block's overflow: hidden clipped the ◇ at
+   −4/−4; F-3 the legend showed ● and the plan ■. No overflow: hidden — there is no text to hide. The badge
+   override that inverted the ◇ on the block is gone: the base .sp-pill-badge fill is --sp-pill-fill = layer-02,
+   which is now the surface it sits on. --sp-pill-names-off is retired from sp-tokens.css (both copies). */
+.sp-pill--names-off { width: var(--sp-seat-footprint); padding: 0; justify-content: center; color: var(--sp-seat-mark-fill-color); }
+.sp-pill--names-off .sp-seat-mark { color: inherit; }
+.sp-pill--names-off.sp-pill--quiet { color: var(--sp-pill-quiet-text); }
 /* 44px hit region (deviation 7): the asset's touch-target pseudo, on every marker */
 .sp-pill.cds-touch-target::after, .sp-seat-footprint.cds-touch-target::after { content: ""; }
 .sp-seat-footprint.cds-touch-target { position: relative; }

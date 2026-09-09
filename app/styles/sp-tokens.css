@@ -412,7 +412,6 @@
   --sp-pill-badge:         var(--cds-status-caution-mark);  /* ◇ changed in draft — the Draft family's shape */
   --sp-pill-badge-size:    var(--cds-spacing-03);           /* 8 */
   --sp-pill-badge-stroke:  1.5px;                           /* the one stroke under 2: a 2px stroke closes an 8px hollow diamond (PHASE3DS §1.16) */
-  --sp-pill-names-off:     var(--cds-icon-primary);         /* names off: assigned = filled footprint */
 
   /* right slot (inspector · mode card · Ask Planner) and the commit bar */
   --sp-slot-bg:            var(--cds-layer-01);
