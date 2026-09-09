@@ -18,11 +18,22 @@ import {
 
 // Reception — front-desk call routing, on the Phase 3 `.sp-recep` family
 // (redesign-v2 Phase 4 PR 5; PHASE2UX §1R; PHASE3DS §1.29; DECISIONS D3 /
-// D3′ / D3-a…e). Read-only: renders published data handed down by
+// D3′ / D3-a…f). Read-only: renders published data handed down by
 // app/(shell)/reception/page.tsx and never mutates anything.
 //
 // Two zones (D3, density by zone): the LIST is dense — scanned — and the
-// READOUT is calm — read aloud under time pressure. The whole loop is
+// READOUT is calm — read aloud under time pressure.
+//
+// Under the sheet's 1055 fold the readout splits BY JOB (Phase 5 PR 2, owner
+// ruling R1; sheet amendment I; D3-f): the BAND — name, extension tile, seat
+// line — is pinned under the search so the answer is never below the fold,
+// and the TAIL — the same-department fallbacks and Show on map — follows the
+// list. The receptionist keeps her window about a third of a 1920 monitor
+// wide, and before this the one number she reads aloud sat under the list.
+// D3-f retires the "Back to the list" ghost with the drill-down it belonged
+// to: the list is never left, so there is nothing to go back from — which is
+// also what keeps the band free of focusable elements, the condition the
+// CSS-only mechanism rests on (reviewer ruling O-1). The whole loop is
 // keyboard-first with the phone in one hand: the field is autofocused, ↑ ↓
 // move the cursor (`[data-highlight]`, the readout previews it), ↵ locks
 // (`aria-selected="true"`, the readout holds the person, `?q=<name>` written),
@@ -208,12 +219,12 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
     }
   }
 
-  function backToList() {
-    inputRef.current?.focus();
-    inputRef.current?.scrollIntoView?.({ block: "start" });
-  }
-
   const fallback = detail ? sameDepartmentFallback(people, detail) : [];
+  // "Show on map" is the locked person's action, never a preview's.
+  const showOnMap = !previewing && locked;
+  // The tail only exists when it has something in it: an empty flex child
+  // would still take one of the section's 16px gaps at wide (Phase 5 PR 2).
+  const hasTail = fallback.length > 0 || Boolean(showOnMap);
   const recentPeople = recents
     .filter(id => id !== selectedId)
     .map(id => byId.get(id))
@@ -352,21 +363,29 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
 
       {/* The readout column (calm zone). Sticky under the header (sheet); in
           the shell the PANE scrolls at lg, so the header offset is zeroed on
-          this element (O-11, the PR 4 §1.37 tab-strip precedent). The live
-          region is the readout block itself, not the whole column: the recents
-          list rides along in the sticky column without being announced on
-          every lock (O-9). */}
+          this element (O-11, the PR 4 §1.37 tab-strip precedent) — and the
+          BAND inherits that zero through the DOM, which is exactly what the
+          1024–1055 seam needs (there the pane already scrolls while the sheet
+          is still below its 1055 fold).
+          Phase 5 PR 2 (owner ruling R1, sheet amendment I): below the fold the
+          readout SPLITS BY JOB — the band (name, tile, seat line) is pinned
+          under the search and the tail follows the list — so this section goes
+          display:contents there and its three children are ordered around the
+          list. It keeps its box and its label above the fold, so nothing at
+          ≥1056 moves.
+          The live region is the BAND, not the whole column: a lock announces
+          name · extension · seat line and stops. The fallbacks and Show on map
+          left it with the split (reviewer ruling O-3, 2026-09-08 — the one
+          named, dated exception to "wide unchanged"); the recents list already
+          sat outside it for the same reason (O-9). */}
       <section
         className="sp-recep-readout lg:[--sp-shell-header-h:0px]"
         aria-label="Caller detail"
       >
-        <button type="button" className="cds-btn cds-btn--ghost sp-recep-back" onMouseDown={keepInputFocus} onClick={backToList}>
-          Back to the list
-        </button>
-        <div aria-live="polite" className="flex flex-col gap-[var(--sp-space-05)]">
+        <div aria-live="polite" className="sp-recep-band">
           {detail ? (
             <>
-              <div>
+              <div className="sp-recep-who">
                 <h2>{detail.name}</h2>
                 <p className="sp-recep-role">{metaLine(detail)}</p>
               </div>
@@ -402,30 +421,6 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
                   </span>
                 )}
               </div>
-              {fallback.length > 0 && (
-                <div className="sp-recep-fallback">
-                  <h3>If no answer — same department</h3>
-                  <div className="sp-row-buttons">
-                    {fallback.map(colleague => (
-                      <button
-                        key={colleague.id}
-                        type="button"
-                        className="cds-btn cds-btn--ghost"
-                        onMouseDown={keepInputFocus}
-                        onClick={() => lock(colleague)}
-                      >
-                        {colleague.name}
-                        <span className="sp-row-button-ext">{colleague.extension}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {!previewing && locked && (
-                <Link href={"/" + withQueryParam("", locked.name)} className="cds-btn cds-btn--ghost cds-btn--md self-start">
-                  Show on map
-                </Link>
-              )}
             </>
           ) : (
             <p className="sp-recep-waiting">
@@ -433,6 +428,40 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
             </p>
           )}
         </div>
+
+        {/* The tail: directly under the band at wide, below the LIST under the
+            fold (R1). Its order is PHASE2UX §1R.4's shipped items 5 then 6 —
+            the hand-off's map-first R3 was withdrawn at plan review (reviewer
+            ruling O-2), and these are focusable controls, so nothing here is
+            ever reordered by CSS at either frame (WCAG 2.4.3). */}
+        {hasTail && (
+          <div className="sp-recep-tail">
+            {fallback.length > 0 && (
+              <div className="sp-recep-fallback">
+                <h3>If no answer — same department</h3>
+                <div className="sp-row-buttons">
+                  {fallback.map(colleague => (
+                    <button
+                      key={colleague.id}
+                      type="button"
+                      className="cds-btn cds-btn--ghost"
+                      onMouseDown={keepInputFocus}
+                      onClick={() => lock(colleague)}
+                    >
+                      {colleague.name}
+                      <span className="sp-row-button-ext">{colleague.extension}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {showOnMap && (
+              <Link href={"/" + withQueryParam("", showOnMap.name)} className="cds-btn cds-btn--ghost cds-btn--md self-start">
+                Show on map
+              </Link>
+            )}
+          </div>
+        )}
 
         {recentPeople.length > 0 && (
           <aside className="sp-recep-recent" aria-label="Recent lookups">

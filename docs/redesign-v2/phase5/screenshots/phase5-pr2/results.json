@@ -1,0 +1,1020 @@
+{
+  "generated": "2026-09-09T00:05:43.553Z",
+  "base": "http://localhost:3300",
+  "passed": 148,
+  "total": 148,
+  "results": [
+    {
+      "name": "480-light · the band holds \"Waiting for a call\"",
+      "ok": true
+    },
+    {
+      "name": "480-light · the band sits under the search and above the list",
+      "ok": true,
+      "detail": "search 216 · band 232-402 · first row 434"
+    },
+    {
+      "name": "480-light · the band is sticky",
+      "ok": true,
+      "detail": "top: 48px"
+    },
+    {
+      "name": "480-light · the sticky offset matches the scroll model",
+      "ok": true,
+      "detail": "48px"
+    },
+    {
+      "name": "480-light · the numeral is painted and on screen with the list scrolled to its end",
+      "ok": true,
+      "detail": "{\"top\":84,\"bottom\":134,\"height\":50}"
+    },
+    {
+      "name": "480-light · the whole band is inside the viewport, all four corners",
+      "ok": true
+    },
+    {
+      "name": "480-light · the band pins at the top of the scrollport while the list runs under it",
+      "ok": true,
+      "detail": "232 → 48 (offset 48px)"
+    },
+    {
+      "name": "480-light · zero focusable elements inside the band",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "480-light · D3-f: no \"Back to the list\"",
+      "ok": true
+    },
+    {
+      "name": "480-light · after the lock focus is in the field and typing filters, with no user scroll",
+      "ok": true,
+      "detail": "focus=reception-main · count=\"12 matches\" · scroll {\"win\":262,\"pane\":0} → {\"win\":134,\"pane\":0}"
+    },
+    {
+      "name": "480-light · the band is fully in the viewport while the field has focus",
+      "ok": true
+    },
+    {
+      "name": "480-light · the ↑ cursor row is never under the pinned band",
+      "ok": true,
+      "detail": "cursor top 636 · band bottom 268"
+    },
+    {
+      "name": "480-light · the band is never a tab stop; the tail precedes recents",
+      "ok": true,
+      "detail": "Show on map"
+    },
+    {
+      "name": "480-light · the tail follows the list",
+      "ok": true,
+      "detail": "first row 268 · tail 860"
+    },
+    {
+      "name": "480-light · tail order is fallbacks then Show on map (O-2)",
+      "ok": true,
+      "detail": "Anthony Cruz: fallback,a"
+    },
+    {
+      "name": "480-light · one live region (the band), one extension slot in the DOM",
+      "ok": true,
+      "detail": "sp-readout-none \"No extension on file\""
+    },
+    {
+      "name": "480-light · no sideways scroll and nothing off-edge in the band",
+      "ok": true,
+      "detail": "480/480, 0 off-edge"
+    },
+    {
+      "name": "480-light · the band holds \"No extension on file\" (§1R.4 item 4)",
+      "ok": true,
+      "detail": "Anthony Cruz"
+    },
+    {
+      "name": "640-light · the band holds \"Waiting for a call\"",
+      "ok": true
+    },
+    {
+      "name": "640-light · the band sits under the search and above the list",
+      "ok": true,
+      "detail": "search 198 · band 214-384 · first row 416"
+    },
+    {
+      "name": "640-light · the band is sticky",
+      "ok": true,
+      "detail": "top: 48px"
+    },
+    {
+      "name": "640-light · the sticky offset matches the scroll model",
+      "ok": true,
+      "detail": "48px"
+    },
+    {
+      "name": "640-light · the numeral is painted and on screen with the list scrolled to its end",
+      "ok": true,
+      "detail": "{\"top\":84,\"bottom\":134,\"height\":50}"
+    },
+    {
+      "name": "640-light · the whole band is inside the viewport, all four corners",
+      "ok": true
+    },
+    {
+      "name": "640-light · the band pins at the top of the scrollport while the list runs under it",
+      "ok": true,
+      "detail": "214 → 48 (offset 48px)"
+    },
+    {
+      "name": "640-light · zero focusable elements inside the band",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "640-light · D3-f: no \"Back to the list\"",
+      "ok": true
+    },
+    {
+      "name": "640-light · after the lock focus is in the field and typing filters, with no user scroll",
+      "ok": true,
+      "detail": "focus=reception-main · count=\"12 matches\" · scroll {\"win\":244,\"pane\":0} → {\"win\":116,\"pane\":0}"
+    },
+    {
+      "name": "640-light · the band is fully in the viewport while the field has focus",
+      "ok": true
+    },
+    {
+      "name": "640-light · the ↑ cursor row is never under the pinned band",
+      "ok": true,
+      "detail": "cursor top 636 · band bottom 268"
+    },
+    {
+      "name": "640-light · the band is never a tab stop; the tail precedes recents",
+      "ok": true,
+      "detail": "Show on map"
+    },
+    {
+      "name": "640-light · the tail follows the list",
+      "ok": true,
+      "detail": "first row 268 · tail 860"
+    },
+    {
+      "name": "640-light · tail order is fallbacks then Show on map (O-2)",
+      "ok": true,
+      "detail": "Anthony Cruz: fallback,a"
+    },
+    {
+      "name": "640-light · one live region (the band), one extension slot in the DOM",
+      "ok": true,
+      "detail": "sp-readout-none \"No extension on file\""
+    },
+    {
+      "name": "640-light · no sideways scroll and nothing off-edge in the band",
+      "ok": true,
+      "detail": "640/640, 0 off-edge"
+    },
+    {
+      "name": "640-light · the band holds \"No extension on file\" (§1R.4 item 4)",
+      "ok": true,
+      "detail": "Anthony Cruz"
+    },
+    {
+      "name": "800-light · the band holds \"Waiting for a call\"",
+      "ok": true
+    },
+    {
+      "name": "800-light · the band sits under the search and above the list",
+      "ok": true,
+      "detail": "search 198 · band 214-384 · first row 416"
+    },
+    {
+      "name": "800-light · the band is sticky",
+      "ok": true,
+      "detail": "top: 48px"
+    },
+    {
+      "name": "800-light · the sticky offset matches the scroll model",
+      "ok": true,
+      "detail": "48px"
+    },
+    {
+      "name": "800-light · the numeral is painted and on screen with the list scrolled to its end",
+      "ok": true,
+      "detail": "{\"top\":84,\"bottom\":134,\"height\":50}"
+    },
+    {
+      "name": "800-light · the whole band is inside the viewport, all four corners",
+      "ok": true
+    },
+    {
+      "name": "800-light · the band pins at the top of the scrollport while the list runs under it",
+      "ok": true,
+      "detail": "214 → 48 (offset 48px)"
+    },
+    {
+      "name": "800-light · zero focusable elements inside the band",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "800-light · D3-f: no \"Back to the list\"",
+      "ok": true
+    },
+    {
+      "name": "800-light · after the lock focus is in the field and typing filters, with no user scroll",
+      "ok": true,
+      "detail": "focus=reception-main · count=\"12 matches\" · scroll {\"win\":244,\"pane\":0} → {\"win\":116,\"pane\":0}"
+    },
+    {
+      "name": "800-light · the band is fully in the viewport while the field has focus",
+      "ok": true
+    },
+    {
+      "name": "800-light · the ↑ cursor row is never under the pinned band",
+      "ok": true,
+      "detail": "cursor top 636 · band bottom 268"
+    },
+    {
+      "name": "800-light · the band is never a tab stop; the tail precedes recents",
+      "ok": true,
+      "detail": "Show on map"
+    },
+    {
+      "name": "800-light · the tail follows the list",
+      "ok": true,
+      "detail": "first row 268 · tail 860"
+    },
+    {
+      "name": "800-light · tail order is fallbacks then Show on map (O-2)",
+      "ok": true,
+      "detail": "Anthony Cruz: fallback,a"
+    },
+    {
+      "name": "800-light · one live region (the band), one extension slot in the DOM",
+      "ok": true,
+      "detail": "sp-readout-none \"No extension on file\""
+    },
+    {
+      "name": "800-light · no sideways scroll and nothing off-edge in the band",
+      "ok": true,
+      "detail": "800/800, 0 off-edge"
+    },
+    {
+      "name": "800-light · the band holds \"No extension on file\" (§1R.4 item 4)",
+      "ok": true,
+      "detail": "Anthony Cruz"
+    },
+    {
+      "name": "1024-light · the band holds \"Waiting for a call\"",
+      "ok": true
+    },
+    {
+      "name": "1024-light · the band sits under the search and above the list",
+      "ok": true,
+      "detail": "search 198 · band 214-384 · first row 416"
+    },
+    {
+      "name": "1024-light · the band is sticky",
+      "ok": true,
+      "detail": "top: 0px"
+    },
+    {
+      "name": "1024-light · the sticky offset matches the scroll model",
+      "ok": true,
+      "detail": "0px"
+    },
+    {
+      "name": "1024-light · the numeral is painted and on screen with the list scrolled to its end",
+      "ok": true,
+      "detail": "{\"top\":84,\"bottom\":134,\"height\":50}"
+    },
+    {
+      "name": "1024-light · the whole band is inside the viewport, all four corners",
+      "ok": true
+    },
+    {
+      "name": "1024-light · the band pins at the top of the scrollport while the list runs under it",
+      "ok": true,
+      "detail": "214 → 48 (offset 0px)"
+    },
+    {
+      "name": "1024-light · zero focusable elements inside the band",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "1024-light · D3-f: no \"Back to the list\"",
+      "ok": true
+    },
+    {
+      "name": "1024-light · after the lock focus is in the field and typing filters, with no user scroll",
+      "ok": true,
+      "detail": "focus=reception-main · count=\"12 matches\" · scroll {\"win\":0,\"pane\":244} → {\"win\":0,\"pane\":116}"
+    },
+    {
+      "name": "1024-light · the band is fully in the viewport while the field has focus",
+      "ok": true
+    },
+    {
+      "name": "1024-light · the ↑ cursor row is never under the pinned band",
+      "ok": true,
+      "detail": "cursor top 636 · band bottom 268"
+    },
+    {
+      "name": "1024-light · the band is never a tab stop; the tail precedes recents",
+      "ok": true,
+      "detail": "Show on map"
+    },
+    {
+      "name": "1024-light · the tail follows the list",
+      "ok": true,
+      "detail": "first row 268 · tail 860"
+    },
+    {
+      "name": "1024-light · tail order is fallbacks then Show on map (O-2)",
+      "ok": true,
+      "detail": "Anthony Cruz: fallback,a"
+    },
+    {
+      "name": "1024-light · one live region (the band), one extension slot in the DOM",
+      "ok": true,
+      "detail": "sp-readout-none \"No extension on file\""
+    },
+    {
+      "name": "1024-light · no sideways scroll and nothing off-edge in the band",
+      "ok": true,
+      "detail": "1024/1024, 0 off-edge"
+    },
+    {
+      "name": "1024-light · the band holds \"No extension on file\" (§1R.4 item 4)",
+      "ok": true,
+      "detail": "Anthony Cruz"
+    },
+    {
+      "name": "480-dark · the band holds \"Waiting for a call\"",
+      "ok": true
+    },
+    {
+      "name": "480-dark · the band sits under the search and above the list",
+      "ok": true,
+      "detail": "search 216 · band 232-402 · first row 434"
+    },
+    {
+      "name": "480-dark · the band is sticky",
+      "ok": true,
+      "detail": "top: 48px"
+    },
+    {
+      "name": "480-dark · the sticky offset matches the scroll model",
+      "ok": true,
+      "detail": "48px"
+    },
+    {
+      "name": "480-dark · the numeral is painted and on screen with the list scrolled to its end",
+      "ok": true,
+      "detail": "{\"top\":84,\"bottom\":134,\"height\":50}"
+    },
+    {
+      "name": "480-dark · the whole band is inside the viewport, all four corners",
+      "ok": true
+    },
+    {
+      "name": "480-dark · the band pins at the top of the scrollport while the list runs under it",
+      "ok": true,
+      "detail": "232 → 48 (offset 48px)"
+    },
+    {
+      "name": "480-dark · zero focusable elements inside the band",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "480-dark · D3-f: no \"Back to the list\"",
+      "ok": true
+    },
+    {
+      "name": "480-dark · after the lock focus is in the field and typing filters, with no user scroll",
+      "ok": true,
+      "detail": "focus=reception-main · count=\"12 matches\" · scroll {\"win\":262,\"pane\":0} → {\"win\":134,\"pane\":0}"
+    },
+    {
+      "name": "480-dark · the band is fully in the viewport while the field has focus",
+      "ok": true
+    },
+    {
+      "name": "480-dark · the ↑ cursor row is never under the pinned band",
+      "ok": true,
+      "detail": "cursor top 636 · band bottom 268"
+    },
+    {
+      "name": "480-dark · the band is never a tab stop; the tail precedes recents",
+      "ok": true,
+      "detail": "Show on map"
+    },
+    {
+      "name": "480-dark · the tail follows the list",
+      "ok": true,
+      "detail": "first row 268 · tail 860"
+    },
+    {
+      "name": "480-dark · tail order is fallbacks then Show on map (O-2)",
+      "ok": true,
+      "detail": "Anthony Cruz: fallback,a"
+    },
+    {
+      "name": "480-dark · one live region (the band), one extension slot in the DOM",
+      "ok": true,
+      "detail": "sp-readout-none \"No extension on file\""
+    },
+    {
+      "name": "480-dark · no sideways scroll and nothing off-edge in the band",
+      "ok": true,
+      "detail": "480/480, 0 off-edge"
+    },
+    {
+      "name": "480-dark · the band holds \"No extension on file\" (§1R.4 item 4)",
+      "ok": true,
+      "detail": "Anthony Cruz"
+    },
+    {
+      "name": "640-dark · the band holds \"Waiting for a call\"",
+      "ok": true
+    },
+    {
+      "name": "640-dark · the band sits under the search and above the list",
+      "ok": true,
+      "detail": "search 198 · band 214-384 · first row 416"
+    },
+    {
+      "name": "640-dark · the band is sticky",
+      "ok": true,
+      "detail": "top: 48px"
+    },
+    {
+      "name": "640-dark · the sticky offset matches the scroll model",
+      "ok": true,
+      "detail": "48px"
+    },
+    {
+      "name": "640-dark · the numeral is painted and on screen with the list scrolled to its end",
+      "ok": true,
+      "detail": "{\"top\":84,\"bottom\":134,\"height\":50}"
+    },
+    {
+      "name": "640-dark · the whole band is inside the viewport, all four corners",
+      "ok": true
+    },
+    {
+      "name": "640-dark · the band pins at the top of the scrollport while the list runs under it",
+      "ok": true,
+      "detail": "214 → 48 (offset 48px)"
+    },
+    {
+      "name": "640-dark · zero focusable elements inside the band",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "640-dark · D3-f: no \"Back to the list\"",
+      "ok": true
+    },
+    {
+      "name": "640-dark · after the lock focus is in the field and typing filters, with no user scroll",
+      "ok": true,
+      "detail": "focus=reception-main · count=\"12 matches\" · scroll {\"win\":244,\"pane\":0} → {\"win\":116,\"pane\":0}"
+    },
+    {
+      "name": "640-dark · the band is fully in the viewport while the field has focus",
+      "ok": true
+    },
+    {
+      "name": "640-dark · the ↑ cursor row is never under the pinned band",
+      "ok": true,
+      "detail": "cursor top 636 · band bottom 268"
+    },
+    {
+      "name": "640-dark · the band is never a tab stop; the tail precedes recents",
+      "ok": true,
+      "detail": "Show on map"
+    },
+    {
+      "name": "640-dark · the tail follows the list",
+      "ok": true,
+      "detail": "first row 268 · tail 860"
+    },
+    {
+      "name": "640-dark · tail order is fallbacks then Show on map (O-2)",
+      "ok": true,
+      "detail": "Anthony Cruz: fallback,a"
+    },
+    {
+      "name": "640-dark · one live region (the band), one extension slot in the DOM",
+      "ok": true,
+      "detail": "sp-readout-none \"No extension on file\""
+    },
+    {
+      "name": "640-dark · no sideways scroll and nothing off-edge in the band",
+      "ok": true,
+      "detail": "640/640, 0 off-edge"
+    },
+    {
+      "name": "640-dark · the band holds \"No extension on file\" (§1R.4 item 4)",
+      "ok": true,
+      "detail": "Anthony Cruz"
+    },
+    {
+      "name": "800-dark · the band holds \"Waiting for a call\"",
+      "ok": true
+    },
+    {
+      "name": "800-dark · the band sits under the search and above the list",
+      "ok": true,
+      "detail": "search 198 · band 214-384 · first row 416"
+    },
+    {
+      "name": "800-dark · the band is sticky",
+      "ok": true,
+      "detail": "top: 48px"
+    },
+    {
+      "name": "800-dark · the sticky offset matches the scroll model",
+      "ok": true,
+      "detail": "48px"
+    },
+    {
+      "name": "800-dark · the numeral is painted and on screen with the list scrolled to its end",
+      "ok": true,
+      "detail": "{\"top\":84,\"bottom\":134,\"height\":50}"
+    },
+    {
+      "name": "800-dark · the whole band is inside the viewport, all four corners",
+      "ok": true
+    },
+    {
+      "name": "800-dark · the band pins at the top of the scrollport while the list runs under it",
+      "ok": true,
+      "detail": "214 → 48 (offset 48px)"
+    },
+    {
+      "name": "800-dark · zero focusable elements inside the band",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "800-dark · D3-f: no \"Back to the list\"",
+      "ok": true
+    },
+    {
+      "name": "800-dark · after the lock focus is in the field and typing filters, with no user scroll",
+      "ok": true,
+      "detail": "focus=reception-main · count=\"12 matches\" · scroll {\"win\":244,\"pane\":0} → {\"win\":116,\"pane\":0}"
+    },
+    {
+      "name": "800-dark · the band is fully in the viewport while the field has focus",
+      "ok": true
+    },
+    {
+      "name": "800-dark · the ↑ cursor row is never under the pinned band",
+      "ok": true,
+      "detail": "cursor top 636 · band bottom 268"
+    },
+    {
+      "name": "800-dark · the band is never a tab stop; the tail precedes recents",
+      "ok": true,
+      "detail": "Show on map"
+    },
+    {
+      "name": "800-dark · the tail follows the list",
+      "ok": true,
+      "detail": "first row 268 · tail 860"
+    },
+    {
+      "name": "800-dark · tail order is fallbacks then Show on map (O-2)",
+      "ok": true,
+      "detail": "Anthony Cruz: fallback,a"
+    },
+    {
+      "name": "800-dark · one live region (the band), one extension slot in the DOM",
+      "ok": true,
+      "detail": "sp-readout-none \"No extension on file\""
+    },
+    {
+      "name": "800-dark · no sideways scroll and nothing off-edge in the band",
+      "ok": true,
+      "detail": "800/800, 0 off-edge"
+    },
+    {
+      "name": "800-dark · the band holds \"No extension on file\" (§1R.4 item 4)",
+      "ok": true,
+      "detail": "Anthony Cruz"
+    },
+    {
+      "name": "1024-dark · the band holds \"Waiting for a call\"",
+      "ok": true
+    },
+    {
+      "name": "1024-dark · the band sits under the search and above the list",
+      "ok": true,
+      "detail": "search 198 · band 214-384 · first row 416"
+    },
+    {
+      "name": "1024-dark · the band is sticky",
+      "ok": true,
+      "detail": "top: 0px"
+    },
+    {
+      "name": "1024-dark · the sticky offset matches the scroll model",
+      "ok": true,
+      "detail": "0px"
+    },
+    {
+      "name": "1024-dark · the numeral is painted and on screen with the list scrolled to its end",
+      "ok": true,
+      "detail": "{\"top\":84,\"bottom\":134,\"height\":50}"
+    },
+    {
+      "name": "1024-dark · the whole band is inside the viewport, all four corners",
+      "ok": true
+    },
+    {
+      "name": "1024-dark · the band pins at the top of the scrollport while the list runs under it",
+      "ok": true,
+      "detail": "214 → 48 (offset 0px)"
+    },
+    {
+      "name": "1024-dark · zero focusable elements inside the band",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "1024-dark · D3-f: no \"Back to the list\"",
+      "ok": true
+    },
+    {
+      "name": "1024-dark · after the lock focus is in the field and typing filters, with no user scroll",
+      "ok": true,
+      "detail": "focus=reception-main · count=\"12 matches\" · scroll {\"win\":0,\"pane\":244} → {\"win\":0,\"pane\":116}"
+    },
+    {
+      "name": "1024-dark · the band is fully in the viewport while the field has focus",
+      "ok": true
+    },
+    {
+      "name": "1024-dark · the ↑ cursor row is never under the pinned band",
+      "ok": true,
+      "detail": "cursor top 636 · band bottom 268"
+    },
+    {
+      "name": "1024-dark · the band is never a tab stop; the tail precedes recents",
+      "ok": true,
+      "detail": "Show on map"
+    },
+    {
+      "name": "1024-dark · the tail follows the list",
+      "ok": true,
+      "detail": "first row 268 · tail 860"
+    },
+    {
+      "name": "1024-dark · tail order is fallbacks then Show on map (O-2)",
+      "ok": true,
+      "detail": "Anthony Cruz: fallback,a"
+    },
+    {
+      "name": "1024-dark · one live region (the band), one extension slot in the DOM",
+      "ok": true,
+      "detail": "sp-readout-none \"No extension on file\""
+    },
+    {
+      "name": "1024-dark · no sideways scroll and nothing off-edge in the band",
+      "ok": true,
+      "detail": "1024/1024, 0 off-edge"
+    },
+    {
+      "name": "1024-dark · the band holds \"No extension on file\" (§1R.4 item 4)",
+      "ok": true,
+      "detail": "Anthony Cruz"
+    },
+    {
+      "name": "1920-light · the wide frame is untouched: readout 480, gutter 32, list 1008",
+      "ok": true,
+      "detail": "{\"readoutWidth\":480,\"listWidth\":1008,\"gutter\":32,\"bandIsColumn\":\"column\",\"bandPosition\":\"static\"}"
+    },
+    {
+      "name": "1920-light · above the fold the band is a plain column in the readout",
+      "ok": true
+    },
+    {
+      "name": "1920-dark · the wide frame is untouched: readout 480, gutter 32, list 1008",
+      "ok": true,
+      "detail": "{\"readoutWidth\":480,\"listWidth\":1008,\"gutter\":32,\"bandIsColumn\":\"column\",\"bandPosition\":\"static\"}"
+    },
+    {
+      "name": "1920-dark · above the fold the band is a plain column in the readout",
+      "ok": true
+    }
+  ],
+  "measurements": [
+    {
+      "width": 480,
+      "theme": "light",
+      "search": {
+        "top": 168,
+        "bottom": 216,
+        "height": 48,
+        "width": 416
+      },
+      "band": {
+        "top": 232,
+        "bottom": 402,
+        "height": 170,
+        "width": 416
+      },
+      "header": {
+        "top": 402,
+        "bottom": 434,
+        "height": 32,
+        "width": 416
+      },
+      "firstRow": {
+        "top": 434,
+        "bottom": 482,
+        "height": 48,
+        "width": 416
+      },
+      "tail": {
+        "top": 1026,
+        "bottom": 1066,
+        "height": 40,
+        "width": 416
+      },
+      "recents": null,
+      "bandSticky": "sticky",
+      "bandTop": "48px",
+      "lockedName": "Alex Shabazian"
+    },
+    {
+      "width": 640,
+      "theme": "light",
+      "search": {
+        "top": 150,
+        "bottom": 198,
+        "height": 48,
+        "width": 576
+      },
+      "band": {
+        "top": 214,
+        "bottom": 384,
+        "height": 170,
+        "width": 576
+      },
+      "header": {
+        "top": 384,
+        "bottom": 416,
+        "height": 32,
+        "width": 576
+      },
+      "firstRow": {
+        "top": 416,
+        "bottom": 464,
+        "height": 48,
+        "width": 576
+      },
+      "tail": {
+        "top": 1008,
+        "bottom": 1048,
+        "height": 40,
+        "width": 576
+      },
+      "recents": null,
+      "bandSticky": "sticky",
+      "bandTop": "48px",
+      "lockedName": "Alex Shabazian"
+    },
+    {
+      "width": 800,
+      "theme": "light",
+      "search": {
+        "top": 150,
+        "bottom": 198,
+        "height": 48,
+        "width": 736
+      },
+      "band": {
+        "top": 214,
+        "bottom": 384,
+        "height": 170,
+        "width": 736
+      },
+      "header": {
+        "top": 384,
+        "bottom": 416,
+        "height": 32,
+        "width": 736
+      },
+      "firstRow": {
+        "top": 416,
+        "bottom": 464,
+        "height": 48,
+        "width": 736
+      },
+      "tail": {
+        "top": 1008,
+        "bottom": 1048,
+        "height": 40,
+        "width": 736
+      },
+      "recents": null,
+      "bandSticky": "sticky",
+      "bandTop": "48px",
+      "lockedName": "Alex Shabazian"
+    },
+    {
+      "width": 1024,
+      "theme": "light",
+      "search": {
+        "top": 150,
+        "bottom": 198,
+        "height": 48,
+        "width": 960
+      },
+      "band": {
+        "top": 214,
+        "bottom": 384,
+        "height": 170,
+        "width": 960
+      },
+      "header": {
+        "top": 384,
+        "bottom": 416,
+        "height": 32,
+        "width": 960
+      },
+      "firstRow": {
+        "top": 416,
+        "bottom": 464,
+        "height": 48,
+        "width": 960
+      },
+      "tail": {
+        "top": 1008,
+        "bottom": 1048,
+        "height": 40,
+        "width": 960
+      },
+      "recents": null,
+      "bandSticky": "sticky",
+      "bandTop": "0px",
+      "lockedName": "Alex Shabazian"
+    },
+    {
+      "width": 480,
+      "theme": "dark",
+      "search": {
+        "top": 168,
+        "bottom": 216,
+        "height": 48,
+        "width": 416
+      },
+      "band": {
+        "top": 232,
+        "bottom": 402,
+        "height": 170,
+        "width": 416
+      },
+      "header": {
+        "top": 402,
+        "bottom": 434,
+        "height": 32,
+        "width": 416
+      },
+      "firstRow": {
+        "top": 434,
+        "bottom": 482,
+        "height": 48,
+        "width": 416
+      },
+      "tail": {
+        "top": 1026,
+        "bottom": 1066,
+        "height": 40,
+        "width": 416
+      },
+      "recents": null,
+      "bandSticky": "sticky",
+      "bandTop": "48px",
+      "lockedName": "Alex Shabazian"
+    },
+    {
+      "width": 640,
+      "theme": "dark",
+      "search": {
+        "top": 150,
+        "bottom": 198,
+        "height": 48,
+        "width": 576
+      },
+      "band": {
+        "top": 214,
+        "bottom": 384,
+        "height": 170,
+        "width": 576
+      },
+      "header": {
+        "top": 384,
+        "bottom": 416,
+        "height": 32,
+        "width": 576
+      },
+      "firstRow": {
+        "top": 416,
+        "bottom": 464,
+        "height": 48,
+        "width": 576
+      },
+      "tail": {
+        "top": 1008,
+        "bottom": 1048,
+        "height": 40,
+        "width": 576
+      },
+      "recents": null,
+      "bandSticky": "sticky",
+      "bandTop": "48px",
+      "lockedName": "Alex Shabazian"
+    },
+    {
+      "width": 800,
+      "theme": "dark",
+      "search": {
+        "top": 150,
+        "bottom": 198,
+        "height": 48,
+        "width": 736
+      },
+      "band": {
+        "top": 214,
+        "bottom": 384,
+        "height": 170,
+        "width": 736
+      },
+      "header": {
+        "top": 384,
+        "bottom": 416,
+        "height": 32,
+        "width": 736
+      },
+      "firstRow": {
+        "top": 416,
+        "bottom": 464,
+        "height": 48,
+        "width": 736
+      },
+      "tail": {
+        "top": 1008,
+        "bottom": 1048,
+        "height": 40,
+        "width": 736
+      },
+      "recents": null,
+      "bandSticky": "sticky",
+      "bandTop": "48px",
+      "lockedName": "Alex Shabazian"
+    },
+    {
+      "width": 1024,
+      "theme": "dark",
+      "search": {
+        "top": 150,
+        "bottom": 198,
+        "height": 48,
+        "width": 960
+      },
+      "band": {
+        "top": 214,
+        "bottom": 384,
+        "height": 170,
+        "width": 960
+      },
+      "header": {
+        "top": 384,
+        "bottom": 416,
+        "height": 32,
+        "width": 960
+      },
+      "firstRow": {
+        "top": 416,
+        "bottom": 464,
+        "height": 48,
+        "width": 960
+      },
+      "tail": {
+        "top": 1008,
+        "bottom": 1048,
+        "height": 40,
+        "width": 960
+      },
+      "recents": null,
+      "bandSticky": "sticky",
+      "bandTop": "0px",
+      "lockedName": "Alex Shabazian"
+    }
+  ]
+}

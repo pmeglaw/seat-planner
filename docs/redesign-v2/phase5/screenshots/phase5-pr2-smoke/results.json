@@ -1,0 +1,2229 @@
+{
+  "generated": "2026-09-09T17:01:16.196Z",
+  "base": "http://localhost:3300",
+  "mainBase": "http://localhost:3301",
+  "head": "763d48956ec8d8774b195be45524d2358eb6c99f",
+  "passed": 67,
+  "total": 67,
+  "results": [
+    {
+      "step": "15 brand-sweep · 01-640-locked-scrolled-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "1 640-locked-scrolled",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "numeral": {
+          "ok": true,
+          "inside": true,
+          "hits": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "rect": {
+            "top": 84,
+            "bottom": 134
+          }
+        },
+        "band": {
+          "top": 48,
+          "bottom": 218,
+          "left": 32,
+          "right": 608,
+          "width": 576,
+          "height": 170
+        },
+        "headerBottom": 48,
+        "centre": {
+          "ok": true,
+          "inRow": false,
+          "hit": "div.sp-recep-band"
+        },
+        "top": "48px",
+        "scrolled": {
+          "win": 244,
+          "pane": 0
+        },
+        "restBandTop": 214
+      },
+      "note": "numeral 84-134 · band top 48 = header bottom 48 · centre → div.sp-recep-band · offset 48px",
+      "files": [
+        "01-640-locked-scrolled-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 01-640-locked-scrolled-dark",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#e8a07a",
+        "linkColor": "rgb(232, 160, 122)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(232, 160, 122)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(232, 160, 122)",
+      "files": []
+    },
+    {
+      "step": "1 640-locked-scrolled",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "numeral": {
+          "ok": true,
+          "inside": true,
+          "hits": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "rect": {
+            "top": 84,
+            "bottom": 134
+          }
+        },
+        "band": {
+          "top": 48,
+          "bottom": 218,
+          "left": 32,
+          "right": 608,
+          "width": 576,
+          "height": 170
+        },
+        "headerBottom": 48,
+        "centre": {
+          "ok": true,
+          "inRow": false,
+          "hit": "div.sp-recep-band"
+        },
+        "top": "48px",
+        "scrolled": {
+          "win": 244,
+          "pane": 0
+        },
+        "restBandTop": 214
+      },
+      "note": "numeral 84-134 · band top 48 = header bottom 48 · centre → div.sp-recep-band · offset 48px",
+      "files": [
+        "01-640-locked-scrolled-dark.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 02-1030-locked-scrolled-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "2 seam-1030",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "numeral": {
+          "ok": true,
+          "inside": true,
+          "hits": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "rect": {
+            "top": 84,
+            "bottom": 134
+          }
+        },
+        "band": {
+          "top": 48,
+          "bottom": 218,
+          "left": 32,
+          "right": 998,
+          "width": 966,
+          "height": 170
+        },
+        "headerBottom": 48,
+        "centre": {
+          "ok": true,
+          "inRow": false,
+          "hit": "div.sp-recep-band"
+        },
+        "top": "0px",
+        "scrolled": {
+          "win": 0,
+          "pane": 244
+        },
+        "paneTop": 48
+      },
+      "note": "offset 0px · pane scrolled 244, window 0 · band top 48 · centre → div.sp-recep-band",
+      "files": [
+        "02-1030-locked-scrolled-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 02-1030-locked-scrolled-dark",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#e8a07a",
+        "linkColor": "rgb(232, 160, 122)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(232, 160, 122)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(232, 160, 122)",
+      "files": []
+    },
+    {
+      "step": "2 seam-1030",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "numeral": {
+          "ok": true,
+          "inside": true,
+          "hits": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "rect": {
+            "top": 84,
+            "bottom": 134
+          }
+        },
+        "band": {
+          "top": 48,
+          "bottom": 218,
+          "left": 32,
+          "right": 998,
+          "width": 966,
+          "height": 170
+        },
+        "headerBottom": 48,
+        "centre": {
+          "ok": true,
+          "inRow": false,
+          "hit": "div.sp-recep-band"
+        },
+        "top": "0px",
+        "scrolled": {
+          "win": 0,
+          "pane": 244
+        },
+        "paneTop": 48
+      },
+      "note": "offset 0px · pane scrolled 244, window 0 · band top 48 · centre → div.sp-recep-band",
+      "files": [
+        "02-1030-locked-scrolled-dark.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 03-640-cursor-under-band-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "3 scroll-margin-640",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "letter": "a",
+        "n": 12,
+        "steps": [
+          {
+            "dir": "start",
+            "name": "Alex Shabazian",
+            "top": 416,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Anthony Cruz",
+            "top": 464,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Daniel Garcia",
+            "top": 482,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "David Kim",
+            "top": 560,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Jessica Moore",
+            "top": 578,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Lauren Smith",
+            "top": 626,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Maria Lopez",
+            "top": 704,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Nina Patel",
+            "top": 752,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Rachel Nguyen",
+            "top": 770,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Robert Allen",
+            "top": 818,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Samantha Reed",
+            "top": 852,
+            "bandBottom": 340,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Victor Chen",
+            "top": 852,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Samantha Reed",
+            "top": 804,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Robert Allen",
+            "top": 756,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Rachel Nguyen",
+            "top": 708,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Nina Patel",
+            "top": 690,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Maria Lopez",
+            "top": 642,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Lauren Smith",
+            "top": 564,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Jessica Moore",
+            "top": 516,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "David Kim",
+            "top": 498,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Daniel Garcia",
+            "top": 420,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Anthony Cruz",
+            "top": 402,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Alex Shabazian",
+            "top": 354,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          }
+        ]
+      },
+      "note": "\"a\" keeps 12 rows · 23/23 cursor steps at or below the band's bottom (384)",
+      "files": [
+        "03-640-cursor-under-band-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 03-1030-cursor-under-band-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "3 scroll-margin-1030",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "letter": "a",
+        "n": 12,
+        "steps": [
+          {
+            "dir": "start",
+            "name": "Alex Shabazian",
+            "top": 416,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Anthony Cruz",
+            "top": 464,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Daniel Garcia",
+            "top": 482,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "David Kim",
+            "top": 560,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Jessica Moore",
+            "top": 578,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Lauren Smith",
+            "top": 626,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Maria Lopez",
+            "top": 704,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Nina Patel",
+            "top": 752,
+            "bandBottom": 384,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Rachel Nguyen",
+            "top": 770,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Robert Allen",
+            "top": 818,
+            "bandBottom": 354,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Samantha Reed",
+            "top": 852,
+            "bandBottom": 340,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↓",
+            "name": "Victor Chen",
+            "top": 852,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Samantha Reed",
+            "top": 804,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Robert Allen",
+            "top": 756,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Rachel Nguyen",
+            "top": 708,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Nina Patel",
+            "top": 690,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Maria Lopez",
+            "top": 642,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Lauren Smith",
+            "top": 564,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Jessica Moore",
+            "top": 516,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "David Kim",
+            "top": 498,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Daniel Garcia",
+            "top": 420,
+            "bandBottom": 292,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Anthony Cruz",
+            "top": 402,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          },
+          {
+            "dir": "↑",
+            "name": "Alex Shabazian",
+            "top": 354,
+            "bandBottom": 322,
+            "painted": true,
+            "ok": true
+          }
+        ]
+      },
+      "note": "\"a\" keeps 12 rows · 23/23 cursor steps at or below the band's bottom (384)",
+      "files": [
+        "03-1030-cursor-under-band-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 04-640-o4-loop-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "4 o4-loop",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "focusAfterLock": {
+          "label": "input:Search the directory",
+          "id": "reception-main",
+          "inBand": false,
+          "inList": false,
+          "inTail": false,
+          "inRecents": false,
+          "isClear": false,
+          "outline": "rgb(184, 92, 46) solid 2px",
+          "outlineOffset": "-2px"
+        },
+        "count": "12 matches",
+        "band": {
+          "ok": true,
+          "inside": true,
+          "hits": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "rect": {
+            "top": 214,
+            "bottom": 384
+          }
+        },
+        "scroll": {
+          "before": {
+            "win": 90,
+            "pane": 0
+          },
+          "during": {
+            "win": 0,
+            "pane": 0
+          }
+        }
+      },
+      "note": "focus reception-main · \"12 matches\" · band corners truetruetruetrue · no rig scroll after the lock",
+      "files": [
+        "04-640-o4-loop-light.png"
+      ]
+    },
+    {
+      "step": "5 o3-live-region-1920",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "all": [
+          "span.sp-recep-count",
+          "div.sp-recep-band"
+        ],
+        "count": 2,
+        "bandIsLive": true,
+        "readoutLive": 1,
+        "readoutLiveIsBand": true,
+        "text": "Anthony CruzLitigationExtension205Escto unlockFloor 2 · Litigation — reaches voicemail if away",
+        "fallbackInLive": false,
+        "mapInLive": false,
+        "countLive": "polite",
+        "numeral": "205",
+        "seatline": "Floor 2 · Litigation — reaches voicemail if away"
+      },
+      "note": "Anthony Cruz: live = [span.sp-recep-count, div.sp-recep-band] · band carries name + 205 + \"Floor 2 · Litigation — reaches v\" · fallback/map outside",
+      "files": []
+    },
+    {
+      "step": "5 o3-live-region-640",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "all": [
+          "span.sp-recep-count",
+          "div.sp-recep-band"
+        ],
+        "count": 2,
+        "bandIsLive": true,
+        "readoutLive": 1,
+        "readoutLiveIsBand": true,
+        "text": "Anthony CruzLitigationExtension205Escto unlockFloor 2 · Litigation — reaches voicemail if away",
+        "fallbackInLive": false,
+        "mapInLive": false,
+        "countLive": "polite",
+        "numeral": "205",
+        "seatline": "Floor 2 · Litigation — reaches voicemail if away"
+      },
+      "note": "Anthony Cruz: live = [span.sp-recep-count, div.sp-recep-band] · band carries name + 205 + \"Floor 2 · Litigation — reaches v\" · fallback/map outside",
+      "files": []
+    },
+    {
+      "step": "15 brand-sweep · 06-480-tab-walk-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "6 o1-tab-walk-480",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "focusables": 0,
+        "roving": {
+          "focusIsField": true,
+          "activeDescendant": "reception-option-00000000-0000-0000-0000-000000000008",
+          "resolves": true,
+          "preview": "Anthony Cruz",
+          "moved": true,
+          "returned": true,
+          "previewIsLocked": true,
+          "rows": 3
+        },
+        "walk": [
+          {
+            "label": "button:Clear search",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": false,
+            "isClear": true,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:David Kim203",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": true,
+            "inRecents": false,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:Alex Shabazian201",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": true,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          }
+        ],
+        "idx": {
+          "clear": 0,
+          "tail": 1,
+          "recents": 2
+        }
+      },
+      "note": "band focusables 0 · ↓ → reception-option-00000000-0000-0000-0000-000000000008 · Tab: button:Clear search → button:David Kim203 → button:Alex Shabazian201",
+      "files": [
+        "06-480-tab-walk-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 06-640-tab-walk-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "6 o1-tab-walk-640",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "focusables": 0,
+        "roving": {
+          "focusIsField": true,
+          "activeDescendant": "reception-option-00000000-0000-0000-0000-000000000008",
+          "resolves": true,
+          "preview": "Anthony Cruz",
+          "moved": true,
+          "returned": true,
+          "previewIsLocked": true,
+          "rows": 3
+        },
+        "walk": [
+          {
+            "label": "button:Clear search",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": false,
+            "isClear": true,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:David Kim203",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": true,
+            "inRecents": false,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:Alex Shabazian201",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": true,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          }
+        ],
+        "idx": {
+          "clear": 0,
+          "tail": 1,
+          "recents": 2
+        }
+      },
+      "note": "band focusables 0 · ↓ → reception-option-00000000-0000-0000-0000-000000000008 · Tab: button:Clear search → button:David Kim203 → button:Alex Shabazian201",
+      "files": [
+        "06-640-tab-walk-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 06-800-tab-walk-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "6 o1-tab-walk-800",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "focusables": 0,
+        "roving": {
+          "focusIsField": true,
+          "activeDescendant": "reception-option-00000000-0000-0000-0000-000000000008",
+          "resolves": true,
+          "preview": "Anthony Cruz",
+          "moved": true,
+          "returned": true,
+          "previewIsLocked": true,
+          "rows": 3
+        },
+        "walk": [
+          {
+            "label": "button:Clear search",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": false,
+            "isClear": true,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:David Kim203",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": true,
+            "inRecents": false,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:Alex Shabazian201",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": true,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          }
+        ],
+        "idx": {
+          "clear": 0,
+          "tail": 1,
+          "recents": 2
+        }
+      },
+      "note": "band focusables 0 · ↓ → reception-option-00000000-0000-0000-0000-000000000008 · Tab: button:Clear search → button:David Kim203 → button:Alex Shabazian201",
+      "files": [
+        "06-800-tab-walk-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 06-1024-tab-walk-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "6 o1-tab-walk-1024",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "focusables": 0,
+        "roving": {
+          "focusIsField": true,
+          "activeDescendant": "reception-option-00000000-0000-0000-0000-000000000008",
+          "resolves": true,
+          "preview": "Anthony Cruz",
+          "moved": true,
+          "returned": true,
+          "previewIsLocked": true,
+          "rows": 3
+        },
+        "walk": [
+          {
+            "label": "button:Clear search",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": false,
+            "isClear": true,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:David Kim203",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": true,
+            "inRecents": false,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:Alex Shabazian201",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": true,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          }
+        ],
+        "idx": {
+          "clear": 0,
+          "tail": 1,
+          "recents": 2
+        }
+      },
+      "note": "band focusables 0 · ↓ → reception-option-00000000-0000-0000-0000-000000000008 · Tab: button:Clear search → button:David Kim203 → button:Alex Shabazian201",
+      "files": [
+        "06-1024-tab-walk-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 06-1920-tab-walk-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "6 o1-tab-walk-1920",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "focusables": 0,
+        "roving": {
+          "focusIsField": true,
+          "activeDescendant": "reception-option-00000000-0000-0000-0000-000000000008",
+          "resolves": true,
+          "preview": "Anthony Cruz",
+          "moved": true,
+          "returned": true,
+          "previewIsLocked": true,
+          "rows": 3
+        },
+        "walk": [
+          {
+            "label": "button:Clear search",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": false,
+            "isClear": true,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:David Kim203",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": true,
+            "inRecents": false,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          },
+          {
+            "label": "button:Alex Shabazian201",
+            "id": "",
+            "inBand": false,
+            "inList": false,
+            "inTail": false,
+            "inRecents": true,
+            "isClear": false,
+            "outline": "rgb(184, 92, 46) solid 2px",
+            "outlineOffset": "-2px"
+          }
+        ],
+        "idx": {
+          "clear": 0,
+          "tail": 1,
+          "recents": 2
+        }
+      },
+      "note": "band focusables 0 · ↓ → reception-option-00000000-0000-0000-0000-000000000008 · Tab: button:Clear search → button:David Kim203 → button:Alex Shabazian201",
+      "files": [
+        "06-1920-tab-walk-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 07-1920-branch-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "7 wide-1920-unchanged",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "readout": 480,
+        "list": 1008,
+        "gutter": 32,
+        "order": [
+          [
+            "who",
+            182
+          ],
+          [
+            "tile",
+            248
+          ],
+          [
+            "seatline",
+            410
+          ],
+          [
+            "fallback",
+            458
+          ],
+          [
+            "map",
+            546
+          ],
+          [
+            "recents",
+            602
+          ]
+        ],
+        "diff": {
+          "differentPixels": 0,
+          "total": 2073600,
+          "width": 1920,
+          "height": 1080,
+          "sameSize": true,
+          "ok": true,
+          "mainMeasure": {
+            "readout": 480,
+            "list": 1008,
+            "gutter": 32,
+            "order": [
+              [
+                "who",
+                null
+              ],
+              [
+                "tile",
+                248
+              ],
+              [
+                "seatline",
+                410
+              ],
+              [
+                "fallback",
+                458
+              ],
+              [
+                "map",
+                546
+              ],
+              [
+                "recents",
+                602
+              ]
+            ]
+          }
+        }
+      },
+      "note": "readout 480 · gutter 32 · list 1008 · order who@182 < tile@248 < seatline@410 < fallback@458 < map@546 < recents@602 · vs main: 0 px differ of 2073600",
+      "files": [
+        "07-1920-branch-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 07-1920-branch-dark",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#e8a07a",
+        "linkColor": "rgb(232, 160, 122)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(232, 160, 122)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(232, 160, 122)",
+      "files": []
+    },
+    {
+      "step": "7 wide-1920-unchanged",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "readout": 480,
+        "list": 1008,
+        "gutter": 32,
+        "order": [
+          [
+            "who",
+            182
+          ],
+          [
+            "tile",
+            248
+          ],
+          [
+            "seatline",
+            410
+          ],
+          [
+            "fallback",
+            458
+          ],
+          [
+            "map",
+            546
+          ],
+          [
+            "recents",
+            602
+          ]
+        ],
+        "diff": {
+          "differentPixels": 0,
+          "total": 2073600,
+          "width": 1920,
+          "height": 1080,
+          "sameSize": true,
+          "ok": true,
+          "mainMeasure": {
+            "readout": 480,
+            "list": 1008,
+            "gutter": 32,
+            "order": [
+              [
+                "who",
+                null
+              ],
+              [
+                "tile",
+                248
+              ],
+              [
+                "seatline",
+                410
+              ],
+              [
+                "fallback",
+                458
+              ],
+              [
+                "map",
+                546
+              ],
+              [
+                "recents",
+                602
+              ]
+            ]
+          }
+        }
+      },
+      "note": "readout 480 · gutter 32 · list 1008 · order who@182 < tile@248 < seatline@410 < fallback@458 < map@546 < recents@602 · vs main: 0 px differ of 2073600",
+      "files": [
+        "07-1920-branch-dark.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 08-480-f1-no-extension-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "15 brand-sweep · 08-480-f1-after-fallback-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "8 f1-480",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "who": "Jessica Moore",
+        "none": {
+          "ok": true,
+          "text": "No extension on file",
+          "rect": {
+            "left": 48,
+            "right": 175,
+            "top": 268
+          }
+        },
+        "colleague": {
+          "name": "Maria Lopez",
+          "ext": "202"
+        },
+        "stop": {
+          "label": "button:Maria Lopez202",
+          "id": "",
+          "inBand": false,
+          "inList": false,
+          "inTail": true,
+          "inRecents": false,
+          "isClear": false,
+          "outline": "rgb(184, 92, 46) solid 2px",
+          "outlineOffset": "-2px"
+        },
+        "after": {
+          "name": "Maria Lopez",
+          "numeral": "202"
+        },
+        "numeralHit": {
+          "ok": true,
+          "inside": true,
+          "hits": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "rect": {
+            "top": 268,
+            "bottom": 318
+          }
+        }
+      },
+      "note": "Jessica Moore: \"No extension on file\" unclipped · Tab → button:Maria Lopez202 · ↵ → Maria Lopez 202",
+      "files": [
+        "08-480-f1-no-extension-light.png",
+        "08-480-f1-after-fallback-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 08-480-f1-no-extension-dark",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#e8a07a",
+        "linkColor": "rgb(232, 160, 122)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(232, 160, 122)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(232, 160, 122)",
+      "files": []
+    },
+    {
+      "step": "15 brand-sweep · 08-480-f1-after-fallback-dark",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#e8a07a",
+        "linkColor": "rgb(232, 160, 122)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(232, 160, 122)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(232, 160, 122)",
+      "files": []
+    },
+    {
+      "step": "8 f1-480",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "who": "Jessica Moore",
+        "none": {
+          "ok": true,
+          "text": "No extension on file",
+          "rect": {
+            "left": 48,
+            "right": 175,
+            "top": 268
+          }
+        },
+        "colleague": {
+          "name": "Maria Lopez",
+          "ext": "202"
+        },
+        "stop": {
+          "label": "button:Maria Lopez202",
+          "id": "",
+          "inBand": false,
+          "inList": false,
+          "inTail": true,
+          "inRecents": false,
+          "isClear": false,
+          "outline": "rgb(184, 92, 46) solid 2px",
+          "outlineOffset": "-2px"
+        },
+        "after": {
+          "name": "Maria Lopez",
+          "numeral": "202"
+        },
+        "numeralHit": {
+          "ok": true,
+          "inside": true,
+          "hits": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "rect": {
+            "top": 268,
+            "bottom": 318
+          }
+        }
+      },
+      "note": "Jessica Moore: \"No extension on file\" unclipped · Tab → button:Maria Lopez202 · ↵ → Maria Lopez 202",
+      "files": [
+        "08-480-f1-no-extension-dark.png",
+        "08-480-f1-after-fallback-dark.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 09-410-wrap-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "9 wrap-410",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "who": {
+          "top": 354,
+          "bottom": 404,
+          "left": 48,
+          "right": 362,
+          "width": 314,
+          "height": 50
+        },
+        "tile": {
+          "top": 248,
+          "bottom": 346,
+          "left": 48,
+          "right": 135,
+          "width": 87,
+          "height": 98
+        }
+      },
+      "note": "stacked: who 354-404 · tile 248-346",
+      "files": [
+        "09-410-wrap-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 09-420-wrap-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "9 wrap-420",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "who": {
+          "top": 354,
+          "bottom": 404,
+          "left": 48,
+          "right": 372,
+          "width": 324,
+          "height": 50
+        },
+        "tile": {
+          "top": 248,
+          "bottom": 346,
+          "left": 48,
+          "right": 135,
+          "width": 87,
+          "height": 98
+        }
+      },
+      "note": "stacked: who 354-404 · tile 248-346",
+      "files": [
+        "09-420-wrap-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 09-460-wrap-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "9 wrap-460",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "who": {
+          "top": 248,
+          "bottom": 298,
+          "left": 167,
+          "right": 412,
+          "width": 245,
+          "height": 50
+        },
+        "tile": {
+          "top": 248,
+          "bottom": 346,
+          "left": 48,
+          "right": 135,
+          "width": 87,
+          "height": 98
+        }
+      },
+      "note": "side by side: who 248-298 · tile 248-346",
+      "files": [
+        "09-460-wrap-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 09-480-wrap-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "9 wrap-480",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "who": {
+          "top": 248,
+          "bottom": 298,
+          "left": 167,
+          "right": 432,
+          "width": 265,
+          "height": 50
+        },
+        "tile": {
+          "top": 248,
+          "bottom": 346,
+          "left": 48,
+          "right": 135,
+          "width": 87,
+          "height": 98
+        }
+      },
+      "note": "side by side: who 248-298 · tile 248-346",
+      "files": [
+        "09-480-wrap-light.png"
+      ]
+    },
+    {
+      "step": "10 no-x-scroll-320",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "bodyScroll": 320,
+        "offEdge": []
+      },
+      "note": "scrollWidth 320 === clientWidth 320 · 0 off-edge",
+      "files": []
+    },
+    {
+      "step": "15 brand-sweep · 10-320-reflow-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "10 no-x-scroll-360",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "bodyScroll": 360,
+        "offEdge": []
+      },
+      "note": "scrollWidth 360 === clientWidth 360 · 0 off-edge",
+      "files": []
+    },
+    {
+      "step": "10 no-x-scroll-390",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyScroll": 390,
+        "offEdge": []
+      },
+      "note": "scrollWidth 390 === clientWidth 390 · 0 off-edge",
+      "files": []
+    },
+    {
+      "step": "10 no-x-scroll-420",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "scrollWidth": 420,
+        "clientWidth": 420,
+        "bodyScroll": 420,
+        "offEdge": []
+      },
+      "note": "scrollWidth 420 === clientWidth 420 · 0 off-edge",
+      "files": []
+    },
+    {
+      "step": "10 no-x-scroll-460",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "scrollWidth": 460,
+        "clientWidth": 460,
+        "bodyScroll": 460,
+        "offEdge": []
+      },
+      "note": "scrollWidth 460 === clientWidth 460 · 0 off-edge",
+      "files": []
+    },
+    {
+      "step": "10 no-x-scroll-480",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "scrollWidth": 480,
+        "clientWidth": 480,
+        "bodyScroll": 480,
+        "offEdge": []
+      },
+      "note": "scrollWidth 480 === clientWidth 480 · 0 off-edge",
+      "files": []
+    },
+    {
+      "step": "15 brand-sweep · 10-480-reflow-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "15 brand-sweep · 11-640-zero-matches-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "11 zero-matches-640",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "empty": {
+          "top": 388,
+          "bottom": 562
+        },
+        "emptyPainted": true,
+        "header": {
+          "top": 356,
+          "bottom": 388
+        },
+        "band": {
+          "top": 214,
+          "bottom": 356
+        },
+        "tail": {
+          "top": 578,
+          "bottom": 706
+        },
+        "rows": 0,
+        "count": "0 matches",
+        "bandName": "Anthony Cruz",
+        "bandNumeral": "205",
+        "heading": "No one matches “zzzzqq”"
+      },
+      "note": "\"0 matches\" · card 388 under header 388 · band keeps Anthony Cruz 205 · tail 578 below card 562",
+      "files": [
+        "11-640-zero-matches-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 11-640-zero-matches-dark",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#e8a07a",
+        "linkColor": "rgb(232, 160, 122)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(232, 160, 122)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(232, 160, 122)",
+      "files": []
+    },
+    {
+      "step": "11 zero-matches-640",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "empty": {
+          "top": 388,
+          "bottom": 562
+        },
+        "emptyPainted": true,
+        "header": {
+          "top": 356,
+          "bottom": 388
+        },
+        "band": {
+          "top": 214,
+          "bottom": 356
+        },
+        "tail": {
+          "top": 578,
+          "bottom": 706
+        },
+        "rows": 0,
+        "count": "0 matches",
+        "bandName": "Anthony Cruz",
+        "bandNumeral": "205",
+        "heading": "No one matches “zzzzqq”"
+      },
+      "note": "\"0 matches\" · card 388 under header 388 · band keeps Anthony Cruz 205 · tail 578 below card 562",
+      "files": [
+        "11-640-zero-matches-dark.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 12-640-partial-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "15 brand-sweep · 12-640-partial-scrolled-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": "rgb(143, 69, 33)",
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "12 partial-640",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "note": {
+          "top": 222,
+          "bottom": 282
+        },
+        "noteText": "Seat locations didn't loadExtensions are up to date. Seat an",
+        "band": {
+          "top": 282,
+          "bottom": 452
+        },
+        "search": {
+          "top": 150,
+          "bottom": 198
+        },
+        "seatline": "Seat unknown right now — the map is still loading.",
+        "bandCentre": {
+          "ok": true,
+          "inRow": false,
+          "hit": "div.sp-recep-band"
+        },
+        "pinned": {
+          "top": 48,
+          "bottom": 218,
+          "left": 32,
+          "right": 608,
+          "width": 576,
+          "height": 170
+        },
+        "pinnedCentre": {
+          "ok": true,
+          "inRow": false,
+          "hit": "div.sp-recep-band"
+        },
+        "noteUnderBandWhenScrolled": {
+          "ok": false,
+          "inRow": false,
+          "hit": null
+        }
+      },
+      "note": "notification 222-282 above band 282 · seat line \"Seat unknown right now — the map is still loading.\" · pinned at 48",
+      "files": [
+        "12-640-partial-light.png",
+        "12-640-partial-scrolled-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 13-480-waiting-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "13 waiting-480",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "hasWaiting": true,
+        "tiles": 0,
+        "children": 1,
+        "waitingWidth": 384,
+        "contentWidth": 384,
+        "text": "Waiting for a call. Start typing what th",
+        "painted": {
+          "ok": true,
+          "inRow": false,
+          "hit": "p.sp-recep-waiting"
+        }
+      },
+      "note": "\"Waiting for a call. Start typing what th\" spans 384/384 · 0 tile columns beside it",
+      "files": [
+        "13-480-waiting-light.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 13-480-waiting-dark",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#e8a07a",
+        "linkColor": "rgb(232, 160, 122)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(232, 160, 122)",
+      "files": []
+    },
+    {
+      "step": "13 waiting-480",
+      "theme": "dark",
+      "ok": true,
+      "values": {
+        "hasWaiting": true,
+        "tiles": 0,
+        "children": 1,
+        "waitingWidth": 384,
+        "contentWidth": 384,
+        "text": "Waiting for a call. Start typing what th",
+        "painted": {
+          "ok": true,
+          "inRow": false,
+          "hit": "p.sp-recep-waiting"
+        }
+      },
+      "note": "\"Waiting for a call. Start typing what th\" spans 384/384 · 0 tile columns beside it",
+      "files": [
+        "13-480-waiting-dark.png"
+      ]
+    },
+    {
+      "step": "15 brand-sweep · 14-640-loading-light",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "blueHits": [],
+        "blueCount": 0,
+        "buttonPrimary": "#b85c2e",
+        "focus": "#b85c2e",
+        "linkPrimary": "#8f4521",
+        "linkColor": "rgb(143, 69, 33)",
+        "primaryBg": "rgb(184, 92, 46)",
+        "showOnMapColor": null,
+        "currentBar": "rgba(0, 0, 0, 0)"
+      },
+      "note": "blue 0 · primary rgb(184, 92, 46) · link rgb(143, 69, 33)",
+      "files": []
+    },
+    {
+      "step": "14 loading-640",
+      "theme": "light",
+      "ok": true,
+      "values": {
+        "search": {
+          "top": 150,
+          "bottom": 198
+        },
+        "band": {
+          "top": 214,
+          "bottom": 278
+        },
+        "header": {
+          "top": 278,
+          "bottom": 310
+        },
+        "firstRow": {
+          "top": 310,
+          "bottom": 358
+        },
+        "tail": {
+          "top": 614,
+          "bottom": 626
+        },
+        "rows": 6,
+        "bandSkeletons": 2,
+        "liveRows": 0,
+        "bandPainted": {
+          "ok": true,
+          "inRow": false,
+          "hit": "div.sp-recep-band"
+        }
+      },
+      "note": "search 198 < band 214-278 < header 278 < rows (6) < tail 614",
+      "files": [
+        "14-640-loading-light.png"
+      ]
+    },
+    {
+      "step": "16 lockstep-and-scope",
+      "theme": "n/a",
+      "ok": true,
+      "values": {
+        "identical": true,
+        "status": [
+          " M docs/redesign-v2/phase5/PHASE5.md",
+          "?? docs/redesign-v2/phase5/audit/pr2-smoke-fixture.sql",
+          "?? docs/redesign-v2/phase5/audit/pr2-smoke.mjs",
+          "?? docs/redesign-v2/phase5/screenshots/phase5-pr2-smoke/"
+        ],
+        "moved": []
+      },
+      "note": "sheet byte-identical true · files outside docs/redesign-v2/phase5: 0",
+      "files": []
+    },
+    {
+      "step": "console",
+      "theme": "n/a",
+      "ok": true,
+      "values": {
+        "total": 142,
+        "unexplained": []
+      },
+      "note": "142 console errors, 0 unexplained",
+      "files": []
+    }
+  ]
+}

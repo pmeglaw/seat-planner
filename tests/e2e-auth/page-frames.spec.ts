@@ -183,11 +183,12 @@ test.describe("Settings frame", () => {
 });
 
 // Reception (Phase 4 PR 5; PHASE2UX §1R.2 as amended by owner ruling Q-6;
-// PHASE3DS §1.22 / §1.29; sheet amendment E): the same 1584 frame, NO action
-// in the page header (D3-a), the readout 480 with the 32 gutter at the two
-// wide frames (the list takes the rest of the 1520 content box — 1008 at
-// 1920), one column under the 1055 fold with the readout following the list
-// and "Back to the list" shown; the skip link lands on the FIELD (§1R.7).
+// PHASE3DS §1.22 / §1.29; sheet amendments E and I): the same 1584 frame, NO
+// action in the page header (D3-a), the readout 480 with the 32 gutter at the
+// two wide frames (the list takes the rest of the 1520 content box — 1008 at
+// 1920); one column under the 1055 fold, where Phase 5 PR 2 splits the readout
+// by job — the band pinned between the search and the list, the tail below it,
+// no back path (D3-f); the skip link lands on the FIELD (§1R.7).
 test.describe("Reception frame", () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page, SEEDED_VIEWER_EMAIL);
@@ -207,19 +208,41 @@ test.describe("Reception frame", () => {
       await expectNoHorizontalScroll(page, `reception ${width}`);
       await expect(page.locator("main .sp-page .cds-page-header .cds-btn")).toHaveCount(0);
 
-      const list = (await page.locator("main .sp-recep-list").boundingBox())!;
-      const readout = (await page.getByRole("region", { name: "Caller detail" }).boundingBox())!;
       if (width >= 1280) {
+        const list = (await page.locator("main .sp-recep-list").boundingBox())!;
+        const readout = (await page.getByRole("region", { name: "Caller detail" }).boundingBox())!;
         expect(Math.round(readout.width), `${width}: the readout column is 480`).toBe(480);
         expect(Math.round(readout.x - (list.x + list.width)), `${width}: the gutter is 32`).toBe(32);
         if (width === 1920) expect(Math.round(list.width), "the list takes the rest of the 1520 content box (Q-6)").toBe(1008);
-        await expect(page.getByRole("button", { name: "Back to the list" })).toBeHidden();
       } else {
+        // Phase 5 PR 2 (owner ruling R1, sheet amendment I, D3-f): under the
+        // fold the readout SPLITS BY JOB. The band — name, extension, seat
+        // line — pins between the search and the count header so the number
+        // the front desk reads aloud is never below the fold; the tail follows
+        // the list. `.sp-recep-list` and the readout section are
+        // display:contents here, so neither has a box — measure the band.
         const columns = await page.locator("main .sp-recep").evaluate(el => getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length);
         expect(columns, `${width}: one column under the fold`).toBe(1);
-        expect(readout.y).toBeGreaterThanOrEqual(list.y + list.height - 1);
-        await expect(page.getByRole("button", { name: "Back to the list" })).toBeVisible();
+
+        // The labelled landmark must survive display:contents (reviewer
+        // condition O-1(c)). getByRole is a real accessibility-tree query.
+        await expect(page.getByRole("region", { name: "Caller detail" })).toBeAttached();
+
+        const search = (await page.locator("main .sp-search-lg").boundingBox())!;
+        const band = (await page.locator("main .sp-recep-band").boundingBox())!;
+        const firstRow = (await page.locator('li[role="option"]').first().boundingBox())!;
+        expect(band.y, `${width}: the band sits below the search`).toBeGreaterThanOrEqual(search.y + search.height - 1);
+        expect(band.y + band.height, `${width}: the band sits above the list`).toBeLessThanOrEqual(firstRow.y + 1);
+
+        // The tail follows the LIST, and the band carries nothing focusable —
+        // which is what keeps focus order matching visual order here (O-1).
+        const focusableInBand = await page
+          .locator("main .sp-recep-band")
+          .evaluate(el => el.querySelectorAll("a, button, input, select, textarea, [tabindex]").length);
+        expect(focusableInBand, `${width}: nothing focusable in the band`).toBe(0);
       }
+      // D3-f: the back path is retired with the drill-down it belonged to.
+      await expect(page.getByRole("button", { name: "Back to the list" })).toHaveCount(0);
 
       // The skip link lands on the field itself. Autofocus already parked
       // focus there, and blur() would leave Chrome's sequential-focus starting

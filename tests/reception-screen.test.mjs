@@ -33,7 +33,13 @@ import {
 //   - focus never leaves the field on a pointer (rows, row-buttons, recents,
 //     the clear ×), Ctrl / ⌘ K refocuses it, the platform hint after mount;
 //   - recents: ≤ 4 shown of 5 stored, the locked person excluded, newest
-//     first, OUTSIDE the live region (O-9); no avatar anywhere (§1.29).
+//     first, OUTSIDE the live region (O-9); no avatar anywhere (§1.29);
+//   - the band / tail split (Phase 5 PR 2, D3-f, sheet amendment I): which
+//     group each readout item is in, the ONE live region and exactly what it
+//     announces (reviewer ruling O-3), the tail's shipped order, and the band
+//     carrying no focusable element now that "Back to the list" is retired.
+//     jsdom applies no media query, so this tier sees the wide tree and pins
+//     structure only — the four-width geometry is e2e-auth's and the rig's.
 let ReceptionScreen;
 before(async () => {
   ({ ReceptionScreen } = await loadComponent("@/components/reception/ReceptionScreen"));
@@ -74,6 +80,7 @@ const count = () => document.querySelector(".sp-recep-count").textContent;
 const hint = () => document.querySelector(".sp-readout-hint")?.textContent ?? null;
 const mapLink = () => screen.queryByRole("link", { name: "Show on map" });
 const recentsRegion = () => screen.queryByRole("complementary", { name: "Recent lookups" });
+const tailOf = region => region.querySelector(".sp-recep-tail");
 
 function type(value) {
   fireEvent.change(searchInput(), { target: { value } });
@@ -525,17 +532,65 @@ test("a recent lookup re-locks that person; its mousedown is prevented", async (
   assert.equal(window.location.search, "?q=Alice+Adams");
 });
 
-// ---------------------------------------------------------------- Back to the list (the narrow fold)
+// ------------------------------------------- the band / tail split (Phase 5 PR 2, D3-f)
 
-test("Back to the list sits first in the readout and focuses the field", async () => {
+// jsdom applies no media query, so this tier sees the WIDE tree. What it pins
+// is the structure the fold reorders — which group each item is in, and where
+// the single live region sits. Sheet amendment I does the rest; the four-width
+// geometry is the e2e-auth spec and the audit rig's job.
+test("the readout splits into a band and a tail; the BAND is the one live region", async () => {
   await renderReception();
   lockByTyping("Bob");
-  const back = within(readout()).getByRole("button", { name: "Back to the list" });
-  assert.ok(back.classList.contains("sp-recep-back"));
-  assert.equal(readout().firstElementChild, back);
-  searchInput().blur();
-  fireEvent.click(back);
-  assert.equal(document.activeElement, searchInput());
+  const band = readout().querySelector(".sp-recep-band");
+  const tail = readout().querySelector(".sp-recep-tail");
+  assert.ok(band, "the band exists");
+  assert.ok(tail, "the tail exists");
+  assert.equal(band.getAttribute("aria-live"), "polite");
+  assert.equal(readout().querySelectorAll("[aria-live]").length, 1, "exactly one live region on the page");
+});
+
+// O-3 condition (b), 2026-09-08: the live region's contents are pinned so a
+// later refactor cannot silently widen or narrow the announcement again. A lock
+// says name · extension · seat line and stops.
+test("the live region announces name, extension and the seat line — and nothing else", async () => {
+  await renderReception();
+  lockByTyping("Bob");
+  const band = readout().querySelector(".sp-recep-band");
+  assert.ok(within(band).getByRole("heading", { level: 2 }), "the name is announced");
+  assert.ok(band.querySelector(".sp-recep-who .sp-recep-role"), "the role line is announced");
+  assert.ok(band.querySelector(".sp-readout .sp-readout-numeral"), "the extension is announced");
+  assert.ok(band.querySelector(".sp-recep-seatline"), "the seat line is announced");
+  // Out of the region: the fallback roster, Show on map (O-3) and recents (O-9).
+  assert.equal(band.querySelector(".sp-recep-fallback"), null, "the colleague roster is not announced on every lock");
+  assert.equal(mapLink().closest("[aria-live]"), null, "Show on map is not announced on every lock");
+  assert.equal(mapLink().closest(".sp-recep-tail"), tailOf(readout()), "Show on map rides the tail");
+  assert.ok(tailOf(readout()).querySelector(".sp-recep-fallback"), "the fallbacks ride the tail");
+});
+
+test("the tail keeps §1R.4's shipped order — fallbacks, then Show on map (R3 withdrawn, O-2)", async () => {
+  await renderReception();
+  lockByTyping("Bob");
+  const children = [...tailOf(readout()).children];
+  assert.ok(children[0].classList.contains("sp-recep-fallback"));
+  assert.equal(children[1], mapLink());
+});
+
+test("at rest the band holds the waiting copy and no tail is rendered", async () => {
+  await renderReception();
+  const band = readout().querySelector(".sp-recep-band");
+  assert.ok(band.querySelector(".sp-recep-waiting"), "the waiting copy is in the band, not below the list");
+  assert.equal(tailOf(readout()), null, "an empty tail would still take one of the column's 16px gaps");
+});
+
+test("D3-f: the Back to the list ghost is retired — the list is never left now", async () => {
+  await renderReception();
+  lockByTyping("Bob");
+  assert.equal(screen.queryByRole("button", { name: "Back to the list" }), null);
+  assert.equal(document.querySelector(".sp-recep-back"), null);
+  // The band carries no focusable element — the condition WCAG 2.4.3 rests on
+  // once the fold shows it above the list (reviewer ruling O-1).
+  const band = readout().querySelector(".sp-recep-band");
+  assert.equal(band.querySelectorAll("a, button, input, select, textarea, [tabindex]").length, 0);
 });
 
 // ---------------------------------------------------------------- ?q= landing (D3-c)
