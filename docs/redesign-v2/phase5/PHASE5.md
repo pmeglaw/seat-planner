@@ -11,7 +11,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 | Slice | What | Tag | State |
 |---|---|---|---|
 | PR 1 | The publish-history record surface returns to Management as a fourth tab | v2.1.0 | **merged 2026-09-08** — #525 squashed as `524c087`, tagged `v2.1.0`, production READY at that SHA |
-| PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **built 2026-09-08** on `feat/phase5-reception-narrow`; full gate green, awaiting the reviewer's branch check |
+| PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **merged 2026-09-09** — #526 squashed as `740fd57`, tagged `v2.2.0`, production READY at that SHA; pre-merge smoke 67/67 on `763d489` |
 
 ---
 
