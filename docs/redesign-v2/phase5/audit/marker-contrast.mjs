@@ -84,7 +84,10 @@ function measureInPage(button) {
     // layer-01 — a surface step, not a pair); the ● on the fill comes through the generic mark branch above.
     const parent = button.closest(".sp-canvas, [data-map-stage], main") || document.body;
     const mat = over(parse(getComputedStyle(parent).backgroundColor) || backdrop, backdrop);
-    const edge = parse(cs.boxShadow);
+    // The QUIET names-off pill wears the quiet pill's subtle edge (border-subtle-01 — 1.7 on the mat, PR 3b's own
+    // number), the de-emphasised edge every quiet pill and quiet footprint carries and nothing gates; its mark is
+    // the ● on the quiet fill, measured above. Only the rest state's icon-secondary edge is a mark on the mat.
+    const edge = button.classList.contains("sp-pill--quiet") ? null : parse(cs.boxShadow);
     if (edge) pairs.push({ kind: "graphic", what: "names-off footprint edge on the mat", fg: hex(over(edge, mat)), bg: hex(mat), ratio: round(ratio(over(edge, mat), mat)), min: 3 });
   }
   const badge = button.querySelector("svg.sp-pill-badge");
@@ -351,10 +354,11 @@ for (const theme of ["light", "dark"]) {
   await record("swap-target", theme, target);
   if (theme === "light") {
     // Confirm once (LOCAL draft write) so both seats carry the changed-in-draft badge.
-    await page.getByRole("dialog").getByRole("button", { name: "Confirm swap" }).click();
+    // PR 5b put the confirm dialogs on the asset modal, which is an alertdialog — no "dialog" scoping (the Phase 4 rig's recipe hung here).
+    await page.getByRole("button", { name: "Confirm swap" }).click();
     await page.waitForTimeout(1500);
   } else {
-    await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Cancel", exact: true }).click();
     await page.waitForTimeout(300);
   }
   await escape();

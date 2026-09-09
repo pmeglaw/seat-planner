@@ -1,0 +1,74 @@
+ok    light rest-assigned           18.1:1 (text ≥ 4.5)  #161616 on #ffffff  "Alex S."
+ok    light rest-available          7.81:1 (graphic ≥ 3)  #525252 on #ffffff  status mark
+ok    light rest-reserved           7.81:1 (graphic ≥ 3)  #525252 on #ffffff  status mark
+ok    light rest-unavailable        7.81:1 (graphic ≥ 3)  #525252 on #ffffff  status mark
+ok    light hover-assigned         14.77:1 (text ≥ 4.5)  #161616 on #e8e8e8  "Alex S."
+ok    light focus-keyboard          7.81:1 (graphic ≥ 3)  #525252 on #ffffff  status mark
+ok    light selected                18.1:1 (text ≥ 4.5)  #161616 on #ffffff  "Alex S."
+ok    light search-hit             15.23:1 (text ≥ 4.5)  #161616 on #fbe8dc  "Alex S."
+ok    light search-selected        15.23:1 (text ≥ 4.5)  #161616 on #fbe8dc  "Alex S."
+ok    light filtered-out             7.1:1 (text ≥ 4.5)  #525252 on #f4f4f4  "Alex S."
+ok    light filtered-out-footprint   7.1:1 (graphic ≥ 3)  #525252 on #f4f4f4  status mark
+ok    light names-off               18.1:1 (graphic ≥ 3)  #161616 on #ffffff  status mark
+ok    light names-off               7.81:1 (graphic ≥ 3)  #525252 on #ffffff  names-off footprint edge on the mat
+ok    light names-off-quiet          7.1:1 (graphic ≥ 3)  #525252 on #f4f4f4  status mark
+ok    light admin-selected          18.1:1 (text ≥ 4.5)  #161616 on #ffffff  "Alex S."
+ok    light move-origin            16.45:1 (text ≥ 4.5)  #161616 on #f4f4f4  "Alex S."
+ok    light move-target            16.41:1 (text ≥ 4.5)  #161616 on #defbe6  "Maria L."
+ok    light move-target-hover      14.77:1 (text ≥ 4.5)  #161616 on #e8e8e8  "Maria L."
+ok    light invalid-target         16.46:1 (text ≥ 4.5)  #161616 on #fff1f1  "NE07"
+ok    light swap-origin            16.45:1 (text ≥ 4.5)  #161616 on #f4f4f4  "Alex S."
+ok    light swap-candidate         16.41:1 (text ≥ 4.5)  #161616 on #defbe6  "Maria L."
+ok    light swap-candidate-hover   14.77:1 (text ≥ 4.5)  #161616 on #e8e8e8  "Maria L."
+ok    light swap-target            16.41:1 (text ≥ 4.5)  #161616 on #defbe6  "Maria L."
+ok    light changed-in-draft        18.1:1 (text ≥ 4.5)  #161616 on #ffffff  "Maria L."
+ok    light changed-in-draft           5:1 (graphic ≥ 3)  #8a3ffc on #ffffff  ◇ badge
+ok    light changed-in-draft-focus  18.1:1 (text ≥ 4.5)  #161616 on #ffffff  "Maria L."
+ok    light changed-in-draft-focus     5:1 (graphic ≥ 3)  #8a3ffc on #ffffff  ◇ badge
+crop  light draft badge #8a3ffc vs focus ring #b85c2e: ΔE2000 47.1, 1.1:1 between them; badge on fill 5:1; header ◇ #be95ff beside bar #b85c2e
+ok    light names-off-draft         18.1:1 (graphic ≥ 3)  #161616 on #ffffff  status mark
+ok    light names-off-draft         7.81:1 (graphic ≥ 3)  #525252 on #ffffff  names-off footprint edge on the mat
+ok    light names-off-draft            5:1 (graphic ≥ 3)  #8a3ffc on #ffffff  ◇ badge
+ok    light planner-highlight       7.81:1 (graphic ≥ 3)  #525252 on #ffffff  status mark
+ok    dark  rest-assigned           10.5:1 (text ≥ 4.5)  #f4f4f4 on #393939  "Alex S."
+ok    dark  rest-available          6.76:1 (graphic ≥ 3)  #c6c6c6 on #393939  status mark
+ok    dark  rest-reserved           6.76:1 (graphic ≥ 3)  #c6c6c6 on #393939  status mark
+ok    dark  rest-unavailable        6.76:1 (graphic ≥ 3)  #c6c6c6 on #393939  status mark
+ok    dark  hover-assigned          8.45:1 (text ≥ 4.5)  #f4f4f4 on #474747  "Alex S."
+ok    dark  focus-keyboard          6.76:1 (graphic ≥ 3)  #c6c6c6 on #393939  status mark
+ok    dark  selected                10.5:1 (text ≥ 4.5)  #f4f4f4 on #393939  "Alex S."
+ok    dark  search-hit              10.5:1 (text ≥ 4.5)  #f4f4f4 on #393939  "Alex S."
+ok    dark  search-selected         10.5:1 (text ≥ 4.5)  #f4f4f4 on #393939  "Alex S."
+ok    dark  filtered-out            8.86:1 (text ≥ 4.5)  #c6c6c6 on #262626  "Alex S."
+ok    dark  filtered-out-footprint  8.86:1 (graphic ≥ 3)  #c6c6c6 on #262626  status mark
+ok    dark  names-off               10.5:1 (graphic ≥ 3)  #f4f4f4 on #393939  status mark
+ok    dark  names-off              10.59:1 (graphic ≥ 3)  #c6c6c6 on #161616  names-off footprint edge on the mat
+ok    dark  names-off-quiet         8.86:1 (graphic ≥ 3)  #c6c6c6 on #262626  status mark
+ok    dark  admin-selected          10.5:1 (text ≥ 4.5)  #f4f4f4 on #393939  "Maria L."
+ok    dark  admin-selected          4.91:1 (graphic ≥ 3)  #be95ff on #393939  ◇ badge
+ok    dark  move-origin            13.76:1 (text ≥ 4.5)  #f4f4f4 on #262626  "Maria L."
+ok    dark  move-origin             6.44:1 (graphic ≥ 3)  #be95ff on #262626  ◇ badge
+ok    dark  move-target            13.76:1 (text ≥ 4.5)  #f4f4f4 on #262626  "Alex S."
+ok    dark  move-target             6.44:1 (graphic ≥ 3)  #be95ff on #262626  ◇ badge
+ok    dark  move-target-hover       8.45:1 (text ≥ 4.5)  #f4f4f4 on #474747  "Alex S."
+ok    dark  move-target-hover       3.95:1 (graphic ≥ 3)  #be95ff on #474747  ◇ badge
+ok    dark  invalid-target         13.76:1 (text ≥ 4.5)  #f4f4f4 on #262626  "NE07"
+ok    dark  swap-origin            13.76:1 (text ≥ 4.5)  #f4f4f4 on #262626  "Maria L."
+ok    dark  swap-origin             6.44:1 (graphic ≥ 3)  #be95ff on #262626  ◇ badge
+ok    dark  swap-candidate         13.76:1 (text ≥ 4.5)  #f4f4f4 on #262626  "Alex S."
+ok    dark  swap-candidate          6.44:1 (graphic ≥ 3)  #be95ff on #262626  ◇ badge
+ok    dark  swap-candidate-hover    8.45:1 (text ≥ 4.5)  #f4f4f4 on #474747  "Alex S."
+ok    dark  swap-candidate-hover    3.95:1 (graphic ≥ 3)  #be95ff on #474747  ◇ badge
+ok    dark  swap-target            13.76:1 (text ≥ 4.5)  #f4f4f4 on #262626  "Alex S."
+ok    dark  swap-target             6.44:1 (graphic ≥ 3)  #be95ff on #262626  ◇ badge
+ok    dark  changed-in-draft        10.5:1 (text ≥ 4.5)  #f4f4f4 on #393939  "Maria L."
+ok    dark  changed-in-draft        4.91:1 (graphic ≥ 3)  #be95ff on #393939  ◇ badge
+ok    dark  changed-in-draft-focus  10.5:1 (text ≥ 4.5)  #f4f4f4 on #393939  "Maria L."
+ok    dark  changed-in-draft-focus  4.91:1 (graphic ≥ 3)  #be95ff on #393939  ◇ badge
+crop  dark  draft badge #be95ff vs focus ring #b85c2e: ΔE2000 45.4, 1.94:1 between them; badge on fill 4.91:1; header ◇ #be95ff beside bar #b85c2e
+ok    dark  names-off-draft         10.5:1 (graphic ≥ 3)  #f4f4f4 on #393939  status mark
+ok    dark  names-off-draft        10.59:1 (graphic ≥ 3)  #c6c6c6 on #161616  names-off footprint edge on the mat
+ok    dark  names-off-draft         4.91:1 (graphic ≥ 3)  #be95ff on #393939  ◇ badge
+SKIPPED dark planner-highlight (no highlighted seat: This is a broad zone-level answer, so no individual seats are highlighted. Ask f)
+
+69 measurements, 0 under their floor, 0 outside the ledger. Ledger: empty.
