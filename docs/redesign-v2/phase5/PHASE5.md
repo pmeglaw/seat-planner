@@ -229,6 +229,17 @@ were read off the live band, and one of them disagreed with the hand-off:
   in their department read as an O-2 regression; the rig now locks a person who *has* fallbacks first.
 - **The local `next start` console carries Speed Insights 404s and a MIME refusal** — the same local-only noise
   PHASE4BUILD §1.46 recorded for the PR 5 smoke. Nothing else on any route.
+- **The band→tail gap at wide equals the intra-band gap** (reviewer critique at 1920, 2026-09-09, rubric level 2
+  Spacing). Amendment I names two jobs — band and tail — but above the fold the readout column spaces them at the
+  same 16 it uses inside the band, where the rubric wants tight inside groups and loose between. Fenced out of this
+  PR by its own "nothing at 1920 changes" contract, so a **post-tag candidate raise**, not a defect; the fallback
+  heading's 32px box already gives ~14px of air, so it reads acceptably today.
+- **The count header and the locked row sit on the same surface** (reviewer critique at 1920, 2026-09-09, rubric
+  level 5 Depth). `.sp-recep-header` is on `--sp-layer-selected` and `.sp-recep-row[aria-selected="true"]` on
+  `--sp-recep-row-locked`, both aliases of `--cds-layer-selected-01` (rgb 224 224 224 light), so when the locked
+  person is row 1 the header and the row fuse into one slab with only the 3px terracotta bar between them.
+  **Pre-existing** — amendment I touched neither rule — and it **needs an owner ruling**, because the fix moves a
+  token alias (one of the two onto another surface, or the header tint dropped). Carried, not fixed.
 
 ### Verification, on the final head
 

@@ -1243,6 +1243,15 @@ the band takes focus. Recorded as a deliberate deviation from C27, not from WCAG
 2026-09-08). **One further deliberate change above the fold:** the live region narrows to the band, so a lock
 announces name · extension · seat line and stops — the fallback roster and Show on map leave it, continuous
 with O-9's reason for keeping recents outside it (reviewer ruling O-3; pinned by `reception-screen`).
+**F-1 (2026-09-09, reviewer ruling: accept and record).** (a) In the no-extension state the band cannot answer, and PHASE2UX §1R.4 item 4 names the
+same-department fallback as the next step — which the split puts **below the list** at narrow. Accepted rather
+than fixed: hoisting the fallback into the band would put focusable buttons in it, destroying the zero-focusable
+property the WCAG 2.4.3 argument above rests on, and would place real controls above the list visually while
+they follow it in DOM — the shape O-2 declined. The list itself carries every colleague's extension, so a second
+path exists. Revisit as its own slice if it bites in use. (b) As an observation, not a change: the band's
+tile-column dominance holds only when there is a numeral — in the no-extension state the name (`heading-03`)
+outweighs the answer (`body-01`, per §1R.4 item 4's own copy and type, which are record and are not being
+changed).
 
 **Would change if:** the band's height starts crowding the list at the widths actually used — it is 232px
 wrapped at 320 and a flat 170px from 460 up, against a list whose rows are 48 — or the directory passes ~300
