@@ -1483,6 +1483,9 @@ labelled triggers with the accepted type and the 5 MB limit stated up front, not
 
 `senior-workflow.md` requires purposeful deviations be written down rather than absorbed:
 
+*Phase 5 PR 3 (v2.3.0, 2026-09-09) is a PHASE3DS §1.16 conformance amendment (the legend follows the toggle — now
+the marker does too); no new deviation, next free stays 19.*
+
 | # | Deviation | Why |
 |---|---|---|
 | 1 | Two width regimes — map fluid at all widths, documents capped at 1584 above `max` | The published grid ends at 1584; a canvas loses data when capped, a text column does not gain from width (D0) |
