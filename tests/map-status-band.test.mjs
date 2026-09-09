@@ -44,7 +44,11 @@ test("the legend follows the Names toggle: names off swaps the mini pill for ●
   );
   const assigned = container.querySelector("li.sp-seat-legend");
   assert.equal(assigned.querySelector(".sp-seat-mark--pill"), null);
-  assert.ok(assigned.querySelector("svg.sp-seat-mark circle[data-fill]"));
+  const dot = assigned.querySelector("svg.sp-seat-mark circle[data-fill]");
+  assert.ok(dot, "names off swaps the mini pill for ●");
+  // Phase 5 PR 3 (owner ruling P-1): the legend's ● and the plan's ● share
+  // --sp-seat-mark-fill-color — the class the Management table already uses.
+  assert.ok(dot.closest("svg").classList.contains("sp-seat-mark--assigned"), "the legend's ● carries the fill-colour class");
 });
 
 test("count, actions, note and controls render in their slots and stay wired", async () => {

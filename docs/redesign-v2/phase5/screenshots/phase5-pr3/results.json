@@ -1,0 +1,221 @@
+{
+  "base": "http://localhost:3000",
+  "generatedAt": "2026-09-09T22:28:08.925Z",
+  "failures": 0,
+  "claims": [
+    {
+      "name": "admin light 1 names-off pills are 28×28 footprints carrying ● with no text (4)",
+      "ok": true,
+      "detail": "{\"w\":28,\"h\":28,\"dot\":true,\"text\":\"\"}"
+    },
+    {
+      "name": "admin light 2 rest fill + edge equal the open footprint's",
+      "ok": true,
+      "detail": "rgb(255, 255, 255) / rgb(82, 82, 82) 0px 0px 0px 1px inset vs rgb(255, 255, 255) / rgb(82, 82, 82) 0px 0px 0px 1px inset"
+    },
+    {
+      "name": "admin light 3 hover lifts to layer-hover-02 like an open seat (R2)",
+      "ok": true,
+      "detail": "rgb(232, 232, 232) vs rgb(232, 232, 232) (rest rgb(255, 255, 255))"
+    },
+    {
+      "name": "admin light 4 focus ring is 2px solid rgb(184, 92, 46) inset",
+      "ok": true,
+      "detail": "{\"outline-width\":\"2px\",\"outline-style\":\"solid\",\"outline-color\":\"rgb(184, 92, 46)\",\"outline-offset\":\"-2px\"}"
+    },
+    {
+      "name": "admin light 5 selected is visible: data-state=selected, 2px inset edge ≠ fill (F-1)",
+      "ok": true,
+      "detail": "selected / rgb(22, 22, 22) 0px 0px 0px 2px inset on rgb(255, 255, 255)"
+    },
+    {
+      "name": "admin light 9 the 44px touch target answers on all four diagonals",
+      "ok": true,
+      "detail": "::after 44px×44px absolute; button.sp-pill, button.sp-pill, button.sp-pill, button.sp-pill"
+    },
+    {
+      "name": "admin light 10 the legend's ● and the plan's ● share one colour (P-1, F-3)",
+      "ok": true,
+      "detail": "rgb(22, 22, 22) vs rgb(22, 22, 22)"
+    },
+    {
+      "name": "admin light 7 quiet: layer-01 fill and the ● steps to the quiet text colour",
+      "ok": true,
+      "detail": "rgb(244, 244, 244) / ● rgb(82, 82, 82) vs fill rgb(244, 244, 244) / text rgb(82, 82, 82) / loud ● null"
+    },
+    {
+      "name": "admin light 6 keyboard selection (ArrowRight, Enter) is visible with names off",
+      "ok": true,
+      "detail": "names-off pill / rgb(22, 22, 22) 0px 0px 0px 2px inset on rgb(255, 255, 255)"
+    },
+    {
+      "name": "admin light 8 the ◇ is 8×8 at −4/−4 and PAINTED — ≥12 purple px in its rect, ≥3 outside the 28×28 box (F-2)",
+      "ok": true,
+      "detail": "badge {\"w\":8,\"h\":8,\"dx\":-4,\"dy\":-4} · purple rgb(138,63,252) px inside 50 / outside 148 at 3x"
+    },
+    {
+      "name": "admin light 12 names ON unchanged against the baseline from main",
+      "ok": true,
+      "detail": "{\"label\":\"CW01 Maria L. Maria Lopez. Assigned seat. Draft changed. Open details.\",\"w\":60.94,\"h\":28,\"background-color\":\"rgb(255, 255, 255)\",\"box-shadow\":\"rgb(82, 82, 82) 0px 0px 0px 1px inset\",\"color\":\"rgb(22, 22, 22)\",\"font\":\"12px / 16px plexSans, \\\"plexSans Fallback\\\", \\\"IBM Plex Sans\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"padding-left\":\"8px\",\"height\":\"28px\"} vs {\"label\":\"CW01 Maria L. Maria Lopez. Assigned seat. Draft changed. Open details.\",\"w\":60.94,\"h\":28,\"background-color\":\"rgb(255, 255, 255)\",\"box-shadow\":\"rgb(82, 82, 82) 0px 0px 0px 1px inset\",\"color\":\"rgb(22, 22, 22)\",\"font\":\"12px / 16px plexSans, \\\"plexSans Fallback\\\", \\\"IBM Plex Sans\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"padding-left\":\"8px\",\"height\":\"28px\"}"
+    },
+    {
+      "name": "viewer light 1 names-off pills are 28×28 footprints carrying ● with no text (4)",
+      "ok": true,
+      "detail": "{\"w\":28,\"h\":28,\"dot\":true,\"text\":\"\"}"
+    },
+    {
+      "name": "viewer light 2 rest fill + edge equal the open footprint's",
+      "ok": true,
+      "detail": "rgb(255, 255, 255) / rgb(82, 82, 82) 0px 0px 0px 1px inset vs rgb(255, 255, 255) / rgb(82, 82, 82) 0px 0px 0px 1px inset"
+    },
+    {
+      "name": "viewer light 3 hover lifts to layer-hover-02 like an open seat (R2)",
+      "ok": true,
+      "detail": "rgb(232, 232, 232) vs rgb(232, 232, 232) (rest rgb(255, 255, 255))"
+    },
+    {
+      "name": "viewer light 4 focus ring is 2px solid rgb(184, 92, 46) inset",
+      "ok": true,
+      "detail": "{\"outline-width\":\"2px\",\"outline-style\":\"solid\",\"outline-color\":\"rgb(184, 92, 46)\",\"outline-offset\":\"-2px\"}"
+    },
+    {
+      "name": "viewer light 5 selected is visible: data-state=selected, 2px inset edge ≠ fill (F-1)",
+      "ok": true,
+      "detail": "selected / rgb(22, 22, 22) 0px 0px 0px 2px inset on rgb(255, 255, 255)"
+    },
+    {
+      "name": "viewer light 9 the 44px touch target answers on all four diagonals",
+      "ok": true,
+      "detail": "::after 44px×44px absolute; button.sp-pill, button.sp-pill, button.sp-pill, button.sp-pill"
+    },
+    {
+      "name": "viewer light 10 the legend's ● and the plan's ● share one colour (P-1, F-3)",
+      "ok": true,
+      "detail": "rgb(22, 22, 22) vs rgb(22, 22, 22)"
+    },
+    {
+      "name": "viewer light 7 quiet: layer-01 fill and the ● steps to the quiet text colour",
+      "ok": true,
+      "detail": "rgb(244, 244, 244) / ● rgb(82, 82, 82) vs fill rgb(244, 244, 244) / text rgb(82, 82, 82) / loud ● null"
+    },
+    {
+      "name": "admin dark 1 names-off pills are 28×28 footprints carrying ● with no text (4)",
+      "ok": true,
+      "detail": "{\"w\":28,\"h\":28,\"dot\":true,\"text\":\"\"}"
+    },
+    {
+      "name": "admin dark 2 rest fill + edge equal the open footprint's",
+      "ok": true,
+      "detail": "rgb(57, 57, 57) / rgb(198, 198, 198) 0px 0px 0px 1px inset vs rgb(57, 57, 57) / rgb(198, 198, 198) 0px 0px 0px 1px inset"
+    },
+    {
+      "name": "admin dark 3 hover lifts to layer-hover-02 like an open seat (R2)",
+      "ok": true,
+      "detail": "rgb(71, 71, 71) vs rgb(71, 71, 71) (rest rgb(57, 57, 57))"
+    },
+    {
+      "name": "admin dark 4 focus ring is 2px solid rgb(184, 92, 46) inset",
+      "ok": true,
+      "detail": "{\"outline-width\":\"2px\",\"outline-style\":\"solid\",\"outline-color\":\"rgb(184, 92, 46)\",\"outline-offset\":\"-2px\"}"
+    },
+    {
+      "name": "admin dark 5 selected is visible: data-state=selected, 2px inset edge ≠ fill (F-1)",
+      "ok": true,
+      "detail": "selected / rgb(244, 244, 244) 0px 0px 0px 2px inset on rgb(57, 57, 57)"
+    },
+    {
+      "name": "admin dark 9 the 44px touch target answers on all four diagonals",
+      "ok": true,
+      "detail": "::after 44px×44px absolute; button.sp-pill, button.sp-pill, button.sp-pill, button.sp-pill"
+    },
+    {
+      "name": "admin dark 10 the legend's ● and the plan's ● share one colour (P-1, F-3)",
+      "ok": true,
+      "detail": "rgb(244, 244, 244) vs rgb(244, 244, 244)"
+    },
+    {
+      "name": "admin dark 7 quiet: layer-01 fill and the ● steps to the quiet text colour",
+      "ok": true,
+      "detail": "rgb(38, 38, 38) / ● rgb(198, 198, 198) vs fill rgb(38, 38, 38) / text rgb(198, 198, 198) / loud ● null"
+    },
+    {
+      "name": "admin dark 6 keyboard selection (ArrowRight, Enter) is visible with names off",
+      "ok": true,
+      "detail": "names-off pill / rgb(244, 244, 244) 0px 0px 0px 2px inset on rgb(57, 57, 57)"
+    },
+    {
+      "name": "admin dark 8 the ◇ is 8×8 at −4/−4 and PAINTED — ≥12 purple px in its rect, ≥3 outside the 28×28 box (F-2)",
+      "ok": true,
+      "detail": "badge {\"w\":8,\"h\":8,\"dx\":-4,\"dy\":-4} · purple rgb(190,149,255) px inside 50 / outside 148 at 3x"
+    },
+    {
+      "name": "admin dark 12 names ON unchanged against the baseline from main",
+      "ok": true,
+      "detail": "{\"label\":\"CW01 Maria L. Maria Lopez. Assigned seat. Draft changed. Open details.\",\"w\":60.94,\"h\":28,\"background-color\":\"rgb(57, 57, 57)\",\"box-shadow\":\"rgb(198, 198, 198) 0px 0px 0px 1px inset\",\"color\":\"rgb(244, 244, 244)\",\"font\":\"12px / 16px plexSans, \\\"plexSans Fallback\\\", \\\"IBM Plex Sans\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"padding-left\":\"8px\",\"height\":\"28px\"} vs {\"label\":\"CW01 Maria L. Maria Lopez. Assigned seat. Draft changed. Open details.\",\"w\":60.94,\"h\":28,\"background-color\":\"rgb(57, 57, 57)\",\"box-shadow\":\"rgb(198, 198, 198) 0px 0px 0px 1px inset\",\"color\":\"rgb(244, 244, 244)\",\"font\":\"12px / 16px plexSans, \\\"plexSans Fallback\\\", \\\"IBM Plex Sans\\\", \\\"Helvetica Neue\\\", Arial, sans-serif\",\"padding-left\":\"8px\",\"height\":\"28px\"}"
+    },
+    {
+      "name": "viewer dark 1 names-off pills are 28×28 footprints carrying ● with no text (4)",
+      "ok": true,
+      "detail": "{\"w\":28,\"h\":28,\"dot\":true,\"text\":\"\"}"
+    },
+    {
+      "name": "viewer dark 2 rest fill + edge equal the open footprint's",
+      "ok": true,
+      "detail": "rgb(57, 57, 57) / rgb(198, 198, 198) 0px 0px 0px 1px inset vs rgb(57, 57, 57) / rgb(198, 198, 198) 0px 0px 0px 1px inset"
+    },
+    {
+      "name": "viewer dark 3 hover lifts to layer-hover-02 like an open seat (R2)",
+      "ok": true,
+      "detail": "rgb(71, 71, 71) vs rgb(71, 71, 71) (rest rgb(57, 57, 57))"
+    },
+    {
+      "name": "viewer dark 4 focus ring is 2px solid rgb(184, 92, 46) inset",
+      "ok": true,
+      "detail": "{\"outline-width\":\"2px\",\"outline-style\":\"solid\",\"outline-color\":\"rgb(184, 92, 46)\",\"outline-offset\":\"-2px\"}"
+    },
+    {
+      "name": "viewer dark 5 selected is visible: data-state=selected, 2px inset edge ≠ fill (F-1)",
+      "ok": true,
+      "detail": "selected / rgb(244, 244, 244) 0px 0px 0px 2px inset on rgb(57, 57, 57)"
+    },
+    {
+      "name": "viewer dark 9 the 44px touch target answers on all four diagonals",
+      "ok": true,
+      "detail": "::after 44px×44px absolute; button.sp-pill, button.sp-pill, button.sp-pill, button.sp-pill"
+    },
+    {
+      "name": "viewer dark 10 the legend's ● and the plan's ● share one colour (P-1, F-3)",
+      "ok": true,
+      "detail": "rgb(244, 244, 244) vs rgb(244, 244, 244)"
+    },
+    {
+      "name": "viewer dark 7 quiet: layer-01 fill and the ● steps to the quiet text colour",
+      "ok": true,
+      "detail": "rgb(38, 38, 38) / ● rgb(198, 198, 198) vs fill rgb(38, 38, 38) / text rgb(198, 198, 198) / loud ● null"
+    }
+  ],
+  "namesOn": {
+    "light": {
+      "label": "CW01 Maria L. Maria Lopez. Assigned seat. Draft changed. Open details.",
+      "w": 60.94,
+      "h": 28,
+      "background-color": "rgb(255, 255, 255)",
+      "box-shadow": "rgb(82, 82, 82) 0px 0px 0px 1px inset",
+      "color": "rgb(22, 22, 22)",
+      "font": "12px / 16px plexSans, \"plexSans Fallback\", \"IBM Plex Sans\", \"Helvetica Neue\", Arial, sans-serif",
+      "padding-left": "8px",
+      "height": "28px"
+    },
+    "dark": {
+      "label": "CW01 Maria L. Maria Lopez. Assigned seat. Draft changed. Open details.",
+      "w": 60.94,
+      "h": 28,
+      "background-color": "rgb(57, 57, 57)",
+      "box-shadow": "rgb(198, 198, 198) 0px 0px 0px 1px inset",
+      "color": "rgb(244, 244, 244)",
+      "font": "12px / 16px plexSans, \"plexSans Fallback\", \"IBM Plex Sans\", \"Helvetica Neue\", Arial, sans-serif",
+      "padding-left": "8px",
+      "height": "28px"
+    }
+  }
+}

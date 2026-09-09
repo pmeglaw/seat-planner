@@ -67,10 +67,28 @@ test("marker vocabulary: one silhouette per state cannot drift (PHASE3DS §1.16,
     /\.sp-pill--origin \{ box-shadow: none; outline: var\(--sp-space-01\) dashed/,
     /\.sp-pill--target \{ background: var\(--sp-pill-target-fill\); box-shadow: inset 0 0 0 var\(--sp-space-01\) var\(--sp-pill-target-edge\); \}/,
     /\.sp-pill--invalid \{ background: var\(--sp-pill-invalid-fill\); box-shadow: none; outline: var\(--sp-space-01\) dashed var\(--sp-pill-invalid-edge\);[^}]*cursor: not-allowed; \}/,
-    /\.sp-pill--names-off \{ width: var\(--sp-seat-footprint\);/
+    // Phase 5 PR 3 amendment J: names off = the empty-seat footprint carrying ●.
+    // The modifier fixes the width, drops the pads and colours the ●; fill,
+    // edge, hover, focus and selected are the base .sp-pill rules above.
+    /\.sp-pill--names-off \{ width: var\(--sp-seat-footprint\); padding: 0; justify-content: center; color: var\(--sp-seat-mark-fill-color\); \}/,
+    /\.sp-pill--names-off \.sp-seat-mark \{ color: inherit; \}/,
+    /\.sp-pill--names-off\.sp-pill--quiet \{ color: var\(--sp-pill-quiet-text\); \}/
   ]) {
     assert.match(componentsCss, rule);
   }
+  // The filled-block language is retired whole (F-1 / F-2 / F-3): no
+  // box-shadow: none, no transparent text, no overflow: hidden (the ◇ badge
+  // sits at −4/−4 and must paint), no badge inversion, no hover restatement,
+  // and the token that carried the block is gone from the layer. Pins run
+  // against the sheet with its comments stripped — amendment J's own comment
+  // names the retired token and rules while explaining them.
+  const sheetRules = componentsCss.replace(/\/\*[\s\S]*?\*\//g, "");
+  const namesOffRule = sheetRules.match(/\.sp-pill--names-off \{[^}]*\}/)[0];
+  assert.doesNotMatch(namesOffRule, /overflow|box-shadow|transparent|background/);
+  assert.doesNotMatch(sheetRules, /\.sp-pill--names-off \.sp-pill-badge/);
+  assert.doesNotMatch(sheetRules, /\.sp-pill--names-off:is\(:hover/);
+  assert.doesNotMatch(sheetRules, /--sp-pill-names-off/);
+  assert.doesNotMatch((await readSource("../app/styles/sp-tokens.css")).replace(/\/\*[\s\S]*?\*\//g, ""), /--sp-pill-names-off/);
 
   // Empty seats keep their status symbol (○ · lock · hatch), inlined by
   // SeatMark; the ◇ changed-in-draft badge is the same inlined mark on a pill.

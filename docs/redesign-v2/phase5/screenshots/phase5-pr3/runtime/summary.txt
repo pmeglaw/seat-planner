@@ -1,0 +1,34 @@
+/ light attrs=light/white referenced=241 undefined=0
+/ dark attrs=dark/g100 referenced=241 undefined=0
+/admin light attrs=light/white referenced=247 undefined=0
+/admin dark attrs=dark/g100 referenced=247 undefined=0
+/admin/management light attrs=light/white referenced=222 undefined=0
+/admin/management dark attrs=dark/g100 referenced=222 undefined=0
+/admin/settings light attrs=light/white referenced=212 undefined=0
+/admin/settings dark attrs=dark/g100 referenced=212 undefined=0
+/reception light attrs=light/white referenced=226 undefined=0
+/reception dark attrs=dark/g100 referenced=226 undefined=0
+/login light attrs=light/white referenced=182 undefined=0
+/login dark attrs=dark/g100 referenced=182 undefined=0
+/admin/management system-light attrs=/ (expected null/null) referenced=222 undefined=0
+/admin/management system-dark attrs=/ (expected null/null) referenced=222 undefined=0
+/admin/settings system-light attrs=/ (expected null/null) referenced=212 undefined=0
+/admin/settings system-dark attrs=/ (expected null/null) referenced=212 undefined=0
+/reception system-light attrs=/ (expected null/null) referenced=226 undefined=0
+/reception system-dark attrs=/ (expected null/null) referenced=226 undefined=0
+/reception (viewer) light attrs=light/white referenced=226 undefined=0
+/reception (viewer) dark attrs=dark/g100 referenced=226 undefined=0
+/my-seat (viewer) light attrs=light/white referenced=176 undefined=0
+/my-seat (viewer) dark attrs=dark/g100 referenced=176 undefined=0
+system state attrs=/ (expected null/null)
+console/page errors: 112
+   Failed to load resource: the server responded with a status of 404 (Not Found)
+   Refused to execute script from 'http://localhost:3000/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.
+   Failed to load resource: the server responded with a status of 404 (Not Found)
+   Refused to execute script from 'http://localhost:3000/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.
+   Failed to load resource: the server responded with a status of 404 (Not Found)
+   Refused to execute script from 'http://localhost:3000/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.
+   Failed to load resource: the server responded with a status of 404 (Not Found)
+   Refused to execute script from 'http://localhost:3000/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.
+   Failed to load resource: the server responded with a status of 404 (Not Found)
+   Refused to execute script from 'http://localhost:3000/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.

@@ -5,9 +5,10 @@
 // (docs/redesign-v2/phase3/specimens/02-map.html), 16px in a 16 viewBox,
 // every stroke 2px (the token), the hatch included.
 //
-//   assigned      a 28×16 miniature of the name pill (● never appears on the
-//                 plan) — `assigned-dot` is the ● the legend shows while names
-//                 are OFF (the legend follows the toggle, P3-13)
+//   assigned      a 28×16 miniature of the name pill while names are ON;
+//                 `assigned-dot` is the ● the legend AND the plan show while
+//                 names are off (the names-off marker, Phase 5 PR 3; the legend
+//                 follows the toggle, P3-13)
 //   open          ○ hollow ring
 //   reserved      lock — hollow shackle, filled body
 //   unavailable   hatched square with a 2px edge

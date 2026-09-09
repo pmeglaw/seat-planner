@@ -131,6 +131,12 @@ read needs them promoted (D1: "symbols specified but not designed into the prima
 `--sp-focus` outline, `[data-state="selected"]` = the pill's 2px `--sp-pill-selected-edge` (an open seat can be
 selected into the inspector), and `.sp-seat-footprint--quiet` (filtered out: the quiet pill's fill + edge, the mark
 in `--sp-pill-quiet-text`) — the same fill/edge/text step the quiet pill takes, never an opacity. Both CSS copies.
+**Phase 5 PR 3 cross-amendment (2026-09-09; owner ruling R1, §1.16 amendment 3).** The clause "● never appears on
+the plan" (owner ruling #507) is superseded: with names off the assigned marker IS the footprint carrying ● —
+`SeatMark kind="assigned-dot"` in `--sp-seat-mark-fill-color` — so ○ and ● sit beside each other on the plan and
+differ by fill, as the legend already had them. `.sp-seat-mark--assigned` is consumed again (the Management table
+since PR 4; the band legend's ● since PR 3, owner ruling P-1 — legend and marker share one colour). Names on is
+untouched: the miniature stays the legend's assigned mark.
 
 ### 1.5 Specimen state hooks
 
@@ -333,18 +339,33 @@ crisp at 3x and 1.5 straddled pixels at 1x. Rig lesson: the badge's fill and str
 and the first render showed a filled diamond (§7). **Would change if** the marker pitch changes (a new
 plan) or a state is added past the five-indicator budget.
 **Phase 4 PR 3b amendments (2026-09-05, as built in `components/seat-map/SeatMarker.tsx`).** (1) *Names off +
-filtered out* had no state: `.sp-pill--names-off.sp-pill--quiet` fills the footprint with `--sp-pill-quiet-edge` —
-still filled (= assigned), lighter than a match, no opacity. (2) *In a move or swap every seat is a pill* — an
+filtered out* had no state: ~~`.sp-pill--names-off.sp-pill--quiet` fills the footprint with `--sp-pill-quiet-edge` —
+still filled (= assigned), lighter than a match, no opacity~~ — superseded by amendment (3). (2) *In a move or swap every seat is a pill* — an
 empty seat shows its code — so the origin, the valid targets and the invalid targets read as one set (the specimen's
 "NE06" target pill, made the rule). (3) Ask Planner's highlight and the viewer's search / people-list hover are the
 search-hit pill; no AI token reaches the map (§1.18). (4) The Draft family is purple 60 / 40 by owner ruling
 (DECISIONS §6 no. 17) — this section's "orange" reads through the brand layer; `sp-tokens.css` still aliases
 Carbon's caution role. (5) The collision nudge (±14 = half the pill height, D1) is an inline transform on the
 marker wrapper, computed per pill at its estimated fit width (`lib/seatCrowding.ts`). (6) *Found in the marker rig:*
-the ◇ on the NAMES-OFF footprint was never measured — purple 40 on the gray-10 square is 2.14 (light 3.62) — so on
+the ◇ on the NAMES-OFF footprint was never measured — purple 40 on the gray-10 square is 2.14 (light 3.62) — ~~so on
 the filled footprint the badge inverts (stroke = the pill fill, fill = the square; the shape carries, the legend's
 count and the inspector text keep the colour), and the names-off + quiet fill is the quiet TEXT colour (gray 70 /
-gray 30 — 5.7 / 10 on the mat; the quiet edge was 1.7). Pairs added to `generate-pairs.mjs`.
+gray 30 — 5.7 / 10 on the mat; the quiet edge was 1.7)~~ — superseded by amendment (3). Pairs added to `generate-pairs.mjs`.
+**Phase 5 PR 3 amendment (3) (2026-09-09; owner ruling R1 = Option B; reviewer defaults R2–R4 confirmed).** The
+sentence "names off = the assigned pill collapses to the filled 28 footprint (`--sp-icon-primary`)" is superseded:
+**names off = the assigned pill takes the empty-seat footprint (§1.4: layer-02 fill, 1px icon-secondary edge,
+layer-hover-02 on hover) and carries the legend's ● (`--sp-seat-mark-fill-color`)**, so "the legend follows the
+toggle" is finally true of the marker too — one status-mark language on the plan. Three defects the block shipped:
+F-1 the selected state was invisible with names off — border-inverse IS the block's fill in both themes (the
+hand-off read it as a cascade loss; the build corrected it: `.sp-pill[data-state="selected"]` outranks the
+modifier); F-2 the block's `overflow: hidden` clipped the ◇ at −4/−4 (the "inverted ◇" of item (6) never rendered
+a diamond); F-3 the band showed ● and the plan ■. Sheet amendment J is three rules — width, no pads, the ● colour;
+the ● inherits; the quiet ● steps to `--sp-pill-quiet-text` by one combined rule (both modifiers are (0,1,0)) —
+because `--sp-pill-fill / -edge / -fill-hover` already alias the footprint's roles; the filled block's rules, its
+badge inversion and `--sp-pill-names-off` are retired. R2: hover lifts like an open seat, no flat special case.
+R3: one marker on `/admin` and `/`. R4: its own slice, v2.3.0, rig-measured (● on layer-02 and on the quiet fill,
+◇ on layer-02, the edge on the mat — PHASE5 PR 3). Options A (leave) and C (a lighter block) declined. Not a
+Carbon deviation — DECISIONS §6 next free stays 19. Specimen `02-map.html`'s names-off cells carry the ● markup.
 
 ### 1.17 Right slot and inspector — Map → `.sp-slot`, commit bar, combobox, text area (§3 rows "Seat inspector side panel, 400", "Combobox", "text area", "Danger button")
 

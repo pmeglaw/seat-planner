@@ -62,7 +62,7 @@ export function MapStatusBand({ ariaLabel, totalLabel, entries, namesVisible = t
           <ul aria-label={ariaLabel} className="sp-band-legend">
             {entries.map(entry => (
               <li key={entry.key} className="sp-seat-legend">
-                <SeatMark kind={entry.mark === "assigned" && !namesVisible ? "assigned-dot" : entry.mark} />
+                <SeatMark kind={entry.mark === "assigned" && !namesVisible ? "assigned-dot" : entry.mark} className={entry.mark === "assigned" && !namesVisible ? "sp-seat-mark--assigned" : undefined} />
                 {entry.label} <span className="tabular-nums">{entry.count}</span>
               </li>
             ))}
