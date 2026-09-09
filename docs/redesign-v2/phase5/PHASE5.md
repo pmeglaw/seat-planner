@@ -180,7 +180,10 @@ reading of §1R.6. The type change was the regression.
 - **The tail must not render empty.** An empty flex child still takes one of the readout column's 16px gaps at
   wide, so `hasTail` gates it — the "wide unchanged" claim is that literal.
 - **The loading skeleton got the same two groups**, or the frame would jump by the band's height at narrow —
-  which is the one thing `loading.tsx` exists to prevent.
+  which is the one thing `loading.tsx` exists to prevent. *Corrected 2026-09-09: the two groups were in the markup, but the
+  skeleton's rows (`.sp-recep-skeleton-row`) carried no `order`, so at narrow they streamed between the search
+  and the band, then the band, then the count header — found by the pre-merge smoke's step 14, fixed in `763d489`
+  (one selector added to amendment I's order rule, both copies).*
 
 ### Sheet amendment I — and the measurement that contradicted the brief
 
@@ -259,6 +262,21 @@ offset switching correctly across the 1024 seam, zero focusable elements in the 
 entering it, the ↑ cursor never parking under it, one live region and one extension slot, "Waiting for a call"
 and "No extension on file" both held by the band, no sideways scroll, and — at 1920, both themes — the wide
 frame untouched at **readout 480 · gutter 32 · list 1008**.
+
+**Reviewer's pre-merge smoke** (`audit/pr2-smoke.mjs`, sixteen steps, real Chrome 320 → 1920, both themes on the
+local Docker stack, every geometric claim a hit test; captures + `results.json` + README under
+`screenshots/phase5-pr2-smoke/`): **67/67 on `763d489`**. It proved the band pinned at the header's bottom with the
+list scrolled to its end at 640 and in the 1024–1055 seam (offset **0px** proved by the pane scrolling while the
+window does not), the ↑ ↓ cursor never under the band in **both** scroll models (23/23 steps each), the O-4 loop
+(focus in the field after a lock, typing filters, band still fully in view), the live region narrowed to the band
+with the count as the only other, zero focusables in the band plus a real Tab walk (clear × → tail → recents,
+never the band) at five widths, the F-1 no-extension state reaching its fallback by keyboard, the wrap threshold at
+420, no sideways scroll 320 → 480, the zero-match band holding the last lock, the partial-state notification above
+the band, the waiting copy spanning the band, the loading skeleton in the new order, the brand sweep clean on every
+capture, and — the strongest line — **1920 against a `next build` of `main`, both themes, same state: 0 of
+2,073,600 pixels differ.** **One product fix it forced:** the loading skeleton's rows had no `order` under the fold
+(the bullet above), `763d489`. The seed needed a one-row fixture (`audit/pr2-smoke-fixture.sql`) because no
+extension-holder in it has a same-department colleague with one.
 
 **The ≥1056 proof** additionally rides in CI: `page-frames`' wide branch is unchanged and still asserts the
 480 / 32 / 1008, and the four new `accessibility` frames prove the labelled "Caller detail" landmark survives
