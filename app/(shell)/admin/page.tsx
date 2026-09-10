@@ -1,3 +1,4 @@
+import { hydratePublishedSeatNotes, type PublishedSeatWithNotes } from "@/lib/publishedSeatNotes";
 import Link from "next/link";
 import { SeatMap } from "@/components/seat-map/SeatMap";
 import { fetchAllRows } from "@/lib/fetchAllRows";
@@ -50,7 +51,7 @@ export default async function AdminPage() {
   // click. publishedEmployees is the viewer-facing snapshot, loaded so the
   // publish review can diff live employee details against what viewers
   // currently see.
-  const [seats, publishedSeats, employees, publishedEmployees, departmentsResult, zonesResult] = await Promise.all([
+  const [seats, publishedSeatRows, employees, publishedEmployees, departmentsResult, zonesResult] = await Promise.all([
     fetchAllRows<SeatWithEmployee>(
       (from, to) =>
         supabase
@@ -61,11 +62,11 @@ export default async function AdminPage() {
           .range(from, to),
       { label: "draft seats" }
     ),
-    fetchAllRows<SeatWithEmployee>(
+    fetchAllRows<PublishedSeatWithNotes>(
       (from, to) =>
         supabase
           .from("seats")
-          .select("*, employee:employees(*)", { count: "exact" })
+          .select("*, employee:employees(*), private_note:published_seat_notes(notes)", { count: "exact" })
           .eq("layer", "published")
           .order("label")
           .range(from, to),
@@ -95,6 +96,8 @@ export default async function AdminPage() {
     supabase.from("department_options").select("*").eq("active", true).order("name"),
     supabase.from("zone_options").select("*").eq("active", true).order("name")
   ]);
+
+  const publishedSeats = hydratePublishedSeatNotes(publishedSeatRows);
 
   const { data: departments, error: departmentsError } = departmentsResult;
   const { data: zones, error: zonesError } = zonesResult;

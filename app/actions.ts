@@ -1,5 +1,6 @@
 "use server";
 
+import { hydratePublishedSeatNotes, type PublishedSeatWithNotes } from "@/lib/publishedSeatNotes";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAllRows } from "@/lib/fetchAllRows";
@@ -1180,11 +1181,11 @@ export async function getDraftStatusAction(): Promise<{ changeCount: number; las
           .range(from, to),
       { label: "draft seats" }
     ),
-    fetchAllRows<SeatWithEmployee>(
+    fetchAllRows<PublishedSeatWithNotes>(
       (from, to) =>
         supabase
           .from("seats")
-          .select("*, employee:employees(*)", { count: "exact" })
+          .select("*, employee:employees(*), private_note:published_seat_notes(notes)", { count: "exact" })
           .eq("layer", "published")
           .order("label")
           .range(from, to),
@@ -1212,7 +1213,7 @@ export async function getDraftStatusAction(): Promise<{ changeCount: number; las
       { label: "published employees" }
     )
   ]);
-  const summary = buildPublishChangeSummary(draftSeats, publishedSeats, { employees, publishedEmployees });
+  const summary = buildPublishChangeSummary(draftSeats, hydratePublishedSeatNotes(publishedSeats), { employees, publishedEmployees });
   const latest = (rows: SeatWithEmployee[]) =>
     rows.reduce<string | null>((max, seat) => (seat.updated_at && (!max || seat.updated_at > max) ? seat.updated_at : max), null);
   return { changeCount: summary.totalChangeCount, lastEditAt: latest(draftSeats), publishedAt: latest(publishedSeats) };

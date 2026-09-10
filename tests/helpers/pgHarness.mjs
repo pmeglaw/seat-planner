@@ -166,31 +166,19 @@ class SeatPlannerDb {
 // Boot a fresh database with the full migration history applied. Call once per
 // test file (module-level) — booting + migrating is the expensive part, so
 // reuse the instance and call reset() between tests.
-export async function createSeatPlannerDb() {
+export async function createSeatPlannerDb({ beforeMigration } = {}) {
   const db = await PGlite.create();
   await db.exec(PRELUDE);
 
   const files = (await readdir(fileURLToPath(MIGRATIONS_DIR))).filter(f => f.endsWith(".sql")).sort();
   for (const file of files) {
+    if (beforeMigration) await beforeMigration(new SeatPlannerDb(db), file);
     const sql = sanitize(await readFile(new URL(file, MIGRATIONS_DIR), "utf8"));
     await db.exec(sql);
   }
 
-  // Supabase grants the `authenticated` role broad table DML by default and
-  // relies on RLS as the actual gate. PGlite has no such bootstrap, so mirror
-  // it here: without these grants, `set role authenticated` fails with a
-  // grant-level "permission denied" before any policy is even evaluated.
-  await db.exec(`
-    grant usage on schema public to authenticated, anon;
-    grant select, insert, update, delete on all tables in schema public to authenticated;
-    grant usage, select on all sequences in schema public to authenticated;
-    -- published_employees is select-only for authenticated in prod at both
-    -- layers: no RLS write policy (20260708230000) and no table-level write
-    -- grant (20260805140000). The broad grant above would mask the latter, so
-    -- re-apply the revoke to keep the harness faithful — a client write is
-    -- denied by the missing grant AND the missing policy, as in prod.
-    revoke insert, update, delete on public.published_employees from authenticated;
-  `);
+  // Permissions come ONLY from the real migrations (including explicit
+  // revokes). Post-migration blanket grants mask security regressions.
 
   return new SeatPlannerDb(db);
 }
