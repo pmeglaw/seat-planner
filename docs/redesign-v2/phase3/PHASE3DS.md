@@ -572,11 +572,6 @@ two actions per row, so the overflow is earned here. Rename swaps the name for a
 primary disabled. A department people carry that the list lacks shows the `outline` tag "Not in list" and
 a tertiary Add to list in the action column. Empty state per list.
 
-**Phase 5 fix-pack amendment (2026-09-10; audit BR-3, owner approval of fix pack 1).** The in-row Add to list is a
-ghost, not a tertiary: tertiary text (#B85C2E) is 4.14:1 on the layer-01 row and 3.72:1 on the hovered row, under
-the 4.5:1 text floor; the ghost reads `--cds-link-primary` (#8F4521 light, 6.28:1 on layer-01; #E8A07A dark). The
-not-gated rig pair 'tertiary label terracotta on layer-01' stays as the record of why.
-
 ### 1.26 Callout — `.sp-callout` (§3 "Callout (non-dismissible, no status) · partial .cds-notification")
 
 Guidance read before acting (patterns.md): loads with the page, never dismissed, never triggered. Hand-built

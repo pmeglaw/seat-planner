@@ -731,10 +731,11 @@ test("an earlier in-flight op settling later leaves a newer op's busy token alon
     fireEvent.click(tab("Departments"));
   });
   const adopt = screen.getByRole("button", { name: "Add to list" });
-  // BR-3: the in-row action sits on a layer-01 table row, where tertiary text
-  // is under the 4.5:1 floor — ghost (link colour) clears it.
-  assert.ok(adopt.className.includes("cds-btn--ghost"), "Add to list is ghost weight");
-  assert.ok(!adopt.className.includes("cds-btn--tertiary"));
+  // BR-3 withdrawn (REVIEW.md errata): the row is a .sp-list-row on
+  // --sp-background (#ffffff), where tertiary text (#B85C2E) is 4.56:1 — the
+  // tertiary weight PHASE3DS §1.25 specifies stands.
+  assert.ok(adopt.className.includes("cds-btn--tertiary"), "Add to list is tertiary weight");
+  assert.ok(!adopt.className.includes("cds-btn--ghost"));
   const save = within(panel()).getByRole("button", { name: "Save employee" });
 
   // Adopt first, then Save, before either pending re-render commits.

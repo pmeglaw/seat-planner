@@ -10,8 +10,8 @@
 // (the name quoted, the next step named — lib/inlineRename). A server
 // failure lands in the same helper slot; the row stays in edit. A department
 // people carry that the list lacks shows the outline tag "Not in list" and a
-// ghost Add to list (BR-3: a tertiary's text is under 4.5:1 on the layer-01
-// row). Empty state per list; the header primary is the next step.
+// tertiary Add to list. Empty state per list; the header primary is the next
+// step.
 
 import { useEffect, useId, useRef, useState } from "react";
 import { resolveInlineRename, type OptionKind } from "@/lib/inlineRename";
@@ -142,7 +142,7 @@ export function OptionList({
               <>
                 <span className="flex items-center gap-2">
                   {!row.managed && onAdopt && (
-                    <button type="button" className="cds-btn cds-btn--ghost" onClick={() => onAdopt(row.name)} disabled={pending} aria-busy={pending && busyOp === `adopt-${kind}:${row.name}` ? "true" : undefined}>
+                    <button type="button" className="cds-btn cds-btn--tertiary" onClick={() => onAdopt(row.name)} disabled={pending} aria-busy={pending && busyOp === `adopt-${kind}:${row.name}` ? "true" : undefined}>
                       {pending && busyOp === `adopt-${kind}:${row.name}` ? "Adding…" : "Add to list"}
                     </button>
                   )}
