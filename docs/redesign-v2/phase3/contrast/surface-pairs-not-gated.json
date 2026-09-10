@@ -31,13 +31,13 @@
  },
  {
   "name": "light · tertiary label terracotta on layer-01 #f4f4f4 (NOT a sanctioned surface for a tertiary — 4.14)",
-  "fg": "#b85c2e",
+  "fg": "#B85C2E",
   "bg": "#f4f4f4",
   "kind": "text"
  },
  {
-  "name": "light · AI border end blue-40 on white (gradient's low stop; the label carries meaning)",
-  "fg": "#78a9ff",
+  "name": "light · AI border end brand on white (gradient's low stop; the label carries meaning)",
+  "fg": "#B85C2E",
   "bg": "#ffffff",
   "kind": "graphic"
  },
@@ -54,20 +54,20 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · AI border end blue-40 on layer-01 #262626 (gradient's low stop)",
-  "fg": "#78a9ff",
+  "name": "dark · AI border end terracotta on layer-01 #262626 (gradient's low stop)",
+  "fg": "#B85C2E",
   "bg": "#262626",
   "kind": "graphic"
  },
  {
   "name": "dark · Reception row bar terracotta on layer-selected-02 #525252 — the value R5 replaces (fails 3:1)",
-  "fg": "#b85c2e",
+  "fg": "#B85C2E",
   "bg": "#525252",
   "kind": "graphic"
  },
  {
   "name": "dark · nav / menu / palette bar terracotta on layer-selected #393939 — the value O5 replaces (fails 3:1)",
-  "fg": "#b85c2e",
+  "fg": "#B85C2E",
   "bg": "#393939",
   "kind": "graphic"
  },

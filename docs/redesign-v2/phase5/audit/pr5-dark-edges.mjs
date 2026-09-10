@@ -3,7 +3,7 @@
 // Proves the one-line flip: --cds-border-interactive is #E8A07A in the two dark blocks and #B85C2E in light,
 // read on the five consumers PR 4's reviewer measured (ruling B) — the left-nav current bar, the floor menu's
 // [aria-current] bar, the palette's selected row bar, the selected page tab, the hovered AI label — plus the
-// two roles the flip must NOT have touched (primary fill, focus ring) and the Reception locked-row bar, which
+// primary fill the flip must NOT touch and the later BR-2 focus amendment and the Reception locked-row bar, which
 // now inherits the role instead of PR 4's own override.
 //
 // EVERY claim is a COMPUTED-STYLE comparison; the 3x crops are for the reviewer's eyes, not for pass / fail.
@@ -78,7 +78,8 @@ for (const theme of THEMES) {
   await open("/admin", theme);
   record(`${theme} 0a --cds-border-interactive is ${EDGE[theme]}`, (await tokenOf("--cds-border-interactive")) === EDGE[theme], await tokenOf("--cds-border-interactive"));
   record(`${theme} 0b --cds-button-primary stays ${TERRACOTTA}`, (await tokenOf("--cds-button-primary")) === TERRACOTTA, await tokenOf("--cds-button-primary"));
-  record(`${theme} 0c --cds-focus stays ${TERRACOTTA}`, (await tokenOf("--cds-focus")) === TERRACOTTA, await tokenOf("--cds-focus"));
+  const focus = theme === "dark" ? "rgb(255, 255, 255)" : TERRACOTTA;
+  record(`${theme} 0c --cds-focus is ${focus} (BR-2)`, (await tokenOf("--cds-focus")) === focus, await tokenOf("--cds-focus"));
   record(`${theme} 0d --cds-interactive (fill role) stays ${TERRACOTTA}`, (await tokenOf("--cds-interactive")) === TERRACOTTA, await tokenOf("--cds-interactive"));
   record(`${theme} 0e --sp-recep-row-bar inherits the role`, (await tokenOf("--sp-recep-row-bar")) === EDGE[theme], await tokenOf("--sp-recep-row-bar"));
 

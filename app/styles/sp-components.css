@@ -1215,3 +1215,26 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-route-card .cds-empty h2 { display: flex; align-items: center; gap: var(--sp-space-03); }
 .sp-route-card .cds-empty h2 svg { width: var(--sp-icon-02); height: var(--sp-icon-02); color: var(--sp-status-error-mark); }
 .sp-digest { font: var(--sp-type-code-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); margin-top: var(--sp-space-05); }
+
+/* DS-1 — owner amendment 2026-09-10. The form and its loading boundary
+   follow the page theme; only chrome is constant-dark. Rebind semantic
+   aliases at the zone itself (custom properties otherwise resolve at root). */
+.login-theme { color: var(--sp-text-primary); background: var(--sp-background); }
+.sp-zone-chrome {
+  color-scheme: dark;
+  --sp-background: var(--sp-shell-bg);
+  --sp-text-primary: var(--sp-panel-dark-text);
+  --sp-text-secondary: var(--sp-panel-dark-text-secondary);
+  --sp-text-helper: var(--sp-panel-dark-text-helper);
+  --sp-border-strong: var(--sp-panel-dark-text-helper);
+  --sp-border-subtle: var(--sp-panel-dark-rule);
+  --sp-focus: var(--sp-panel-dark-focus);
+  --sp-link: var(--sp-panel-dark-link);
+  --sp-link-hover: var(--sp-panel-dark-link-hover);
+  color: var(--sp-text-primary);
+  background: var(--sp-background);
+}
+
+/* BR-2 owner amendment 2026-09-10: Carbon omits the tertiary pressed rule.
+   Consume the governed active host without changing weight or focus geometry. */
+.cds-btn--tertiary:active { background: var(--sp-button-tertiary-active); color: var(--sp-text-on-color); }

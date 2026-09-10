@@ -13,7 +13,7 @@ The always-loaded rules (mark-only orange, terracotta primary, no blue, Draft pu
 
 ## Primary UI colour — terracotta #B85C2E
 
-(184,92,46): 4.56:1 on white (AA text), 3.97:1 on #161616 (non-text ≥ 3:1). Hover **#8F4521**, active **#7A3A1C**, tints #F5DDD1 / #FBE8DC. Links: light theme **#8F4521**, dark theme **#E8A07A**. In dark, interactive *borders and bars* (`--cds-border-interactive`: nav / menu / palette / tab / Reception bars, the AI label's border start) are **#E8A07A** (O5, 2026-09-10 — terracotta measured 2.53 on #393939, 2.77 on #333333, 1.71 on #525252, under the 3:1 graphic floor; #E8A07A is 5.36 / 5.86 / 3.62); the focus ring, primary fills and `--cds-interactive` (a fill role) stay #B85C2E.
+(184,92,46): 4.56:1 on white (AA text), 3.97:1 on #161616 (non-text ≥ 3:1). Hover **#8F4521**, active **#7A3A1C**, tints #F5DDD1 / #FBE8DC. Links: light theme **#8F4521**, dark theme **#E8A07A**. In dark, interactive *borders and bars* (`--cds-border-interactive`: nav / menu / palette / tab / Reception bars, the AI label's border start) are **#E8A07A** (O5, 2026-09-10 — terracotta measured 2.53 on #393939, 2.77 on #333333, 1.71 on #525252, under the 3:1 graphic floor; #E8A07A is 5.36 / 5.86 / 3.62); primary fills and `--cds-interactive` (a fill role) stay #B85C2E; dark focus is white (BR-2).
 
 ## Where it lives
 
@@ -21,9 +21,9 @@ The always-loaded rules (mark-only orange, terracotta primary, no blue, Draft pu
 
 ## Rules in full
 
-1. IBM blue (#0f62fe, #0353e9, #0043ce, #4589ff, #78a9ff, #a6c8ff) is never a primary, link, focus or interactive colour. `grep -rn "0f62fe" app components lib` returns only the vendored `carbon-tokens.css` (whose blue roles are overridden). The search/filter hit surface is a terracotta tint (owner ruling O2, 2026-09-04, built in PR 3b): light fill #FBE8DC + edge #B85C2E via `--cds-highlight` and `--sp-pill-search-*` in the brand file; dark keeps the neutral layer-02 fill with the dark link colour #E8A07A as the edge (terracotta on #393939 is 2.53:1). Carbon's dark `--cds-highlight` (blue 90) is still declared but painted by nothing. No blue is in use outside the BR-5 info-notification roles awaiting a ruling — and `tests/brand-resolved-tokens.test.mjs` keeps it so by resolving, in all three theme states, every `--sp-*` alias sp-tokens.css declares plus every `--cds-*` role that `carbon-components.css` / `sp-components.css` consume directly via var() (nothing else: a role read only from an inline style or Tailwind utility is the phase4 token-layer test's), and failing on any IBM blue (audit BR-1, 2026-09-10: the roster hit row's `--sp-status-search-*` pair had reached `--cds-support-info` / dark `--cds-highlight` unseen by the text checks); its allowlist has two kinds of row — `unpainted` blue-resolving tokens (shrink-only) and `pending-ruling` live blues that must cite their audit finding (today `--cds-support-info`, `--cds-support-info-subtle`, `--cds-status-info-mark` — BR-5, 2026-09-10). Reception's locked row takes the same hit surface (owner ruling O4, 2026-09-09, Phase 5 PR 4, DECISIONS D3-g): `--sp-recep-row-locked` light #FBE8DC / dark #525252 (layer-selected-02); its dark bar is #E8A07A because terracotta is 1.71:1 on #525252 — since O5 (Phase 5 PR 5, 2026-09-10) inherited from the dark `--cds-border-interactive` itself, not a per-consumer override.
+1. IBM blue (#0f62fe, #0353e9, #0043ce, #4589ff, #78a9ff, #a6c8ff) is never a primary, link, focus or interactive colour. `grep -rn "0f62fe" app components lib` returns only the vendored `carbon-tokens.css` (whose blue roles are overridden). The search/filter hit surface is a terracotta tint (owner ruling O2, 2026-09-04, built in PR 3b): light fill #FBE8DC + edge #B85C2E via `--cds-highlight` and `--sp-pill-search-*` in the brand file; dark keeps the neutral layer-02 fill with the dark link colour #E8A07A as the edge (terracotta on #393939 is 2.53:1). Carbon's dark `--cds-highlight` (blue 90) is still declared but painted by nothing. No blue is painted after the approved BR-5 amendment — and `tests/brand-resolved-tokens.test.mjs` keeps it so by resolving, in all three theme states, every `--sp-*` alias sp-tokens.css declares plus every `--cds-*` role that `carbon-components.css` / `sp-components.css` consume directly via var() (nothing else: a role read only from an inline style or Tailwind utility is the phase4 token-layer test's), and failing on any IBM blue (audit BR-1, 2026-09-10: the roster hit row's `--sp-status-search-*` pair had reached `--cds-support-info` / dark `--cds-highlight` unseen by the text checks); its allowlist has two kinds of row — `unpainted` blue-resolving tokens (shrink-only) and `pending-ruling` live blues that must cite their audit finding (none remain after BR-5, approved 2026-09-10). Reception's locked row takes the same hit surface (owner ruling O4, 2026-09-09, Phase 5 PR 4, DECISIONS D3-g): `--sp-recep-row-locked` light #FBE8DC / dark #525252 (layer-selected-02); its dark bar is #E8A07A because terracotta is 1.71:1 on #525252 — since O5 (Phase 5 PR 5, 2026-09-10) inherited from the dark `--cds-border-interactive` itself, not a per-consumer override.
 2. #EB7C35 is never a UI colour (the token test fails the build if it appears outside the brand declaration).
-3. Primary actions, current-section bar, focus ring, interactive borders and the AI label use #B85C2E; hover #8F4521; active #7A3A1C. In dark, interactive *borders and bars* are #E8A07A (O5, 2026-09-10); focus ring and primary fills stay #B85C2E.
+3. Primary fills and the current-section bar use #B85C2E; hover #8F4521; active #7A3A1C. Focus is terracotta in light and white in explicit/system dark (BR-2, owner 2026-09-10). Interactive borders remain terracotta light / #E8A07A dark. In dark, interactive *borders and bars* are #E8A07A (O5, 2026-09-10); primary fills stay #B85C2E; dark focus is white (BR-2).
 4. New colours derive from the terracotta scale; never introduce a blue. The Draft family (◇ badge, Draft status mark, header Draft indicator) is Carbon **purple 60 light / purple 40 dark** (`--sp-status-draft-mark`, `--sp-pill-badge`, `--sp-mode-draft-mark` in the brand file — DECISIONS §6 no. 17): Carbon's caution orange is one hue with the terracotta primary (ΔE2000 5.3, 1.10:1), and purple carries no other meaning in the app.
 5. Contrast is verified with `docs/redesign-v2/phase3/contrast/generate-pairs.mjs` + the checker after any token change; white on #B85C2E is 4.56:1 — keep button labels ≥ 14px regular.
 6. Recorded as `DECISIONS.md` §6 deviation 16 from the Carbon rule "Blue 60 is the only primary" — the brand layer is the one place that deviation is expressed.
@@ -32,9 +32,33 @@ The always-loaded rules (mark-only orange, terracotta primary, no blue, Draft pu
 
 - primary button computed background `rgb(184, 92, 46)`
 - hover `rgb(143, 69, 33)`
-- focus ring #B85C2E (2px inset)
+- focus terracotta light / white explicit and system dark; preserve each control’s existing geometry; measure rest, hover and selected host surfaces
 - header current-section bar #B85C2E
 - links light #8F4521 / dark #E8A07A
 - interactive bars / edges (nav current, floor menu, palette row, tab, Reception row, AI label border start): light `rgb(184, 92, 46)` / dark `rgb(232, 160, 122)` (O5) — `phase5/audit/pr5-dark-edges.mjs` reads all of them
 - no #0f62fe outside `carbon-tokens.css`
 - build and `npm test` green
+
+## Approved PR #531 amendments (owner, 2026-09-10)
+
+BR-2: white dark focus, terracotta light focus; primary fills and apricot dark
+borders retained. DS-1: constant-dark login chrome via semantic zone rules;
+form/password/loading remain theme-aware. UX-3: consequence-based Discard danger
+confirmation and reviewed Restore, no typing, optional export. UX-4: Restore
+tertiary entry and plain-primary confirmation (D6-c/D6-d).
+BR-5: override --cds-support-info and --cds-support-info-subtle in all three
+brand blocks: #B85C2E / #FBE8DC light; #E8A07A / #262626 dark. The JSON record
+mirrors these values; do not edit vendored Carbon. Information aliases now
+inherit the brand, so their obsolete blue allowances are removed.
+
+Additional verification checklist:
+- Resolve both direct Carbon consumers and semantic aliases, including system themes.
+- Inspect actual focused controls, hovered/selected rows and primary fills.
+- Inspect login, password update and loading in both themes; sheet copies byte-identical.
+- Inspect inspector, publish review and Ask Planner info; retain warning/error and Draft purple.
+- Record approval separately from implementation and browser evidence.
+- PR #531: authenticated preview roster hits, chip/Find/canvas parity and 1920×1080 overview;
+  final-commit checks and a fresh Codex review remain required before merge.
+
+BR-2 host constraint: dark tertiary hover/active fills are neutral #333333/#393939,
+so the white focus/text remain legible. Keep the outlined tertiary entry weight.

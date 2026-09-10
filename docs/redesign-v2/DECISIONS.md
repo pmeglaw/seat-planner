@@ -1710,3 +1710,37 @@ first). The shell sequence below is unchanged, in **two** slices rather than one
 Nothing else starts until those two land — the multi-floor arc is the one owner-sequenced exception,
 placed ahead of the shell because its schema half is invisible when merged and its viewer half retires
 the D1 inference risk.
+
+## Owner amendments — PR #531 — 2026-09-10
+
+All five rulings are **approved** by the owner on this date. Approval is distinct
+from implementation and verification; the evidence and remaining merge gates
+are recorded in [PR531-VERIFICATION.md](../audits/2026-09-10/PR531-VERIFICATION.md).
+
+- **BR-2:** white focus in explicit and system dark; light focus stays terracotta.
+  Preserve existing focus geometry, terracotta primary fills and apricot dark
+  interactive borders. Includes the auth fields' existing 2px bottom focus rule.
+  Implementation consequence: dark tertiary hover/active hosts use neutral
+  #333333/#393939; Carbon's near-white hover would hide the white ring and text.
+  Tertiary entry weight is unchanged; this is not danger styling.
+- **DS-1:** restore the approved login layout's constant-dark brand panel through
+  semantic zone rules. The form pane, password update and login loading follow
+  the page theme; chrome stays dark. Runtime and Phase 3 component sheets must
+  remain byte-identical.
+- **UX-3 / Discard (explicit ruling):** retain consequence-based danger confirmation
+  for Discard draft changes, without typing a phrase. This is the owner-approved
+  exception to the general high-impact typed-confirmation guidance.
+- **UX-3 / Restore:** reaffirm D6/D6-c. Preserve reviewed counts, file details,
+  consequences and “Export the current draft first”. Export remains optional;
+  no typed confirmation and no export prerequisite.
+- **UX-4:** reaffirm D6-c/D6-d: Restore entry is tertiary; confirmation is plain
+  primary, never danger. Existing behavior is retained.
+- **BR-5:** informational notifications use a terracotta-family accent and
+  restrained backgrounds centrally in the brand CSS and its JSON record.
+  Light: terracotta on pale terracotta; explicit/system dark: apricot on neutral
+  layer-01. Keep information icons/text, warning/error semantics and Draft purple.
+  Remove pending-blue allowances when resolved-token checks pass.
+
+SEC-1 is a separate security/release concern, not resolved by this UI pack.
+A complete fix must address already-published notes and future publishing.
+Do not merge or deploy as part of this work.

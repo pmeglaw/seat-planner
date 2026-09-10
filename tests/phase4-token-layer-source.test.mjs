@@ -394,12 +394,12 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
     assert.ok(m, `brand block missing: ${re}`);
     assert.match(m[1], /--cds-button-primary:\s*#B85C2E/i);
     assert.match(m[1], /--cds-button-primary-hover:\s*#8F4521/i);
-    assert.match(m[1], /--cds-focus:\s*#B85C2E/i);
+    assert.match(m[1], re === blocks[0] ? /--cds-focus:\s*#B85C2E/i : /--cds-focus:\s*#FFFFFF/i);
     assert.match(m[1], /--cds-interactive:\s*#B85C2E/i, "--cds-interactive is a FILL role — O5 did not flip it");
   }
   // O5 (Phase 5 PR 5, owner ruling 2026-09-10): interactive EDGES carry the hue on dark — the border role is
   // #E8A07A in the two dark blocks (terracotta measured 2.53 on #393939 / 2.77 on #333333, under the 3:1 graphic
-  // floor on every bar it painted); light keeps terracotta. Focus ring and primary fills stay #B85C2E everywhere.
+  // floor on every bar it painted); light keeps terracotta. BR-2 moves dark focus to white; primary fills stay #B85C2E everywhere.
   assert.match(css.match(blocks[0])[1], /--cds-border-interactive:\s*#B85C2E/i, "light interactive border is terracotta");
   for (const re of blocks.slice(1)) assert.match(css.match(re)[1], /--cds-border-interactive:\s*#E8A07A/i, "dark interactive border is the dark link colour (O5)");
   assert.match(css.match(blocks[0])[1], /--cds-link-primary:\s*#8F4521/i, "light links are #8F4521");

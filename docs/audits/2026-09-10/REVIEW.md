@@ -6,6 +6,18 @@
 
 This is a frozen point-in-time record per `docs/audits/README.md`. Open findings should become issues; this file is not edited as they close.
 
+### Owner amendment errata (2026-09-10)
+
+BR-2, DS-1, UX-3, UX-4 and BR-5 are now **approved**, superseding the
+pending-ruling wording below. See DECISIONS.md’s dated PR #531 amendments and
+[PR531-VERIFICATION.md](PR531-VERIFICATION.md) for implementation/evidence status.
+Discard explicitly retains danger confirmation without typing. Restore retains
+D6-c/D6-d, optional export, reviewed consequences and plain-primary confirmation.
+BR-5’s resolved-token guard no longer requires the pending-blue allowances.
+SEC-1 remains separate and open in this branch: the latest publish RPC copies
+notes; any fix must also remediate existing published notes. The old suggestion
+of changing only future publishing is insufficient.
+
 ### Errata (2026-09-10, same day — found by the adversarial review of fix pack 1)
 
 - **DS-4 withdrawn.** The audit compared the two-button dirty-close ask with the three-button inspector guard. The design record already rules the two-button case: PHASE3DS §1.24 (owner ruling 2026-09-05, PHASE4BUILD §1.38) — "Keep editing (secondary) · Discard changes (plain primary): a discard of unsaved edits is not destruction of data." `AdminManagementPanel.tsx:719` was therefore correct as shipped. The three-button guard's "Discard at secondary weight" (amendment F) has no analogue in a two-button ask.

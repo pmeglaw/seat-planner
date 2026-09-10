@@ -31,7 +31,7 @@ const fieldShellClass = (restRule: "subtle" | "strong") =>
     restRule === "subtle"
       ? "border-b border-b-[color:var(--sp-border-subtle)]"
       : "border-b border-b-[color:var(--sp-border-strong)]",
-    "has-[input:focus]:border-b-2 has-[input:focus]:border-b-[color:var(--sp-button-primary)]"
+    "has-[input:focus]:border-b-2 has-[input:focus]:border-b-[color:var(--sp-focus)]"
   );
 const fieldLabelClass = "block text-xs font-normal leading-[1.3] text-[var(--sp-text-secondary)]";
 // outline-none is safe only because the shell above draws the focus rule.

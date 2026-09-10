@@ -59,7 +59,10 @@
       "--sp-status-search-mark": "#B85C2E",
       "--sp-recep-row-locked": "#FBE8DC",
       "--sp-status-draft-mark": "#8A3FFC",
-      "--sp-pill-badge": "#8A3FFC"
+      "--sp-pill-badge": "#8A3FFC",
+      "--cds-focus": "#B85C2E",
+      "--cds-support-info": "#B85C2E",
+      "--cds-support-info-subtle": "#FBE8DC"
     },
     "g100": {
       "--cds-button-primary": "#B85C2E",
@@ -72,7 +75,12 @@
       "--sp-status-search-mark": "#E8A07A",
       "--sp-recep-row-locked": "#525252",
       "--sp-status-draft-mark": "#BE95FF",
-      "--sp-pill-badge": "#BE95FF"
+      "--sp-pill-badge": "#BE95FF",
+      "--cds-focus": "#FFFFFF",
+      "--cds-support-info": "#E8A07A",
+      "--cds-support-info-subtle": "#262626",
+      "--cds-button-tertiary-hover": "#333333",
+      "--cds-button-tertiary-active": "#393939"
     }
   },
   "draftFamily": {
@@ -85,5 +93,9 @@
       "--sp-mode-draft-mark"
     ],
     "why": "Carbon purple 60/40 instead of the caution orange: orange 60 is ΔE2000 5.3 / 1.10:1 from the terracotta primary. DECISIONS §6 no. 17"
+  },
+  "themeStates": {
+    "light": "carbonMapping.g10 (legacy record name; runtime white or system light)",
+    "dark": "carbonMapping.g100 (runtime g100 or system dark)"
   }
 }

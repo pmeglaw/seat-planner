@@ -84,8 +84,8 @@ overridden in `app/styles/brand/megeredchian-law-tokens.css`. **No blue is in us
 
     Primary                #B85C2E   both themes (4.56:1 on white, 3.97:1 on gray 100)
     Primary hover          #8F4521   ·  active #7A3A1C
-    Focus ring             #B85C2E   both themes
-    Tertiary / outlined    #B85C2E   light only; dark keeps Carbon's white tertiary
+    Focus ring             #B85C2E light / #FFFFFF explicit and system dark (BR-2, 2026-09-10)
+    Tertiary / outlined    #B85C2E light / white dark; dark hover #333333, active #393939 (BR-2)
     Link                   #8F4521 light  /  #E8A07A dark
     Link hover             #7A3A1C light  /  #F5DDD1 dark
     Interactive border     #B85C2E light  /  #E8A07A dark   (ruling O5, 2026-09-10)
@@ -95,8 +95,10 @@ overridden in `app/styles/brand/megeredchian-law-tokens.css`. **No blue is in us
     Brand neutrals         charcoal #5D5C5B (#3F3E3D) · tints #F5DDD1 / #FBE8DC · paper #FFFBF7
 
 On dark, interactive *edges and links* carry apricot `#E8A07A` — terracotta measures 1.71–2.77:1
-on the dark layers it has to draw on, under the 3:1 graphic floor. Filled primaries, the focus
-ring and `--cds-interactive` stay terracotta.
+on the dark layers it has to draw on, under the 3:1 graphic floor. Filled primaries and
+`--cds-interactive` stay terracotta; BR-2 makes dark focus white without changing geometry.
+BR-5 informational accents/fills are #B85C2E/#FBE8DC light and #E8A07A/#262626 dark,
+centrally in the brand layer. Owner amendments dated 2026-09-10 are in DECISIONS.md.
 
 **Logo orange `#EB7C35` is the logo mark only** — 2.81:1 on white, fails AA. Never a button, text,
 link, border or focus colour; the token test fails the build if it appears outside the brand

@@ -345,7 +345,7 @@ export function LoginForm() {
             // field's focus rule while the BUTTON has keyboard focus — two
             // indicators, one pointing at the wrong control. The rule tracks
             // the input alone; the toggle keeps its own inset ring.
-            "has-[input:focus]:border-b-2 has-[input:focus]:border-b-[color:var(--sp-button-primary)]"
+            "has-[input:focus]:border-b-2 has-[input:focus]:border-b-[color:var(--sp-focus)]"
           )
     );
   const fieldLabelClass = "block text-xs font-normal leading-[1.3] text-[var(--sp-text-secondary)]";
