@@ -14,7 +14,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 | PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **merged 2026-09-09** — #526 squashed as `740fd57`, tagged `v2.2.0`, production READY at that SHA; pre-merge smoke 67/67 on `763d489` |
 | PR 3 | The names-off marker becomes ● in the footprint: one status-mark language on the plan | v2.3.0 | **merged 2026-09-09** — #527 squashed as `bedecbb`, tagged `v2.3.0`, production READY at that SHA; CI green on `6efe9d6`, read-only preview walk 8/8 (step 6 N/A) on `2f7e262` |
 | PR 4 | Reception's locked row gets its own surface (O4), and 24 between the readout's groups (amendment K) | v2.4.0 | **merged 2026-09-10** — #528 squashed as `365dc7f`, tagged `v2.4.0`; CI green on `d71a450`; read-only walk 18/18 on a local build of the head with the preview artifact proven via share link (owner could not sign in; owner ruling: merge) |
-| PR 5 | Dark interactive edges carry the hue: `--cds-border-interactive` is #E8A07A in the two dark blocks (O5) | v2.5.0 | **in review** — branch `claude/caveman-mode-ilivrg`; owner ruling "flip it" 2026-09-10; static contrast 214/214; the Docker-bound tiers (e2e-auth, runtime audit, the PR 5 and PR 4 rigs) run on the owner's machine before the smoke hand-off |
+| PR 5 | Dark interactive edges carry the hue: `--cds-border-interactive` is #E8A07A in the two dark blocks (O5) | v2.5.0 | **in review** — branch `feat/phase5-dark-interactive-edges`; owner ruling "flip it" 2026-09-10; static contrast 214/214; the Docker-bound tiers (e2e-auth, runtime audit, the PR 5 and PR 4 rigs) run on the owner's machine before the smoke hand-off |
 
 ---
 
@@ -603,8 +603,9 @@ the value O5 replaces (fails 3:1)" stays as the record of what was replaced, bes
 
 ### Verification, on the final head
 
-Run in the build session (no Docker, Playwright Chromium — the Docker-bound tiers are the owner's, below):
-unit **1488/1489** (1 skipped, 0 fail) · ct **337/337** · browser **26/26** · e2e smoke **36/36** on a `next build` of
+Run in the cloud build session on the tree committed as `00d65fe` (Node 22, no Docker, Playwright Chromium — the
+Docker-bound tiers are the owner's, below): unit **1488/1489** (1 skipped — `publish-guard`'s ".env.local must not
+define VERCEL_ENV", which skips wherever no `.env.local` exists; 0 fail) · ct **337/337** · browser **26/26** · e2e smoke **36/36** on a `next build` of
 the head · static contrast **214/214** (`generate-pairs.mjs` + the skill's `check_contrast.py --pairs`; surfaces #393939,
 #333333, #262626, #161616, #525252) · `phase4-token-layer-source` 14/14 (the brand test now pins #B85C2E light /
 #E8A07A dark for the border role, `--cds-interactive` and `--cds-focus` #B85C2E in all three blocks, and the absence
