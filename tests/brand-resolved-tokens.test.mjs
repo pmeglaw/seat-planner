@@ -297,10 +297,20 @@ test("the allowlist holds: every row is blue in exactly the states it names; unp
       const [, findingId, date] = citation;
       const auditPath = `docs/audits/${date}/REVIEW.md`;
       assert.ok(existsSync(path.join(repoRoot, auditPath)), `${name}: cites ${findingId} in ${auditPath}, which does not exist`);
-      assert.match(
-        read(auditPath),
-        new RegExp(`(?<![\\w-])${findingId}(?![\\w-])`),
-        `${name}: ${auditPath} records no finding ${findingId} — a pending-ruling row must cite a finding the audit record carries`
+      // RECORDED, not merely mentioned: a §3 findings-table row that starts
+      // with the id, or an Errata bullet adding it. An Errata bullet
+      // withdrawing the id fails the row outright and wins over a §3 row —
+      // the record is frozen (BR-3 still sits in its table), the erratum is
+      // the correction.
+      const audit = read(auditPath);
+      assert.doesNotMatch(
+        audit,
+        new RegExp(`^- \\*\\*${findingId} withdrawn`, "m"),
+        `${name}: ${auditPath} withdraws ${findingId} in its Errata — a pending-ruling row cannot cite a withdrawn finding`
+      );
+      assert.ok(
+        new RegExp(`^\\| ${findingId} \\||^- \\*\\*${findingId} added`, "m").test(audit),
+        `${name}: ${auditPath} records no finding ${findingId} (no §3 table row "| ${findingId} |" and no Errata bullet "- **${findingId} added") — a pending-ruling row must cite a finding the audit record carries`
       );
       // A pending ruling is a LIVE blue; a blue nothing paints is "unpainted".
       assert.ok(consumers.length > 0, `${name} is painted by nothing — file it as kind "unpainted", not "pending-ruling"`);

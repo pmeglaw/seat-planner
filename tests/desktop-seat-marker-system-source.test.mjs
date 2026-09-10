@@ -183,9 +183,9 @@ test("desktop marker redesign stays clear of data auth publish and route boundar
 // re-derivation with its own inset. The property guarded here is the ROUTE:
 // both map surfaces import the helper from lib/mapViewport and call it, and
 // neither carries its own aspect-ratio derivation or its own 16px inset. The
-// margin each surface passes in, the state setter the result lands in, and
-// how the viewer aliases its import are implementation detail and
-// deliberately not pinned (review C8/C21). Each surface is pinned by its
+// margin each surface passes in (inline literal or hoisted variable), the
+// state setter the result lands in, and how the viewer aliases its import are
+// implementation detail and deliberately not pinned (review C8/C21). Each surface is pinned by its
 // IMPORT binding, never by a bare word: the viewer's resolved-width state is
 // itself named `fitMapWidth`, so a word match there held with the helper
 // unused.
@@ -205,7 +205,7 @@ test("admin overview fit goes through fitMapWidth, not an inline re-derivation",
 
   for (const [surface, source] of [["SeatMap", seatMapSource], ["ViewerSeatFinder", viewerSource]]) {
     const binding = fitMapWidthBinding(source, surface);
-    assert.match(source, new RegExp(`\\b${binding}\\(\\s*\\{`), `${surface} calls the imported helper (${binding})`);
+    assert.match(source, new RegExp(`\\b${binding}\\(`), `${surface} calls the imported helper (${binding})`);
     assert.doesNotMatch(source, /clientWidth - 16/, `${surface} carries no inline 16px width inset`);
     assert.doesNotMatch(source, /clientHeight - 16/, `${surface} carries no inline 16px height inset`);
     assert.doesNotMatch(source, /availableHeight \* \(MAP_IMAGE_WIDTH \/ MAP_IMAGE_HEIGHT\)/, `${surface} carries no inline aspect derivation`);

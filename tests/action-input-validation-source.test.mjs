@@ -249,15 +249,24 @@ test("createSeatAction parses its coordinates before clamping or reading", () =>
   assert.ok(xGuard < firstClamp && yGuard < firstClamp, "the saved parse must run before the first clamp");
   assert.ok(visualXGuard < visualClamp, "the visual parse must run before the clamp that takes it");
 
-  const authorize = source.search(/await\s+requireAdmin\s*\(\s*\)/);
-  assert.notEqual(authorize, -1, "the action authorizes through requireAdmin()");
+  // The admin client's local name is read from the authorize statement itself
+  // (`const supabase = await requireAdmin()`), the way the marker-system test
+  // reads the fitMapWidth import binding: rename the binding and the anchor
+  // moves with it instead of silently matching nothing.
+  const authorized = source.match(/const\s+(\w+)\s*=\s*await\s+requireAdmin\s*\(\s*\)/);
+  assert.ok(authorized, "the action authorizes through requireAdmin() and binds the admin client");
+  const authorize = authorized.index;
+  const client = authorized[1];
   assert.ok(authorize < xGuard, "authorize before validating");
   // The first database call after requireAdmin() hands the client over: a
-  // query-builder / RPC call on it, or the client passed to an awaited helper
-  // — whichever comes first. A call shape, not the word "supabase", so a
-  // destructuring rename or a comment cannot move this anchor.
+  // query-builder / RPC call on that binding, or the binding passed to an
+  // awaited helper — whichever comes first. A call shape on the captured name,
+  // not a bare word, so a comment cannot move this anchor.
   const firstClientUse = Math.min(
-    ...[/\bsupabase\s*\.\s*(from|rpc)\s*\(/, /await\s+\w+\(\s*supabase\b/]
+    ...[
+      new RegExp(`\\b${client}\\s*\\.\\s*(from|rpc)\\s*\\(`),
+      new RegExp(`await\\s+\\w+\\(\\s*${client}\\b`)
+    ]
       .map(pattern => indexAfter(source, pattern, authorize))
       .filter(index => index !== -1)
   );
