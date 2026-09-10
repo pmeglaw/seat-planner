@@ -17,7 +17,10 @@ const eslintConfig = [
       // local scratch (screenshots, repro rigs, qa harness bundles) — gitignored,
       // absent in CI, and full of deliberately un-lintable throwaway code. With
       // it linted, `npm run gate` fails locally on files CI never sees.
-      "output/**"
+      "output/**",
+      // Claude Code workflow worktrees — nested checkouts of this repo (gitignored,
+      // absent in CI) whose own .next/types output is not covered by ".next/**".
+      ".claude/worktrees/**"
     ]
   },
   ...coreWebVitals,
