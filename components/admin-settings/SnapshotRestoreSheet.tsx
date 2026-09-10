@@ -115,7 +115,7 @@ export function SnapshotRestoreSheet({
           <button type="button" className="cds-btn cds-btn--secondary" onClick={onCancel} disabled={busy}>
             Cancel
           </button>
-          <button type="button" className="cds-btn cds-btn--danger" onClick={onConfirm} disabled={busy} aria-busy={busy || undefined}>
+          <button type="button" className="cds-btn cds-btn--primary" onClick={onConfirm} disabled={busy} aria-busy={busy || undefined}>
             {busy ? "Restoring…" : "Restore draft snapshot"}
           </button>
         </div>

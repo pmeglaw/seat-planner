@@ -395,11 +395,12 @@ test("closing the panel is one dirty check: clean Esc closes; dirty Esc asks on 
   const ask = screen.getByRole("alertdialog", { name: "Discard changes to Jane Doe?" });
   assert.ok(ask.className.includes("cds-modal"), "the ask is the asset modal on top of the panel");
   assert.ok(within(ask).getByRole("button", { name: "Keep editing" }).className.includes("cds-btn--secondary"));
-  // DS-4 (audit 2026-09-10): the affirming data-loss action carries danger
-  // weight, never the section's primary — the same hierarchy rule the seat
-  // inspector's dirty-close follows (SeatMapDialogs, PHASE3DS §1.24).
-  assert.ok(within(ask).getByRole("button", { name: "Discard changes" }).className.includes("cds-btn--danger"), "the data-loss confirm is danger, not the primary");
-  assert.ok(!within(ask).getByRole("button", { name: "Discard changes" }).className.includes("cds-btn--primary"));
+  // PHASE3DS §1.24 (owner ruling 2026-09-05): the dirty-close ask is Keep
+  // editing (secondary) · Discard changes (PLAIN primary) — discarding unsaved
+  // edits is not destruction of data, so never danger. (Audit 2026-09-10 DS-4
+  // proposed danger and was withdrawn against this ruling — REVIEW.md errata.)
+  assert.ok(within(ask).getByRole("button", { name: "Discard changes" }).className.includes("cds-btn--primary"), "a plain primary, not danger");
+  assert.ok(!within(ask).getByRole("button", { name: "Discard changes" }).className.includes("cds-btn--danger"));
 
   await act(async () => {
     fireEvent.click(within(ask).getByRole("button", { name: "Keep editing" }));

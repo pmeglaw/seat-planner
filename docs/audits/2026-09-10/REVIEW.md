@@ -6,6 +6,12 @@
 
 This is a frozen point-in-time record per `docs/audits/README.md`. Open findings should become issues; this file is not edited as they close.
 
+### Errata (2026-09-10, same day — found by the adversarial review of fix pack 1)
+
+- **DS-4 withdrawn.** The audit compared the two-button dirty-close ask with the three-button inspector guard. The design record already rules the two-button case: PHASE3DS §1.24 (owner ruling 2026-09-05, PHASE4BUILD §1.38) — "Keep editing (secondary) · Discard changes (plain primary): a discard of unsaved edits is not destruction of data." `AdminManagementPanel.tsx:719` was therefore correct as shipped. The three-button guard's "Discard at secondary weight" (amendment F) has no analogue in a two-button ask.
+- **UX-4 withdrawn pending ruling.** DECISIONS D6-c / D6-d rule restore a moderate-impact, reviewed action whose section "loses its danger styling — nothing destructive remains on the page"; the sheet's header comment records the plain primary. Making the confirm `cds-btn--danger` would be a reopening of that record, not an application of it. Left to the owner as a ruling request.
+- **BR-5 added (missed).** Section 4.5 states `--sp-status-info-*` has no consumer; that is true of the `--sp-*` alias, but `app/styles/carbon-components.css:368-371` paints `--cds-support-info` (blue 70 light / blue 50 dark) and `--cds-support-info-subtle` (`#edf5ff` light) directly on `.cds-notification--info`, which is live on three surfaces: `SeatInspector.tsx:989`, `PublishReviewSheet.tsx:128`, `AskPlannerDrawer.tsx:414`. Neither role is overridden by the brand file, so an info notification's bar, icon and light fill are IBM blue today. Same class as BR-1 (an un-overridden `--cds-*` role), Required, and a ruling request because the replacement colour is the owner's call (the terracotta family per rule 4, or a neutral).
+
 ---
 
 ## 1. Executive summary

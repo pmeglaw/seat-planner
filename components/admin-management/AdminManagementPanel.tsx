@@ -719,7 +719,7 @@ export function AdminManagementPanel({
           footer={
             <>
               <button type="button" className="cds-btn cds-btn--secondary" onClick={keepEditing}>Keep editing</button>
-              <button type="button" className="cds-btn cds-btn--danger" onClick={closeEmployeeDialog}>Discard changes</button>
+              <button type="button" className="cds-btn cds-btn--primary" onClick={closeEmployeeDialog}>Discard changes</button>
             </>
           }
         >
