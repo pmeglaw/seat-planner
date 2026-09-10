@@ -1,4 +1,4 @@
-import { departmentKey, normalizeDepartmentName, seatDepartmentValue } from "@/lib/departments";
+import { departmentRowKey, normalizeDepartmentName, seatDepartmentValue } from "@/lib/departments";
 import { floorOf, type FloorId } from "@/lib/floorIds";
 import { FLOORS, NO_DEPARTMENT_LABEL, floorOfPerson } from "@/lib/floors";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
@@ -294,11 +294,17 @@ export function buildViewerSeatSearch({
   });
 
   // Department rows are named and compared through lib/departments: one row
-  // per departmentKey, titled with the first normalized spelling (a managed
+  // per departmentRowKey, titled with the first normalized spelling (a managed
   // option's when one exists — options come first), and every membership test
-  // below IS departmentKey — so a spelling that differs only by case or inner
-  // whitespace folds into the row its chip counts it under (review
-  // 2026-09-10, C3). Every RAW spelling that folded into a row is kept and
+  // below IS departmentRowKey — so a spelling that differs only by case or
+  // inner whitespace folds into the row its chip counts it under (review
+  // 2026-09-10, C3). The key reserves "" for "No department": a managed option
+  // or employee string literally spelled that way lands in the reserved row,
+  // titled NO_DEPARTMENT_LABEL, whose members are everyone the chip counts
+  // under that name — the people with no department too, and for seats the
+  // open ones (their seat-row meta already reads "No department") — instead
+  // of only the literal spelling (follow-up A). Blank values still create no
+  // row on their own. Every RAW spelling that folded into a row is kept and
   // matched alongside the title, so a query typed with the stored inner
   // whitespace still finds the row, as it finds the person and seat rows.
   const departmentRows = new Map<string, { title: string; spellings: string[] }>();
@@ -307,26 +313,26 @@ export function buildViewerSeatSearch({
     ...activeEmployees.map(employee => employee.department)
   ].forEach(raw => {
     const title = normalizeDepartmentName(raw);
-    const key = departmentKey(raw);
-    if (!raw || !title || !key) return;
+    if (!raw || !title) return;
+    const key = departmentRowKey(raw);
     const row = departmentRows.get(key);
     if (row) row.spellings.push(raw);
-    else departmentRows.set(key, { title, spellings: [raw] });
+    else departmentRows.set(key, { title: key ? title : NO_DEPARTMENT_LABEL, spellings: [raw] });
   });
 
   Array.from(departmentRows.entries()).sort(([, left], [, right]) => sortText(left.title, right.title)).forEach(([key, { title, spellings }]) => {
     if (!matchesQuery(query, [title, ...spellings])) return;
     const departmentPeopleById = new Map<string, Employee>();
     activeEmployees.forEach(employee => {
-      if (departmentKey(employee.department) === key) departmentPeopleById.set(employee.id, employee);
+      if (departmentRowKey(employee.department) === key) departmentPeopleById.set(employee.id, employee);
     });
     const departmentSeats = seats.filter(seat => {
       const occupied = withOccupant(seat, employeeById);
       const employee = occupied.employee;
-      if (employee && employee.active !== false && departmentKey(employee.department) === key) {
+      if (employee && employee.active !== false && departmentRowKey(employee.department) === key) {
         departmentPeopleById.set(employee.id, employee);
       }
-      return departmentKey(seatDepartmentValue(occupied)) === key;
+      return departmentRowKey(seatDepartmentValue(occupied)) === key;
     });
 
     if (departmentPeopleById.size === 0 && departmentSeats.length === 0) return;

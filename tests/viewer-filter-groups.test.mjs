@@ -79,3 +79,30 @@ test("department counts follow the occupant, never the legacy seats.department c
   assert.equal(floorSeats.filter(s => seatMatchesFilters(s, pinned)).length, litigation.count, "the count IS the pinned result");
   assert.equal(seatMatchesFilters(legacyEmpty, pinned), false);
 });
+
+// Review 2026-09-10 follow-up (A): the count keys on departmentRowKey
+// (lib/departments), where "No department" is reserved — so a chip carrying
+// that name counts everyone without a department on both surfaces: on the plan
+// the open seats and the occupants with none, on the roster the people with
+// none, plus anyone whose stored string is literally "No department" (the only
+// thing the chip used to count, while the roster, the palette and Ask Planner
+// each answered differently). One chip, and its count is the predicate's on
+// each surface.
+test("a No department chip counts everyone without a department, the literal spelling included, on both surfaces", async () => {
+  const { seatMatchesFilters, FILTER_ALL } = await importTsModule("lib/seatFilters.ts");
+  const { personPassesFilters } = await importTsModule("lib/floors.ts");
+  const dana = person("dana", null, "Clerk");
+  const eli = person("eli", "No department", "Clerk");
+  const floorSeats = [seat("A1", "assigned", "North", null, ADA), seat("B2", "assigned", "North", null, dana), seat("C3", "assigned", "North", null, eli), seat("D4", "available", "North", null)];
+  const departments = ["Litigation", "No department"];
+
+  const plan = buildViewerFilterGroups({ ...base, floorSeats, departments }).find(g => g.id === "department").items;
+  assert.deepEqual(plan.map(i => [i.id, i.count]), [["Litigation", 1], ["No department", 3]], "the open seat, the null occupant and the literal spelling");
+  const pinned = { search: "", department: "No department", position: FILTER_ALL, zone: FILTER_ALL, status: FILTER_ALL };
+  assert.equal(floorSeats.filter(s => seatMatchesFilters(s, pinned)).length, 3, "the plan count IS the pinned result");
+
+  const floorPeople = [ADA, dana, eli];
+  const roster = buildViewerFilterGroups({ ...base, surface: "roster", floorSeats: [], floorPeople, departments }).find(g => g.id === "department").items;
+  assert.deepEqual(roster.map(i => [i.id, i.count]), [["Litigation", 1], ["No department", 2]]);
+  assert.equal(floorPeople.filter(p => personPassesFilters(p, { department: "No department", position: "all" })).length, 2, "the roster count IS the roster filter's result");
+});

@@ -356,3 +356,52 @@ test("uniqueLandingResult: one result, or one person whose only other rows are t
   assert.equal(uniqueLandingResult([person, otherPerson]), null, "two people keep the list");
   assert.equal(uniqueLandingResult([otherPerson, ownSeat]), null, "an unseated person beside a seat keeps the list");
 });
+
+// Review 2026-09-10 follow-up (A): department rows key on departmentRowKey
+// (lib/departments), where "No department" is reserved — a managed option or
+// employee string literally spelled that way lands in the reserved row, titled
+// NO_DEPARTMENT_LABEL, whose members are everyone the chip counts under that
+// name: the people with no department as well as the literal spelling, and for
+// seats the open ones too (a seat row's own meta already reads "No department"
+// for them). Before, the row held only the literal spelling while the chip, the
+// roster and Ask Planner each answered differently.
+test("a No department row holds everyone without a department, the literal spelling included, and agrees with the chip", async () => {
+  const { buildViewerFilterGroups } = await importTsModule("lib/viewerFilterGroups.ts");
+  const dana = employee({ id: "emp-dana", full_name: "Dana Hill", department: null });
+  const eli = employee({ id: "emp-eli", full_name: "Eli Stone", department: "No department" });
+  const fay = employee({ id: "emp-fay", full_name: "Fay Moss", department: "Finance" });
+  const noneSeats = [
+    seat({ id: "seat-d01", label: "D01", employee: dana, zone: "Center" }),
+    seat({ id: "seat-d02", label: "D02", employee: eli, zone: "Center" }),
+    seat({ id: "seat-d03", label: "D03", employee: fay, zone: "Center" }),
+    seat({ id: "seat-d04", label: "D04", status: "available", zone: "Center" })
+  ];
+  const options = [{ id: "dep-none", name: "No department", active: true }, { id: "dep-fin", name: "Finance", active: true }];
+  const result = viewerSearch.buildViewerSeatSearch({ query: "no department", seats: noneSeats, employees: [dana, eli, fay], departmentOptions: options, zoneOptions: [] });
+
+  const rows = result.results.filter(item => item.kind === "department");
+  assert.equal(rows.length, 1, "one row, not one per spelling");
+  assert.equal(rows[0].title, "No department");
+  assert.equal(rows[0].meta, "2 people · 3 seats", "Dana and Eli; their seats and the open seat");
+  assert.deepEqual(rows[0].seatIds, ["seat-d01", "seat-d02", "seat-d04"]);
+
+  const chips = buildViewerFilterGroups({
+    surface: "plan",
+    floorSeats: noneSeats,
+    floorPeople: [],
+    departments: ["Finance", "No department"],
+    positions: [],
+    zones: [],
+    seatZone: item => item.zone ?? "",
+    selected: { department: "all", position: "all", zone: "all", status: "all" }
+  }).find(group => group.id === "department").items;
+  assert.equal(chips.find(chip => chip.id === "No department").count, rows[0].seatIds.length, "the palette's seat count IS the chip's count");
+
+  // A real department is untouched, and a lowercase literal spelling with no
+  // managed option still titles the reserved row canonically.
+  const finance = viewerSearch.buildViewerSeatSearch({ query: "finance", seats: noneSeats, employees: [dana, eli, fay], departmentOptions: options, zoneOptions: [] }).results.find(item => item.kind === "department");
+  assert.equal(finance.meta, "1 person · 1 seat");
+  const ned = employee({ id: "emp-ned", full_name: "Ned Low", department: "no  department" });
+  const lower = viewerSearch.buildViewerSeatSearch({ query: "department", seats: [noneSeats[0], noneSeats[3]], employees: [dana, ned], departmentOptions: [], zoneOptions: [] }).results.filter(item => item.kind === "department");
+  assert.deepEqual(lower.map(row => [row.title, row.meta]), [["No department", "2 people · 2 seats"]], "Dana and Ned; Dana's seat and the open seat");
+});

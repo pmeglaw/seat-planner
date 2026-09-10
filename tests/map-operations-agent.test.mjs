@@ -357,8 +357,11 @@ test("ask planner folds department case and whitespace variants like the admin c
 // row — before, it keyed to "no department" and get_map_summary emitted two
 // adjacent rows both named "No department". The same reserved key makes a
 // department argument of "No department" (any case or spacing) select the
-// people and seats with no department, instead of matching nobody.
-test("ask planner reserves the No department row for the literal spelling too", () => {
+// people and seats with no department, instead of matching nobody. The key is
+// lib/departments' departmentRowKey — ONE home, shared with the admin chip, the
+// filter predicate, the Find palette and the roster — so the chip's count for
+// "No department" IS the tools' count on each surface.
+test("ask planner reserves the No department row for the literal spelling too", async () => {
   const dana = employee("emp-dana", "Dana Hill", null);
   const eli = employee("emp-eli", "Eli Stone", "No department");
   const fay = employee("emp-fay", "Fay Moss", "Finance");
@@ -424,6 +427,29 @@ test("ask planner reserves the No department row for the literal spelling too", 
     center.departments.map(item => [item.name, item.total]),
     [["Finance", 1], ["Open or no department", 3]]
   );
+
+  // ONE home for the rule: the admin chip (buildViewerFilterGroups) counts the
+  // same people and seats under "No department" as the tools do — on the plan
+  // the seats search_seats returns (the open seat included), on the roster the
+  // people list_people returns, who are also the `occupied` search hits here
+  // since every no-department person is seated.
+  const { buildViewerFilterGroups } = await importTsModule("lib/viewerFilterGroups.ts");
+  const chipFor = (surface, floorPeople) =>
+    buildViewerFilterGroups({
+      surface,
+      floorSeats: seats,
+      floorPeople,
+      departments: ["No department"],
+      positions: [],
+      zones: [],
+      seatZone: item => item.zone ?? "",
+      selected: { department: "all", position: "all", zone: "all", status: "all" }
+    }).find(group => group.id === "department").items[0];
+  assert.equal(chipFor("plan", []).count, seatsWithout.count, "the plan chip's count IS search_seats' count");
+  assert.equal(seatsWithout.count, 3);
+  assert.equal(chipFor("roster", [dana, eli, fay]).count, people.count, "the roster chip's count IS list_people's count");
+  assert.equal(chipFor("roster", [dana, eli, fay]).count, occupiedWithout.count, "… and the occupied search_seats count");
+  assert.equal(people.count, 2);
 });
 
 test("seat search filters by zone, status, occupancy, and caps results", () => {

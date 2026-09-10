@@ -8,7 +8,7 @@ import type {
   SeatWithEmployee,
   ZoneOption
 } from "./types";
-import { departmentKey, normalizeDepartmentName, seatDepartmentValue } from "@/lib/departments";
+import { departmentRowKey, normalizeDepartmentName, seatDepartmentValue } from "@/lib/departments";
 import { FLOOR_IDS, floorOf } from "@/lib/floorIds";
 import { FLOORS, NO_DEPARTMENT_LABEL, floorOfPerson, floorTag, listFloors, peopleOnFloor } from "@/lib/floors";
 
@@ -200,24 +200,19 @@ function getSeatZoneLabel(seat: SeatWithEmployee) {
 }
 
 // A seat's department is lib/departments' seatDepartmentValue — the
-// occupant's, normalized, never seats.department (E1) — and department
-// comparisons go through departmentKey, the admin chip's rule, so the model
-// and the chip can never disagree about who is in a department (review
-// 2026-09-10, C3).
-//
-// One ROW KEY per department value: departmentKey, with "" reserved for "no
-// department" (lib/floors keys its roster groups the same way) and labelled
-// NO_DEPARTMENT_LABEL. A managed option or an employee string literally
-// spelled "No department" folds into that reserved row too — otherwise it
-// keys to "no department" and forks a second row under the same label — and
-// a `department` argument of "No department" means "with no department" to
-// search_seats / list_people (review 2026-09-10 follow-up, A).
-const NO_DEPARTMENT_KEY = departmentKey(NO_DEPARTMENT_LABEL) ?? "";
-
-function departmentRowKey(value: string | null | undefined): string {
-  const key = departmentKey(value) ?? "";
-  return key === NO_DEPARTMENT_KEY ? "" : key;
-}
+// occupant's, normalized, never seats.department (E1) — and every department
+// row, bucket and filter here is keyed by lib/departments' departmentRowKey:
+// case- and whitespace-insensitive, with "" reserved for "no department" —
+// null, blank, and the literal NO_DEPARTMENT_LABEL spelling alike (a managed
+// option or employee string spelled "No department" would otherwise key to
+// "no department" and fork a second row under the same label). The admin chip
+// (lib/viewerFilterGroups), the filter predicate (lib/seatFilters), the Find
+// palette (lib/viewerSeatSearch) and the roster (lib/floors) key on that same
+// function, so the model and those surfaces agree about who is in a
+// department, the reserved row included (review 2026-09-10, C3 and follow-up
+// A). A `department` argument of "No department" means "with no department"
+// to search_seats / list_people — for seats that includes the open ones
+// unless `occupied` narrows.
 
 function hasEmployee(seat: SeatWithEmployee) {
   return Boolean(seat.employee_id || seat.employee);
@@ -913,7 +908,11 @@ function buildReadOnlyTools() {
           status: { type: "string", enum: ["all", "available", "assigned", "reserved", "unavailable"] },
           floor: { type: "string", enum: ["all", ...FLOOR_IDS], description: "Restrict to one floor by id ('3' is Floor 3, '2' is Floor 2), or 'all'." },
           zone: { type: "string" },
-          department: { type: "string" },
+          department: {
+            type: "string",
+            description:
+              "A department name as listed by get_map_summary, 'all' for no filter, or 'No department' for seats/people without one (for seats this includes open seats unless occupied is true)."
+          },
           occupied: { type: ["boolean", "null"] },
           customOnly: { type: ["boolean", "null"] },
           limit: { type: "number" }
@@ -931,7 +930,11 @@ function buildReadOnlyTools() {
         type: "object",
         properties: {
           query: { type: "string" },
-          department: { type: "string" },
+          department: {
+            type: "string",
+            description:
+              "A department name as listed by get_map_summary, 'all' for no filter, or 'No department' for seats/people without one (for seats this includes open seats unless occupied is true)."
+          },
           assignment: { type: "string", enum: ["all", "assigned", "unassigned"] },
           floor: { type: "string", enum: ["all", ...FLOOR_IDS], description: "Restrict to the people who work on one floor by id, or 'all'." },
           limit: { type: "number" }

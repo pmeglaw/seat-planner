@@ -239,3 +239,23 @@ test("a legacy seats.department value never stands in for the occupant's departm
   // The legacy column keeps its ONE remaining meaning: the zone fallback.
   assert.equal(seatMatchesFilters(legacyEmpty, criteria({ zone: "Litigation" })), true);
 });
+
+// Review 2026-09-10 follow-up (A): "No department" is a reserved value on every
+// surface (lib/departments departmentRowKey). A criteria of "No department" —
+// any case or spacing — selects every seat without one: open seats and
+// occupants with none, AND an occupant whose stored string is literally "No
+// department", which used to be the only thing it matched. A real department
+// is untouched, and the chip count is still the pinned set.
+test("a department criteria of No department selects every seat without one, the literal spelling included", () => {
+  const open = seat({ id: "s1", status: "available", employee: null });
+  const noDepartment = seat({ id: "s2", employee: { full_name: "Dana Hill", position: null, department: null, phone_extension: null } });
+  const literal = seat({ id: "s3", employee: { full_name: "Eli Stone", position: null, department: "No department", phone_extension: null } });
+  const intake = seat({ id: "s4" });
+  const seats = [open, noDepartment, literal, intake];
+  const matching = department => seats.filter(s => seatMatchesFilters(s, criteria({ department }))).map(s => s.id);
+
+  assert.deepEqual(matching("No department"), ["s1", "s2", "s3"], "open, null and the literal spelling are one set");
+  assert.deepEqual(matching("no  DEPARTMENT"), ["s1", "s2", "s3"], "case and spacing fold as for any department");
+  assert.deepEqual(matching("Intake"), ["s4"], "a real department is untouched");
+  assert.deepEqual(departmentChipCounts(seats, criteria(), ["Intake", "No department"]), { Intake: 1, "No department": 3 }, "the chip count IS the pinned set");
+});

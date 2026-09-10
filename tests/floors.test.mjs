@@ -195,6 +195,47 @@ test("groupRosterByDepartment filters people by a case-insensitive query over na
   assert.deepEqual(groupRosterByDepartment([alice, bob], "nobody"), []);
 });
 
+// Review 2026-09-10 follow-up (A): the roster keys its groups on
+// departmentRowKey (lib/departments), where "No department" is reserved — a
+// person whose stored string is literally "No department" (any case or spacing)
+// joins the no-department group, labelled NO_DEPARTMENT_LABEL and last, instead
+// of forking a second group under the same label; the person filter and the
+// cross-floor line select and name that group for a department of "No
+// department". Before, the roster showed two "No department" groups while the
+// chip counted only one of them.
+test("the roster folds the literal No department spelling into the reserved group, and the person filter selects it", () => {
+  const eli = employee("eli", "Eli Stone", { department: "No department", position: "Clerk" });
+  const ned = employee("ned", "Ned Low", { department: "no  department", position: "Clerk" });
+  const groups = groupRosterByDepartment([ned, eli, dan, cara, bob, alice]);
+  assert.deepEqual(
+    groups.map(g => [g.key, g.department]),
+    [["case management", "Case Management"], ["litigation", "Litigation"], ["", "No department"]],
+    "one reserved group, canonically labelled, last"
+  );
+  assert.deepEqual(groups[2].people.map(p => p.id), ["dan", "eli", "ned"]);
+
+  const people = [alice, bob, cara, dan, eli, ned];
+  const filter = { department: "No department", position: "all" };
+  assert.deepEqual(people.filter(p => floors.personPassesFilters(p, filter)).map(p => p.id), ["dan", "eli", "ned"]);
+  assert.equal(floors.personPassesFilters(dan, { department: "no  DEPARTMENT", position: "all" }), true, "any case or spacing");
+  assert.equal(floors.personPassesFilters(cara, filter), false);
+
+  // The cross-floor line names the reserved group canonically, whatever
+  // spelling the first matching person carries.
+  const summary = floorDepartmentSummary({
+    floor: "3",
+    department: "No department",
+    position: "all",
+    floorMatchCount: 0,
+    floorSeatCount: 68,
+    seats: publishedSeats,
+    employees: [alice, ned, dan]
+  });
+  assert.deepEqual(summary, { text: "0 of 68 seats on Floor 3 · 2 people in No department are on Floor 2", switchTo: "2" });
+
+  assert.equal(floors.NO_DEPARTMENT_LABEL, "No department", "lib/floors still exports the label for its importers");
+});
+
 // ---- Q5: the department filter is floor-aware
 
 test("floorDepartmentSummary on a plan floor with matches keeps the plain count", () => {

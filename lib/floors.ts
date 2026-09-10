@@ -1,5 +1,5 @@
 import { findSeatIdByParam } from "@/lib/deepLink";
-import { departmentKey, normalizeDepartmentName } from "@/lib/departments";
+import { NO_DEPARTMENT_LABEL, departmentRowKey, normalizeDepartmentName } from "@/lib/departments";
 import { FLOOR_2_PLAN } from "@/lib/floorGeometry/floor2";
 import type { FloorPlan } from "@/lib/floorGeometry/types";
 import { DEFAULT_FLOOR, FLOOR_IDS, floorOf, isFloorId, type FloorId } from "@/lib/floorIds";
@@ -195,10 +195,14 @@ export function urlFloorFor(
 // Roster (the surface an unmapped floor renders)
 // ---------------------------------------------------------------------------
 
-export const NO_DEPARTMENT_LABEL = "No department";
+/** Lives in lib/departments now (departmentRowKey reserves its spelling, and
+ *  this module imports that one — a cycle otherwise); re-exported so the
+ *  existing importers keep working. */
+export { NO_DEPARTMENT_LABEL };
 
 export type RosterGroup = {
-  /** departmentKey, "" for people with no department. */
+  /** departmentRowKey (lib/departments): "" for people with no department —
+   *  the literal "No department" spelling included. */
   key: string;
   department: string;
   people: Employee[];
@@ -222,7 +226,7 @@ export function groupRosterByDepartment(people: readonly Employee[], query = "")
   const groups = new Map<string, Employee[]>();
   for (const person of people) {
     if (needle && !rosterHaystack(person).includes(needle)) continue;
-    const key = departmentKey(person.department) ?? "";
+    const key = departmentRowKey(person.department);
     const members = groups.get(key);
     if (members) members.push(person);
     else groups.set(key, [person]);
@@ -232,7 +236,9 @@ export function groupRosterByDepartment(people: readonly Employee[], query = "")
       const sorted = [...members].sort((left, right) =>
         compareText(formatDisplayName(left.full_name), formatDisplayName(right.full_name))
       );
-      return { key, department: normalizeDepartmentName(sorted[0].department) ?? NO_DEPARTMENT_LABEL, people: sorted };
+      // The reserved group is always labelled NO_DEPARTMENT_LABEL, whatever
+      // spelling (null, or the literal) its first member carries.
+      return { key, department: (key && normalizeDepartmentName(sorted[0].department)) || NO_DEPARTMENT_LABEL, people: sorted };
     })
     .sort((left, right) => {
       if ((left.key === "") !== (right.key === "")) return left.key === "" ? 1 : -1;
@@ -247,7 +253,9 @@ export function groupRosterByDepartment(people: readonly Employee[], query = "")
 /** The department and position facets applied to a PERSON — what the roster
  *  floor filters by, where zone and status (seat facts) are inert. */
 export function personPassesFilters(person: Employee, filters: { department: string; position: string }): boolean {
-  const departmentOk = filters.department === FILTER_ALL || departmentKey(person.department) === departmentKey(filters.department);
+  // departmentRowKey on both sides — the chip's and the predicate's key — so
+  // a department of "No department" selects the people with none.
+  const departmentOk = filters.department === FILTER_ALL || departmentRowKey(person.department) === departmentRowKey(filters.department);
   return departmentOk && seatMatchesPosition(person.position, filters.position);
 }
 
@@ -256,8 +264,9 @@ function personMatchesFilters(person: Employee, department: string, position: st
 }
 
 function displayDepartment(employees: readonly Employee[], department: string): string {
-  const key = departmentKey(department);
-  const spelled = employees.find(employee => departmentKey(employee.department) === key);
+  const key = departmentRowKey(department);
+  if (!key) return NO_DEPARTMENT_LABEL;
+  const spelled = employees.find(employee => departmentRowKey(employee.department) === key);
   return normalizeDepartmentName(spelled?.department) ?? normalizeDepartmentName(department) ?? department;
 }
 
