@@ -126,8 +126,11 @@ export function AdminManagementPanel({
   // The transition's `pending` is one shared flag, but several confirming
   // controls are on screen at once — this names WHICH one is in flight so
   // only the pressed control shows its participle. Set synchronously in the
-  // click handler, cleared when the transition settles. Resolves with the
-  // work's value so an inline sink (a field helper) can receive the outcome.
+  // click handler, cleared by the op that SET it when its work settles — an
+  // earlier op that finishes later must not null a newer op's token, or
+  // Save's participle would drop while its write is still in flight (COR-3).
+  // Resolves with the work's value so an inline sink (a field helper) can
+  // receive the outcome.
   const [busyOp, setBusyOp] = useState<string | null>(null);
   function runManagementOp<T>(op: string, work: () => Promise<T>): Promise<T> {
     setBusyOp(op);
@@ -138,7 +141,7 @@ export function AdminManagementPanel({
         } catch (errorValue) {
           reject(errorValue);
         } finally {
-          setBusyOp(null);
+          setBusyOp(current => (current === op ? null : current));
         }
       });
     });
@@ -716,7 +719,7 @@ export function AdminManagementPanel({
           footer={
             <>
               <button type="button" className="cds-btn cds-btn--secondary" onClick={keepEditing}>Keep editing</button>
-              <button type="button" className="cds-btn cds-btn--primary" onClick={closeEmployeeDialog}>Discard changes</button>
+              <button type="button" className="cds-btn cds-btn--danger" onClick={closeEmployeeDialog}>Discard changes</button>
             </>
           }
         >

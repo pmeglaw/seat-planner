@@ -140,7 +140,7 @@ export function OptionList({
               <>
                 <span className="flex items-center gap-2">
                   {!row.managed && onAdopt && (
-                    <button type="button" className="cds-btn cds-btn--tertiary" onClick={() => onAdopt(row.name)} disabled={pending} aria-busy={pending && busyOp === `adopt-${kind}:${row.name}` ? "true" : undefined}>
+                    <button type="button" className="cds-btn cds-btn--ghost" onClick={() => onAdopt(row.name)} disabled={pending} aria-busy={pending && busyOp === `adopt-${kind}:${row.name}` ? "true" : undefined}>
                       {pending && busyOp === `adopt-${kind}:${row.name}` ? "Adding…" : "Add to list"}
                     </button>
                   )}

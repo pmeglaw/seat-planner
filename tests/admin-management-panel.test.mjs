@@ -395,7 +395,11 @@ test("closing the panel is one dirty check: clean Esc closes; dirty Esc asks on 
   const ask = screen.getByRole("alertdialog", { name: "Discard changes to Jane Doe?" });
   assert.ok(ask.className.includes("cds-modal"), "the ask is the asset modal on top of the panel");
   assert.ok(within(ask).getByRole("button", { name: "Keep editing" }).className.includes("cds-btn--secondary"));
-  assert.ok(within(ask).getByRole("button", { name: "Discard changes" }).className.includes("cds-btn--primary"), "a plain primary, not danger");
+  // DS-4 (audit 2026-09-10): the affirming data-loss action carries danger
+  // weight, never the section's primary — the same hierarchy rule the seat
+  // inspector's dirty-close follows (SeatMapDialogs, PHASE3DS §1.24).
+  assert.ok(within(ask).getByRole("button", { name: "Discard changes" }).className.includes("cds-btn--danger"), "the data-loss confirm is danger, not the primary");
+  assert.ok(!within(ask).getByRole("button", { name: "Discard changes" }).className.includes("cds-btn--primary"));
 
   await act(async () => {
     fireEvent.click(within(ask).getByRole("button", { name: "Keep editing" }));
@@ -682,4 +686,74 @@ test("the page-size select re-pages the log and never strands the reader past th
     fireEvent.change(screen.getByLabelText("Publishes per page"), { target: { value: "50" } });
   });
   assert.equal(rangeText(), "1–12 of 12");
+});
+
+// ---------------------------------------------------------------------------
+// COR-3 (audit 2026-09-10): `busyOp` is ONE shared token. An earlier op that
+// settles after a newer one started must leave the newer op's token alone —
+// otherwise Save's participle and aria-busy drop, and the form unlocks, while
+// the employee write is still in flight. Every trigger is `disabled={pending}`,
+// so two ops overlap only when the second activation lands before React
+// commits the pending re-render; dispatching both clicks inside one act scope
+// forces exactly that window.
+// ---------------------------------------------------------------------------
+
+test("an earlier in-flight op settling later leaves a newer op's busy token alone: Save stays busy until ITS write resolves", async () => {
+  let resolveAdopt;
+  let resolveSave;
+  globalThis.__ct.actions.createDepartmentAction = name =>
+    new Promise(resolve => {
+      resolveAdopt = () => resolve({ ok: true, department: option("dept-ops", name) });
+    });
+  globalThis.__ct.actions.updateEmployeeAction = args =>
+    new Promise(resolve => {
+      resolveSave = () => resolve({ ok: true, employee: employee("emp-1", "Jane Doe", { department: "Intake", position: args.position }) });
+    });
+  const props = defaultProps();
+  // Bob's department is on an employee but not in the managed options, so the
+  // Departments tab offers the in-row "Add to list" adopt for it.
+  props.employees[1] = employee("emp-2", "Bob Field", { department: "Ops" });
+  await renderPanel(props);
+
+  await openEditJane();
+  await act(async () => {
+    fireEvent.change(within(panel()).getByLabelText("Position"), { target: { value: "Senior Analyst" } });
+  });
+  // The panel is a dialog over the frame; the tab strip still switches behind it.
+  await act(async () => {
+    fireEvent.click(tab("Departments"));
+  });
+  const adopt = screen.getByRole("button", { name: "Add to list" });
+  // BR-3: the in-row action sits on a layer-01 table row, where tertiary text
+  // is under the 4.5:1 floor — ghost (link colour) clears it.
+  assert.ok(adopt.className.includes("cds-btn--ghost"), "Add to list is ghost weight");
+  assert.ok(!adopt.className.includes("cds-btn--tertiary"));
+  const save = within(panel()).getByRole("button", { name: "Save employee" });
+
+  // Adopt first, then Save, before either pending re-render commits.
+  await act(async () => {
+    fireEvent.click(adopt);
+    fireEvent.click(save);
+  });
+  assert.ok(typeof resolveAdopt === "function" && typeof resolveSave === "function", "both writes are in flight");
+  assert.equal(save.getAttribute("aria-busy"), "true");
+  assert.equal(save.textContent, "Saving…");
+  assert.equal(save.disabled, true);
+  assert.equal(adopt.textContent, "Add to list", "the token names the newest op; the adopt row shows no participle");
+
+  // The ADOPT write settles first; Save's write is still in flight.
+  await act(async () => {
+    resolveAdopt();
+  });
+  await waitFor(() => assert.match(visibleStatus().textContent, /Department Ops added to the managed list\./));
+  assert.equal(save.getAttribute("aria-busy"), "true", "Save stays busy — its own write has not resolved");
+  assert.equal(save.textContent, "Saving…");
+  assert.equal(save.disabled, true);
+  assert.equal(within(panel()).getByLabelText("Position").readOnly, true, "the form stays locked mid-write");
+
+  await act(async () => {
+    resolveSave();
+  });
+  await waitFor(() => assert.match(visibleStatus().textContent, /Jane Doe saved\./));
+  assert.ok(!screen.queryByRole("dialog"), "the panel closes once ITS write lands");
 });
