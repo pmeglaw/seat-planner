@@ -13,7 +13,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 | PR 1 | The publish-history record surface returns to Management as a fourth tab | v2.1.0 | **merged 2026-09-08** — #525 squashed as `524c087`, tagged `v2.1.0`, production READY at that SHA |
 | PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **merged 2026-09-09** — #526 squashed as `740fd57`, tagged `v2.2.0`, production READY at that SHA; pre-merge smoke 67/67 on `763d489` |
 | PR 3 | The names-off marker becomes ● in the footprint: one status-mark language on the plan | v2.3.0 | **merged 2026-09-09** — #527 squashed as `bedecbb`, tagged `v2.3.0`, production READY at that SHA; CI green on `6efe9d6`, read-only preview walk 8/8 (step 6 N/A) on `2f7e262` |
-| PR 4 | Reception's locked row gets its own surface (O4), and 24 between the readout's groups (amendment K) | v2.4.0 | **in review** — `feat/phase5-reception-locked-row`, #528 |
+| PR 4 | Reception's locked row gets its own surface (O4), and 24 between the readout's groups (amendment K) | v2.4.0 | **merged 2026-09-10** — #528 squashed as `365dc7f`, tagged `v2.4.0`; CI green on `d71a450`; read-only walk 18/18 on a local build of the head with the preview artifact proven via share link (owner could not sign in; owner ruling: merge) |
 
 ---
 
