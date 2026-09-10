@@ -180,7 +180,11 @@ test("desktop marker redesign stays clear of data auth publish and route boundar
 // lib/mapViewport's fitMapWidth — the one place the marker-edge gutter
 // (charged against height only, never width) and the 2026-07-28 clip it
 // prevents are documented and unit-tested — not through an inline
-// re-derivation with its own inset. The viewer already calls it.
+// re-derivation with its own inset. The property guarded here is the ROUTE:
+// both map surfaces reach the tested helper, and the admin surface no longer
+// carries its own aspect-ratio derivation or its own 16px inset. The margin
+// each surface passes in, and how the viewer names its import, are
+// implementation detail and deliberately not pinned (review C8/C21).
 test("admin overview fit goes through fitMapWidth, not an inline re-derivation", async () => {
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
@@ -191,8 +195,6 @@ test("admin overview fit goes through fitMapWidth, not an inline re-derivation",
   assert.doesNotMatch(seatMapSource, /clientWidth - 16/);
   assert.doesNotMatch(seatMapSource, /clientHeight - 16/);
   assert.doesNotMatch(seatMapSource, /availableHeight \* \(MAP_IMAGE_WIDTH \/ MAP_IMAGE_HEIGHT\)/);
-  // Both surfaces pass the same 2px breathing margin into the same helper.
-  assert.match(seatMapSource, /clientWidth - 2\)/);
-  assert.match(viewerSource, /fitMapWidth as computeFitMapWidth/);
-  assert.match(viewerSource, /clientWidth - 2\)/);
+  // The viewer routes through the same helper (however it aliases the import).
+  assert.match(viewerSource, /\bfitMapWidth\b/);
 });
