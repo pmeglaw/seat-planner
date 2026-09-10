@@ -59,3 +59,6 @@ ds-bundle/
 
 # Claude Code per-machine settings
 .claude/settings.local.json
+
+# Claude Code workflow worktrees (transient, machine state — nested checkouts of this repo)
+.claude/worktrees/
