@@ -334,11 +334,95 @@ test("ask planner folds department case and whitespace variants like the admin c
   });
   assert.equal(people.count, 3);
 
+  // Free-text people queries see the normalized spelling alongside the raw
+  // value (as seat search text already did): "case management" finds Ben,
+  // whose stored value carries a doubled inner space — before, list_people
+  // matched the raw value only and returned Ana and Cy (review follow-up, B).
+  const byText = agent.runReadOnlyPlannerTool(context, "list_people", {
+    query: "case management", department: "", assignment: "all", floor: "all", limit: 10
+  });
+  assert.deepEqual(byText.people.map(item => item.fullName), ["Ana Lima", "Ben Ode", "Cy Park"], "the doubled-space spelling matches the collapsed query");
+
   const breakdown = agent.runReadOnlyPlannerTool(context, "get_zone_department_breakdown", {});
   const center = breakdown.zones.find(zone => zone.name === "Center");
   assert.deepEqual(
     center.departments.map(item => [item.name, item.total]),
     [["Case Management", 3], ["Open or no department", 1]]
+  );
+});
+
+// Review 2026-09-10 follow-up (A): the summary's "" row is reserved for people
+// with no department and labelled NO_DEPARTMENT_LABEL, so a managed option or
+// an employee string literally spelled "No department" must fold into THAT
+// row — before, it keyed to "no department" and get_map_summary emitted two
+// adjacent rows both named "No department". The same reserved key makes a
+// department argument of "No department" (any case or spacing) select the
+// people and seats with no department, instead of matching nobody.
+test("ask planner reserves the No department row for the literal spelling too", () => {
+  const dana = employee("emp-dana", "Dana Hill", null);
+  const eli = employee("emp-eli", "Eli Stone", "No department");
+  const fay = employee("emp-fay", "Fay Moss", "Finance");
+  const seats = [
+    seat("seat-d01", "D01", "assigned", "Center", dana),
+    seat("seat-d02", "D02", "assigned", "Center", eli),
+    seat("seat-d03", "D03", "assigned", "Center", fay),
+    seat("seat-d04", "D04", "available", "Center")
+  ];
+  const context = agent.createMapOperationsContext({
+    employees: [dana, eli, fay],
+    seats,
+    departmentOptions: [
+      { id: "dep-none", name: "No department", active: true, created_at: "", updated_at: "" },
+      { id: "dep-fin", name: "Finance", active: true, created_at: "", updated_at: "" }
+    ],
+    zoneOptions: []
+  });
+
+  const summary = agent.runReadOnlyPlannerTool(context, "get_map_summary", {});
+  assert.deepEqual(summary.byDepartment.map(row => row.name), ["Finance", "No department"], "exactly one No department row");
+  const none = summary.byDepartment.find(row => row.name === "No department");
+  assert.equal(none.activeEmployees, 2, "the null department and the literal spelling are both counted");
+  assert.equal(none.assignedSeats, 2);
+  assert.equal(none.unassignedEmployees, 0);
+
+  const people = agent.runReadOnlyPlannerTool(context, "list_people", {
+    query: "", department: "No department", assignment: "all", floor: "all", limit: 10
+  });
+  assert.deepEqual(people.people.map(item => item.fullName), ["Dana Hill", "Eli Stone"]);
+  // The payload still carries each person's stored value (shape unchanged).
+  assert.deepEqual(people.people.map(item => item.department), [null, "No department"]);
+
+  // Seats: every seat that counts under the reserved row — an occupant with no
+  // department, the literal spelling, and an open seat (no occupant, so no
+  // department: the breakdown's "Open or no department" bucket) — with
+  // `occupied` narrowing to the seated people. Case and spacing fold as for
+  // any other department argument, and payloads keep each stored value.
+  const seatsWithout = agent.runReadOnlyPlannerTool(context, "search_seats", {
+    query: "", status: "all", floor: "all", zone: "", department: "no  DEPARTMENT", occupied: null, customOnly: null, limit: 10
+  });
+  assert.deepEqual(seatsWithout.seats.map(item => item.label), ["D01", "D02", "D04"]);
+  assert.deepEqual(seatsWithout.seats.map(item => item.department), [null, "No department", null]);
+  const occupiedWithout = agent.runReadOnlyPlannerTool(context, "search_seats", {
+    query: "", status: "all", floor: "all", zone: "", department: "No department", occupied: true, customOnly: null, limit: 10
+  });
+  assert.deepEqual(occupiedWithout.seats.map(item => item.label), ["D01", "D02"]);
+
+  // A real department is unaffected, and an empty argument still means no filter.
+  const finance = agent.runReadOnlyPlannerTool(context, "list_people", {
+    query: "", department: "finance", assignment: "all", floor: "all", limit: 10
+  });
+  assert.deepEqual(finance.people.map(item => item.fullName), ["Fay Moss"]);
+  const everyone = agent.runReadOnlyPlannerTool(context, "list_people", {
+    query: "", department: "", assignment: "all", floor: "all", limit: 10
+  });
+  assert.equal(everyone.count, 3);
+
+  // The breakdown's one "" row folds the literal spelling too.
+  const breakdown = agent.runReadOnlyPlannerTool(context, "get_zone_department_breakdown", {});
+  const center = breakdown.zones.find(zone => zone.name === "Center");
+  assert.deepEqual(
+    center.departments.map(item => [item.name, item.total]),
+    [["Finance", 1], ["Open or no department", 3]]
   );
 });
 

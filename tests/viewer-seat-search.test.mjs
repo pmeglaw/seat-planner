@@ -214,6 +214,33 @@ test("viewer department rows fold case and whitespace variants and agree with th
   });
   const doubleSpacedRow = bySeatLabel.results.find(item => item.id === "seat:seat-cm-2");
   assert.equal(doubleSpacedRow.meta, "Assigned · Case Management · Center", "inner whitespace run collapsed");
+
+  // Review follow-up (C): matching sees the normalized department ALONGSIDE
+  // the raw stored value, in both directions. The collapsed query finds the
+  // doubled-space occupant's seat row and person row (before, seat and person
+  // rows matched the raw "Case  Management" only, so C02 and Ben were missing
+  // from this very result set while the department row counted them) …
+  assert.ok(result.results.some(item => item.id === "seat:seat-cm-2"), "the doubled-space occupant's seat row matches the collapsed query");
+  assert.ok(result.results.some(item => item.id === "person:emp-cm-2"), "the doubled-space occupant's person row matches the collapsed query");
+
+  // … and the raw doubled-space query still finds the department row, since
+  // every spelling that folded into the row is matched too (before, the row
+  // was matched against its collapsed title only, so the query that hit Ben
+  // and C02 no longer hit their department). The title stays normalized.
+  const rawSpelling = viewerSearch.buildViewerSeatSearch({
+    query: "case  management",
+    seats: caseSeats,
+    employees: [canonical, doubleSpaced, shouting],
+    departmentOptions: [{ id: "dep-cm", name: "Case Management", active: true }],
+    zoneOptions: []
+  });
+  const rawDepartmentRows = rawSpelling.results.filter(item => item.kind === "department");
+  assert.equal(rawDepartmentRows.length, 1, "the raw doubled-space query finds the one department row");
+  assert.equal(rawDepartmentRows[0].id, "department:case management");
+  assert.equal(rawDepartmentRows[0].title, "Case Management", "the title stays the managed option's spelling");
+  assert.equal(rawDepartmentRows[0].meta, "3 people · 3 seats");
+  assert.ok(rawSpelling.results.some(item => item.id === "seat:seat-cm-2"), "raw value still matches the seat row");
+  assert.ok(rawSpelling.results.some(item => item.id === "person:emp-cm-2"), "raw value still matches the person row");
 });
 
 test("viewer search formats a person's assigned seat label canonically in the subtitle", () => {

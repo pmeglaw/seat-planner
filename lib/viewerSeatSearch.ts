@@ -53,8 +53,10 @@ const KIND_ORDER: Record<ViewerSearchResultKind, number> = {
   zone: 40
 };
 
-// Kept local (not imported from lib/types): tests/viewer-seat-search.test.mjs
-// transpiles this module standalone, so runtime imports cannot resolve here.
+// A deliberate local mirror of lib/types' STATUS_LABELS, pinned to agree by
+// tests/status-label-source.test.mjs. Not a loader limitation: the test
+// loader resolves runtime `@/` imports (this module already imports
+// lib/floors and lib/departments through it).
 const STATUS_LABELS: Record<SeatStatus, string> = {
   assigned: "Assigned",
   available: "Open",
@@ -64,18 +66,18 @@ const STATUS_LABELS: Record<SeatStatus, string> = {
 
 // Display-only formatting for the identity segments composed into result
 // title/subtitle strings below (seat codes, person names). Mirrors
-// lib/formatName.ts's formatDisplayName/formatSeatCode byte-for-byte — kept
-// local rather than imported because tests/viewer-seat-search.test.mjs
-// transpiles this module standalone via a data: URL, and relative runtime
-// imports cannot resolve from there (verified: Node throws "Invalid relative
-// URL or base scheme is not hierarchical"). Both are exercised indirectly by
+// lib/formatName.ts's formatDisplayName/formatSeatCode byte-for-byte — a
+// deliberate local mirror that predates the test loader's runtime `@/`
+// import resolution (see STATUS_LABELS above). Both are exercised by
 // tests/format-name.test.mjs against the canonical copy; keep these two in
 // sync if that file's formatting rules change.
 //
 // CRITICAL: these must only touch human-visible composed strings (title/
-// subtitle). Search matching above always operates on the raw stored values
-// via matchesQuery/normalizeSearchText — never run a match input through
-// these formatters.
+// subtitle). Search matching always operates on the raw stored values via
+// matchesQuery/normalizeSearchText — department matching additionally sees
+// the normalized spelling (lib/departments, the value the row displays) so a
+// query typed either way hits, but the raw value is never replaced — and no
+// match input is ever run through these formatters.
 function formatDisplayNameLocal(name: string | null | undefined): string {
   if (!name) return "";
   const trimmed = name.trim();
@@ -267,7 +269,7 @@ export function buildViewerSeatSearch({
   activeEmployees.forEach(employee => {
     const assignedSeat = assignedSeatByEmployeeId.get(employee.id) ?? null;
     const zone = assignedSeat ? getSeatZone(assignedSeat) : null;
-    if (!matchesQuery(query, [employee.full_name, employee.position, employee.department, employee.phone_extension, assignedSeat?.label, zone])) return;
+    if (!matchesQuery(query, [employee.full_name, employee.position, employee.department, normalizeDepartmentName(employee.department), employee.phone_extension, assignedSeat?.label, zone])) return;
 
     results.push(buildPersonRow(employee, assignedSeat, seats));
   });
@@ -276,7 +278,7 @@ export function buildViewerSeatSearch({
     const occupied = withOccupant(seat, employeeById);
     const employee = occupied.employee;
     const zone = getSeatZone(seat);
-    if (!matchesQuery(query, [seat.label, seat.status, zone, employee?.department, employee?.full_name, employee?.position, employee?.phone_extension])) return;
+    if (!matchesQuery(query, [seat.label, seat.status, zone, employee?.department, seatDepartmentValue(occupied), employee?.full_name, employee?.position, employee?.phone_extension])) return;
 
     results.push({
       id: `seat:${seat.id}`,
@@ -291,19 +293,29 @@ export function buildViewerSeatSearch({
     });
   });
 
-  // Department rows are named and compared through lib/departments — the
-  // names are pre-normalized (whitespace-collapsed) so uniqueValues' key is
-  // departmentKey, and every membership test below IS departmentKey — so a
-  // spelling that differs only by case or inner whitespace folds into the
-  // row its chip counts it under (review 2026-09-10, C3).
-  const departmentNames = uniqueValues([
-    ...departmentOptions.filter(option => option.active).map(option => normalizeDepartmentName(option.name)),
-    ...activeEmployees.map(employee => normalizeDepartmentName(employee.department))
-  ]);
+  // Department rows are named and compared through lib/departments: one row
+  // per departmentKey, titled with the first normalized spelling (a managed
+  // option's when one exists — options come first), and every membership test
+  // below IS departmentKey — so a spelling that differs only by case or inner
+  // whitespace folds into the row its chip counts it under (review
+  // 2026-09-10, C3). Every RAW spelling that folded into a row is kept and
+  // matched alongside the title, so a query typed with the stored inner
+  // whitespace still finds the row, as it finds the person and seat rows.
+  const departmentRows = new Map<string, { title: string; spellings: string[] }>();
+  [
+    ...departmentOptions.filter(option => option.active).map(option => option.name),
+    ...activeEmployees.map(employee => employee.department)
+  ].forEach(raw => {
+    const title = normalizeDepartmentName(raw);
+    const key = departmentKey(raw);
+    if (!raw || !title || !key) return;
+    const row = departmentRows.get(key);
+    if (row) row.spellings.push(raw);
+    else departmentRows.set(key, { title, spellings: [raw] });
+  });
 
-  departmentNames.forEach(name => {
-    if (!matchesQuery(query, [name])) return;
-    const key = departmentKey(name);
+  Array.from(departmentRows.entries()).sort(([, left], [, right]) => sortText(left.title, right.title)).forEach(([key, { title, spellings }]) => {
+    if (!matchesQuery(query, [title, ...spellings])) return;
     const departmentPeopleById = new Map<string, Employee>();
     activeEmployees.forEach(employee => {
       if (departmentKey(employee.department) === key) departmentPeopleById.set(employee.id, employee);
@@ -320,9 +332,9 @@ export function buildViewerSeatSearch({
     if (departmentPeopleById.size === 0 && departmentSeats.length === 0) return;
 
     results.push({
-      id: `department:${normalizeSearchText(name)}`,
+      id: `department:${normalizeSearchText(title)}`,
       kind: "department",
-      title: name,
+      title,
       subtitle: "Department",
       meta: `${countLabel(departmentPeopleById.size, "person")} · ${countLabel(departmentSeats.length, "seat")}`,
       seatId: departmentSeats.length === 1 ? departmentSeats[0].id : null,
