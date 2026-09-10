@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import test from "node:test";
@@ -15,8 +15,10 @@ import test from "node:test";
 // painted IBM blue 70 / 50 in both themes while every text check stayed green.
 //
 // SCOPE. Two sets of names are walked, and nothing else: every `--sp-*` token
-// sp-tokens.css declares, and every `--cds-*` role that carbon-components.css
-// or sp-components.css consumes DIRECTLY through var() (the errata's BR-5
+// sp-tokens.css or the brand file declares (a token that exists only as a
+// brand override is walked, not skipped), and every `--cds-*` role that
+// carbon-components.css or sp-components.css consumes DIRECTLY through var()
+// (the errata's BR-5
 // class — `.cds-notification` paints `--cds-support-info` with no `--sp-*`
 // alias in between, so a walk over the aliases alone was a false pass there).
 // Each name is resolved through its var() chain — the Carbon palette and theme
@@ -52,34 +54,37 @@ const IBM_BLUES = new Set([
 ]);
 
 // ALLOWLIST — walked names that resolve to a blue in some state. Every row
-// carries a `kind`, and the last test holds each kind to its own contract:
+// names the `states` (keys of STATES below) it is blue in — held to EXACT
+// equality with what resolves, so re-pointing one theme block of three shrinks
+// the row and re-pointing all three deletes it — and carries a `kind`, which
+// the last test holds to its own contract:
 //
 // - "unpainted": the audit's DS-5 class ("declared, consumed by no rule"). The
-//   row must still resolve to a blue (stale — delete it) and must have NO
-//   consumer: no `var(--name)` in app/ components/ lib/, and no Tailwind class
-//   built on its tailwind.config.ts alias. Shrink-only: never add a row, re-
-//   point the token in the brand layer instead, as BR-1 did for the
-//   --sp-status-search-* pair.
+//   row must have NO consumer: no `var(--name)` in app/ components/ lib/, and
+//   no Tailwind class built on its tailwind.config.ts alias. Shrink-only:
+//   never add a row, re-point the token in the brand layer instead, as BR-1
+//   did for the --sp-status-search-* pair.
 // - "pending-ruling": a LIVE blue the audit has recorded and the owner has not
-//   yet ruled a replacement for. The row must cite the finding id and date in
-//   its `why`, and must still resolve to a blue (delete it once the brand layer
-//   re-points the role); consumers are expected. A row of this kind is a
-//   recorded debt, not an exemption — the audit record is the only way in.
+//   yet ruled a replacement for. The row's `why` cites the finding id and date,
+//   that finding must appear in docs/audits/<date>/REVIEW.md, and the name
+//   must have at least one consumer — a blue nothing paints is "unpainted",
+//   not a pending ruling. A row of this kind is a recorded debt, not an
+//   exemption — the audit record is the only way in.
 //
 // `--sp-status-info-text` is deliberately NOT here: it aliases
 // --cds-text-primary and never resolves to a blue, so the shrink check would
 // reject the row as dead.
 const ALLOWLIST = {
-  "--sp-status-info-mark": { kind: "unpainted", why: "Carbon info status, blue 70 light / blue 50 dark; tailwind.config.ts aliases it as `info`, no class uses it (DS-5)" },
-  "--sp-status-info-surface": { kind: "unpainted", why: "Carbon info status surface, blue 10 in light (DS-5)" },
-  "--sp-highlight": { kind: "unpainted", why: "Carbon's highlight role — blue 90 in both dark states (light is the O2 tint); the hit surfaces read --sp-pill-search-* / --sp-status-search-*, nothing reads this alias" },
+  "--sp-status-info-mark": { kind: "unpainted", states: ["light", "system-dark", "forced-dark"], why: "Carbon info status, blue 70 light / blue 50 dark; tailwind.config.ts aliases it as `info`, no class uses it (DS-5)" },
+  "--sp-status-info-surface": { kind: "unpainted", states: ["light"], why: "Carbon info status surface, blue 10 in light (DS-5)" },
+  "--sp-highlight": { kind: "unpainted", states: ["system-dark", "forced-dark"], why: "Carbon's highlight role — blue 90 in both dark states (light is the O2 tint); the hit surfaces read --sp-pill-search-* / --sp-status-search-*, nothing reads this alias" },
   // BR-5: carbon-components.css paints these straight onto .cds-notification
   // (bar, icon, light fill) and .cds-status--info; `.cds-notification--info`
   // is live in SeatInspector, PublishReviewSheet and AskPlannerDrawer. The
   // replacement colour is the owner's call (terracotta family or a neutral).
-  "--cds-support-info": { kind: "pending-ruling", why: "info notification bar + icon, blue 70 light / blue 50 dark (BR-5, 2026-09-10)" },
-  "--cds-support-info-subtle": { kind: "pending-ruling", why: "info notification light fill, blue 10 (BR-5, 2026-09-10)" },
-  "--cds-status-info-mark": { kind: "pending-ruling", why: ".cds-status--info glyph, aliases --cds-support-info (BR-5, 2026-09-10)" },
+  "--cds-support-info": { kind: "pending-ruling", states: ["light", "system-dark", "forced-dark"], why: "info notification bar + icon, blue 70 light / blue 50 dark (BR-5, 2026-09-10)" },
+  "--cds-support-info-subtle": { kind: "pending-ruling", states: ["light"], why: "info notification light fill, blue 10 (BR-5, 2026-09-10)" },
+  "--cds-status-info-mark": { kind: "pending-ruling", states: ["light", "system-dark", "forced-dark"], why: ".cds-status--info glyph, aliases --cds-support-info (BR-5, 2026-09-10)" },
 };
 
 // --- a minimal CSS model: innermost blocks, each with its enclosing at-rule ---
@@ -104,22 +109,27 @@ function parseBlocks(css) {
   return blocks;
 }
 
-// The three theme states (lib/theme.ts; carbon-tokens.css header). Each is an
-// ordered list of tiers — later tiers win, as higher specificity does. Both
-// dark tiers match their selector exactly: a sheet that wrote a different
-// `:not()` chain would be a different cascade, not a looser match.
+// The three theme states (lib/theme.ts; carbon-tokens.css header), keyed as
+// the allowlist rows name them:
+//   light        — bare :root (the forced "white" attribute only shares the
+//                  brand file's light block)
+//   system-dark  — @media (prefers-color-scheme: dark), no forced theme
+//   forced-dark  — [data-carbon-theme="g100"]
+// Each is an ordered list of tiers — later tiers win, as higher specificity
+// does. Both dark tiers match their selector exactly: a sheet that wrote a
+// different `:not()` chain would be a different cascade, not a looser match.
 const SYSTEM_DARK_SELECTOR = ':root:not([data-carbon-theme="white"]):not([data-carbon-theme="g10"])';
 const ROOT_TIER = {
   at: atRule => atRule === null,
   sel: s => s === ":root" || s === ':root[data-carbon-theme="white"]',
 };
 const STATES = {
-  'light (:root / [data-carbon-theme="white"])': [ROOT_TIER],
-  "system-dark (@media prefers-color-scheme: dark, no forced theme)": [
+  light: [ROOT_TIER],
+  "system-dark": [
     ROOT_TIER,
     { at: atRule => atRule !== null && /prefers-color-scheme:\s*dark/.test(atRule), sel: s => s === SYSTEM_DARK_SELECTOR },
   ],
-  'forced dark ([data-carbon-theme="g100"])': [
+  "forced-dark": [
     ROOT_TIER,
     { at: atRule => atRule === null, sel: s => s === ':root[data-carbon-theme="g100"]' },
   ],
@@ -128,10 +138,10 @@ const STATES = {
 const SHEETS = [...read("app/layout.tsx").matchAll(/^import "\.\/([^"]+\.css)";/gm)].map(m => `app/${m[1]}`);
 const blocks = SHEETS.flatMap(rel => parseBlocks(read(rel)));
 
-function variablesIn(state) {
+function variablesIn(state, from = blocks) {
   const vars = {};
   for (const tier of STATES[state]) {
-    for (const block of blocks) {
+    for (const block of from) {
       if (tier.at(block.atRule) && block.selector.split(",").some(s => tier.sel(s.trim()))) Object.assign(vars, block.decls);
     }
   }
@@ -159,7 +169,9 @@ const coloursIn = value => [
 const resolvedIn = (vars, name) => resolve(vars[name] ?? "", vars);
 const isBlue = value => coloursIn(value).some(h => IBM_BLUES.has(h));
 
-const spTokenNames = [...new Set(parseBlocks(read(SP_TOKENS)).flatMap(b => Object.keys(b.decls)).filter(n => n.startsWith("--sp-")))];
+// Every --sp-* name the product layer declares: sp-tokens.css, plus any the
+// brand file declares on its own.
+const spTokenNames = [...new Set([SP_TOKENS, BRAND_FILE].flatMap(rel => parseBlocks(read(rel)).flatMap(b => Object.keys(b.decls))).filter(n => n.startsWith("--sp-")))];
 // The --cds-* roles the component sheets read straight from the Carbon layer.
 const cdsConsumedNames = [...new Set(COMPONENT_SHEETS.flatMap(rel =>
   [...read(rel).replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/var\(\s*(--cds-[\w-]+)/g)].map(m => m[1])))];
@@ -170,7 +182,7 @@ test("the model reads the real cascade: the shipped sheets, the brand layer appl
     assert.ok(SHEETS.includes(rel), `app/layout.tsx must import ${rel}`);
   }
   assert.ok(SHEETS.indexOf(BRAND_FILE) > SHEETS.indexOf(SP_TOKENS), "the brand layer loads after sp-tokens.css, so its --sp-* overrides win");
-  assert.ok(spTokenNames.length > 100, `sp-tokens.css declares the --sp-* layer (found ${spTokenNames.length})`);
+  assert.ok(spTokenNames.length > 100, `sp-tokens.css and the brand file declare the --sp-* layer (found ${spTokenNames.length})`);
   assert.ok(cdsConsumedNames.length > 20, `the component sheets consume --cds-* roles directly (found ${cdsConsumedNames.length})`);
   assert.ok(cdsConsumedNames.includes("--cds-support-info"), "the walk reaches .cds-notification's direct --cds-support-info read (BR-5)");
 
@@ -179,16 +191,23 @@ test("the model reads the real cascade: the shipped sheets, the brand layer appl
   assert.ok(!isBlue("#b85c2e") && !isBlue("rgb(184, 92, 46)"), "a non-blue is not flagged");
 
   // Known STRUCTURAL resolutions in each state — a parser or tier regression
-  // cannot pass vacuously. Deliberately not the owner-ruled brand values
-  // (tests/phase4-token-layer-source.test.mjs pins those, once): the page
-  // background per theme is Carbon's, and the brand literal is read from the
-  // brand file rather than restated here.
-  const lightVars = variablesIn(Object.keys(STATES)[0]);
-  const brandLiteral = lightVars["--brand-terracotta"];
+  // cannot pass vacuously. No literal is restated here: the page background
+  // per state is read from carbon-tokens.css's own --cds-background
+  // declaration in that state's tiers, and the brand literal from the brand
+  // file (tests/phase4-token-layer-source.test.mjs pins the owner-ruled
+  // values, once). The dark backgrounds must also DIFFER from light — the
+  // expected value comes through the same tier model, so that is what proves
+  // a dark tier was applied at all.
+  const carbonBlocks = parseBlocks(read("app/styles/carbon-tokens.css"));
+  const brandLiteral = variablesIn("light")["--brand-terracotta"];
   assert.match(brandLiteral ?? "", /^#[0-9a-f]{6}$/i, "the brand file declares --brand-terracotta as a hex literal on :root");
+  const backgrounds = {};
   for (const state of Object.keys(STATES)) {
     const vars = variablesIn(state);
-    assert.equal(resolvedIn(vars, "--sp-background").toLowerCase(), state.startsWith("light") ? "#ffffff" : "#161616", `${state}: --sp-background`);
+    const carbonBackground = variablesIn(state, carbonBlocks)["--cds-background"];
+    assert.match(carbonBackground ?? "", /^#[0-9a-f]{6}$/i, `${state}: carbon-tokens.css declares --cds-background as a hex literal in this state's tiers`);
+    backgrounds[state] = resolvedIn(vars, "--sp-background").toLowerCase();
+    assert.equal(backgrounds[state], carbonBackground.toLowerCase(), `${state}: --sp-background resolves to Carbon's own page background for the state`);
     assert.ok(
       spTokenNames.some(name => resolvedIn(vars, name).toLowerCase() === brandLiteral.toLowerCase()),
       `${state}: some --sp-* token resolves, through the --cds-* roles, to the brand file's --brand-terracotta literal`
@@ -203,6 +222,9 @@ test("the model reads the real cascade: the shipped sheets, the brand layer appl
     // the blue check with the blue still inside it.
     const unresolved = walkedNames.filter(name => resolvedIn(vars, name).includes("var(")).map(name => `${state}: ${name} → ${resolvedIn(vars, name)}`);
     assert.deepEqual(unresolved, [], "a resolved value still contains var()");
+  }
+  for (const state of Object.keys(STATES).filter(s => s !== "light")) {
+    assert.notEqual(backgrounds[state], backgrounds.light, `${state}: the dark tier must move --sp-background off the light value (${backgrounds.light})`);
   }
 });
 
@@ -231,30 +253,60 @@ function collectFiles(root, out = []) {
   return out;
 }
 
-test("the allowlist holds: unpainted rows still resolve to a blue and are painted by nothing; pending-ruling rows cite their finding and are still blue", () => {
+// Everything that paints a walked name: a `var(--name)` read in the product
+// files (whitespace inside var() and a fallback after the name both count),
+// and any Tailwind utility built on a tailwind.config.ts colour key that
+// aliases it (`text-sp-<key>` & co.).
+function consumersOf(name, files, tailwind) {
+  const consumerPattern = new RegExp("var\\(\\s*" + name + "(?![\\w-])");
+  const consumers = files.filter(rel => consumerPattern.test(read(rel)));
+  const keys = [...tailwind.matchAll(/"?([\w-]+)"?:\s*"var\((--[\w-]+)\)"/g)].filter(m => m[2] === name).map(m => m[1]);
+  for (const key of keys) {
+    const utility = new RegExp(`(?<![\\w-])[\\w:-]*-sp-${key}(?![\\w-])`);
+    consumers.push(...files.filter(rel => utility.test(read(rel))).map(rel => `${rel} (Tailwind sp-${key})`));
+  }
+  return consumers;
+}
+
+test("the allowlist holds: every row is blue in exactly the states it names; unpainted rows are painted by nothing; pending-ruling rows cite a recorded finding and are painted", () => {
   const files = ["app", "components", "lib"].flatMap(root => collectFiles(root));
   const tailwind = read("tailwind.config.ts");
-  for (const [name, { kind, why }] of Object.entries(ALLOWLIST)) {
+  for (const [name, { kind, states, why }] of Object.entries(ALLOWLIST)) {
     assert.ok(["unpainted", "pending-ruling"].includes(kind), `${name}: unknown allowlist kind "${kind}"`);
-    assert.ok(walkedNames.includes(name), `${name} is neither declared in sp-tokens.css nor consumed by a component sheet — delete its allowlist row (${why})`);
-    const blueSomewhere = Object.keys(STATES).some(state => isBlue(resolvedIn(variablesIn(state), name)));
-    assert.ok(blueSomewhere, `${name} no longer resolves to a blue in any state — delete its allowlist row (${why})`);
+    assert.ok(walkedNames.includes(name), `${name} is neither declared in sp-tokens.css / the brand file nor consumed by a component sheet — delete its allowlist row (${why})`);
 
+    // Staleness, per state: the row lists exactly the states that resolve to
+    // a blue. A partial re-point shrinks the row; a full one deletes it.
+    assert.ok(
+      Array.isArray(states) && states.length > 0 && states.every(state => Object.hasOwn(STATES, state)),
+      `${name}: states must name at least one of ${Object.keys(STATES).join(" / ")}`
+    );
+    const blueStates = Object.keys(STATES).filter(state => isBlue(resolvedIn(variablesIn(state), name)));
+    assert.deepEqual(
+      blueStates,
+      Object.keys(STATES).filter(state => states.includes(state)),
+      `${name} resolves to a blue in [${blueStates.join(", ")}] but its row says [${states.join(", ")}] — shrink the row to the states still blue, or delete it once none is (${why})`
+    );
+
+    const consumers = consumersOf(name, files, tailwind);
     if (kind === "pending-ruling") {
-      // The audit record is the only way in: the row names the finding and its date.
-      assert.match(why, /\b[A-Z]{2,}-\d+\b, \d{4}-\d{2}-\d{2}/, `${name}: a pending-ruling row must cite the finding id and date (e.g. "BR-5, 2026-09-10")`);
+      // The audit record is the only way in: the row names the finding and
+      // its date, and that finding must exist in that day's REVIEW.md.
+      const citation = why.match(/\b([A-Z]{2,}-\d+)\b, (\d{4}-\d{2}-\d{2})\b/);
+      assert.ok(citation, `${name}: a pending-ruling row must cite the finding id and date (e.g. "BR-5, 2026-09-10")`);
+      const [, findingId, date] = citation;
+      const auditPath = `docs/audits/${date}/REVIEW.md`;
+      assert.ok(existsSync(path.join(repoRoot, auditPath)), `${name}: cites ${findingId} in ${auditPath}, which does not exist`);
+      assert.match(
+        read(auditPath),
+        new RegExp(`(?<![\\w-])${findingId}(?![\\w-])`),
+        `${name}: ${auditPath} records no finding ${findingId} — a pending-ruling row must cite a finding the audit record carries`
+      );
+      // A pending ruling is a LIVE blue; a blue nothing paints is "unpainted".
+      assert.ok(consumers.length > 0, `${name} is painted by nothing — file it as kind "unpainted", not "pending-ruling"`);
       continue;
     }
 
-    // Whitespace inside var() and a fallback after the name both still paint it.
-    const consumerPattern = new RegExp("var\\(\\s*" + name + "(?![\\w-])");
-    const consumers = files.filter(rel => consumerPattern.test(read(rel)));
-    // A Tailwind colour key aliasing the token makes `text-sp-<key>` & co. paint it.
-    const keys = [...tailwind.matchAll(/"?([\w-]+)"?:\s*"var\((--[\w-]+)\)"/g)].filter(m => m[2] === name).map(m => m[1]);
-    for (const key of keys) {
-      const utility = new RegExp(`(?<![\\w-])[\\w:-]*-sp-${key}(?![\\w-])`);
-      consumers.push(...files.filter(rel => utility.test(read(rel))).map(rel => `${rel} (Tailwind sp-${key})`));
-    }
     assert.deepEqual(consumers, [], `${name} resolves to IBM blue and is now painted — re-point it in ${BRAND_FILE} and delete its allowlist row`);
   }
 });

@@ -210,14 +210,26 @@ test("snapshot restore normalizers bound the text they rewrite", () => {
 // Both paths that take coordinates off the wire must parse before clamping;
 // parseCoordinate's behaviour is covered by tests/schemas.test.mjs. These pins
 // are ORDER and SHAPE only — which call precedes which, what never reaches the
-// clamp — not local names, labels or statement text (review C9/C17).
+// clamp — not local names, labels or statement text (review C9/C17). Every
+// index is taken on a comment-stripped copy, and every anchor is a call or
+// statement SHAPE with tolerant whitespace, so neither a comment that mentions
+// the client nor a reformatted statement can move a pin.
+const stripComments = text => text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/[^\n]*/gm, "$1");
+const indexAfter = (text, pattern, from) => {
+  const offset = text.slice(from).search(pattern);
+  return offset === -1 ? -1 : from + offset;
+};
+const FAILURE_RESULT = /return\s*\{\s*ok:\s*false\b/;
+const CLAMP = /validateSeatCoordinates\s*\(/;
+
 test("createSeatAction parses its coordinates before clamping or reading", () => {
   // createSeatAction is followed by a comment block rather than a bare export,
   // so anchor on the next action's signature (as seat-creation-ui-source does).
-  const source = actionsSource.match(
+  const action = actionsSource.match(
     /export async function createSeatAction\([\s\S]+?export async function updateSeatAction/
   )?.[0];
-  assert.ok(source, "createSeatAction should be present");
+  assert.ok(action, "createSeatAction should be present");
+  const source = stripComments(action);
 
   const parseIndex = field => source.search(new RegExp(`parseCoordinate\\(\\s*input\\.${field}\\b`));
   const xGuard = parseIndex("x");
@@ -229,44 +241,67 @@ test("createSeatAction parses its coordinates before clamping or reading", () =>
   assert.notEqual(visualXGuard, -1, "a supplied visual x is wire input too");
   assert.notEqual(visualYGuard, -1, "a supplied visual y is wire input too");
 
-  const firstClamp = source.indexOf("validateSeatCoordinates(");
-  const lastClamp = source.lastIndexOf("validateSeatCoordinates(");
-  // The first use of the admin client after requireAdmin() hands it over.
-  const firstClientUse = source.search(/\bsupabase\b\s*[.,)]/);
+  const firstClamp = source.search(CLAMP);
   assert.notEqual(firstClamp, -1, "the saved point still goes through the rounding / calibration clamp");
-  assert.notEqual(firstClientUse, -1, "the action reads through the admin client");
+  // The clamp that consumes the visual pair is the first one after its parse.
+  const visualClamp = indexAfter(source, CLAMP, visualYGuard);
+  assert.notEqual(visualClamp, -1, "the visual pair still goes through the clamp, after it is parsed");
   assert.ok(xGuard < firstClamp && yGuard < firstClamp, "the saved parse must run before the first clamp");
-  assert.ok(visualXGuard < lastClamp && visualYGuard < lastClamp, "the visual parse must run before the clamp that takes it");
+  assert.ok(visualXGuard < visualClamp, "the visual parse must run before the clamp that takes it");
+
+  const authorize = source.search(/await\s+requireAdmin\s*\(\s*\)/);
+  assert.notEqual(authorize, -1, "the action authorizes through requireAdmin()");
+  assert.ok(authorize < xGuard, "authorize before validating");
+  // The first database call after requireAdmin() hands the client over: a
+  // query-builder / RPC call on it, or the client passed to an awaited helper
+  // — whichever comes first. A call shape, not the word "supabase", so a
+  // destructuring rename or a comment cannot move this anchor.
+  const firstClientUse = Math.min(
+    ...[/\bsupabase\s*\.\s*(from|rpc)\s*\(/, /await\s+\w+\(\s*supabase\b/]
+      .map(pattern => indexAfter(source, pattern, authorize))
+      .filter(index => index !== -1)
+  );
+  assert.ok(Number.isFinite(firstClientUse), "the action reads through the admin client");
   for (const guard of [xGuard, yGuard, visualXGuard, visualYGuard]) {
     assert.ok(guard < firstClientUse, "every parse must run before the first database read");
   }
-  assert.ok(source.indexOf("await requireAdmin()") < xGuard, "authorize before validating");
-  assert.doesNotMatch(source, /validateSeatCoordinates\([^)]*\binput\./, "raw input must never reach the clamp");
+  assert.doesNotMatch(source, /validateSeatCoordinates\s*\([^)]*\binput\./, "raw input must never reach the clamp");
 
   // Returned, not thrown, in the action's own failure arm (CreateSeatResult
-  // carries no code field — action-error-contract-source pins the no-throw rule).
-  const failureArm = source.slice(xGuard, firstClamp);
-  assert.ok(failureArm.includes("return { ok: false, message:"), "a failed parse returns the action's failure result");
-  assert.doesNotMatch(failureArm, /\bthrow\b/, "a failed parse must not throw");
+  // carries no code field — action-error-contract-source pins the no-throw
+  // rule). Checked PER FIELD: the gap between one parse and the next step (the
+  // other parse, then the clamp) must carry its own failure return, so
+  // dropping either axis's guard fails on its own gap rather than hiding
+  // behind its sibling's.
+  function eachGapReturnsFailure(anchors) {
+    for (let i = 0; i + 1 < anchors.length; i += 1) {
+      const [[field, from], [next, to]] = [anchors[i], anchors[i + 1]];
+      assert.ok(from < to, `the ${field} parse must precede ${next}`);
+      assert.match(source.slice(from, to), FAILURE_RESULT, `a failed ${field} parse returns the action's failure result before ${next}`);
+    }
+  }
+  eachGapReturnsFailure([["x", xGuard], ["y", yGuard], ["the first clamp", firstClamp]]);
+  eachGapReturnsFailure([["visualX", visualXGuard], ["visualY", visualYGuard], ["the visual clamp", visualClamp]]);
+  assert.doesNotMatch(source.slice(xGuard, firstClamp) + source.slice(visualXGuard, visualClamp), /\bthrow\b/, "a failed parse must not throw");
 });
 
 test("normalizeRestoreSeat refuses a malformed coordinate instead of clamping it", () => {
-  const seatNormalizer = actionsSource.match(/function normalizeRestoreSeat\([\s\S]+?\r?\n}/)?.[0];
+  const seatNormalizer = stripComments(actionsSource.match(/function normalizeRestoreSeat\([\s\S]+?\r?\n}/)?.[0] ?? "");
   assert.ok(seatNormalizer, "normalizeRestoreSeat should be present");
 
-  assert.match(seatNormalizer, /(?:boundedCoordinate|parseCoordinate)\(\s*seat\.x\b/, "the restored x is parsed");
-  assert.match(seatNormalizer, /(?:boundedCoordinate|parseCoordinate)\(\s*seat\.y\b/, "the restored y is parsed");
+  assert.match(seatNormalizer, /(?:boundedCoordinate|parseCoordinate)\s*\(\s*seat\.x\b/, "the restored x is parsed");
+  assert.match(seatNormalizer, /(?:boundedCoordinate|parseCoordinate)\s*\(\s*seat\.y\b/, "the restored y is parsed");
   assert.doesNotMatch(
     seatNormalizer,
-    /validateSeatCoordinates\(|Number\(\s*seat\.x\s*\)|Number\(\s*seat\.y\s*\)/,
+    /validateSeatCoordinates\s*\(|Number\s*\(\s*seat\.x\s*\)|Number\s*\(\s*seat\.y\s*\)/,
     "no coercion or clamp may survive in the restore path"
   );
   // The wrapper throws like boundedRequired/boundedOptional/boundedFloor do:
   // restore has no validation-failure arm, a bad snapshot value is corruption.
-  const coordinateHelper = actionsSource.match(/function boundedCoordinate\([\s\S]+?\r?\n}/)?.[0];
+  const coordinateHelper = stripComments(actionsSource.match(/function boundedCoordinate\([\s\S]+?\r?\n}/)?.[0] ?? "");
   assert.ok(coordinateHelper, "boundedCoordinate should be present");
-  assert.match(coordinateHelper, /parseCoordinate\(/, "the helper parses rather than coerces");
-  assert.match(coordinateHelper, /throw new Error\(/, "the helper throws on a malformed value");
+  assert.match(coordinateHelper, /parseCoordinate\s*\(/, "the helper parses rather than coerces");
+  assert.match(coordinateHelper, /throw\s+new\s+Error\s*\(/, "the helper throws on a malformed value");
 });
 
 // S-05: parseUuid was applied inconsistently — updateEmployeeAction and
