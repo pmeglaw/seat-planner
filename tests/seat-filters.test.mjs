@@ -259,3 +259,17 @@ test("a department criteria of No department selects every seat without one, the
   assert.deepEqual(matching("Intake"), ["s4"], "a real department is untouched");
   assert.deepEqual(departmentChipCounts(seats, criteria(), ["Intake", "No department"]), { Intake: 1, "No department": 3 }, "the chip count IS the pinned set");
 });
+
+// PR #531 review (Codex, lib/viewerSeatSearch.ts:281): the Find palette matches
+// a collapsed query against the normalized department, so the canvas haystack
+// must carry the same spelling — otherwise the palette highlights a seat the
+// canvas dims and reports as zero matches. The raw spelling stays in the
+// haystack too (a query typed with the doubled space still hits).
+test("the canvas haystack carries the normalized department spelling beside the raw one", () => {
+  const doubled = seat({ id: "s1", employee: { full_name: "Ira Lane", position: null, department: "Case  Management", phone_extension: null } });
+  assert.equal(seatMatchesFilters(doubled, criteria({ search: "case management" })), true, "the collapsed query the palette accepts finds the seat on the canvas too");
+  assert.equal(seatMatchesFilters(doubled, criteria({ search: "case  management" })), true, "the raw doubled-space spelling still matches");
+  assert.equal(seatMatchesFilters(seat({ id: "s2" }), criteria({ search: "case management" })), false, "an unrelated seat is untouched");
+  assert.match(seatSearchHaystack(doubled), /case management/, "the normalized spelling is in the haystack");
+  assert.match(seatSearchHaystack(doubled), /case {2}management/, "and so is the raw one");
+});

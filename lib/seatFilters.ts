@@ -78,6 +78,10 @@ export function seatSearchHaystack(seat: SeatWithEmployee): string {
     seat.employee?.full_name,
     seat.employee?.position,
     seat.employee?.department,
+    // The normalized spelling too (raw kept): the Find palette matches a
+    // collapsed query ("case management") against "Case  Management", so the
+    // canvas must find the same seat or it dims what the palette highlights.
+    seatDepartmentValue(seat),
     seat.employee?.phone_extension
   ]
     .filter(Boolean)

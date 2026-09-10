@@ -7,7 +7,7 @@ import { nextMapHref } from "@/lib/mapUrlState";
 import { scopeResults, type SearchScope } from "@/lib/mapSearchScope";
 import { shortcutHint } from "@/lib/platformShortcut";
 import { findEmployeeByEmail, findSeatForEmployee } from "@/lib/mySeat";
-import { departmentKey, seatDepartmentValue } from "@/lib/departments";
+import { departmentRowKey, seatDepartmentValue } from "@/lib/departments";
 import { DEFAULT_FLOOR, floorOf, type FloorId } from "@/lib/floorIds";
 import {
   FLOORS,
@@ -386,11 +386,14 @@ export function ViewerSeatFinder({
   // filters by, and what decides whether a zero on this floor is the
   // department's absence or a zone/status choice.
   const seatPassesPersonFacets = useCallback((seat: SeatWithEmployee) => {
-    // departmentKey on both sides (the same normalisation the facet options
+    // One key on both sides (the same normalisation the facet options
     // and the roster use), not a bare toLowerCase — sweep defect 5. The seat's
     // department is its occupant's (seatDepartmentValue, E1), the same fact
     // the left-panel counts and the Find palette read.
-    const departmentOk = department === "all" || departmentKey(seatDepartmentValue(seat)) === departmentKey(department);
+    // departmentRowKey, not departmentKey: the reserved "No department" row
+    // folds the literal spelling, and the chip (buildViewerFilterGroups) counts
+    // through the same key — the pin must select exactly what the chip counts.
+    const departmentOk = department === "all" || departmentRowKey(seatDepartmentValue(seat)) === departmentRowKey(department);
     return departmentOk && seatMatchesPosition(seat.employee?.position, position);
   }, [department, position]);
 
