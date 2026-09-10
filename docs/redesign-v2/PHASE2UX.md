@@ -403,7 +403,9 @@ the same. The e2e-auth `page-frames` spec asserts the 480, the 32 and the 1008.
 Row: name `body-compact-01` 600 + `label-01` "position · department" ("—" when both
 missing) · seat code (plain `code-01` text-secondary: `L02` — *Phase 3 PR 4 amendment: no chip, no avatar; a 32px initials disc is decoration and a circle is a radius the system lacks; the chip would be the row's only rounded shape and Management renders the seat as mono text*) or floor tag ("Floor 2") or "—" · extension right-aligned,
 tabular, 96px column, "—" when missing. Highlighted row (typing) = layer-hover + 3px inset bar; locked row =
-layer-selected + bar. Count copy: "68 people" at rest; "7 matches" / "1 match" / **"0 matches"** while
+layer-selected + bar. *Phase 5 PR 4 amendment (2026-09-09, owner ruling R1 = option C; DECISIONS **D3-g**; brand-file
+O4): the locked row is the hit surface — light the O2 tint, dark layer-selected-02 — and in dark the bar is the dark
+link colour (R5); "layer-selected + bar" is superseded.* Count copy: "68 people" at rest; "7 matches" / "1 match" / **"0 matches"** while
 typing. Keyboard as shipped: ↑ ↓ clamp, Enter locks (only while typing), Esc clears; mousedown on a row
 never steals focus from the field. Ranking as shipped (name starts-with → name contains → other fields).
 Overflow: names and departments truncate end-line with `title`; the list is the page's scroll.

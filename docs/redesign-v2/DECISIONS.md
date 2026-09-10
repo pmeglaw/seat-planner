@@ -1257,6 +1257,42 @@ changed).
 wrapped at 320 and a flat 170px from 460 up, against a list whose rows are 48 — or the directory passes ~300
 people, at which point D3's own "faceted filters replace the persistent readout" line arrives first.
 
+#### D3-g · The locked row is the search's hit, so it takes the hit surface — and in dark the bar carries the hue
+
+*Ruled 2026-09-09 (Phase 5 PR 4, owner ruling R1 = option C, R5; reviewer defaults R2–R4 accepted). Built in the
+same slice: brand-file O4, sheet amendment K. **Not** a §6 deviation — next free stays 19: the token aliases into a
+surface the brand layer already defines (O2's precedent), as D3-f was not one.*
+
+**Problem.** PHASE5 PR 2 carried "the count header and the locked row sit on the same surface". The reviewer's
+mockup showed it wider: the hover / keyboard-cursor row is one ladder rung from the locked row in both themes —
+header `layer-selected-01` #e0e0e0 / #393939, locked row the same, hover `layer-hover-01` #e8e8e8 / #333333. The
+receptionist's most important state — *this is the person whose extension I am reading aloud* — was
+indistinguishable from the header and nearly from "my mouse is here". A flat header or a 1px seam (options B, D)
+would have left locked ≈ hover; leaving it (A) was declined.
+
+**Choice (owner, 2026-09-09).** Option C. `--sp-recep-row-locked` keeps its name and its neutral default in
+`sp-tokens.css`; the brand file overrides it the way O2 is expressed — light the O2 tint #FBE8DC (what
+`--cds-highlight` already is), dark `layer-selected-02` #525252, one neutral step above the header ("light tints,
+dark steps neutral"). Measured (the skill's checker): light text 15.23, helper 6.58, bar 3.84; dark text 7.10,
+helper 4.57. **R5:** the dark bar (`--cds-border-interactive` #B85C2E) measured 1.71:1 on #525252 — under the
+3:1 graphic floor, and already 2.53 on the header and 2.77 on the cursor row — so the dark blocks also override
+`--sp-recep-row-bar: #E8A07A` (3.62 / 5.86 / 5.36), O2's "the edge carries the hue on dark" shape. Light keeps
+terracotta. Hovering the locked row still does nothing (R2). Bundled: the readout column's gap between its
+groups is 24 at wide (R4, sheet amendment K) — the PR 2 carry-over "band→tail gap equals the intra-band gap".
+
+**What this supersedes.** PHASE2UX §1R.3 / PHASE3DS §1.29 "locked (↵) = selected surface + bar" → "locked =
+hit surface + bar"; amendment I's "the column's own 16 rhythm" for the gap *between* groups only.
+
+**Trade-off.** In dark the fill separates by value alone (#525252 vs #393939, 1.48:1) — the same choice O2 made
+for the dark hit pill; the bar does the hue work. The light tint now means "hit" on the map and "locked" on
+Reception — one meaning ("the thing the search found") on two surfaces.
+
+**Would change if:** a desk reading finds the light tint reads as "search result" rather than "locked", or a
+fourth row state appears that needs the tint. Open beside it, not decided here (reviewer ruling B, 2026-09-10):
+every other dark 3px bar through `--cds-border-interactive` is under 3:1 on its layer today — nav current bar,
+menu `[aria-current]`, palette rows (2.53 on #393939), the hovered AI label's border start (2.77) — a brand-layer
+question recorded in PHASE5 PR 4 "Carried", no entry here until ruled.
+
 ---
 
 ### D4 — Login (`/login`)
@@ -1485,6 +1521,9 @@ labelled triggers with the accepted type and the 5 MB limit stated up front, not
 
 *Phase 5 PR 3 (v2.3.0, 2026-09-09) is a PHASE3DS §1.16 conformance amendment (the legend follows the toggle — now
 the marker does too); no new deviation, next free stays 19.*
+
+*Phase 5 PR 4 (v2.4.0, 2026-09-09) is D3-g: a token alias into a surface the brand layer already defines (O2's
+precedent) plus a spacing amendment; no new deviation, next free stays 19.*
 
 | # | Deviation | Why |
 |---|---|---|

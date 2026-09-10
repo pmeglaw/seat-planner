@@ -13,6 +13,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 | PR 1 | The publish-history record surface returns to Management as a fourth tab | v2.1.0 | **merged 2026-09-08** — #525 squashed as `524c087`, tagged `v2.1.0`, production READY at that SHA |
 | PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **merged 2026-09-09** — #526 squashed as `740fd57`, tagged `v2.2.0`, production READY at that SHA; pre-merge smoke 67/67 on `763d489` |
 | PR 3 | The names-off marker becomes ● in the footprint: one status-mark language on the plan | v2.3.0 | **merged 2026-09-09** — #527 squashed as `bedecbb`, tagged `v2.3.0`, production READY at that SHA; CI green on `6efe9d6`, read-only preview walk 8/8 (step 6 N/A) on `2f7e262` |
+| PR 4 | Reception's locked row gets its own surface (O4), and 24 between the readout's groups (amendment K) | v2.4.0 | **in review** — `feat/phase5-reception-locked-row` |
 
 ---
 
@@ -237,13 +238,15 @@ were read off the live band, and one of them disagreed with the hand-off:
   Spacing). Amendment I names two jobs — band and tail — but above the fold the readout column spaces them at the
   same 16 it uses inside the band, where the rubric wants tight inside groups and loose between. Fenced out of this
   PR by its own "nothing at 1920 changes" contract, so a **post-tag candidate raise**, not a defect; the fallback
-  heading's 32px box already gives ~14px of air, so it reads acceptably today.
+  heading's 32px box already gives ~14px of air, so it reads acceptably today. → **fixed in PR 4 (v2.4.0, sheet
+  amendment K).**
 - **The count header and the locked row sit on the same surface** (reviewer critique at 1920, 2026-09-09, rubric
   level 5 Depth). `.sp-recep-header` is on `--sp-layer-selected` and `.sp-recep-row[aria-selected="true"]` on
   `--sp-recep-row-locked`, both aliases of `--cds-layer-selected-01` (rgb 224 224 224 light), so when the locked
   person is row 1 the header and the row fuse into one slab with only the 3px terracotta bar between them.
   **Pre-existing** — amendment I touched neither rule — and it **needs an owner ruling**, because the fix moves a
-  token alias (one of the two onto another surface, or the header tint dropped). Carried, not fixed.
+  token alias (one of the two onto another surface, or the header tint dropped). Carried, not fixed. → **fixed in PR 4
+  (v2.4.0, owner ruling R1 = option C, brand-file O4, DECISIONS D3-g).**
 
 ### Verification, on the final head
 
@@ -408,3 +411,115 @@ named: the block's `overflow: hidden` also clipped the 44px touch pseudo, so `el
 layer beneath. Amendment J removes that with the rest.
 
 **Brand checklist on the Vercel preview:** **10/10** on the Vercel preview of #527 (`seat-planner-git-feat-phase5-a5adc2-…vercel.app`, behind Vercel Authentication via a 23h share link; read-only, computed colours only, both themes): primary `rgb(184, 92, 46)`, hover `rgb(143, 69, 33)`, focus ring 2px inset `rgb(184, 92, 46)`, links `--cds-link-primary` `rgb(143, 69, 33)` light / `rgb(232, 160, 122)` dark, the header's current-section bar a 3px inset `rgb(184, 92, 46)` in both themes, no `#0f62fe` painted by any rule outside the Carbon token declarations — and on `/` with Names off, **58 of 58** assigned seats carry ● in `rgb(22, 22, 22)` on `rgb(255, 255, 255)` light / `rgb(244, 244, 244)` on `rgb(57, 57, 57)` dark. Captures of production data stay out of the repo.
+---
+
+## PR 4 — Reception's locked row gets its own surface (+ the band→tail gap)
+
+**Plan of record:** `phase5/plans/phase5-pr4-reception-locked-row.md` (hand-off: `phase5-pr4-reception-locked-row-HANDOFF.md`;
+reviewer rulings A–D of 2026-09-10 folded into the plan before "go").
+**Rulings landed in DECISIONS:** D3-g (R1 = option C, R5 the dark bar; reviewer defaults R2–R4 accepted); the §6 header
+carries one line, next free stays 19.
+**Skill fingerprint:** `f997ee525800e755`, verified before reading anything.
+
+### What the slice is
+
+PR 2 carried "the count header and the locked row sit on the same surface". The reviewer's mockup showed it wider: the
+hover / keyboard-cursor row sat one ladder rung from the locked row in both themes — header `layer-selected-01`
+#e0e0e0 / #393939, locked row the same, hover `layer-hover-01` #e8e8e8 / #333333 — so the row the receptionist reads
+from fused with the header at row 1 and barely parted from the mouse. Owner ruling R1 = option C: the locked row is
+the search's hit, so it takes the hit surface the way O2 expresses it — `--sp-recep-row-locked` keeps its name and its
+neutral default in `sp-tokens.css`; the brand file overrides it to the O2 tint #FBE8DC (light) and `layer-selected-02`
+#525252 (dark). R5 (owner, in planning): the dark bar `--sp-recep-row-bar` goes #E8A07A — terracotta measured 1.71:1
+on #525252 (and was already 2.53 on the header, 2.77 on the cursor row), the same reason O2 never uses it as a dark
+edge. Bundled (R4): sheet amendment K — 24 between the readout column's groups at wide. No `.tsx` change.
+
+### Engineering calls the code forced, one line each
+
+- The value lives in the brand file, not `sp-tokens.css`: the semantic layer is hex-free and byte-locked to Phase 3;
+  the brand file is the one place a product hex may live (O2's precedent).
+- Two dark blocks, one value each: the system-dark `@media` block and the forced `g100` block are both required (the
+  source test walks both).
+- The dark bar override is a consequence, not scope creep: R1's fill made a pre-existing 3:1 failure worse
+  (2.53 → 1.71); the hand-off's own gate stopped the slice until the owner ruled R5.
+- The hand-off's "PHASE3DS §1.22" is the page frame; Reception is §1.29 — amended there.
+- The recents `<aside>` is the readout column's third direct child, so amendment K's 24 also lands tail→recents
+  (R4 accepted with that).
+- The hand-off's helper-text fallback is moot: `--sp-text-helper-on-row` aliases `text-secondary` = gray 70, not
+  gray 60 — 6.58 on the tint, not the ≈4.6 estimated.
+
+### Contrast — the locked row's pairs
+
+| pair | light | dark |
+|---|---|---|
+| text-primary on the locked fill | 15.23 | 7.10 |
+| `--sp-text-helper-on-row` on the locked fill | 6.58 | 4.57 |
+| bar on the locked fill | 3.84 (#B85C2E) | 3.62 (#E8A07A) |
+| bar on the cursor row (light terracotta; dark #E8A07A, R5) | 3.72 | 5.86 |
+| bar on the header (R5, dark only) | — | 5.36 |
+| tab bar on its host (ruling A — measured for the first time as terracotta) | 4.56 | 3.97 |
+| *retired:* terracotta bar on #525252 | — | 1.71 (not gated) |
+
+Ruling A: `generate-pairs.mjs:119` / `:130` had measured Carbon blue 60 / 50 for "row bar / tab bar" — the static
+gate had never measured the terracotta bar on any row surface, which is why the dark 2.53 / 2.77 were never caught.
+Both retargeted; the tab bar is its own pair per theme on `--sp-tabs-bg`. The two locked-row-meta pairs moved with
+the fill; ruling B's two failing consumers are recorded not-gated.
+
+```
+product-pairs.json: 212 pairs · surface-pairs-not-gated.json: 17 pairs
+212/212 pass
+```
+
+### Sheet amendment K (2026-09-09)
+
+`.sp-recep-readout`'s column gap goes `--sp-space-05` → `--sp-space-06`; the band's and the tail's own 16 (line 1110)
+stands; both copies, byte-identical. Measured at 1920, both themes: band→tail **24.00**, tail→recents **24.00**
+(16.00 / 16.00 on main); the band's box and the tile's box are pixel-identical to a `next build` of main
+(416×260 at 1272,182). Below the 1055 fold the column is `display: contents` — nothing changes there.
+
+### Carried, not fixed
+
+- **`npm run test:e2e:auth` still needs `npx supabase db reset --no-seed` between runs** — PR 2's note, unchanged
+  (and `npm run db:seed` needs it too when the volume persisted: `one_published_seat_per_employee` collides).
+- **Every dark 3px bar or edge resolving through `--cds-border-interactive` #B85C2E is under 3:1 on its layer today**
+  (reviewer ruling B, 2026-09-10; measured with the skill's checker). R5 fixed the Reception row bar only. One row
+  each — consumer · surface · ratio today · if #E8A07A:
+  - `--sp-nav-current-bar` (`.sp-left-nav a[aria-current]`) · `--sp-nav-current-bg` = layer-selected-01 #393939 ·
+    **2.53** · 5.36
+  - `.sp-menu button[aria-current]` bar · `--sp-layer-selected` #393939 · **2.53** · 5.36
+  - `.sp-palette-row[aria-selected] / [aria-current]` bar · `--sp-layer-selected` #393939 · **2.53** · 5.36
+  - `--sp-ai-border-start` on the hovered `.sp-ai-label` · layer-hover-01 #333333 · **2.77** · 5.86
+  - `--sp-ai-border-start` at rest / `.sp-textarea--ai` · layer-01 / field-01 #262626 · 3.32 (passes) · 7.02
+  - `.sp-menu-button[aria-expanded]` 1px rule · field-01 #262626 · 3.32 (passes)
+  - `--sp-tab-bar` · `--sp-tabs-bg` = background #161616 · 3.97 (passes; now gated by ruling A) · 8.39
+  - `--sp-shell-current-bar` (tier-C) · shell g100 · 3.97 (passes, ledgered)
+
+  **Not fixed in PR 4** — a brand-layer question for the owner: either `--cds-border-interactive` goes #E8A07A in
+  the two dark blocks (one line; every consumer follows — O2's dark-edge shape), or each failing consumer is themed
+  like O4. The two failing surfaces are in `surface-pairs-not-gated.json` labelled "carried — dark
+  --cds-border-interactive consumers, owner ruling pending". No DECISIONS entry until ruled.
+- **`phase4/audit/pr5-smoke.mjs` asserts the locked bar is terracotta** — true in light, no longer in dark. phase4/
+  is closed record (PR 3 ruling A); not run for this slice.
+- **The local `next start` console still carries the Speed Insights 404s and the MIME refusal** — PR 2's note,
+  unchanged; sampled on `/` and `/reception` after the runtime audit's count (114 across 22 loads ≈ 5 per load): nothing
+  else on any route.
+
+### Verification, on the final head
+
+Unit **1489/1489** · ct **337/337** · browser **26/26** · e2e **36/36** · e2e-auth **63/63** (Docker, local
+stack) · runtime audit **0 undefined `var()` across 6 routes × 2 themes + the system state + the viewer routes** · static contrast 212/212 · lockstep byte-identical (`phase4-token-layer-source`
+14/14, `HEX_LEDGER` two rows) · `git diff main -- app/styles/sp-tokens.css app/styles/carbon-*.css` empty ·
+`git diff --stat main -- docs/redesign-v2/phase4` empty · `git grep 0f62fe` hits only `carbon-tokens.css` ·
+typecheck clean · lint 0 errors.
+
+**The capture + hit-test rig** `phase5/audit/pr4-reception-locked-row.mjs`: **84/84** claims at 480 / 640 / 800 /
+1024 / 1920 × light / dark on the branch build (`5373ebc`), baseline `results-main.json` from a `next build` of main
+(`d9d52ee`) in a second worktree (ruling C; 38/82 there — locked = header, gaps 16.00, by design); captures + README in
+`screenshots/phase5-pr4/`. Header · locked · hovered are three computed values at every width in both themes; hovering
+the locked row changes nothing (R2); the bar is rgb(184, 92, 46) light / rgb(232, 160, 122) dark on both the locked and
+the cursor row; the locked row is hittable under the pinned band at every width below the fold.
+
+**Brand checklist on the local build (real Chrome, both themes):** primary `rgb(184, 92, 46)`, hover
+`rgb(143, 69, 33)`, focus ring `2px solid rgb(184, 92, 46)` inset −2px on the search field, current-section bar
+`rgb(184, 92, 46)` 3px inset, links light `rgb(143, 69, 33)` / dark `rgb(232, 160, 122)`, locked row
+`rgb(251, 232, 220)` / `rgb(82, 82, 82)`, row bar `rgb(184, 92, 46)` / `rgb(232, 160, 122)`; no `#0f62fe` outside
+`carbon-tokens.css`. The Vercel preview walk is the reviewer's.

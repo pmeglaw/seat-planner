@@ -682,6 +682,24 @@ inherits the readout's `lg:[--sp-shell-header-h:0px]`, which is exactly what the
 pane already scrolls while the sheet is still below its fold. Both copies, byte-identical; **no token change**, so
 contrast was not re-run.
 
+**Phase 5 PR 4 amendment K (the locked row's own surface, and 24 between the readout's groups, 2026-09-09; owner
+rulings R1 = C, R4, R5; DECISIONS D3-g; brand-file O4).** "Locked (↵) = selected surface + bar" above is superseded:
+the locked row, the header and the hover / cursor row sat on one ladder rung (layer-selected-01 / layer-selected-01 /
+layer-hover-01 — #e0e0e0 / #e0e0e0 / #e8e8e8 light, #393939 / #393939 / #333333 dark), so the row the receptionist is
+reading from fused with the count header at row 1 and barely parted from the mouse. The row now takes the HIT surface
+the way O2 expresses it — `--sp-recep-row-locked` keeps its name and its neutral default here; the brand file
+overrides it to the O2 tint #FBE8DC (light) and layer-selected-02 #525252 (dark). Measured with the skill's checker:
+light text 15.23, `text-helper-on-row` 6.58, bar 3.84; dark text 7.10, helper 4.57. The dark BAR moves with it (R5):
+terracotta is 1.71:1 on #525252 (and was 2.53 on the header, 2.77 on the cursor row), so the dark blocks override
+`--sp-recep-row-bar` to #E8A07A — 3.62 / 5.86 / 5.36 — the same reason O2 never uses terracotta as a dark edge; light
+keeps it. Hovering the locked row changes nothing (the selected rule out-orders the hover rule at equal specificity —
+R2). Sheet amendment K is the PR 2 carry-over: the readout column's gap between its three children — band, tail,
+recents — is `--sp-space-06` (24) above the fold; the 16 inside the band and inside the tail stands; below 1055 the
+column is `display: contents`, so nothing changes there. Both copies, byte-identical. Verified at 480 / 640 / 800 /
+1024 / 1920 × both themes (R3) by `phase5/audit/pr4-reception-locked-row.mjs` against a build of main. Contrast
+re-run: 212/212 gated pairs pass — and reviewer ruling A retargeted the two "row bar / tab bar" pairs that had measured
+Carbon blue since the brand layer, which is why the dark bar's 2.53 / 2.77 were never caught.
+
 ---
 
 ## 2. Component inventory (PHASE2UX §3 → kind → class → specimen anchor)
