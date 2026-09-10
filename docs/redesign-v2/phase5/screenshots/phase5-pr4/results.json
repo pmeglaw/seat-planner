@@ -1,0 +1,500 @@
+{
+  "generated": "2026-09-10T00:15:09.586Z",
+  "base": "http://localhost:3300",
+  "passed": 84,
+  "total": 84,
+  "results": [
+    {
+      "name": "480-light 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(251, 232, 220) (want rgb(251, 232, 220))"
+    },
+    {
+      "name": "480-light 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(224, 224, 224) · locked rgb(251, 232, 220) · hover rgb(232, 232, 232)"
+    },
+    {
+      "name": "480-light 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(224, 224, 224) / rgb(232, 232, 232)"
+    },
+    {
+      "name": "480-light 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(251, 232, 220)"
+    },
+    {
+      "name": "480-light 3 the locked row's 3px bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "480-light 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(232, 232, 232) · locked rgb(251, 232, 220)"
+    },
+    {
+      "name": "480-light 4 the cursor row's bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "480-light 6 the locked row is hittable under the pinned band",
+      "ok": true,
+      "detail": "elementFromPoint → aria-selected=true"
+    },
+    {
+      "name": "640-light 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(251, 232, 220) (want rgb(251, 232, 220))"
+    },
+    {
+      "name": "640-light 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(224, 224, 224) · locked rgb(251, 232, 220) · hover rgb(232, 232, 232)"
+    },
+    {
+      "name": "640-light 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(224, 224, 224) / rgb(232, 232, 232)"
+    },
+    {
+      "name": "640-light 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(251, 232, 220)"
+    },
+    {
+      "name": "640-light 3 the locked row's 3px bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "640-light 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(232, 232, 232) · locked rgb(251, 232, 220)"
+    },
+    {
+      "name": "640-light 4 the cursor row's bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "640-light 6 the locked row is hittable under the pinned band",
+      "ok": true,
+      "detail": "elementFromPoint → aria-selected=true"
+    },
+    {
+      "name": "800-light 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(251, 232, 220) (want rgb(251, 232, 220))"
+    },
+    {
+      "name": "800-light 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(224, 224, 224) · locked rgb(251, 232, 220) · hover rgb(232, 232, 232)"
+    },
+    {
+      "name": "800-light 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(224, 224, 224) / rgb(232, 232, 232)"
+    },
+    {
+      "name": "800-light 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(251, 232, 220)"
+    },
+    {
+      "name": "800-light 3 the locked row's 3px bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "800-light 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(232, 232, 232) · locked rgb(251, 232, 220)"
+    },
+    {
+      "name": "800-light 4 the cursor row's bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "800-light 6 the locked row is hittable under the pinned band",
+      "ok": true,
+      "detail": "elementFromPoint → aria-selected=true"
+    },
+    {
+      "name": "1024-light 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(251, 232, 220) (want rgb(251, 232, 220))"
+    },
+    {
+      "name": "1024-light 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(224, 224, 224) · locked rgb(251, 232, 220) · hover rgb(232, 232, 232)"
+    },
+    {
+      "name": "1024-light 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(224, 224, 224) / rgb(232, 232, 232)"
+    },
+    {
+      "name": "1024-light 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(251, 232, 220)"
+    },
+    {
+      "name": "1024-light 3 the locked row's 3px bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "1024-light 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(232, 232, 232) · locked rgb(251, 232, 220)"
+    },
+    {
+      "name": "1024-light 4 the cursor row's bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "1024-light 6 the locked row is hittable under the pinned band",
+      "ok": true,
+      "detail": "elementFromPoint → aria-selected=true"
+    },
+    {
+      "name": "1920-light 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(251, 232, 220) (want rgb(251, 232, 220))"
+    },
+    {
+      "name": "1920-light 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(224, 224, 224) · locked rgb(251, 232, 220) · hover rgb(232, 232, 232)"
+    },
+    {
+      "name": "1920-light 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(224, 224, 224) / rgb(232, 232, 232)"
+    },
+    {
+      "name": "1920-light 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(251, 232, 220)"
+    },
+    {
+      "name": "1920-light 3 the locked row's 3px bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "1920-light 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(232, 232, 232) · locked rgb(251, 232, 220)"
+    },
+    {
+      "name": "1920-light 4 the cursor row's bar is rgb(184, 92, 46)",
+      "ok": true,
+      "detail": "rgb(184, 92, 46) 3px 0px 0px 0px inset, rgb(224, 224, 224) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "1920-light 5 band→tail gap is 24",
+      "ok": true,
+      "detail": "24.00"
+    },
+    {
+      "name": "1920-light 5 tail→recents gap is 24",
+      "ok": true,
+      "detail": "24.00"
+    },
+    {
+      "name": "1920-light 5 the band's box and the tile's box are pixel-identical to main",
+      "ok": true,
+      "detail": "{\"band\":{\"x\":1272,\"y\":182,\"width\":416,\"height\":260,\"right\":1688,\"bottom\":442},\"main\":{\"x\":1272,\"y\":182,\"width\":416,\"height\":260,\"right\":1688,\"bottom\":442}}"
+    },
+    {
+      "name": "480-dark 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(82, 82, 82) (want rgb(82, 82, 82))"
+    },
+    {
+      "name": "480-dark 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(57, 57, 57) · locked rgb(82, 82, 82) · hover rgb(51, 51, 51)"
+    },
+    {
+      "name": "480-dark 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(57, 57, 57) / rgb(51, 51, 51)"
+    },
+    {
+      "name": "480-dark 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(82, 82, 82)"
+    },
+    {
+      "name": "480-dark 3 the locked row's 3px bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "480-dark 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(51, 51, 51) · locked rgb(82, 82, 82)"
+    },
+    {
+      "name": "480-dark 4 the cursor row's bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "480-dark 6 the locked row is hittable under the pinned band",
+      "ok": true,
+      "detail": "elementFromPoint → aria-selected=true"
+    },
+    {
+      "name": "640-dark 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(82, 82, 82) (want rgb(82, 82, 82))"
+    },
+    {
+      "name": "640-dark 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(57, 57, 57) · locked rgb(82, 82, 82) · hover rgb(51, 51, 51)"
+    },
+    {
+      "name": "640-dark 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(57, 57, 57) / rgb(51, 51, 51)"
+    },
+    {
+      "name": "640-dark 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(82, 82, 82)"
+    },
+    {
+      "name": "640-dark 3 the locked row's 3px bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "640-dark 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(51, 51, 51) · locked rgb(82, 82, 82)"
+    },
+    {
+      "name": "640-dark 4 the cursor row's bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "640-dark 6 the locked row is hittable under the pinned band",
+      "ok": true,
+      "detail": "elementFromPoint → aria-selected=true"
+    },
+    {
+      "name": "800-dark 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(82, 82, 82) (want rgb(82, 82, 82))"
+    },
+    {
+      "name": "800-dark 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(57, 57, 57) · locked rgb(82, 82, 82) · hover rgb(51, 51, 51)"
+    },
+    {
+      "name": "800-dark 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(57, 57, 57) / rgb(51, 51, 51)"
+    },
+    {
+      "name": "800-dark 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(82, 82, 82)"
+    },
+    {
+      "name": "800-dark 3 the locked row's 3px bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "800-dark 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(51, 51, 51) · locked rgb(82, 82, 82)"
+    },
+    {
+      "name": "800-dark 4 the cursor row's bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "800-dark 6 the locked row is hittable under the pinned band",
+      "ok": true,
+      "detail": "elementFromPoint → aria-selected=true"
+    },
+    {
+      "name": "1024-dark 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(82, 82, 82) (want rgb(82, 82, 82))"
+    },
+    {
+      "name": "1024-dark 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(57, 57, 57) · locked rgb(82, 82, 82) · hover rgb(51, 51, 51)"
+    },
+    {
+      "name": "1024-dark 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(57, 57, 57) / rgb(51, 51, 51)"
+    },
+    {
+      "name": "1024-dark 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(82, 82, 82)"
+    },
+    {
+      "name": "1024-dark 3 the locked row's 3px bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "1024-dark 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(51, 51, 51) · locked rgb(82, 82, 82)"
+    },
+    {
+      "name": "1024-dark 4 the cursor row's bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "1024-dark 6 the locked row is hittable under the pinned band",
+      "ok": true,
+      "detail": "elementFromPoint → aria-selected=true"
+    },
+    {
+      "name": "1920-dark 1 locked row is the hit surface",
+      "ok": true,
+      "detail": "rgb(82, 82, 82) (want rgb(82, 82, 82))"
+    },
+    {
+      "name": "1920-dark 1 header · locked · hovered are three surfaces",
+      "ok": true,
+      "detail": "header rgb(57, 57, 57) · locked rgb(82, 82, 82) · hover rgb(51, 51, 51)"
+    },
+    {
+      "name": "1920-dark 1 header and hover surfaces unchanged",
+      "ok": true,
+      "detail": "rgb(57, 57, 57) / rgb(51, 51, 51)"
+    },
+    {
+      "name": "1920-dark 2 hovering the locked row changes nothing",
+      "ok": true,
+      "detail": "rgb(82, 82, 82)"
+    },
+    {
+      "name": "1920-dark 3 the locked row's 3px bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "1920-dark 4 cursor row is the hover surface, the lock keeps the hit surface",
+      "ok": true,
+      "detail": "cursor rgb(51, 51, 51) · locked rgb(82, 82, 82)"
+    },
+    {
+      "name": "1920-dark 4 the cursor row's bar is rgb(232, 160, 122)",
+      "ok": true,
+      "detail": "rgb(232, 160, 122) 3px 0px 0px 0px inset, rgb(57, 57, 57) 0px -1px 0px 0px inset"
+    },
+    {
+      "name": "1920-dark 5 band→tail gap is 24",
+      "ok": true,
+      "detail": "24.00"
+    },
+    {
+      "name": "1920-dark 5 tail→recents gap is 24",
+      "ok": true,
+      "detail": "24.00"
+    },
+    {
+      "name": "1920-dark 5 the band's box and the tile's box are pixel-identical to main",
+      "ok": true,
+      "detail": "{\"band\":{\"x\":1272,\"y\":182,\"width\":416,\"height\":260,\"right\":1688,\"bottom\":442},\"main\":{\"x\":1272,\"y\":182,\"width\":416,\"height\":260,\"right\":1688,\"bottom\":442}}"
+    }
+  ],
+  "measurements": [
+    {
+      "tag": "1920-light",
+      "band": {
+        "x": 1272,
+        "y": 182,
+        "width": 416,
+        "height": 260,
+        "right": 1688,
+        "bottom": 442
+      },
+      "tile": {
+        "x": 1272,
+        "y": 248,
+        "width": 416,
+        "height": 146,
+        "right": 1688,
+        "bottom": 394
+      },
+      "tail": {
+        "x": 1272,
+        "y": 466,
+        "width": 416,
+        "height": 40,
+        "right": 1688,
+        "bottom": 506
+      },
+      "recent": {
+        "x": 1272,
+        "y": 530,
+        "width": 416,
+        "height": 72,
+        "right": 1688,
+        "bottom": 602
+      }
+    },
+    {
+      "tag": "1920-dark",
+      "band": {
+        "x": 1272,
+        "y": 182,
+        "width": 416,
+        "height": 260,
+        "right": 1688,
+        "bottom": 442
+      },
+      "tile": {
+        "x": 1272,
+        "y": 248,
+        "width": 416,
+        "height": 146,
+        "right": 1688,
+        "bottom": 394
+      },
+      "tail": {
+        "x": 1272,
+        "y": 466,
+        "width": 416,
+        "height": 40,
+        "right": 1688,
+        "bottom": 506
+      },
+      "recent": {
+        "x": 1272,
+        "y": 530,
+        "width": 416,
+        "height": 72,
+        "right": 1688,
+        "bottom": 602
+      }
+    }
+  ]
+}
