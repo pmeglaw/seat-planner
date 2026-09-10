@@ -415,6 +415,12 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
   assert.match(light, /--cds-highlight:\s*#FBE8DC/i, "light hit surface: --cds-highlight is the terracotta tint (O2)");
   assert.match(light, /--sp-pill-search-fill:\s*#FBE8DC/i);
   assert.match(light, /--sp-pill-search-edge:\s*#B85C2E/i);
+  // BR-1 (2026-09-10 audit): the roster's hit row (.sp-roster-row[data-highlight]) paints the STATUS pair, not the
+  // pill's — in sp-tokens.css it aliases --cds-support-info / --cds-highlight, roles the brand file never re-points —
+  // so the brand file carries the pill pair's values on it too. tests/brand-resolved-tokens.test.mjs guards the
+  // resolved colours, so a forgotten role cannot paint blue again.
+  assert.match(light, /--sp-status-search-surface:\s*#FBE8DC/i, "light roster hit surface is the O2 tint (BR-1)");
+  assert.match(light, /--sp-status-search-mark:\s*#B85C2E/i, "light roster hit bar is terracotta (BR-1)");
   assert.match(light, /--sp-status-draft-mark:\s*#8A3FFC/i, "light Draft family is purple 60 (O3)");
   assert.match(light, /--sp-pill-badge:\s*#8A3FFC/i);
   // O4 (Phase 5 PR 4, owner ruling 2026-09-09): the Reception locked row is the search's hit, so it takes the
@@ -427,6 +433,8 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
     assert.doesNotMatch(dark, /--cds-highlight/i, "--cds-highlight is overridden for the LIGHT value only (owner ruling)");
     assert.match(dark, /--sp-pill-search-fill:\s*#393939/i, "dark hit fill stays the neutral layer-02");
     assert.match(dark, /--sp-pill-search-edge:\s*#E8A07A/i, "dark hit edge is the dark link colour, not terracotta");
+    assert.match(dark, /--sp-status-search-surface:\s*#393939/i, "dark roster hit surface is the neutral layer-02 (BR-1)");
+    assert.match(dark, /--sp-status-search-mark:\s*#E8A07A/i, "dark roster hit bar is the dark edge colour, not terracotta (BR-1)");
     assert.match(dark, /--sp-status-draft-mark:\s*#BE95FF/i, "dark Draft family is purple 40 (O3)");
     assert.match(dark, /--sp-pill-badge:\s*#BE95FF/i);
     assert.match(dark, /--sp-recep-row-locked:\s*#525252/i, "dark locked row is layer-selected-02, one neutral step above the header (O4)");

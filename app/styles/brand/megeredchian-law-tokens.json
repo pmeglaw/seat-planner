@@ -55,6 +55,8 @@
       "--cds-highlight": "#FBE8DC",
       "--sp-pill-search-fill": "#FBE8DC",
       "--sp-pill-search-edge": "#B85C2E",
+      "--sp-status-search-surface": "#FBE8DC",
+      "--sp-status-search-mark": "#B85C2E",
       "--sp-recep-row-locked": "#FBE8DC",
       "--sp-status-draft-mark": "#8A3FFC",
       "--sp-pill-badge": "#8A3FFC"
@@ -66,6 +68,8 @@
       "--cds-ai-border-strong": "#B85C2E",
       "--sp-pill-search-fill": "#393939",
       "--sp-pill-search-edge": "#E8A07A",
+      "--sp-status-search-surface": "#393939",
+      "--sp-status-search-mark": "#E8A07A",
       "--sp-recep-row-locked": "#525252",
       "--sp-status-draft-mark": "#BE95FF",
       "--sp-pill-badge": "#BE95FF"

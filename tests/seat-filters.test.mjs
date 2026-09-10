@@ -217,3 +217,59 @@ test("departmentChipCounts matches departments through departmentKey drift", () 
   const counts = departmentChipCounts(seats, criteria(), ["Intake"]);
   assert.deepEqual(counts, { Intake: 1 });
 });
+
+// Review 2026-09-10, COR-1: a seat's department is its OCCUPANT's and nothing
+// else. seats.department is legacy zone data (audit finding E1) — the Find
+// palette already ignored it, but the predicate and the left-panel counts
+// read it through two different expressions, so an empty seat carrying a
+// legacy value counted toward a chip that, once pinned, excluded it ("· 1" on
+// the chip, 0 on the map). Both now go through seatDepartmentValue.
+test("a legacy seats.department value never stands in for the occupant's department", () => {
+  const legacyEmpty = seat({ id: "s1", status: "available", zone: null, department: "Litigation", employee: null });
+  const occupied = seat({ id: "s2", employee: { full_name: "Bob Reyes", position: "Attorney", department: "Litigation", phone_extension: null } });
+  const drifted = seat({ id: "s3", employee: { full_name: "Cara Diaz", position: "Attorney", department: "  litigation ", phone_extension: null } });
+
+  assert.equal(seatMatchesFilters(legacyEmpty, criteria({ department: "Litigation" })), false, "no occupant → no department, whatever the seat column says");
+  assert.equal(seatMatchesFilters(occupied, criteria({ department: "Litigation" })), true);
+  assert.equal(seatMatchesFilters(drifted, criteria({ department: "Litigation" })), true, "departmentKey normalisation still applies to the occupant's value");
+
+  const counts = departmentChipCounts([legacyEmpty, occupied, drifted], criteria(), ["Litigation"]);
+  assert.deepEqual(counts, { Litigation: 2 }, "the chip count and the pinned result are the same set");
+
+  // The legacy column keeps its ONE remaining meaning: the zone fallback.
+  assert.equal(seatMatchesFilters(legacyEmpty, criteria({ zone: "Litigation" })), true);
+});
+
+// Review 2026-09-10 follow-up (A): "No department" is a reserved value on every
+// surface (lib/departments departmentRowKey). A criteria of "No department" —
+// any case or spacing — selects every seat without one: open seats and
+// occupants with none, AND an occupant whose stored string is literally "No
+// department", which used to be the only thing it matched. A real department
+// is untouched, and the chip count is still the pinned set.
+test("a department criteria of No department selects every seat without one, the literal spelling included", () => {
+  const open = seat({ id: "s1", status: "available", employee: null });
+  const noDepartment = seat({ id: "s2", employee: { full_name: "Dana Hill", position: null, department: null, phone_extension: null } });
+  const literal = seat({ id: "s3", employee: { full_name: "Eli Stone", position: null, department: "No department", phone_extension: null } });
+  const intake = seat({ id: "s4" });
+  const seats = [open, noDepartment, literal, intake];
+  const matching = department => seats.filter(s => seatMatchesFilters(s, criteria({ department }))).map(s => s.id);
+
+  assert.deepEqual(matching("No department"), ["s1", "s2", "s3"], "open, null and the literal spelling are one set");
+  assert.deepEqual(matching("no  DEPARTMENT"), ["s1", "s2", "s3"], "case and spacing fold as for any department");
+  assert.deepEqual(matching("Intake"), ["s4"], "a real department is untouched");
+  assert.deepEqual(departmentChipCounts(seats, criteria(), ["Intake", "No department"]), { Intake: 1, "No department": 3 }, "the chip count IS the pinned set");
+});
+
+// PR #531 review (Codex, lib/viewerSeatSearch.ts:281): the Find palette matches
+// a collapsed query against the normalized department, so the canvas haystack
+// must carry the same spelling — otherwise the palette highlights a seat the
+// canvas dims and reports as zero matches. The raw spelling stays in the
+// haystack too (a query typed with the doubled space still hits).
+test("the canvas haystack carries the normalized department spelling beside the raw one", () => {
+  const doubled = seat({ id: "s1", employee: { full_name: "Ira Lane", position: null, department: "Case  Management", phone_extension: null } });
+  assert.equal(seatMatchesFilters(doubled, criteria({ search: "case management" })), true, "the collapsed query the palette accepts finds the seat on the canvas too");
+  assert.equal(seatMatchesFilters(doubled, criteria({ search: "case  management" })), true, "the raw doubled-space spelling still matches");
+  assert.equal(seatMatchesFilters(seat({ id: "s2" }), criteria({ search: "case management" })), false, "an unrelated seat is untouched");
+  assert.match(seatSearchHaystack(doubled), /case management/, "the normalized spelling is in the haystack");
+  assert.match(seatSearchHaystack(doubled), /case {2}management/, "and so is the raw one");
+});

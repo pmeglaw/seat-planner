@@ -275,6 +275,183 @@ test("map summary counts seats by status, zone, and department", () => {
   assert.equal(ops.unassignedEmployees, 1);
 });
 
+// Review 2026-09-10, C3: Ask Planner reads a seat's department through
+// lib/departments (seatDepartmentValue / departmentKey) — the admin chip's
+// rule — so spellings that differ only by case or inner whitespace are one
+// department to the model too: one summary row, one search hit-set (equal to
+// the chip's count), one people filter, one breakdown row, and a normalized
+// value in every seat payload. Before, the agent compared trimmed-lowercase
+// strings (inner whitespace kept) and emitted the raw, untrimmed value.
+test("ask planner folds department case and whitespace variants like the admin chip", async () => {
+  const { buildViewerFilterGroups } = await importTsModule("lib/viewerFilterGroups.ts");
+  const ana = employee("emp-ana", "Ana Lima", "Case Management");
+  const ben = employee("emp-ben", "Ben Ode", "Case  Management");
+  const cy = employee("emp-cy", "Cy Park", "  CASE MANAGEMENT ");
+  const seats = [
+    seat("seat-c01", "C01", "assigned", "Center", ana),
+    seat("seat-c02", "C02", "assigned", "Center", ben),
+    seat("seat-c03", "C03", "assigned", "Center", cy),
+    seat("seat-c04", "C04", "available", "Center")
+  ];
+  const context = agent.createMapOperationsContext({
+    employees: [ana, ben, cy],
+    seats,
+    departmentOptions: [{ id: "dep-cm", name: "Case Management", active: true, created_at: "", updated_at: "" }],
+    zoneOptions: []
+  });
+
+  const summary = agent.runReadOnlyPlannerTool(context, "get_map_summary", {});
+  const rows = summary.byDepartment.filter(row => /case\s+management/i.test(row.name));
+  assert.equal(rows.length, 1, "one summary row, not one per spelling");
+  assert.equal(rows[0].name, "Case Management", "the managed option's spelling wins");
+  assert.equal(rows[0].activeEmployees, 3);
+  assert.equal(rows[0].assignedSeats, 3);
+  assert.equal(rows[0].unassignedEmployees, 0);
+
+  const search = agent.runReadOnlyPlannerTool(context, "search_seats", {
+    query: "", status: "all", floor: "all", zone: "", department: "case management", occupied: null, customOnly: null, limit: 10
+  });
+  assert.deepEqual(search.seats.map(item => item.label), ["C01", "C02", "C03"]);
+  // Payloads carry the occupant's spelling through the shared rule: trimmed
+  // and whitespace-collapsed, case kept (the rule folds case for comparison,
+  // not display) — before, C02 read "Case  Management" and C03 "  CASE MANAGEMENT ".
+  assert.deepEqual(search.seats.map(item => item.department), ["Case Management", "Case Management", "CASE MANAGEMENT"], "every seat payload carries the normalized value");
+
+  const [chip] = buildViewerFilterGroups({
+    surface: "plan",
+    floorSeats: seats,
+    floorPeople: [],
+    departments: ["Case Management"],
+    positions: [],
+    zones: [],
+    seatZone: item => item.zone ?? "",
+    selected: { department: "all", position: "all", zone: "all", status: "all" }
+  }).find(group => group.id === "department").items;
+  assert.equal(search.count, chip.count, "Ask Planner's hit count IS the chip's count");
+
+  const people = agent.runReadOnlyPlannerTool(context, "list_people", {
+    query: "", department: "CASE   MANAGEMENT", assignment: "all", floor: "all", limit: 10
+  });
+  assert.equal(people.count, 3);
+
+  // Free-text people queries see the normalized spelling alongside the raw
+  // value (as seat search text already did): "case management" finds Ben,
+  // whose stored value carries a doubled inner space — before, list_people
+  // matched the raw value only and returned Ana and Cy (review follow-up, B).
+  const byText = agent.runReadOnlyPlannerTool(context, "list_people", {
+    query: "case management", department: "", assignment: "all", floor: "all", limit: 10
+  });
+  assert.deepEqual(byText.people.map(item => item.fullName), ["Ana Lima", "Ben Ode", "Cy Park"], "the doubled-space spelling matches the collapsed query");
+
+  const breakdown = agent.runReadOnlyPlannerTool(context, "get_zone_department_breakdown", {});
+  const center = breakdown.zones.find(zone => zone.name === "Center");
+  assert.deepEqual(
+    center.departments.map(item => [item.name, item.total]),
+    [["Case Management", 3], ["Open or no department", 1]]
+  );
+});
+
+// Review 2026-09-10 follow-up (A): the summary's "" row is reserved for people
+// with no department and labelled NO_DEPARTMENT_LABEL, so a managed option or
+// an employee string literally spelled "No department" must fold into THAT
+// row — before, it keyed to "no department" and get_map_summary emitted two
+// adjacent rows both named "No department". The same reserved key makes a
+// department argument of "No department" (any case or spacing) select the
+// people and seats with no department, instead of matching nobody. The key is
+// lib/departments' departmentRowKey — ONE home, shared with the admin chip, the
+// filter predicate, the Find palette and the roster — so the chip's count for
+// "No department" IS the tools' count on each surface.
+test("ask planner reserves the No department row for the literal spelling too", async () => {
+  const dana = employee("emp-dana", "Dana Hill", null);
+  const eli = employee("emp-eli", "Eli Stone", "No department");
+  const fay = employee("emp-fay", "Fay Moss", "Finance");
+  const seats = [
+    seat("seat-d01", "D01", "assigned", "Center", dana),
+    seat("seat-d02", "D02", "assigned", "Center", eli),
+    seat("seat-d03", "D03", "assigned", "Center", fay),
+    seat("seat-d04", "D04", "available", "Center")
+  ];
+  const context = agent.createMapOperationsContext({
+    employees: [dana, eli, fay],
+    seats,
+    departmentOptions: [
+      { id: "dep-none", name: "No department", active: true, created_at: "", updated_at: "" },
+      { id: "dep-fin", name: "Finance", active: true, created_at: "", updated_at: "" }
+    ],
+    zoneOptions: []
+  });
+
+  const summary = agent.runReadOnlyPlannerTool(context, "get_map_summary", {});
+  assert.deepEqual(summary.byDepartment.map(row => row.name), ["Finance", "No department"], "exactly one No department row");
+  const none = summary.byDepartment.find(row => row.name === "No department");
+  assert.equal(none.activeEmployees, 2, "the null department and the literal spelling are both counted");
+  assert.equal(none.assignedSeats, 2);
+  assert.equal(none.unassignedEmployees, 0);
+
+  const people = agent.runReadOnlyPlannerTool(context, "list_people", {
+    query: "", department: "No department", assignment: "all", floor: "all", limit: 10
+  });
+  assert.deepEqual(people.people.map(item => item.fullName), ["Dana Hill", "Eli Stone"]);
+  // The payload still carries each person's stored value (shape unchanged).
+  assert.deepEqual(people.people.map(item => item.department), [null, "No department"]);
+
+  // Seats: every seat that counts under the reserved row — an occupant with no
+  // department, the literal spelling, and an open seat (no occupant, so no
+  // department: the breakdown's "Open or no department" bucket) — with
+  // `occupied` narrowing to the seated people. Case and spacing fold as for
+  // any other department argument, and payloads keep each stored value.
+  const seatsWithout = agent.runReadOnlyPlannerTool(context, "search_seats", {
+    query: "", status: "all", floor: "all", zone: "", department: "no  DEPARTMENT", occupied: null, customOnly: null, limit: 10
+  });
+  assert.deepEqual(seatsWithout.seats.map(item => item.label), ["D01", "D02", "D04"]);
+  assert.deepEqual(seatsWithout.seats.map(item => item.department), [null, "No department", null]);
+  const occupiedWithout = agent.runReadOnlyPlannerTool(context, "search_seats", {
+    query: "", status: "all", floor: "all", zone: "", department: "No department", occupied: true, customOnly: null, limit: 10
+  });
+  assert.deepEqual(occupiedWithout.seats.map(item => item.label), ["D01", "D02"]);
+
+  // A real department is unaffected, and an empty argument still means no filter.
+  const finance = agent.runReadOnlyPlannerTool(context, "list_people", {
+    query: "", department: "finance", assignment: "all", floor: "all", limit: 10
+  });
+  assert.deepEqual(finance.people.map(item => item.fullName), ["Fay Moss"]);
+  const everyone = agent.runReadOnlyPlannerTool(context, "list_people", {
+    query: "", department: "", assignment: "all", floor: "all", limit: 10
+  });
+  assert.equal(everyone.count, 3);
+
+  // The breakdown's one "" row folds the literal spelling too.
+  const breakdown = agent.runReadOnlyPlannerTool(context, "get_zone_department_breakdown", {});
+  const center = breakdown.zones.find(zone => zone.name === "Center");
+  assert.deepEqual(
+    center.departments.map(item => [item.name, item.total]),
+    [["Finance", 1], ["Open or no department", 3]]
+  );
+
+  // ONE home for the rule: the admin chip (buildViewerFilterGroups) counts the
+  // same people and seats under "No department" as the tools do — on the plan
+  // the seats search_seats returns (the open seat included), on the roster the
+  // people list_people returns, who are also the `occupied` search hits here
+  // since every no-department person is seated.
+  const { buildViewerFilterGroups } = await importTsModule("lib/viewerFilterGroups.ts");
+  const chipFor = (surface, floorPeople) =>
+    buildViewerFilterGroups({
+      surface,
+      floorSeats: seats,
+      floorPeople,
+      departments: ["No department"],
+      positions: [],
+      zones: [],
+      seatZone: item => item.zone ?? "",
+      selected: { department: "all", position: "all", zone: "all", status: "all" }
+    }).find(group => group.id === "department").items[0];
+  assert.equal(chipFor("plan", []).count, seatsWithout.count, "the plan chip's count IS search_seats' count");
+  assert.equal(seatsWithout.count, 3);
+  assert.equal(chipFor("roster", [dana, eli, fay]).count, people.count, "the roster chip's count IS list_people's count");
+  assert.equal(chipFor("roster", [dana, eli, fay]).count, occupiedWithout.count, "… and the occupied search_seats count");
+  assert.equal(people.count, 2);
+});
+
 test("seat search filters by zone, status, occupancy, and caps results", () => {
   const result = agent.runReadOnlyPlannerTool(baseContext(), "search_seats", {
     zone: "North Pod",

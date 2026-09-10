@@ -75,6 +75,8 @@ export function OptionList({
   const canSave = resolution?.kind === "valid" && !pending;
 
   async function commitRename() {
+    // COR-3: Enter reaches here ungated by `disabled={pending}` — one op at a time, as canSave already says.
+    if (pending) return;
     if (editing === null || resolution?.kind !== "valid") {
       setTouched(true);
       return;

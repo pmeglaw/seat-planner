@@ -234,3 +234,14 @@ test("fitMapWidth still yields a renderable width when the column collapses", ()
   assert.ok(width >= 1, "a zero or negative width would blank the map");
   assert.ok(Number.isInteger(width), "a subpixel frame width shifts every marker off the plan");
 });
+
+// The admin overview below the desktop breakpoint is width-bound only (the
+// viewer's fit tier does the same); SeatMap expresses that by passing an
+// unbounded height rather than keeping a second, inline fit expression
+// (review 2026-09-10, COR-4). Pin that an infinite height cannot bind and
+// the natural-width cap still holds.
+test("fitMapWidth with an unbounded height is constrained by width alone", () => {
+  assert.equal(fitMapWidth({ availableWidth: 900, availableHeight: Number.POSITIVE_INFINITY, planRatio: PLAN_RATIO, naturalWidth: 1911 }), 900);
+  assert.equal(fitMapWidth({ availableWidth: 99_999, availableHeight: Number.POSITIVE_INFINITY, planRatio: PLAN_RATIO, naturalWidth: 1911 }), 1911);
+  assert.equal(fitMapWidth({ availableWidth: 1, availableHeight: Number.POSITIVE_INFINITY, planRatio: PLAN_RATIO }), 1);
+});

@@ -38,6 +38,7 @@ repository and link to it from the report.
 | --- | --- | --- | --- |
 | [2026-07-09](2026-07-09-architecture-review.md) | Architecture: module boundaries, data flow, test posture | — | Moved here from `docs/ARCHITECTURE_REVIEW.md` in the 2026-08-06 sweep. Its remediations shipped incrementally, ending with #332 (bandaid retirement). |
 | [2026-07-28](2026-07-28/REVIEW.md) | Full app: security, UX, performance, code quality, infrastructure | **B−** | Independent pass at commit `f32721b`. Verified against a local Supabase stack; no production data touched. Screenshots are synthetic except `prod-csp-login-verified.png`, which is the anonymous login page. |
+| [2026-09-10](2026-09-10/REVIEW.md) | Full app: brand system, Carbon design language, security, correctness, architecture, performance, UX/a11y, tests and docs | **B+** | Pass at commit `5b29b36` (v2.5.0). Every Docker-free gate and browser tier run on Node 24; brand checklist measured in Chromium on the served build in all four theme states; no production data touched. No screenshots committed (the two login captures prove only what §5 states in prose). |
 
 ## Reading the 2026-07-28 report
 

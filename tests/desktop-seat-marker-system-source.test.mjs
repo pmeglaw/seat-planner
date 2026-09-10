@@ -175,3 +175,40 @@ test("desktop marker redesign stays clear of data auth publish and route boundar
     assert.doesNotMatch(source, /createServerSupabaseClient|requireAdmin|profiles\.role|\.rpc\("publish_seat_map"\)|\.from\("seats"\)\.insert|\.from\("seats"\)\.delete/);
   }
 });
+
+// Review 2026-09-10, COR-4: the admin overview must size the plan through
+// lib/mapViewport's fitMapWidth — the one place the marker-edge gutter
+// (charged against height only, never width) and the 2026-07-28 clip it
+// prevents are documented and unit-tested — not through an inline
+// re-derivation with its own inset. The property guarded here is the ROUTE:
+// both map surfaces import the helper from lib/mapViewport and call it, and
+// neither carries its own aspect-ratio derivation or its own 16px inset. The
+// margin each surface passes in (inline literal or hoisted variable), the
+// state setter the result lands in, and how the viewer aliases its import are
+// implementation detail and deliberately not pinned (review C8/C21). Each surface is pinned by its
+// IMPORT binding, never by a bare word: the viewer's resolved-width state is
+// itself named `fitMapWidth`, so a word match there held with the helper
+// unused.
+test("admin overview fit goes through fitMapWidth, not an inline re-derivation", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+
+  // The local name the helper is bound to — `fitMapWidth`, or the alias after
+  // `as` — read from the braces of the lib/mapViewport import.
+  function fitMapWidthBinding(source, surface) {
+    const imported = source.match(/import \{([^}]*)\} from "@\/lib\/mapViewport"/);
+    assert.ok(imported, `${surface} imports from lib/mapViewport`);
+    const binding = imported[1].match(/\bfitMapWidth\b(?:\s+as\s+(\w+))?/);
+    assert.ok(binding, `${surface} imports fitMapWidth from lib/mapViewport`);
+    return binding[1] ?? "fitMapWidth";
+  }
+
+  for (const [surface, source] of [["SeatMap", seatMapSource], ["ViewerSeatFinder", viewerSource]]) {
+    const binding = fitMapWidthBinding(source, surface);
+    assert.match(source, new RegExp(`\\b${binding}\\(`), `${surface} calls the imported helper (${binding})`);
+    assert.doesNotMatch(source, /clientWidth - 16/, `${surface} carries no inline 16px width inset`);
+    assert.doesNotMatch(source, /clientHeight - 16/, `${surface} carries no inline 16px height inset`);
+    assert.doesNotMatch(source, /availableHeight \* \(MAP_IMAGE_WIDTH \/ MAP_IMAGE_HEIGHT\)/, `${surface} carries no inline aspect derivation`);
+  }
+  assert.match(seatMapSource, /naturalWidth: MAP_IMAGE_WIDTH/);
+});

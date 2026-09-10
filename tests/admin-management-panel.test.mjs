@@ -395,7 +395,12 @@ test("closing the panel is one dirty check: clean Esc closes; dirty Esc asks on 
   const ask = screen.getByRole("alertdialog", { name: "Discard changes to Jane Doe?" });
   assert.ok(ask.className.includes("cds-modal"), "the ask is the asset modal on top of the panel");
   assert.ok(within(ask).getByRole("button", { name: "Keep editing" }).className.includes("cds-btn--secondary"));
+  // PHASE3DS §1.24 (owner ruling 2026-09-05): the dirty-close ask is Keep
+  // editing (secondary) · Discard changes (PLAIN primary) — discarding unsaved
+  // edits is not destruction of data, so never danger. (Audit 2026-09-10 DS-4
+  // proposed danger and was withdrawn against this ruling — REVIEW.md errata.)
   assert.ok(within(ask).getByRole("button", { name: "Discard changes" }).className.includes("cds-btn--primary"), "a plain primary, not danger");
+  assert.ok(!within(ask).getByRole("button", { name: "Discard changes" }).className.includes("cds-btn--danger"));
 
   await act(async () => {
     fireEvent.click(within(ask).getByRole("button", { name: "Keep editing" }));
@@ -682,4 +687,148 @@ test("the page-size select re-pages the log and never strands the reader past th
     fireEvent.change(screen.getByLabelText("Publishes per page"), { target: { value: "50" } });
   });
   assert.equal(rangeText(), "1–12 of 12");
+});
+
+// ---------------------------------------------------------------------------
+// COR-3 (audit 2026-09-10): `busyOp` is ONE shared token. An earlier op that
+// settles after a newer one started must leave the newer op's token alone —
+// otherwise Save's participle and aria-busy drop, and the form unlocks, while
+// the employee write is still in flight.
+//
+// The first test below CONSTRUCTS the overlap. Every click trigger is
+// `disabled={pending}`, so two clicks can only overlap if the second lands
+// before React commits the pending re-render; dispatching both inside one act
+// scope forces that window, which no user reaches by clicking. What it guards
+// is the token semantics (`current === op ? null : current`). The one
+// REACHABLE path — Enter in an open rename field, whose key handler is not
+// disabled by `pending` — is closed by the gate in OptionList's commitRename;
+// the second test proves that through real input.
+// ---------------------------------------------------------------------------
+
+test("an earlier in-flight op settling later leaves a newer op's busy token alone: Save stays busy until ITS write resolves", async () => {
+  let resolveAdopt;
+  let resolveSave;
+  globalThis.__ct.actions.createDepartmentAction = name =>
+    new Promise(resolve => {
+      resolveAdopt = () => resolve({ ok: true, department: option("dept-ops", name) });
+    });
+  globalThis.__ct.actions.updateEmployeeAction = args =>
+    new Promise(resolve => {
+      resolveSave = () => resolve({ ok: true, employee: employee("emp-1", "Jane Doe", { department: "Intake", position: args.position }) });
+    });
+  const props = defaultProps();
+  // Bob's department is on an employee but not in the managed options, so the
+  // Departments tab offers the in-row "Add to list" adopt for it.
+  props.employees[1] = employee("emp-2", "Bob Field", { department: "Ops" });
+  await renderPanel(props);
+
+  await openEditJane();
+  await act(async () => {
+    fireEvent.change(within(panel()).getByLabelText("Position"), { target: { value: "Senior Analyst" } });
+  });
+  // The panel is a dialog over the frame; the tab strip still switches behind it.
+  await act(async () => {
+    fireEvent.click(tab("Departments"));
+  });
+  const adopt = screen.getByRole("button", { name: "Add to list" });
+  // BR-3 withdrawn (REVIEW.md errata): the row is a .sp-list-row on
+  // --sp-background (#ffffff), where tertiary text (#B85C2E) is 4.56:1 — the
+  // tertiary weight PHASE3DS §1.25 specifies stands.
+  assert.ok(adopt.className.includes("cds-btn--tertiary"), "Add to list is tertiary weight");
+  assert.ok(!adopt.className.includes("cds-btn--ghost"));
+  const save = within(panel()).getByRole("button", { name: "Save employee" });
+
+  // Adopt first, then Save, before either pending re-render commits.
+  await act(async () => {
+    fireEvent.click(adopt);
+    fireEvent.click(save);
+  });
+  assert.ok(typeof resolveAdopt === "function" && typeof resolveSave === "function", "both writes are in flight");
+  assert.equal(save.getAttribute("aria-busy"), "true");
+  assert.equal(save.textContent, "Saving…");
+  assert.equal(save.disabled, true);
+  assert.equal(adopt.textContent, "Add to list", "the token names the newest op; the adopt row shows no participle");
+
+  // The ADOPT write settles first; Save's write is still in flight.
+  await act(async () => {
+    resolveAdopt();
+  });
+  await waitFor(() => assert.match(visibleStatus().textContent, /Department Ops added to the managed list\./));
+  assert.equal(save.getAttribute("aria-busy"), "true", "Save stays busy — its own write has not resolved");
+  assert.equal(save.textContent, "Saving…");
+  assert.equal(save.disabled, true);
+  assert.equal(within(panel()).getByLabelText("Position").readOnly, true, "the form stays locked mid-write");
+
+  await act(async () => {
+    resolveSave();
+  });
+  await waitFor(() => assert.match(visibleStatus().textContent, /Jane Doe saved\./));
+  assert.ok(!screen.queryByRole("dialog"), "the panel closes once ITS write lands");
+});
+
+test("Enter in an open rename field while another op is in flight starts nothing: the adopt keeps its token and settles on its own", async () => {
+  let resolveAdopt;
+  const renameCalls = [];
+  globalThis.__ct.actions.createDepartmentAction = name =>
+    new Promise(resolve => {
+      resolveAdopt = () => resolve({ ok: true, department: option("dept-ops", name) });
+    });
+  globalThis.__ct.actions.renameDepartmentAction = async args => {
+    renameCalls.push(args);
+    return { ok: true, from: args.from, to: args.to };
+  };
+  const props = defaultProps();
+  // As above: Bob's "Ops" is on an employee but not in the managed options, so
+  // the Departments tab shows an "Add to list" row beside Intake's managed row.
+  props.employees[1] = employee("emp-2", "Bob Field", { department: "Ops" });
+  await renderPanel(props);
+  await act(async () => {
+    fireEvent.click(tab("Departments"));
+  });
+
+  // Open the rename on the managed Intake row and type a valid new name.
+  const intakeRow = screen.getByTitle("Intake").closest("li");
+  await act(async () => {
+    fireEvent.click(within(intakeRow).getByRole("button", { name: "Rename" }));
+  });
+  const field = screen.getByLabelText("Department name");
+  await act(async () => {
+    fireEvent.change(field, { target: { value: "Client Intake" } });
+  });
+  assert.equal(screen.getByRole("button", { name: "Save" }).disabled, false, "the rename is valid and saveable on its own");
+
+  // Start the adopt on the Ops row with a real click, committed in its own act.
+  const adopt = screen.getByRole("button", { name: "Add to list" });
+  await act(async () => {
+    fireEvent.click(adopt);
+  });
+  assert.ok(typeof resolveAdopt === "function", "the adopt write is in flight");
+  assert.equal(adopt.getAttribute("aria-busy"), "true");
+  assert.equal(adopt.textContent, "Adding…");
+  assert.equal(screen.getByRole("button", { name: "Save" }).disabled, true, "Save is gated by pending");
+
+  // Enter in the field is the one trigger `disabled={pending}` never reaches.
+  await act(async () => {
+    fireEvent.keyDown(field, { key: "Enter" });
+  });
+  assert.equal(renameCalls.length, 0, "Enter while an op is in flight starts no rename");
+  assert.equal(adopt.getAttribute("aria-busy"), "true", "the adopt keeps its token — no second op touched it");
+  assert.equal(adopt.textContent, "Adding…");
+  assert.equal(field.value, "Client Intake", "the row stays in edit with the draft intact");
+
+  // The adopt settles on its own and the list unlocks; the rename is still waiting in the field.
+  await act(async () => {
+    resolveAdopt();
+  });
+  await waitFor(() => assert.match(visibleStatus().textContent, /Department Ops added to the managed list\./));
+  assert.ok(!screen.queryByRole("button", { name: "Add to list" }), "Ops is managed now — no adopt remains");
+  assert.equal(screen.getByRole("button", { name: "Save" }).disabled, false, "Save unlocks once the adopt lands");
+  assert.equal(renameCalls.length, 0);
+
+  // With nothing in flight, the same Enter commits — it was the gate, not a dead key.
+  await act(async () => {
+    fireEvent.keyDown(screen.getByLabelText("Department name"), { key: "Enter" });
+  });
+  await waitFor(() => assert.deepEqual(renameCalls, [{ from: "Intake", to: "Client Intake" }]));
+  await waitFor(() => assert.match(visibleStatus().textContent, /Department renamed to Client Intake\./));
 });

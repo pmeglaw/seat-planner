@@ -30,6 +30,7 @@ import {
   boundingBoxCenter,
   centerScrollTarget,
   clampZoom,
+  fitMapWidth,
   hasPassedPanThreshold,
   panScrollTarget,
   scrollTargetForPoint,
@@ -791,16 +792,22 @@ export function SeatMap({
         setOverviewMapWidth(null);
         return;
       }
-      // The inset used to cancel the viewport's matting padding; with the
-      // matting gone it is the prototype's breathing margin instead, so the
-      // fitted plan never butts flush against the rail or the window edge.
-      const availableWidth = Math.max(1, viewportElement.clientWidth - 16);
-      const availableHeight = Math.max(1, viewportElement.clientHeight - 16);
+      // Same fit as the viewer (ViewerSeatFinder.updateFitMapWidth): a 2px
+      // breathing margin per axis, and the marker-edge gutter charged against
+      // HEIGHT only by fitMapWidth — the inline re-derivation this replaced
+      // took 16px off both axes and under-reserved the room the bottom row of
+      // markers hangs into (COR-4; the 2026-07-28 clip lib/mapViewport.ts
+      // documents). Below the desktop breakpoint only width constrains the
+      // overview, so height is passed as unbounded and cannot bind.
       const desktopOverview = window.matchMedia("(min-width: 1024px)").matches;
-      const nextWidth = desktopOverview
-        ? Math.min(MAP_IMAGE_WIDTH, availableWidth, availableHeight * (MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT))
-        : Math.min(MAP_IMAGE_WIDTH, availableWidth);
-      setOverviewMapWidth(Math.floor(nextWidth));
+      setOverviewMapWidth(
+        fitMapWidth({
+          availableWidth: Math.max(1, viewportElement.clientWidth - 2),
+          availableHeight: desktopOverview ? Math.max(1, viewportElement.clientHeight - 2) : Number.POSITIVE_INFINITY,
+          planRatio: MAP_IMAGE_WIDTH / MAP_IMAGE_HEIGHT,
+          naturalWidth: MAP_IMAGE_WIDTH
+        })
+      );
     }
 
     updateOverviewMapWidth();
@@ -2733,7 +2740,6 @@ export function SeatMap({
         positions,
         zones,
         seatZone: getSeatZone,
-        seatDepartment: seat => seat.employee?.department ?? seat.department ?? "",
         selected: { department, position, zone, status }
       }),
     // departments / positions are derived arrays rebuilt per render; their

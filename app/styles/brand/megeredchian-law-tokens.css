@@ -98,6 +98,10 @@
   --cds-highlight: #FBE8DC;
   --sp-pill-search-fill: #FBE8DC;
   --sp-pill-search-edge: #B85C2E;
+  /* 2026-09-10 audit, BR-1 — the roster's hit row (sp-components.css .sp-roster-row[data-highlight]) paints the
+     STATUS pair, which aliases --cds-support-info (blue 70) and --cds-highlight; it carries the pill pair's values. */
+  --sp-status-search-surface: #FBE8DC;
+  --sp-status-search-mark: #B85C2E;
   /* O3 — Draft family (light): purple 60. On white 5.00, layer-01 4.55, layer-hover-01 4.08,
      the hit tint 4.21 — every fill the ◇ badge lands on clears 3:1. */
   --sp-status-draft-mark: #8A3FFC;
@@ -130,6 +134,10 @@
     /* O2 — hit surface (dark): neutral layer-02 fill, the dark link colour as the edge (5.36:1 on it). */
     --sp-pill-search-fill: #393939;
     --sp-pill-search-edge: #E8A07A;
+    /* 2026-09-10 audit, BR-1 — roster hit row (sp-components.css .sp-roster-row[data-highlight]): as the pill pair;
+       --cds-support-info is blue 50 and --cds-highlight blue 90 here. #E8A07A on #393939 5.36:1. */
+    --sp-status-search-surface: #393939;
+    --sp-status-search-mark: #E8A07A;
     /* O3 — Draft family (dark): purple 40. On #161616 7.70, #393939 4.91, #474747 3.95. */
     --sp-status-draft-mark: #BE95FF;
     --sp-pill-badge: #BE95FF;
@@ -161,6 +169,9 @@
   /* O2 / O3 — as the system-dark block above */
   --sp-pill-search-fill: #393939;
   --sp-pill-search-edge: #E8A07A;
+  /* 2026-09-10 audit, BR-1 — roster hit row (.sp-roster-row[data-highlight]): as the system-dark block above */
+  --sp-status-search-surface: #393939;
+  --sp-status-search-mark: #E8A07A;
   --sp-status-draft-mark: #BE95FF;
   --sp-pill-badge: #BE95FF;
   /* O4 — as the system-dark block above (the bar inherits the O5 role) */

@@ -16,6 +16,7 @@ const {
   parseSeatTextInput,
   parseUuid,
   parseFloorId,
+  parseCoordinate,
   MAX_EMPLOYEE_NAME_LENGTH,
   MAX_PHONE_EXTENSION_LENGTH,
   MAX_EMAIL_LENGTH,
@@ -352,4 +353,20 @@ test("floor id parsing defaults absence to Floor 3 and rejects anything else", (
   assert.deepEqual(parseFloorId("5"), { ok: false, message: "Floor is not valid." });
   assert.deepEqual(parseFloorId(""), { ok: false, message: "Floor is not valid." });
   assert.deepEqual(parseFloorId(3), { ok: false, message: "Floor must be text." });
+});
+
+// COR-2: seats.x / seats.y arrive as numbers the type system no longer vouches
+// for. The render-time clamp (lib/seatMath.ts) would repair NaN to 0 and 7 to
+// 1 — a real seat at the corner — so the boundary refuses instead of coercing.
+test("coordinate parsing accepts only a finite number already inside [0, 1]", () => {
+  for (const value of [0, 1, 0.5]) {
+    assert.deepEqual(parseCoordinate(value, "Seat x"), { ok: true, value });
+  }
+  // Never coerced: a numeric string is rejected, not Number()'d.
+  for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, "0.5", null, undefined]) {
+    assert.deepEqual(parseCoordinate(value, "Seat x"), { ok: false, message: "Seat x must be a number." });
+  }
+  for (const value of [-0.1, 1.1]) {
+    assert.deepEqual(parseCoordinate(value, "Seat y"), { ok: false, message: "Seat y must be between 0 and 1." });
+  }
 });

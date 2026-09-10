@@ -324,6 +324,11 @@ test("snapshot restore: a valid snapshot opens the review, and confirming sends 
   assert.match(sheet.textContent, /1Employees/);
   assert.match(sheet.textContent, /Undo history is cleared\./);
   assert.equal(restoreCalls.length, 0);
+  // DECISIONS D6-c / PHASE3DS §1.28: the restore confirm is the sheet's plain
+  // primary — restore is moderate impact, reviewed, with an export-first escape
+  // hatch. (Audit 2026-09-10 UX-4 proposed danger and was withdrawn pending an
+  // owner ruling — REVIEW.md errata.)
+  assert.ok(screen.getByRole("button", { name: "Restore draft snapshot" }).className.includes("cds-btn--primary"), "the restore confirm is the plain primary");
 
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Restore draft snapshot" }));

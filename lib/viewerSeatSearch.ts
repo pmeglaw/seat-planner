@@ -1,5 +1,6 @@
+import { departmentRowKey, normalizeDepartmentName, seatDepartmentValue } from "@/lib/departments";
 import { floorOf, type FloorId } from "@/lib/floorIds";
-import { FLOORS, floorOfPerson } from "@/lib/floors";
+import { FLOORS, NO_DEPARTMENT_LABEL, floorOfPerson } from "@/lib/floors";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
 // One placeholder for every seat-search input (admin chrome, admin canvas
@@ -52,8 +53,10 @@ const KIND_ORDER: Record<ViewerSearchResultKind, number> = {
   zone: 40
 };
 
-// Kept local (not imported from lib/types): tests/viewer-seat-search.test.mjs
-// transpiles this module standalone, so runtime imports cannot resolve here.
+// A deliberate local mirror of lib/types' STATUS_LABELS, pinned to agree by
+// tests/status-label-source.test.mjs. Not a loader limitation: the test
+// loader resolves runtime `@/` imports (this module already imports
+// lib/floors and lib/departments through it).
 const STATUS_LABELS: Record<SeatStatus, string> = {
   assigned: "Assigned",
   available: "Open",
@@ -63,18 +66,18 @@ const STATUS_LABELS: Record<SeatStatus, string> = {
 
 // Display-only formatting for the identity segments composed into result
 // title/subtitle strings below (seat codes, person names). Mirrors
-// lib/formatName.ts's formatDisplayName/formatSeatCode byte-for-byte — kept
-// local rather than imported because tests/viewer-seat-search.test.mjs
-// transpiles this module standalone via a data: URL, and relative runtime
-// imports cannot resolve from there (verified: Node throws "Invalid relative
-// URL or base scheme is not hierarchical"). Both are exercised indirectly by
+// lib/formatName.ts's formatDisplayName/formatSeatCode byte-for-byte — a
+// deliberate local mirror that predates the test loader's runtime `@/`
+// import resolution (see STATUS_LABELS above). Both are exercised by
 // tests/format-name.test.mjs against the canonical copy; keep these two in
 // sync if that file's formatting rules change.
 //
 // CRITICAL: these must only touch human-visible composed strings (title/
-// subtitle). Search matching above always operates on the raw stored values
-// via matchesQuery/normalizeSearchText — never run a match input through
-// these formatters.
+// subtitle). Search matching always operates on the raw stored values via
+// matchesQuery/normalizeSearchText — department matching additionally sees
+// the normalized spelling (lib/departments, the value the row displays) so a
+// query typed either way hits, but the raw value is never replaced — and no
+// match input is ever run through these formatters.
 function formatDisplayNameLocal(name: string | null | undefined): string {
   if (!name) return "";
   const trimmed = name.trim();
@@ -123,16 +126,17 @@ function getSeatEmployee(seat: SeatWithEmployee, employeeById: Map<string, Emplo
   return null;
 }
 
-function getSeatDepartment(seat: SeatWithEmployee, employeeById: Map<string, Employee>) {
-  // Departments belong to people. seats.department is legacy zone data
-  // (pre-007 pod names resurrected by snapshot restores) and must never be
-  // displayed or aggregated as a department (audit finding E1).
+// The palette accepts seats whose employee join is unresolved (employee null,
+// employee_id set — pinned by tests/viewer-seat-search.test.mjs), so the
+// occupant is resolved through the directory first. The department rule
+// itself is NOT re-derived here: lib/departments' seatDepartmentValue (the
+// occupant's department, normalized, never seats.department — audit finding
+// E1) is the one definition the chip counts, the filter predicate and this
+// palette share, so a row and its chip agree to the character (review
+// 2026-09-10, C3).
+function withOccupant(seat: SeatWithEmployee, employeeById: Map<string, Employee>): SeatWithEmployee {
   const employee = getSeatEmployee(seat, employeeById);
-  return normalizeDisplayText(employee?.department) ?? "No department";
-}
-
-function getSeatPerson(seat: SeatWithEmployee, employeeById: Map<string, Employee>) {
-  return getSeatEmployee(seat, employeeById);
+  return employee === seat.employee ? seat : { ...seat, employee };
 }
 
 function uniqueValues(values: Array<string | null | undefined>) {
@@ -265,23 +269,23 @@ export function buildViewerSeatSearch({
   activeEmployees.forEach(employee => {
     const assignedSeat = assignedSeatByEmployeeId.get(employee.id) ?? null;
     const zone = assignedSeat ? getSeatZone(assignedSeat) : null;
-    if (!matchesQuery(query, [employee.full_name, employee.position, employee.department, employee.phone_extension, assignedSeat?.label, zone])) return;
+    if (!matchesQuery(query, [employee.full_name, employee.position, employee.department, normalizeDepartmentName(employee.department), employee.phone_extension, assignedSeat?.label, zone])) return;
 
     results.push(buildPersonRow(employee, assignedSeat, seats));
   });
 
   seats.forEach(seat => {
-    const employee = getSeatPerson(seat, employeeById);
+    const occupied = withOccupant(seat, employeeById);
+    const employee = occupied.employee;
     const zone = getSeatZone(seat);
-    const department = employee?.department ?? null;
-    if (!matchesQuery(query, [seat.label, seat.status, zone, department, employee?.full_name, employee?.position, employee?.phone_extension])) return;
+    if (!matchesQuery(query, [seat.label, seat.status, zone, employee?.department, seatDepartmentValue(occupied), employee?.full_name, employee?.position, employee?.phone_extension])) return;
 
     results.push({
       id: `seat:${seat.id}`,
       kind: "seat",
       title: formatSeatCodeLocal(seat.label),
       subtitle: employee?.full_name ? formatDisplayNameLocal(employee.full_name) : "Open seat",
-      meta: `${STATUS_LABELS[seat.status]} · ${department ?? "No department"} · ${zone}`,
+      meta: `${STATUS_LABELS[seat.status]} · ${seatDepartmentValue(occupied) ?? NO_DEPARTMENT_LABEL} · ${zone}`,
       seatId: seat.id,
       seatIds: [seat.id],
       status: seat.status,
@@ -289,32 +293,54 @@ export function buildViewerSeatSearch({
     });
   });
 
-  const departmentNames = uniqueValues([
+  // Department rows are named and compared through lib/departments: one row
+  // per departmentRowKey, titled with the first normalized spelling (a managed
+  // option's when one exists — options come first), and every membership test
+  // below IS departmentRowKey — so a spelling that differs only by case or
+  // inner whitespace folds into the row its chip counts it under (review
+  // 2026-09-10, C3). The key reserves "" for "No department": a managed option
+  // or employee string literally spelled that way lands in the reserved row,
+  // titled NO_DEPARTMENT_LABEL, whose members are everyone the chip counts
+  // under that name — the people with no department too, and for seats the
+  // open ones (their seat-row meta already reads "No department") — instead
+  // of only the literal spelling (follow-up A). Blank values still create no
+  // row on their own. Every RAW spelling that folded into a row is kept and
+  // matched alongside the title, so a query typed with the stored inner
+  // whitespace still finds the row, as it finds the person and seat rows.
+  const departmentRows = new Map<string, { title: string; spellings: string[] }>();
+  [
     ...departmentOptions.filter(option => option.active).map(option => option.name),
     ...activeEmployees.map(employee => employee.department)
-  ]);
+  ].forEach(raw => {
+    const title = normalizeDepartmentName(raw);
+    if (!raw || !title) return;
+    const key = departmentRowKey(raw);
+    const row = departmentRows.get(key);
+    if (row) row.spellings.push(raw);
+    else departmentRows.set(key, { title: key ? title : NO_DEPARTMENT_LABEL, spellings: [raw] });
+  });
 
-  departmentNames.forEach(name => {
-    if (!matchesQuery(query, [name])) return;
-    const departmentKey = normalizeSearchText(name);
+  Array.from(departmentRows.entries()).sort(([, left], [, right]) => sortText(left.title, right.title)).forEach(([key, { title, spellings }]) => {
+    if (!matchesQuery(query, [title, ...spellings])) return;
     const departmentPeopleById = new Map<string, Employee>();
     activeEmployees.forEach(employee => {
-      if (normalizeSearchText(employee.department) === departmentKey) departmentPeopleById.set(employee.id, employee);
+      if (departmentRowKey(employee.department) === key) departmentPeopleById.set(employee.id, employee);
     });
     const departmentSeats = seats.filter(seat => {
-      const employee = getSeatEmployee(seat, employeeById);
-      if (employee && employee.active !== false && normalizeSearchText(employee.department) === departmentKey) {
+      const occupied = withOccupant(seat, employeeById);
+      const employee = occupied.employee;
+      if (employee && employee.active !== false && departmentRowKey(employee.department) === key) {
         departmentPeopleById.set(employee.id, employee);
       }
-      return normalizeSearchText(getSeatDepartment(seat, employeeById)) === departmentKey;
+      return departmentRowKey(seatDepartmentValue(occupied)) === key;
     });
 
     if (departmentPeopleById.size === 0 && departmentSeats.length === 0) return;
 
     results.push({
-      id: `department:${normalizeSearchText(name)}`,
+      id: `department:${normalizeSearchText(title)}`,
       kind: "department",
-      title: name,
+      title,
       subtitle: "Department",
       meta: `${countLabel(departmentPeopleById.size, "person")} · ${countLabel(departmentSeats.length, "seat")}`,
       seatId: departmentSeats.length === 1 ? departmentSeats[0].id : null,

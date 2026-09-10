@@ -8,8 +8,9 @@ import type {
   SeatWithEmployee,
   ZoneOption
 } from "./types";
+import { departmentRowKey, normalizeDepartmentName, seatDepartmentValue } from "@/lib/departments";
 import { FLOOR_IDS, floorOf } from "@/lib/floorIds";
-import { FLOORS, floorOfPerson, floorTag, listFloors, peopleOnFloor } from "@/lib/floors";
+import { FLOORS, NO_DEPARTMENT_LABEL, floorOfPerson, floorTag, listFloors, peopleOnFloor } from "@/lib/floors";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 export const ASK_PLANNER_DEFAULT_MODEL = "gpt-5.5";
@@ -198,10 +199,20 @@ function getSeatZoneLabel(seat: SeatWithEmployee) {
   return getSeatZone(seat) || "Unzoned";
 }
 
-function getSeatDepartment(seat: SeatWithEmployee) {
-  // seats.department is legacy zone data — never a person's department (E1).
-  return seat.employee?.department ?? null;
-}
+// A seat's department is lib/departments' seatDepartmentValue — the
+// occupant's, normalized, never seats.department (E1) — and every department
+// row, bucket and filter here is keyed by lib/departments' departmentRowKey:
+// case- and whitespace-insensitive, with "" reserved for "no department" —
+// null, blank, and the literal NO_DEPARTMENT_LABEL spelling alike (a managed
+// option or employee string spelled "No department" would otherwise key to
+// "no department" and fork a second row under the same label). The admin chip
+// (lib/viewerFilterGroups), the filter predicate (lib/seatFilters), the Find
+// palette (lib/viewerSeatSearch) and the roster (lib/floors) key on that same
+// function, so the model and those surfaces agree about who is in a
+// department, the reserved row included (review 2026-09-10, C3 and follow-up
+// A). A `department` argument of "No department" means "with no department"
+// to search_seats / list_people — for seats that includes the open ones
+// unless `occupied` narrows.
 
 function hasEmployee(seat: SeatWithEmployee) {
   return Boolean(seat.employee_id || seat.employee);
@@ -214,7 +225,7 @@ function seatSearchText(seat: SeatWithEmployee) {
     seat.status,
     floorTag(floorOf(seat)),
     getSeatZone(seat),
-    getSeatDepartment(seat),
+    seatDepartmentValue(seat),
     seat.employee?.full_name,
     seat.employee?.position,
     seat.employee?.department
@@ -229,6 +240,7 @@ function employeeSearchText(employee: Employee, assignedSeat: SeatWithEmployee |
     employee.full_name,
     employee.position,
     employee.department,
+    normalizeDepartmentName(employee.department),
     assignedSeat?.label,
     assignedSeat ? getSeatZone(assignedSeat) : null
   ]
@@ -268,6 +280,15 @@ function limitArg(args: Record<string, unknown>, defaultLimit = 12) {
   return clamp(typeof args.limit === "number" ? args.limit : defaultLimit, 1, MAX_TOOL_RESULT_ITEMS);
 }
 
+// The `department` tool argument: null when absent or "all" (no filter),
+// otherwise the row key to match — "" selects the reserved no-department row.
+function departmentFilterArg(args: Record<string, unknown>): string | null {
+  const value = stringArg(args, "department");
+  if (!value) return null;
+  const key = departmentRowKey(value);
+  return key === "all" ? null : key;
+}
+
 function formatSeat(seat: SeatWithEmployee) {
   return {
     id: seat.id,
@@ -278,7 +299,7 @@ function formatSeat(seat: SeatWithEmployee) {
     floorLabel: FLOORS[floorOf(seat)].label,
     status: seat.status,
     zone: getSeatZone(seat),
-    department: getSeatDepartment(seat),
+    department: seatDepartmentValue(seat),
     employeeName: seat.employee?.full_name ?? null,
     employeePosition: seat.employee?.position ?? null,
     isCustom: Boolean(seat.is_custom),
@@ -339,21 +360,23 @@ export function getMapSummary(context: MapOperationsContext) {
   context.zoneOptions.filter(zone => zone.active).forEach(zone => zoneNames.add(zone.name));
   context.seats.forEach(seat => zoneNames.add(getSeatZoneLabel(seat)));
 
-  // Case-insensitive department rows: managed options first (their spelling
-  // wins), then employee variants fold into the same row instead of forking
-  // into duplicates (E1 — counts must match the employee list).
+  // Department rows keyed by departmentRowKey (case- and whitespace-
+  // insensitive; the reserved "" row, labelled NO_DEPARTMENT_LABEL, for people
+  // with no department — the literal "No department" spelling included):
+  // managed options first (their spelling wins), then employee variants fold
+  // into the same row instead of forking into duplicates (E1 — counts must
+  // match the employee list and the admin chip).
   const departmentRows = new Map<string, string>();
   function departmentRowName(value: string | null | undefined) {
-    const display = (value ?? "").trim() || "No department";
-    const key = normalizeKey(display);
+    const key = departmentRowKey(value);
     const existing = departmentRows.get(key);
     if (existing) return existing;
+    const display = (key && normalizeDepartmentName(value)) || NO_DEPARTMENT_LABEL;
     departmentRows.set(key, display);
     return display;
   }
   context.departmentOptions.filter(department => department.active).forEach(department => departmentRowName(department.name));
   context.employees.forEach(employee => departmentRowName(employee.department));
-  const departmentNames = new Set<string>(departmentRows.values());
 
   return {
     generatedAt: context.generatedAt,
@@ -377,8 +400,8 @@ export function getMapSummary(context: MapOperationsContext) {
       name,
       ...statusCounts(context.seats.filter(seat => getSeatZoneLabel(seat) === name))
     }))),
-    byDepartment: sortByName(Array.from(departmentNames).map(name => {
-      const employees = context.employees.filter(employee => normalizeKey(employee.department || "No department") === normalizeKey(name));
+    byDepartment: sortByName(Array.from(departmentRows.entries()).map(([key, name]) => {
+      const employees = context.employees.filter(employee => departmentRowKey(employee.department) === key);
       const employeeIds = new Set(employees.map(employee => employee.id));
       const assignedSeats = context.seats.filter(seat => seat.employee_id && employeeIds.has(seat.employee_id));
       return {
@@ -397,7 +420,7 @@ export function searchSeats(context: MapOperationsContext, rawArgs: unknown) {
   const status = stringArg(args, "status");
   const floor = stringArg(args, "floor");
   const zone = normalizeKey(stringArg(args, "zone"));
-  const department = normalizeKey(stringArg(args, "department"));
+  const department = departmentFilterArg(args);
   const occupied = nullableBooleanArg(args, "occupied");
   const customOnly = nullableBooleanArg(args, "customOnly");
   const limit = limitArg(args, 12);
@@ -407,7 +430,7 @@ export function searchSeats(context: MapOperationsContext, rawArgs: unknown) {
     if (status && status !== "all" && seat.status !== status) return false;
     if (floor && floor !== "all" && floorOf(seat) !== floor) return false;
     if (zone && zone !== "all" && normalizeKey(getSeatZone(seat)) !== zone) return false;
-    if (department && department !== "all" && normalizeKey(getSeatDepartment(seat)) !== department) return false;
+    if (department !== null && departmentRowKey(seatDepartmentValue(seat)) !== department) return false;
     if (occupied !== null && hasEmployee(seat) !== occupied) return false;
     if (customOnly !== null && Boolean(seat.is_custom) !== customOnly) return false;
     return true;
@@ -424,7 +447,7 @@ export function searchSeats(context: MapOperationsContext, rawArgs: unknown) {
 export function listPeople(context: MapOperationsContext, rawArgs: unknown) {
   const args = parseArgs(rawArgs);
   const query = stringArg(args, "query").toLowerCase();
-  const department = normalizeKey(stringArg(args, "department"));
+  const department = departmentFilterArg(args);
   const assignment = stringArg(args, "assignment") || "all";
   const floor = stringArg(args, "floor");
   const limit = limitArg(args, 12);
@@ -433,7 +456,7 @@ export function listPeople(context: MapOperationsContext, rawArgs: unknown) {
   const matches = context.employees.filter(employee => {
     const assignedSeat = assignments.get(employee.id)?.[0] ?? null;
     if (query && !employeeSearchText(employee, assignedSeat).includes(query)) return false;
-    if (department && department !== "all" && normalizeKey(employee.department) !== department) return false;
+    if (department !== null && departmentRowKey(employee.department) !== department) return false;
     if (assignment === "assigned" && !assignedSeat) return false;
     if (assignment === "unassigned" && assignedSeat) return false;
     // A person's floor is their seat's, else the interim roster floor
@@ -484,9 +507,12 @@ export function getZoneDepartmentBreakdown(context: MapOperationsContext) {
       const departments = new Map<string, SeatWithEmployee[]>();
       const departmentLabels = new Map<string, string>();
       seats.forEach(seat => {
-        const department = seat.employee?.department?.trim() || "Open or no department";
-        const key = normalizeKey(department);
-        const label = departmentLabels.get(key) ?? department;
+        // Open seats and occupants with no department share one row (the
+        // reserved "" key, as in getMapSummary); the first spelling seen
+        // labels every other row.
+        const department = seatDepartmentValue(seat);
+        const key = departmentRowKey(department);
+        const label = departmentLabels.get(key) ?? ((key && department) || "Open or no department");
         departmentLabels.set(key, label);
         const departmentSeats = departments.get(label) ?? [];
         departmentSeats.push(seat);
@@ -882,7 +908,11 @@ function buildReadOnlyTools() {
           status: { type: "string", enum: ["all", "available", "assigned", "reserved", "unavailable"] },
           floor: { type: "string", enum: ["all", ...FLOOR_IDS], description: "Restrict to one floor by id ('3' is Floor 3, '2' is Floor 2), or 'all'." },
           zone: { type: "string" },
-          department: { type: "string" },
+          department: {
+            type: "string",
+            description:
+              "A department name as listed by get_map_summary, 'all' for no filter, or 'No department' for seats/people without one (for seats this includes open seats unless occupied is true)."
+          },
           occupied: { type: ["boolean", "null"] },
           customOnly: { type: ["boolean", "null"] },
           limit: { type: "number" }
@@ -900,7 +930,11 @@ function buildReadOnlyTools() {
         type: "object",
         properties: {
           query: { type: "string" },
-          department: { type: "string" },
+          department: {
+            type: "string",
+            description:
+              "A department name as listed by get_map_summary, 'all' for no filter, or 'No department' for seats/people without one (for seats this includes open seats unless occupied is true)."
+          },
           assignment: { type: "string", enum: ["all", "assigned", "unassigned"] },
           floor: { type: "string", enum: ["all", ...FLOOR_IDS], description: "Restrict to the people who work on one floor by id, or 'all'." },
           limit: { type: "number" }

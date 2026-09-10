@@ -38,6 +38,9 @@ function seat(overrides) {
 }
 const ADA = employee("e1", "Ada Lovelace", "Litigation", "Attorney");
 const GRACE = employee("e2", "Grace Hopper", "Corporate", "Paralegal");
+// C-03 and D-04 carry a legacy seats.department but no occupant: departments
+// belong to people (E1; review 2026-09-10, COR-1), so they count under NO
+// department — only Ada (Litigation) and Grace (Corporate) do.
 const FIXTURE = {
   employees: [ADA, GRACE],
   seats: [
@@ -106,7 +109,7 @@ test("'Filters · N' appears once a filter is applied and opens the shell's left
   const trigger = within(row).getByRole("button", { name: "Filters · 1" });
   assert.equal(trigger.getAttribute("aria-controls"), "shell-left-panel");
   assert.equal(trigger.getAttribute("aria-expanded"), "true", "the panel is open");
-  assert.match(within(row).getByText(/seats match/).textContent, /^2 of 4 seats match$/, "the count follows the filter");
+  assert.match(within(row).getByText(/seats match/).textContent, /^1 of 4 seats match$/, "the count follows the filter");
   await act(async () => fireEvent.click(within(row).getByRole("button", { name: "Clear filters" })));
   await flushFrames();
   assert.equal(within(row).queryByRole("button", { name: /^Filters · / }), null);
@@ -119,8 +122,8 @@ test("the four filter groups register with the left panel, in order, with per-fl
   const groups = Array.from(panel.querySelectorAll("fieldset")).map(fieldset => fieldset.querySelector(".sp-filter-group-row").firstChild.textContent);
   assert.deepEqual(groups, ["Department", "Zone", "Status", "Position"]);
   const count = name => within(panel).getByRole("checkbox", { name: new RegExp(`^${name}`) }).closest("label").querySelector(".sp-filter-count").textContent;
-  assert.equal(count("Litigation"), "2");
-  assert.equal(count("Corporate"), "2");
+  assert.equal(count("Litigation"), "1");
+  assert.equal(count("Corporate"), "1");
   assert.equal(count("North Offices"), "1");
   assert.equal(count("Assigned"), "2");
   assert.equal(count("Unavailable"), "0", "zero counts render");
@@ -133,7 +136,7 @@ test("toggling an item filters the map (legend follows), writes ?dept= to the UR
   const panel = await openLeftPanel();
   await act(async () => fireEvent.click(within(panel).getByRole("checkbox", { name: /^Corporate/ })));
   await flushFrames();
-  assert.deepEqual(legendCounts(), { assigned: 1, open: 1, reserved: 0 });
+  assert.deepEqual(legendCounts(), { assigned: 1, open: 0, reserved: 0 });
   assert.equal(window.location.search, "?dept=Corporate");
   assert.ok(within(panel).getByRole("button", { name: "Clear all" }));
   await act(async () => fireEvent.click(within(panel).getByRole("checkbox", { name: /^Corporate/ })));
