@@ -1,0 +1,122 @@
+{
+  "skill_name": "ibm-design-language",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build me an index page for managing API keys in our admin console. There are a few hundred keys, each with a name, owner, scopes, created date, last used, and status (active/expired/revoked). Users need to find keys, revoke several at once, and create new ones. Single HTML file, Carbon look; inline JS is fine for demonstrating selection and states.",
+      "expected_output": "A single HTML file that reads as productive Carbon, built on the token layer and the component layer from assets/ rather than hand-derived CSS: UI shell + page header with one primary 'New key' button; compact data table with sortable headers, multi-select driving a batch bar, expandable rows rather than extra columns, advanced pagination, batch filtering with chips; status shown as icon + label with marks that clear 3:1 on the hovered surface; first-run, no-results, loading, and error states present; contrast checked with the script; zero radius; a short decision log explaining the create-flow container choice and density.",
+      "files": [],
+      "assertions": [
+        "Output is a single self-contained HTML file with embedded CSS and (optionally) inline JS — no external CSS/JS frameworks; a Google Fonts import is acceptable",
+        "Zero border-radius on UI surfaces — only tags/badges may be rounded",
+        "Exactly one primary button on the page (the header's 'New key'); a create dialog's own Create button is the only other primary allowed, and only inside that dialog",
+        "Data table rows are multi-selectable and selection drives a batch action bar that includes Revoke and shows the selected count",
+        "Status column uses two signals — an icon/shape plus a text label, never color alone",
+        "Empty/first-run, no-results, loading, and error states are present in the file, each naming a next step; the empty state keeps column headers and the toolbar CTA in place",
+        "Pagination is present for the few-hundred-row table",
+        "A Carbon token layer (CSS custom properties) and IBM Plex font stack are used, and product CSS references tokens rather than raw hex",
+        "The component CSS is taken from assets/carbon-components.css (cds-* classes) or, if hand-built, the output explains why the asset was not used",
+        "A decision log exists explaining the create-flow container choice and the density choice"
+      ],
+      "notes": ""
+    },
+    {
+      "id": 2,
+      "prompt": "Here's a screen from our tool. Tell me what's off about it and what you'd change: a dashboard with six KPI tiles all the same size and color, each with a drop shadow and rounded corners, three blue buttons in the header ('Export', 'Refresh', 'Create report'), a pie chart with a legend of nine categories, centered paragraph text under each tile explaining the metric, and everything animates on hover.",
+      "expected_output": "A critique in rubric order (hierarchy first: three competing primaries, undifferentiated tiles; then spacing/type: centered body text; then color/depth: shadows and radius are not Carbon, one accent; then polish: hover animation on high-frequency elements, pie with nine categories → bar or direct labels). Each finding names the principle and the fix. Ends with what's working and the single most valuable change. No preference-only notes.",
+      "files": [],
+      "assertions": [
+        "Identifies three same-styled header buttons as competing primaries and prescribes keeping exactly one primary",
+        "Flags rounded corners and drop shadows as off-system for Carbon (flat, square surfaces)",
+        "Flags centered paragraph text — Carbon type is flush left",
+        "Recommends replacing or reworking the nine-category pie chart (bar chart, direct labels, or fewer categories)",
+        "Flags animate-on-hover-everything as motion misuse on high-frequency elements",
+        "Findings are ordered hierarchy-first (hierarchy/actions before color, depth, and polish notes)",
+        "Each finding names the principle behind it and gives a concrete fix (no preference-only notes)",
+        "Ends with what's working and/or names the single most valuable change"
+      ],
+      "notes": "Mostly floor checks: a baseline without the skill passes most of these on general design sense. Keep for regression; don't read as skill value."
+    },
+    {
+      "id": 3,
+      "prompt": "We need a flow for creating a new deployment environment. It has four sections: basics (name, region), networking (VPC, subnets — the user picks from a live list), access (roles and users), and review. Some fields depend on earlier choices. What container should this use in Carbon and how should validation and exit work?",
+      "expected_output": "Reasons through inline/modal/side panel/narrow tearsheet/wide tearsheet/full page and lands on a wide tearsheet with a progress rail (or defends an alternative with evidence); single-column steps; validate on blur with Next gated per step and errors marked on the rail; no close X, Cancel to exit, warning on discarding input; Next becomes Create on the last step; submitting state then navigate or success banner; error notification preserving the form. Notes that Create flows is a community pattern.",
+      "files": [],
+      "assertions": [
+        "Reasons across the container options (modal, side panel, tearsheet narrow/wide, full page) rather than asserting one",
+        "Lands on a wide tearsheet with a progress/step rail, or explicitly defends an alternative against it",
+        "Specifies single-column layout within each step",
+        "Validation on blur with Next gated per step, and step errors marked on the progress rail",
+        "Exit behavior: no close X, Cancel to exit, warning before discarding entered input",
+        "Last step's Next becomes Create; a submitting state is described; on error the form is preserved (error notification), on success navigate or success banner",
+        "Notes that Create flows is a community pattern (not core Carbon)",
+        "Dependent fields: downstream controls are disabled (not hidden) with the reason stated outside the control, and an upstream change that invalidates a downstream selection clears it and says so"
+      ],
+      "notes": ""
+    },
+    {
+      "id": 4,
+      "prompt": "Give me the CSS for a status legend in our light-theme ops console: five states — healthy, warning, critical, in progress, not started. Each state is a 16px dot with a text label, and the legend also appears as a column in a data table with row hover on. Use Carbon's own support tokens.",
+      "expected_output": "Rejects color-alone dots: adds a distinct shape or symbol per state (and notes that a constant shape needs a symbol/texture to compensate). Uses Carbon's semantic tokens for fills but explicitly does NOT use $support-warning (yellow 30) or green 50 for the drawn marks, because they fail 3:1 on the hovered row surface (layer-hover-01 #e8e8e8); substitutes yellow 60 / green 60 (or explains the fill-vs-mark split). In progress = blue 70, not started = gray 60, critical = red 60. Shape indicators get outlines. Marks are checked with the contrast script against white, layer-01 and the hover surface, and the output says so.",
+      "files": [],
+      "assertions": [
+        "Refuses to distinguish states by color alone — each state gets a shape or symbol in addition to color",
+        "Explicitly avoids yellow 30 (#f1c21b, $support-warning) as a drawn mark and substitutes a darker yellow grade (60, or 50 with a stated no-hover caveat)",
+        "Explicitly avoids green 50 (#24a148, $support-success) as a drawn mark on hoverable rows and substitutes green 60, citing the hover surface",
+        "Names layer-hover-01 (#e8e8e8) as the surface the marks must be checked against, not white",
+        "Uses gray 60 for 'not started' and blue 70 (info/in-progress) for 'in progress'",
+        "States that the palette was checked with scripts/check_contrast.py (or shows its output) rather than asserting the pairs pass",
+        "Shape indicators are legible without relying on a light fill: either every mark is filled with the accessible grade (yellow 60 / green 60 / orange 60, ≥3:1 on layer-hover-01) and has a distinct shape per state, or light fills (yellow 30, orange 40, green 50) carry an outline of at least 1px at 16px — a hairline edge on a light fill fails; icon indicators need neither"
+      ],
+      "notes": ""
+    },
+    {
+      "id": 5,
+      "prompt": "In our billing settings page, users on the free plan can see the 'Invoice email' and 'Tax ID' fields but can't edit them until they upgrade. The engineer just set both fields to disabled. Is that right?",
+      "expected_output": "No. Disabled components are not announced by screen readers and do not pass contrast, so the user can't read the values they need to see. These fields should be read-only: keyboard-navigable, text at full color passing 4.5:1, not operable. Explains the reason outside the control (inline text or a callout) with the upgrade path as the action — not hidden, since the user is allowed to know the fields exist. Disabled is correct only for something temporarily unavailable pending a user action where the content doesn't need reading. Never convert disabled to read-only merely because the view is read-only, and don't use read-only for content that has no enabled state.",
+      "files": [],
+      "assertions": [
+        "Says disabled is wrong here and prescribes read-only",
+        "Gives the accessibility reason: disabled components are not read by screen readers and do not pass contrast, while read-only keeps text color and 4.5:1 and stays keyboard-navigable",
+        "Rejects hiding the fields, because the user is permitted to know they exist",
+        "Specifies that the reason/upgrade path is explained outside the control (inline text, helper text, or a callout), not inside it",
+        "Describes when disabled would be correct (temporarily unavailable pending a user action, content that doesn't need reading)"
+      ],
+      "notes": ""
+    },
+    {
+      "id": 6,
+      "prompt": "Design the hero section for our product's public landing page — headline, one-paragraph subhead, a primary CTA, and a product screenshot. Carbon/IBM look. Single HTML file with CSS.",
+      "expected_output": "Recognizes an expressive surface and uses the fluid (expressive) type set — fluid-heading-05 / fluid-display-04 class sizes that change per breakpoint, with weight dropping to 300 as size grows — rather than the fixed productive set. Generous scale and air on the 2x grid, one deliberate full-bleed moment at most, headline flush left over two or three lines, sentence case, Plex Sans (Serif optional for an editorial moment), Blue 60 as the single accent, zero radius, fixed-width button with 64px right padding or a fluid button hugging an edge. No productive-density chrome (no data table, no 32px controls). Does not confuse expressive with decorative — no gradients or glows.",
+      "files": [],
+      "assertions": [
+        "Identifies the surface as expressive (marketing/landing) rather than productive, explicitly or by choices",
+        "Headline uses the fluid/expressive type scale with sizes that change at breakpoints (media queries or clamp) and a Light (300) weight at the largest sizes",
+        "Headline and body are flush left, sentence case; nothing longer than two lines is centered",
+        "Exactly one primary CTA in Blue 60; any secondary link is tertiary or ghost",
+        "Zero border-radius; no drop shadows, gradients or glows used as decoration",
+        "At most one full-bleed or container-free moment, and spacing values come from the 8px scale",
+        "Does not import productive-density patterns (data tables, 32px compact controls) into the hero",
+        "No product UI shell (48px Gray 100 header with utility icons) on the marketing page, and Blue 60 appears only on the action and links — not as a decorative accent, rule, or background"
+      ],
+      "notes": "Type/CTA/radius assertions are floor checks the baseline also passes; the shell-header and Blue-60-restraint assertion is the discriminator."
+    },
+    {
+      "id": 7,
+      "prompt": "Product wants a 'Quick add user' modal on the Users page with: first name, last name, email, role dropdown, team dropdown, send-invite toggle, and a free-text notes field. Please give me the modal spec with all seven fields.",
+      "expected_output": "Pushes back on the brief before speccing: seven inputs exceeds Carbon's modal limit (fewer than five inputs, never more than four fields or any scrolling). Reframes: either cut to the minimum for 'quick add' (email + role, maybe name) and keep the modal, or move the full seven-field form to a side panel (more than five inputs; the Users list behind it is useful context). Recommends one of the two with reasoning, notes what's optional and marks the minority, buttons at the bottom named for the result ('Add user' / 'Send invite', not 'Submit'), and notes the modal must not nest a confirmation. Records the deviation from the brief in a one-paragraph decision log.",
+      "files": [],
+      "assertions": [
+        "Does not simply deliver a seven-field modal; explicitly states the modal field limit (fewer than five / never more than four with scrolling) and that the brief violates it",
+        "Offers a reframe: reduce the fields to keep the modal, or move the form to a side panel (or tearsheet) — and recommends one with reasons",
+        "If a side panel is recommended, notes that the page behind it stays useful and the panel has no close X (Cancel exits)",
+        "States Carbon's modal input limit as a number (fewer than five inputs / no more than four fields, no scrolling) and counts the brief's seven against it",
+        "Marks the minority of fields (required or optional) rather than both",
+        "Notes that a modal must not open a nested confirmation modal",
+        "Includes a short decision log recording the deviation from the brief and what evidence would reopen it"
+      ],
+      "notes": ""
+    }
+  ],
+  "summary": "7 evals, 53 assertions. Baseline (no skill) passes ~20 of the original 51 — those are floor/regression checks concentrated in evals 2 and 6. Discriminators: evals 1 (component asset), 3, 4, 5, 7."
+}

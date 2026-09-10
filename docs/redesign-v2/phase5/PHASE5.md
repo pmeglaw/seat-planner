@@ -589,6 +589,7 @@ the value O5 replaces (fails 3:1)" stays as the record of what was replaced, bes
 
 ### Carried, not fixed
 
+- **2026-09-10 — Agent design-system chore:** added the `AGENTS.md` design-system section, vendored `ibm-design-language` 1.3.0, corrected the `CLAUDE.md` vendored-skills sentence and, with owner approval, replaced its stale free-form design paragraph with a pointer to `AGENTS.md`; docs-only, no tag.
 - **`npm run test:e2e:auth` still needs `npx supabase db reset --no-seed` between runs** — PR 2's note, unchanged.
 - **`--cds-interactive` (#B85C2E, all blocks) has dark consumers under 3:1** — measured 2026-09-10: the pinned zone
   chip's border (`ViewerFindPalette.tsx:426`, `--sp-interactive` on `--sp-layer-hover` #333333) **2.77**; the map's
