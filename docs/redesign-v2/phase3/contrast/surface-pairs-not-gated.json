@@ -66,15 +66,9 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · nav current / menu [aria-current] / palette-row bar terracotta on layer-selected #393939 — carried — dark --cds-border-interactive consumers, owner ruling pending",
+  "name": "dark · nav / menu / palette bar terracotta on layer-selected #393939 — the value O5 replaces (fails 3:1)",
   "fg": "#b85c2e",
   "bg": "#393939",
-  "kind": "graphic"
- },
- {
-  "name": "dark · AI border start terracotta on the hovered label layer-hover-01 #333333 — carried — dark --cds-border-interactive consumers, owner ruling pending",
-  "fg": "#b85c2e",
-  "bg": "#333333",
   "kind": "graphic"
  },
  {

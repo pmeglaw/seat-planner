@@ -14,6 +14,7 @@ through it, and a contradiction becomes a dated amendment or a question — neve
 | PR 2 | Reception's narrow frame: the readout splits by job, the answer pins under the search | v2.2.0 | **merged 2026-09-09** — #526 squashed as `740fd57`, tagged `v2.2.0`, production READY at that SHA; pre-merge smoke 67/67 on `763d489` |
 | PR 3 | The names-off marker becomes ● in the footprint: one status-mark language on the plan | v2.3.0 | **merged 2026-09-09** — #527 squashed as `bedecbb`, tagged `v2.3.0`, production READY at that SHA; CI green on `6efe9d6`, read-only preview walk 8/8 (step 6 N/A) on `2f7e262` |
 | PR 4 | Reception's locked row gets its own surface (O4), and 24 between the readout's groups (amendment K) | v2.4.0 | **merged 2026-09-10** — #528 squashed as `365dc7f`, tagged `v2.4.0`; CI green on `d71a450`; read-only walk 18/18 on a local build of the head with the preview artifact proven via share link (owner could not sign in; owner ruling: merge) |
+| PR 5 | Dark interactive edges carry the hue: `--cds-border-interactive` is #E8A07A in the two dark blocks (O5) | v2.5.0 | **in review** — branch `claude/caveman-mode-ilivrg`; owner ruling "flip it" 2026-09-10; static contrast 214/214; the Docker-bound tiers (e2e-auth, runtime audit, the PR 5 and PR 4 rigs) run on the owner's machine before the smoke hand-off |
 
 ---
 
@@ -496,7 +497,8 @@ stands; both copies, byte-identical. Measured at 1920, both themes: band→tail 
   **Not fixed in PR 4** — a brand-layer question for the owner: either `--cds-border-interactive` goes #E8A07A in
   the two dark blocks (one line; every consumer follows — O2's dark-edge shape), or each failing consumer is themed
   like O4. The two failing surfaces are in `surface-pairs-not-gated.json` labelled "carried — dark
-  --cds-border-interactive consumers, owner ruling pending". No DECISIONS entry until ruled.
+  --cds-border-interactive consumers, owner ruling pending". No DECISIONS entry until ruled. **→ fixed in PR 5
+  (v2.5.0, O5): the one-line flip; the two pairs are gated at #E8A07A.**
 - **`phase4/audit/pr5-smoke.mjs` asserts the locked bar is terracotta** — true in light, no longer in dark. phase4/
   is closed record (PR 3 ruling A); not run for this slice.
 - **The local `next start` console still carries the Speed Insights 404s and the MIME refusal** — PR 2's note,
@@ -523,3 +525,96 @@ the cursor row; the locked row is hittable under the pinned band at every width 
 `rgb(184, 92, 46)` 3px inset, links light `rgb(143, 69, 33)` / dark `rgb(232, 160, 122)`, locked row
 `rgb(251, 232, 220)` / `rgb(82, 82, 82)`, row bar `rgb(184, 92, 46)` / `rgb(232, 160, 122)`; no `#0f62fe` outside
 `carbon-tokens.css`. The Vercel preview walk is the reviewer's.
+
+---
+
+## PR 5 — dark interactive edges carry the hue
+
+**Plan of record:** `phase5/plans/phase5-pr5-dark-interactive-edges.md` (hand-off: `phase5-pr5-dark-interactive-edges-HANDOFF.md`,
+reviewer Cowork, 2026-09-10).
+**Ruling landed:** brand ruling **O5** (owner, 2026-09-10, "flip it") — recorded inside DECISIONS §6 no. 16 and in D3-g's
+open item; the §6 header carries one line, **next free stays 19**.
+**Skill fingerprint:** `f997ee525800e755`, verified before reading anything.
+
+### What the slice is
+
+PR 4's reviewer ruling B measured every dark consumer of `--cds-border-interactive` on its real host with the skill's
+checker: the brand file set the role to terracotta #B85C2E in all three theme blocks, and terracotta cannot reach the
+3:1 graphic floor on the dark greys the panels are made of. R5 had fixed the Reception row bar alone, by a per-consumer
+override. The owner was shown the enumeration (the vendored Carbon sheet does not reference the role; `--cds-focus`,
+`--cds-interactive` and the `--cds-button-*` roles are separate and untouched) and chose the **one-line flip** over
+per-consumer overrides: `--cds-border-interactive: #E8A07A` in the two dark blocks only. Light keeps #B85C2E. It matches
+O2's existing dark rule ("the edge carries the hue") and gives dark one coherent statement — apricot for interactive
+edges and links, terracotta for filled primaries — where per-consumer overrides would say the same thing seven times and
+leave the eighth consumer to fail. PR 4's dark `--sp-recep-row-bar: #E8A07A` retires: the bar inherits the role through
+`sp-tokens.css`. No `.tsx`, no sheet, no `sp-tokens.css` change.
+
+| consumer | dark host | was #B85C2E | now #E8A07A |
+|---|---|---|---|
+| `--sp-nav-current-bar` (`.sp-left-nav a[aria-current]`) | layer-selected-01 #393939 | **2.53** | 5.36 |
+| `.sp-menu button[aria-current]` bar | layer-selected #393939 | **2.53** | 5.36 |
+| `.sp-palette-row[aria-selected] / [aria-current]` bar | layer-selected #393939 | **2.53** | 5.36 |
+| `--sp-ai-border-start` on the hovered `.sp-ai-label` | layer-hover-01 #333333 | **2.77** | 5.86 |
+| `--sp-ai-border-start` at rest / `.sp-textarea--ai` · `.sp-menu-button[aria-expanded]` rule | layer-01 / field-01 #262626 | 3.32 | 7.02 |
+| `--sp-tab-bar` | `--sp-tabs-bg` = background #161616 | 3.97 | 8.39 |
+| `--sp-recep-row-bar` (PR 4's override, now inherited) | #525252 / #333333 / #393939 | — | 3.62 / 5.86 / 5.36 |
+
+Light: terracotta 3.7–4.6 on its surfaces, unchanged.
+
+### Engineering calls the code forced, one line each
+
+- The brand file is the only file whose value changes: the role is aliased from `sp-tokens.css` (byte-locked) by every
+  consumer, so one declaration per dark block is the whole fix.
+- Both dark blocks carry the value (the source test walks the system-dark `@media` block and the forced `g100` block).
+- The O4 bar override comes out rather than staying as a no-op: two declarations of one value would be the "per-consumer"
+  shape the owner declined, and the source test now pins its absence.
+- `--cds-interactive` stays #B85C2E: it is a fill role (switch / checkbox on), not an edge; its own dark consumers are
+  measured and listed under Carried, not flipped in this slice.
+- The static gate measured blue for the dark AI border start (`P.b50`) — ruling A's stale-blue shape, retargeted to the
+  real value as PR 4 did for the row bar; the dark tab-bar pair follows the value it now paints.
+
+### Contrast
+
+Regenerated with `generate-pairs.mjs`, checked with the skill's `check_contrast.py --pairs` (surfaces: #393939, #333333,
+#262626, #161616, #525252):
+
+```
+product-pairs.json: 214 pairs · surface-pairs-not-gated.json: 16 pairs
+214/214 pass
+```
+
+Gated: the two ruling-B rows at #E8A07A (5.36 / 5.86), the dark AI border start / menu-button open rule on #262626
+(7.02), the dark tab bar (8.39); the PR 4 Reception pairs are unchanged in value. Not gated: "terracotta on #393939 —
+the value O5 replaces (fails 3:1)" stays as the record of what was replaced, beside PR 4's #525252 row.
+
+### Carried, not fixed
+
+- **`npm run test:e2e:auth` still needs `npx supabase db reset --no-seed` between runs** — PR 2's note, unchanged.
+- **`--cds-interactive` (#B85C2E, all blocks) has dark consumers under 3:1** — measured 2026-09-10: the pinned zone
+  chip's border (`ViewerFindPalette.tsx:426`, `--sp-interactive` on `--sp-layer-hover` #333333) **2.77**; the map's
+  clear-result button hover border (`SeatMap.tsx:2611`, on a terracotta-alpha fill); the login dot-pulse halo
+  (`globals.css:149`, decorative). A fill role by name, an edge on those two `.tsx` consumers — out of PR 5's scope
+  (hand-off §5); an owner question for a later slice.
+- **`--sp-ai-border-end` (tier-C, #B85C2E, theme-invariant)** is the AI gradient's end stop: 2.77 on the hovered label
+  #333333, 3.32 at rest. The record already treats the gradient's low stop as not gated ("the label carries meaning");
+  listed here so the next slice sees it beside the `--cds-interactive` rows.
+- **`phase4/audit/pr5-smoke.mjs` asserts a terracotta locked bar** — closed record (PR 3 ruling A); not run.
+- **The local `next start` console** — PR 2's note, unchanged.
+
+### Verification, on the final head
+
+Run in the build session (no Docker, Playwright Chromium — the Docker-bound tiers are the owner's, below):
+unit **1488/1489** (1 skipped, 0 fail) · ct **337/337** · browser **26/26** · e2e smoke **36/36** on a `next build` of
+the head · static contrast **214/214** (`generate-pairs.mjs` + the skill's `check_contrast.py --pairs`; surfaces #393939,
+#333333, #262626, #161616, #525252) · `phase4-token-layer-source` 14/14 (the brand test now pins #B85C2E light /
+#E8A07A dark for the border role, `--cds-interactive` and `--cds-focus` #B85C2E in all three blocks, and the absence
+of the O4 bar override in both dark blocks) · lockstep byte-identical (`git diff main -- app/styles/sp-components.css
+app/styles/sp-tokens.css app/styles/carbon-*.css` empty) · `git diff --stat main -- docs/redesign-v2/phase4` empty ·
+`git grep 0f62fe` hits only `carbon-tokens.css` · typecheck clean · lint 0 errors (84 pre-existing warnings).
+
+**Owed before the smoke hand-off, on the owner's machine (Docker + real Chrome):** `npm run test:e2e:auth`;
+`phase4/audit/runtime-audit.mjs` (0 undefined `var()`); the PR 5 rig `phase5/audit/pr5-dark-edges.mjs` (dark
+`rgb(232, 160, 122)` / light `rgb(184, 92, 46)` on the five consumers, primary / focus / `--cds-interactive` still
+`rgb(184, 92, 46)`, crops into `screenshots/phase5-pr5/`); the PR 4 rig once at 1920 × both themes (Reception's bar
+unchanged after the override is retired); the brand checklist in dark. Then PR → CI → a read-only preview walk in
+dark (nav, floor menu, palette, tabs, Reception locked row) → owner's "merge" → v2.5.0.

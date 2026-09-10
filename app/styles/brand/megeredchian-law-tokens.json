@@ -9,11 +9,11 @@
     "terracotta": {
       "value": "#B85C2E",
       "rgb": "184,92,46",
-      "usage": "Primary UI",
+      "usage": "Primary UI (interactive borders in light only — dark borders are terracottaDarkLink, O5)",
       "wcag": "4.56:1 AA PASS on white",
       "carbon": [
         "--cds-button-primary",
-        "--cds-border-interactive",
+        "--cds-border-interactive (light)",
         "--cds-ai-border-strong"
       ]
     },
@@ -39,7 +39,7 @@
     },
     "terracottaDarkLink": {
       "value": "#E8A07A",
-      "usage": "Links on dark; search hit edge on the dark pill fill — O2"
+      "usage": "Links on dark; search hit edge on the dark pill fill — O2; every interactive border and bar on dark via --cds-border-interactive — O5"
     }
   },
   "carbonMapping": {
@@ -61,12 +61,12 @@
     },
     "g100": {
       "--cds-button-primary": "#B85C2E",
+      "--cds-border-interactive": "#E8A07A",
       "--cds-link-primary": "#E8A07A",
       "--cds-ai-border-strong": "#B85C2E",
       "--sp-pill-search-fill": "#393939",
       "--sp-pill-search-edge": "#E8A07A",
       "--sp-recep-row-locked": "#525252",
-      "--sp-recep-row-bar": "#E8A07A",
       "--sp-status-draft-mark": "#BE95FF",
       "--sp-pill-badge": "#BE95FF"
     }

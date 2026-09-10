@@ -104,7 +104,7 @@ marks(gated, "dark", { name: "error mark red-50 (invalid-target edge on error-su
 add(gated, "dark · text-primary gray-10 on error-subtle / success-subtle #262626", P.g10, P.g90, "text");
 marks(gated, "dark", { name: "warning mark yellow-30", hex: P.y30 }, "graphic", [D.bg, D.l1, D.hover]);
 marks(gated, "dark", { name: "AI label text blue-40", hex: P.b40 }, "text", [D.bg, D.l1, D.hover]);
-add(gated, "dark · AI border start blue-50 on field #262626", P.b50, P.g90, "graphic");
+add(gated, "dark · AI border start / menu-button open rule #E8A07A on field #262626 (O5; was measured as blue-50)", BRAND.darkLink, P.g90, "graphic");
 add(gated, "dark · kbd shortcut hint text-secondary gray-30 on field-01 #262626", P.g30, P.g90, "text");
 add(gated, "dark · names-off ● gray-10 on the footprint layer-02 #393939", P.g10, P.g80, "graphic");
 add(gated, "dark · names-off quiet ● gray-30 on the quiet fill layer-01 #262626", P.g30, P.g90, "graphic");
@@ -133,7 +133,7 @@ add(gated, "light · text-on-color white on danger red-60", P.white, P.r60, "tex
 add(gated, "dark · seat link blue-40 on table row layer-01 #262626", P.b40, P.g90, "text");
 add(gated, "dark · seat link hover blue-30 on layer-hover-01 #333333", P.b30, P.hoverG90, "text");
 add(gated, "dark · Reception row bar #E8A07A on the cursor row layer-hover-01 #333333 (O4 / R5; was measured as blue-50)", BRAND.darkLink, P.hoverG90, "graphic");
-add(gated, "dark · tab bar terracotta on the tabs host (background #161616; --sp-tabs-bg)", BRAND.terracotta, P.g100, "graphic");
+add(gated, "dark · tab bar #E8A07A on the tabs host (background #161616; --sp-tabs-bg; O5 — terracotta measured 3.97)", BRAND.darkLink, P.g100, "graphic");
 add(gated, "dark · tab hover bar gray-60 on background #161616", P.g60, P.g100, "graphic");
 add(gated, "dark · tab text gray-30 on the sticky strip (background #161616)", P.g30, P.g100, "text");
 add(gated, "dark · count card / readout numeral gray-10 on layer-01 #262626", P.g10, P.g90, "text");
@@ -142,9 +142,10 @@ add(gated, "dark · Reception locked row text gray-10 on layer-selected-02 #5252
 add(gated, "dark · Reception locked row meta gray-30 on layer-selected-02 #525252 (O4; was layer-selected #393939)", P.g30, P.g70, "text");
 add(gated, "dark · Reception row bar #E8A07A on the locked layer-selected-02 #525252 (O4 / R5)", BRAND.darkLink, P.g70, "graphic");
 add(notGated, "dark · Reception row bar terracotta on layer-selected-02 #525252 — the value R5 replaces (fails 3:1)", BRAND.terracotta, P.g70, "graphic");
-// Ruling B: the other dark --cds-border-interactive consumers, measured and carried — not gated, not fixed here.
-add(notGated, "dark · nav current / menu [aria-current] / palette-row bar terracotta on layer-selected #393939 — carried — dark --cds-border-interactive consumers, owner ruling pending", BRAND.terracotta, P.g80, "graphic");
-add(notGated, "dark · AI border start terracotta on the hovered label layer-hover-01 #333333 — carried — dark --cds-border-interactive consumers, owner ruling pending", BRAND.terracotta, P.hoverG90, "graphic");
+// O5 (Phase 5 PR 5, owner ruling 2026-09-10): --cds-border-interactive is #E8A07A on dark — PR 4's ruling-B carry-overs, now gated.
+add(gated, "dark · nav current / menu [aria-current] / palette-row bar #E8A07A on layer-selected #393939 (O5)", BRAND.darkLink, P.g80, "graphic");
+add(gated, "dark · AI border start #E8A07A on the hovered label layer-hover-01 #333333 (O5)", BRAND.darkLink, P.hoverG90, "graphic");
+add(notGated, "dark · nav / menu / palette bar terracotta on layer-selected #393939 — the value O5 replaces (fails 3:1)", BRAND.terracotta, P.g80, "graphic");
 add(gated, "dark · danger ghost text red-40 on layer-02 #393939 (side panel)", P.r40, P.g80, "text");
 add(gated, "dark · danger ghost text red-40 on layer-01 #262626 (inspector)", P.r40, P.g90, "text");
 add(gated, "dark · text-on-color white on danger red-60", P.white, P.r60, "text");

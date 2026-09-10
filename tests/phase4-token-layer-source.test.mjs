@@ -395,8 +395,13 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
     assert.match(m[1], /--cds-button-primary:\s*#B85C2E/i);
     assert.match(m[1], /--cds-button-primary-hover:\s*#8F4521/i);
     assert.match(m[1], /--cds-focus:\s*#B85C2E/i);
-    assert.match(m[1], /--cds-border-interactive:\s*#B85C2E/i);
+    assert.match(m[1], /--cds-interactive:\s*#B85C2E/i, "--cds-interactive is a FILL role — O5 did not flip it");
   }
+  // O5 (Phase 5 PR 5, owner ruling 2026-09-10): interactive EDGES carry the hue on dark — the border role is
+  // #E8A07A in the two dark blocks (terracotta measured 2.53 on #393939 / 2.77 on #333333, under the 3:1 graphic
+  // floor on every bar it painted); light keeps terracotta. Focus ring and primary fills stay #B85C2E everywhere.
+  assert.match(css.match(blocks[0])[1], /--cds-border-interactive:\s*#B85C2E/i, "light interactive border is terracotta");
+  for (const re of blocks.slice(1)) assert.match(css.match(re)[1], /--cds-border-interactive:\s*#E8A07A/i, "dark interactive border is the dark link colour (O5)");
   assert.match(css.match(blocks[0])[1], /--cds-link-primary:\s*#8F4521/i, "light links are #8F4521");
   // Carbon's light tertiary is blue 60 — the PR 3a smoke caught Filters · N / Clear / Ask
   // Planner rendering IBM blue on /admin. The brand layer owns that role too (PHASE4BUILD §1.22).
@@ -414,7 +419,7 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
   assert.match(light, /--sp-pill-badge:\s*#8A3FFC/i);
   // O4 (Phase 5 PR 4, owner ruling 2026-09-09): the Reception locked row is the search's hit, so it takes the
   // hit surface — light the O2 tint, dark layer-selected-02; the dark bar carries the hue as O2's dark edge does
-  // (terracotta is 1.71:1 on #525252). Light keeps the terracotta bar through --cds-border-interactive.
+  // (terracotta is 1.71:1 on #525252). Both themes take the bar through --cds-border-interactive (O5).
   assert.match(light, /--sp-recep-row-locked:\s*#FBE8DC/i, "light locked row is the O2 tint (O4)");
   assert.doesNotMatch(light, /--sp-recep-row-bar/i, "light bar stays --cds-border-interactive (terracotta) — no override");
   for (const re of blocks.slice(1)) {
@@ -425,7 +430,7 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
     assert.match(dark, /--sp-status-draft-mark:\s*#BE95FF/i, "dark Draft family is purple 40 (O3)");
     assert.match(dark, /--sp-pill-badge:\s*#BE95FF/i);
     assert.match(dark, /--sp-recep-row-locked:\s*#525252/i, "dark locked row is layer-selected-02, one neutral step above the header (O4)");
-    assert.match(dark, /--sp-recep-row-bar:\s*#E8A07A/i, "dark row bar is the dark link colour — terracotta is 1.71:1 on #525252 (O4 / R5)");
+    assert.doesNotMatch(dark, /--sp-recep-row-bar/i, "dark row bar inherits the role — O5 retired the O4 / R5 override");
   }
   // The neutral defaults stay in sp-tokens.css — the brand file overrides, it does not replace.
   const spTokens = stripCssComments(read("app/styles/sp-tokens.css"));

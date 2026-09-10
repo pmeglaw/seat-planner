@@ -22,7 +22,9 @@
      #FBE8DC + edge #B85C2E (--cds-highlight itself is overridden, light only,
      so every --sp-* alias of it follows). Dark: the fill stays the neutral
      layer-02 #393939 and the EDGE carries the hue in #E8A07A — terracotta on
-     #393939 is 2.53:1, under the 3:1 graphic floor, so it is never a dark edge.
+     #393939 is 2.53:1, under the 3:1 graphic floor. Since O5 the ROLE itself
+     (--cds-border-interactive) carries that dark edge colour; O2 was its first
+     consumer to say so by hand.
    · O3 — the DRAFT FAMILY is Carbon purple (60 light / 40 dark; the header's
      zone-invariant ◇ is purple 40 on gray 100), not the caution orange Phase 3
      chose: orange 60 #ba4e00 is ΔE2000 5.3 / 1.10:1 from the terracotta
@@ -33,11 +35,23 @@
      neutral step above the header's layer-selected-01 (O2's "light tints,
      dark steps neutral" shape). Separates locked from the count header AND
      from the hover / cursor row (layer-hover-01), which sat one ladder rung
-     apart in both themes. The dark ROW BAR moves to #E8A07A with it (R5):
+     apart in both themes. The dark ROW BAR moved to #E8A07A with it (R5):
      terracotta is 1.71:1 on #525252 — under the 3:1 graphic floor (it was
-     already 2.53 on #393939) — the same reason O2 never uses it as a dark
-     edge. DECISIONS D3-g; not a §6 deviation.
-   All three are expressed by overriding the tier-B/tier-C --sp-* tokens directly:
+     already 2.53 on #393939). DECISIONS D3-g; not a §6 deviation. The R5
+     override itself is retired by O5 — the bar inherits the role.
+   Phase 5 PR 5 addition (owner ruling 2026-09-10, "flip it"):
+   · O5 — DARK INTERACTIVE EDGES carry the hue: --cds-border-interactive is
+     #E8A07A in the two dark blocks (light keeps #B85C2E). PR 4's reviewer
+     measured every consumer of the role on its real dark host: the nav
+     current bar, the floor menu's and the palette's [aria-current] bars are
+     2.53 on layer-selected #393939; the hovered AI label's border start is
+     2.77 on layer-hover-01 #333333 — under the 3:1 graphic floor. At #E8A07A:
+     5.36 / 5.86, 7.02 on #262626 (rest / field), 8.39 on #161616 (tab bar),
+     3.62 on #525252 (Reception's locked row). One value, every consumer
+     follows — apricot for interactive EDGES and links on dark, terracotta
+     for filled primaries, the focus ring and --cds-interactive (a fill role,
+     untouched). DECISIONS §6 no. 16 amended; not a new deviation.
+   O2–O4 are expressed by overriding the tier-B/tier-C --sp-* tokens directly:
    they alias Carbon STATUS roles (caution, info, highlight) that other kinds
    of status still need, so the roles themselves stay Carbon's.
    ========================================================================== */
@@ -100,7 +114,9 @@
     --cds-button-primary: #B85C2E;
     --cds-button-primary-hover: #8F4521;
     --cds-button-primary-active: #7A3A1C;
-    --cds-border-interactive: #B85C2E;
+    /* O5 — interactive edges carry the hue on dark: 5.36 on #393939 · 5.86 on #333333 · 7.02 on #262626 ·
+       8.39 on #161616 · 3.62 on #525252 (terracotta measured 2.53 / 2.77 / 3.32 / 3.97 / 1.71). */
+    --cds-border-interactive: #E8A07A;
     --cds-interactive: #B85C2E;
     --cds-link-primary: #E8A07A;
     --cds-link-primary-hover: #F5DDD1;
@@ -119,10 +135,10 @@
     --sp-pill-badge: #BE95FF;
     /* O4 — Reception locked row (dark): layer-selected-02, one neutral step above the header's #393939 —
        separation by value, as O2's dark fill. text-primary on #525252 7.10:1; helper-on-row gray-30 4.57:1
-       (AA text). The bar takes the dark link colour (R5): #E8A07A on #525252 3.62:1, on the cursor row
-       #333333 5.86:1, on the header #393939 5.36:1 — terracotta measured 1.71 / 2.77 / 2.53 there. */
+       (AA text). The bar is the dark link colour (R5) — since O5 inherited from --cds-border-interactive
+       through sp-tokens.css, no override here: #E8A07A on #525252 3.62:1, on the cursor row #333333 5.86:1,
+       on the header #393939 5.36:1 — terracotta measured 1.71 / 2.77 / 2.53 there. */
     --sp-recep-row-locked: #525252;
-    --sp-recep-row-bar: #E8A07A;
   }
 }
 
@@ -131,7 +147,7 @@
   --cds-button-primary: #B85C2E;
   --cds-button-primary-hover: #8F4521;
   --cds-button-primary-active: #7A3A1C;
-  --cds-border-interactive: #B85C2E;
+  --cds-border-interactive: #E8A07A;   /* O5 — as the system-dark block above */
   --cds-interactive: #B85C2E;
   --cds-link-primary: #E8A07A;
   --cds-link-primary-hover: #F5DDD1;
@@ -147,9 +163,8 @@
   --sp-pill-search-edge: #E8A07A;
   --sp-status-draft-mark: #BE95FF;
   --sp-pill-badge: #BE95FF;
-  /* O4 — as the system-dark block above */
+  /* O4 — as the system-dark block above (the bar inherits the O5 role) */
   --sp-recep-row-locked: #525252;
-  --sp-recep-row-bar: #E8A07A;
 }
 
 /* -----------------------------------------------------------------------------
