@@ -1,0 +1,14 @@
+# Vercel preview for #528 — fetched 2026-09-10 through a get_access_to_vercel_url share link (Vercel Authentication bypass, 23 h)
+# https://seat-planner-git-feat-phase5-8f6868-patrick-s-projects-c7baae0c.vercel.app
+
+GET /api/build-id
+{"buildId":"e890aac0e662090e867db48981b64c02f2ebd0d7"}
+
+GET /_next/static/immutable/chunks/0pfx8i1rz7w32.css
+      2 --sp-recep-row-bar:#e8a07a
+      2 --sp-recep-row-locked:#525252
+      1 --sp-recep-row-locked:#fbe8dc
+
+GET /_next/static/immutable/chunks/3pox85eyqgue3.css
+      1 .sp-recep-readout{top:calc(var(--sp-shell-header-h) + var(--sp-space-05));padding:var(--sp-space-07);background:var(--sp-background);box-shadow:inset 1px 0 0 var(--sp-border-subtle-00);gap:var(--sp-space-06)
+
