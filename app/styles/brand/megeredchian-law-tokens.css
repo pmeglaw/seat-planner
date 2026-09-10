@@ -27,7 +27,17 @@
      zone-invariant ◇ is purple 40 on gray 100), not the caution orange Phase 3
      chose: orange 60 #ba4e00 is ΔE2000 5.3 / 1.10:1 from the terracotta
      primary — one hue at pill size beside a focus ring. DECISIONS §6 no. 17.
-   Both are expressed by overriding the tier-B/tier-C --sp-* tokens directly:
+   Phase 5 PR 4 addition (owner ruling 2026-09-09, built the same day):
+   · O4 — Reception's LOCKED ROW is the search's hit, so it takes the hit
+     surface: light the O2 tint #FBE8DC; dark layer-selected-02 #525252, one
+     neutral step above the header's layer-selected-01 (O2's "light tints,
+     dark steps neutral" shape). Separates locked from the count header AND
+     from the hover / cursor row (layer-hover-01), which sat one ladder rung
+     apart in both themes. The dark ROW BAR moves to #E8A07A with it (R5):
+     terracotta is 1.71:1 on #525252 — under the 3:1 graphic floor (it was
+     already 2.53 on #393939) — the same reason O2 never uses it as a dark
+     edge. DECISIONS D3-g; not a §6 deviation.
+   All three are expressed by overriding the tier-B/tier-C --sp-* tokens directly:
    they alias Carbon STATUS roles (caution, info, highlight) that other kinds
    of status still need, so the roles themselves stay Carbon's.
    ========================================================================== */
@@ -78,6 +88,10 @@
      the hit tint 4.21 — every fill the ◇ badge lands on clears 3:1. */
   --sp-status-draft-mark: #8A3FFC;
   --sp-pill-badge: #8A3FFC;
+  /* O4 — Reception locked row (light): the O2 tint. text-primary on #FBE8DC 15.23:1; helper-on-row gray-70
+     6.58:1 (AA text); the bar --cds-border-interactive #B85C2E on it 3.84:1 (graphic ≥ 3). The bar itself
+     is not overridden here — light keeps terracotta. */
+  --sp-recep-row-locked: #FBE8DC;
 }
 
 /* DARK — system-dark (no attribute, OS prefers dark) … */
@@ -103,6 +117,12 @@
     /* O3 — Draft family (dark): purple 40. On #161616 7.70, #393939 4.91, #474747 3.95. */
     --sp-status-draft-mark: #BE95FF;
     --sp-pill-badge: #BE95FF;
+    /* O4 — Reception locked row (dark): layer-selected-02, one neutral step above the header's #393939 —
+       separation by value, as O2's dark fill. text-primary on #525252 7.10:1; helper-on-row gray-30 4.57:1
+       (AA text). The bar takes the dark link colour (R5): #E8A07A on #525252 3.62:1, on the cursor row
+       #333333 5.86:1, on the header #393939 5.36:1 — terracotta measured 1.71 / 2.77 / 2.53 there. */
+    --sp-recep-row-locked: #525252;
+    --sp-recep-row-bar: #E8A07A;
   }
 }
 
@@ -127,6 +147,9 @@
   --sp-pill-search-edge: #E8A07A;
   --sp-status-draft-mark: #BE95FF;
   --sp-pill-badge: #BE95FF;
+  /* O4 — as the system-dark block above */
+  --sp-recep-row-locked: #525252;
+  --sp-recep-row-bar: #E8A07A;
 }
 
 /* -----------------------------------------------------------------------------

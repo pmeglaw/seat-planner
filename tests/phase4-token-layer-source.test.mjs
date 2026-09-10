@@ -412,6 +412,11 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
   assert.match(light, /--sp-pill-search-edge:\s*#B85C2E/i);
   assert.match(light, /--sp-status-draft-mark:\s*#8A3FFC/i, "light Draft family is purple 60 (O3)");
   assert.match(light, /--sp-pill-badge:\s*#8A3FFC/i);
+  // O4 (Phase 5 PR 4, owner ruling 2026-09-09): the Reception locked row is the search's hit, so it takes the
+  // hit surface — light the O2 tint, dark layer-selected-02; the dark bar carries the hue as O2's dark edge does
+  // (terracotta is 1.71:1 on #525252). Light keeps the terracotta bar through --cds-border-interactive.
+  assert.match(light, /--sp-recep-row-locked:\s*#FBE8DC/i, "light locked row is the O2 tint (O4)");
+  assert.doesNotMatch(light, /--sp-recep-row-bar/i, "light bar stays --cds-border-interactive (terracotta) — no override");
   for (const re of blocks.slice(1)) {
     const dark = css.match(re)[1];
     assert.doesNotMatch(dark, /--cds-highlight/i, "--cds-highlight is overridden for the LIGHT value only (owner ruling)");
@@ -419,7 +424,13 @@ test("brand layer: terracotta is the primary in all three theme states, blue is 
     assert.match(dark, /--sp-pill-search-edge:\s*#E8A07A/i, "dark hit edge is the dark link colour, not terracotta");
     assert.match(dark, /--sp-status-draft-mark:\s*#BE95FF/i, "dark Draft family is purple 40 (O3)");
     assert.match(dark, /--sp-pill-badge:\s*#BE95FF/i);
+    assert.match(dark, /--sp-recep-row-locked:\s*#525252/i, "dark locked row is layer-selected-02, one neutral step above the header (O4)");
+    assert.match(dark, /--sp-recep-row-bar:\s*#E8A07A/i, "dark row bar is the dark link colour — terracotta is 1.71:1 on #525252 (O4 / R5)");
   }
+  // The neutral defaults stay in sp-tokens.css — the brand file overrides, it does not replace.
+  const spTokens = stripCssComments(read("app/styles/sp-tokens.css"));
+  assert.match(spTokens, /--sp-recep-row-locked:\s*var\(--cds-layer-selected-01\)/, "sp-tokens.css keeps the Carbon-neutral locked default");
+  assert.match(spTokens, /--sp-recep-row-bar:\s*var\(--cds-border-interactive\)/, "sp-tokens.css keeps the Carbon-role bar default");
   assert.doesNotMatch(css, /#ba4e00|#ff832b/i, "the caution orange is not the Draft family any more (O3)");
   assert.doesNotMatch(css, /#d0e2ff|#001d6c/i, "no highlight blue in the brand layer (O2)");
   assert.match(css.match(blocks[2])[1], /--cds-link-primary:\s*#E8A07A/i, "dark links are #E8A07A");
