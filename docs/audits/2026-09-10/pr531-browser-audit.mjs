@@ -68,12 +68,18 @@ for(const theme of ['white','g100','system-light','system-dark']){
       assert.equal(painted.background,dark?'rgb(51, 51, 51)':'rgb(143, 69, 33)');
       assert.equal(painted.focus,dark?'rgb(255, 255, 255)':'rgb(184, 92, 46)');
       assert.equal(painted.width,'2px');assert.equal(painted.offset,'-2px');
+      await page.mouse.down();
+      const activeFill=dark?'rgb(57, 57, 57)':'rgb(122, 58, 28)';
+      await page.waitForFunction(({el,fill})=>getComputedStyle(el).backgroundColor===fill,{el:await button.elementHandle(),fill:activeFill});
+      const active=await button.evaluate(el=>getComputedStyle(el).backgroundColor);
+      assert.equal(active,activeFill);
+      await page.mouse.up();
       // The actual current floor menu item is the selected surface that exposed BR-2.
       const selected=page.locator('[role="menu"] [aria-current]').first();
       await selected.focus();await selected.hover();
       const selectedPaint=await selected.evaluate(el=>{const s=getComputedStyle(el);return {background:s.backgroundColor,focus:s.outlineColor};});
       assert.equal(selectedPaint.focus,painted.focus);
-      results.push({theme,name,...painted,selected:selectedPaint});
+      results.push({theme,name,...painted,active,selected:selectedPaint});
     }else{
       const bg=await page.locator('[role="status"]').first().evaluate(el=>getComputedStyle(el).backgroundColor);
       const chrome=page.locator('.sp-zone-chrome');

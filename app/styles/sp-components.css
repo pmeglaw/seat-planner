@@ -1234,3 +1234,7 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
   color: var(--sp-text-primary);
   background: var(--sp-background);
 }
+
+/* BR-2 owner amendment 2026-09-10: Carbon omits the tertiary pressed rule.
+   Consume the governed active host without changing weight or focus geometry. */
+.cds-btn--tertiary:active { background: var(--sp-button-tertiary-active); color: var(--sp-text-on-color); }
