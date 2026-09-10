@@ -60,6 +60,24 @@
   "kind": "graphic"
  },
  {
+  "name": "dark · Reception row bar terracotta on layer-selected-02 #525252 — the value R5 replaces (fails 3:1)",
+  "fg": "#b85c2e",
+  "bg": "#525252",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · nav current / menu [aria-current] / palette-row bar terracotta on layer-selected #393939 — carried — dark --cds-border-interactive consumers, owner ruling pending",
+  "fg": "#b85c2e",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · AI border start terracotta on the hovered label layer-hover-01 #333333 — carried — dark --cds-border-interactive consumers, owner ruling pending",
+  "fg": "#b85c2e",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
   "name": "light · callout edge gray-50 on layer-01 (a decorative edge on a non-interactive, no-status container — no 3:1 obligation)",
   "fg": "#8d8d8d",
   "bg": "#f4f4f4",

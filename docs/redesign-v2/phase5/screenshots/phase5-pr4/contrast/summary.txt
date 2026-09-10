@@ -1,0 +1,12 @@
+product-pairs.json: 212 pairs · surface-pairs-not-gated.json: 17 pairs
+[PASS] light · Reception row bar terracotta on layer-hover-01 #e8e8e8 (cursor row; was measured as blue-60): #b85c2e on #e8e8e8 = 3.72:1 (needs 3.0:1 for graphic)
+[PASS] light · tab bar terracotta on the tabs host (background white; --sp-tabs-bg): #b85c2e on white = 4.56:1 (needs 3.0:1 for graphic)
+[PASS] light · Reception locked row text gray-100 on the hit tint #fbe8dc (O4): gray 100 on #fbe8dc = 15.23:1 (needs 4.5:1 for text)
+[PASS] light · Reception locked row meta gray-70 on the hit tint #fbe8dc (O4; was layer-selected): gray 70 on #fbe8dc = 6.58:1 (needs 4.5:1 for text)
+[PASS] light · Reception row bar terracotta on the locked hit tint #fbe8dc (O4): #b85c2e on #fbe8dc = 3.84:1 (needs 3.0:1 for graphic)
+[PASS] dark · Reception row bar #E8A07A on the cursor row layer-hover-01 #333333 (O4 / R5; was measured as blue-50): #e8a07a on #333333 = 5.86:1 (needs 3.0:1 for graphic)
+[PASS] dark · tab bar terracotta on the tabs host (background #161616; --sp-tabs-bg): #b85c2e on gray 100 = 3.97:1 (needs 3.0:1 for graphic)
+[PASS] dark · Reception locked row text gray-10 on layer-selected-02 #525252 (O4): gray 10 on gray 70 = 7.10:1 (needs 4.5:1 for text)
+[PASS] dark · Reception locked row meta gray-30 on layer-selected-02 #525252 (O4; was layer-selected #393939): gray 30 on gray 70 = 4.57:1 (needs 4.5:1 for text)
+[PASS] dark · Reception row bar #E8A07A on the locked layer-selected-02 #525252 (O4 / R5): #e8a07a on gray 70 = 3.62:1 (needs 3.0:1 for graphic)
+212/212 pass
