@@ -40,6 +40,9 @@ const page = await context.newPage();
 context.setDefaultTimeout(15000);
 const cdp = await context.newCDPSession(page);
 
+// Vercel Authentication on previews: visit a get_access_to_vercel_url share link first (env VERCEL_SHARE_URL) so the
+// only sign-in left is the app's own — which the owner does by hand.
+if (process.env.VERCEL_SHARE_URL) await page.goto(process.env.VERCEL_SHARE_URL, { waitUntil: "networkidle" });
 await page.goto(`${base}/login`, { waitUntil: "networkidle" });
 if (password) {
   await page.locator('input[type="email"]').fill(email);
