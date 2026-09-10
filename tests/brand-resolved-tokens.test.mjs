@@ -75,16 +75,8 @@ const IBM_BLUES = new Set([
 // --cds-text-primary and never resolves to a blue, so the shrink check would
 // reject the row as dead.
 const ALLOWLIST = {
-  "--sp-status-info-mark": { kind: "unpainted", states: ["light", "system-dark", "forced-dark"], why: "Carbon info status, blue 70 light / blue 50 dark; tailwind.config.ts aliases it as `info`, no class uses it (DS-5)" },
-  "--sp-status-info-surface": { kind: "unpainted", states: ["light"], why: "Carbon info status surface, blue 10 in light (DS-5)" },
   "--sp-highlight": { kind: "unpainted", states: ["system-dark", "forced-dark"], why: "Carbon's highlight role — blue 90 in both dark states (light is the O2 tint); the hit surfaces read --sp-pill-search-* / --sp-status-search-*, nothing reads this alias" },
-  // BR-5: carbon-components.css paints these straight onto .cds-notification
-  // (bar, icon, light fill) and .cds-status--info; `.cds-notification--info`
-  // is live in SeatInspector, PublishReviewSheet and AskPlannerDrawer. The
-  // replacement colour is the owner's call (terracotta family or a neutral).
-  "--cds-support-info": { kind: "pending-ruling", states: ["light", "system-dark", "forced-dark"], why: "info notification bar + icon, blue 70 light / blue 50 dark (BR-5, 2026-09-10)" },
-  "--cds-support-info-subtle": { kind: "pending-ruling", states: ["light"], why: "info notification light fill, blue 10 (BR-5, 2026-09-10)" },
-  "--cds-status-info-mark": { kind: "pending-ruling", states: ["light", "system-dark", "forced-dark"], why: ".cds-status--info glyph, aliases --cds-support-info (BR-5, 2026-09-10)" },
+  // BR-5 approved 2026-09-10: all informational roles now resolve to the brand.
 };
 
 // --- a minimal CSS model: innermost blocks, each with its enclosing at-rule ---
@@ -318,5 +310,17 @@ test("the allowlist holds: every row is blue in exactly the states it names; unp
     }
 
     assert.deepEqual(consumers, [], `${name} resolves to IBM blue and is now painted — re-point it in ${BRAND_FILE} and delete its allowlist row`);
+  }
+});
+
+// BR-2 / BR-5: the machine-readable handoff must agree with all runtime states.
+test("brand JSON mirrors resolved focus and informational roles in every theme", () => {
+  const record = JSON.parse(read("app/styles/brand/megeredchian-law-tokens.json"));
+  for (const state of Object.keys(STATES)) {
+    const mapping = record.carbonMapping[state === "light" ? "g10" : "g100"];
+    const vars = variablesIn(state);
+    for (const name of ["--cds-focus", "--cds-support-info", "--cds-support-info-subtle", "--cds-button-tertiary-hover", "--cds-button-tertiary-active"]) {
+      assert.equal(resolvedIn(vars, name).toLowerCase(), mapping[name].toLowerCase(), state + ": " + name);
+    }
   }
 });

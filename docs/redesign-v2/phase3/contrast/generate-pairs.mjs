@@ -32,16 +32,21 @@ for (const m of [{ name: "text gray-10", hex: P.g10 }, { name: "secondary gray-3
 for (const m of [{ name: "mode Published ■ gray-10", hex: P.g10 }, { name: "mode Draft ◇ purple-40 (O3, §6 no. 17; was orange-40)", hex: P.p40 }, { name: "mode Not published □ gray-40", hex: P.g40 }, { name: "mode Error ⊗ red-50", hex: P.r50 }, { name: "focus white", hex: P.white }]) marks(gated, "shell", m, "graphic", shellSurfaces);
 // Brand layer (DECISIONS §6 no. 16): the current bar is terracotta, and the CURRENT link takes no
 // hover fill (owner ruling 2026-09-04), so the bar's hover surface is still g100 — both pairs measured.
-const BRAND = { terracotta: "#b85c2e", tint: "#fbe8dc", darkLink: "#e8a07a" };
+// Read the shipped brand declarations so the audit cannot keep measuring retired blue.
+const brandCss = fs.readFileSync(new URL('../../../../app/styles/brand/megeredchian-law-tokens.css', import.meta.url), 'utf8');
+const lightBrand = brandCss.match(/:root,\s*:root\[data-carbon-theme="white"\]\s*\{([^}]*)\}/)[1];
+const darkBrand = brandCss.match(/:root\[data-carbon-theme="g100"\]\s*\{([^}]*)\}/)[1];
+const role = (block, name) => block.match(new RegExp(name + ':\\s*(#[0-9a-fA-F]{6})'))[1];
+const BRAND = { terracotta: role(lightBrand, '--cds-button-primary'), tint: role(lightBrand, '--cds-support-info-subtle'), darkLink: role(darkBrand, '--cds-link-primary') };
 add(gated, "shell · current bar terracotta on shell g100 (rest)", BRAND.terracotta, P.g100, "graphic");
 add(gated, "shell · current bar terracotta on shell g100 (hovered current link — no hover fill)", BRAND.terracotta, P.g100, "graphic");
 add(gated, "shell · nav link gray-30 on shell g100", P.g30, P.g100, "text");
 add(gated, "shell · nav link gray-30 on shell hover", P.g30, P.hoverG90, "text");
 add(gated, "shell · nav link gray-10 on shell pressed g80", P.g10, P.g80, "text");
 add(gated, "shell · tooltip text gray-10 on tooltip gray-80", P.g10, P.g80, "text");
-for (const m of [{ name: "text gray-10", hex: P.g10 }, { name: "secondary gray-30", hex: P.g30 }, { name: "helper gray-40", hex: P.g40 }, { name: "ghost blue-40", hex: P.b40 }]) marks(gated, "panel", m, "text", panelSurfaces);
-add(gated, "panel · ghost hover blue-30 on row hover #333333", P.b30, P.hoverG90, "text");
-add(gated, "panel · ghost pressed blue-30 on g80", P.b30, P.g80, "text");
+for (const m of [{ name: "text gray-10", hex: P.g10 }, { name: "secondary gray-30", hex: P.g30 }, { name: "helper gray-40", hex: P.g40 }, { name: "ghost brand", hex: role(darkBrand, '--cds-link-primary') }]) marks(gated, "panel", m, "text", panelSurfaces);
+add(gated, "panel · ghost hover brand on row hover #333333", role(darkBrand, '--cds-link-primary-hover'), P.hoverG90, "text");
+add(gated, "panel · ghost pressed brand on g80", role(darkBrand, '--cds-link-primary-hover'), P.g80, "text");
 add(gated, "panel · tag text gray-10 on tag gray-80", P.g10, P.g80, "text");
 add(gated, "panel · switch selected text gray-100 on gray-10", P.g100, P.g10, "text");
 add(gated, "panel · switch selected fill gray-10 vs panel g100", P.g10, P.g100, "graphic");
@@ -62,16 +67,16 @@ for (const m of [{ name: "seat stroke gray-70", hex: P.g70 }, { name: "seat fill
 // status mark, the inspector note. Orange 60 was ΔE2000 5.3 / 1.10:1 from the terracotta primary.
 marks(gated, "light", { name: "draft mark purple-60 (was orange-60)", hex: P.p60 }, "graphic", [L.bg, L.l1, L.hover, L.hi]);          // pill badge on rest / hover / search fills
 // O2 (PR 3b): the hit pill edge is terracotta on the tint; the hovered hit pill keeps the same fill (sp-components.css `.sp-pill--search:hover`).
-marks(gated, "light", { name: "search edge terracotta (was blue-70)", hex: BRAND.terracotta }, "graphic", [L.hi, L.bg, L.l1]);
-marks(gated, "light", { name: "current bar blue-60", hex: P.b60 }, "graphic", [L.sel, L.bg]);
+marks(gated, "light", { name: "search edge terracotta (owner brand amendment)", hex: BRAND.terracotta }, "graphic", [L.hi, L.bg, L.l1]);
+marks(gated, "light", { name: "current bar brand", hex: BRAND.terracotta }, "graphic", [L.sel, L.bg]);
 marks(gated, "light", { name: "success mark green-60 (target edge, toggle on)", hex: P.gr60 }, "graphic", [L.bg, L.l1, L.hover, L.ok]);
 marks(gated, "light", { name: "error mark red-60 (invalid-target edge, notification)", hex: P.r60 }, "graphic", [L.bg, L.l1, L.hover, L.err]);
 add(gated, "light · text-primary on error-subtle #fff1f1 (invalid target label)", P.g100, "#fff1f1", "text");
 add(gated, "light · text-primary on success-subtle #defbe6 (target label)", P.g100, P.gr10, "text");
 marks(gated, "light", { name: "warning mark yellow-60", hex: P.y60 }, "graphic", [L.bg, L.l1, L.hover]);
-marks(gated, "light", { name: "AI label text blue-60", hex: P.b60 }, "text", [L.bg, L.l1]);
-add(gated, "light · AI label hover text blue-70 on layer-hover-01", P.b70, P.hoverWhite, "text");
-add(gated, "light · AI border start blue-60 on field #f4f4f4", P.b60, P.g10, "graphic");
+marks(gated, "light", { name: "AI label text brand", hex: role(lightBrand, '--cds-link-primary') }, "text", [L.bg, L.l1]);
+add(gated, "light · AI label hover text brand on layer-hover-01", role(lightBrand, '--cds-link-primary-hover'), P.hoverWhite, "text");
+add(gated, "light · AI border start brand on field #f4f4f4", BRAND.terracotta, P.g10, "graphic");
 add(gated, "light · helper-on-row gray-70 on layer-hover-01", P.g70, P.hoverWhite, "text");
 add(gated, "light · quiet pill text gray-70 on layer-01 / hover", P.g70, P.hoverWhite, "text");
 // Phase 5 PR 3 (amendment J): names off = the footprint carrying ●. The block's pairs (fill on the mat, the inverted ◇) are gone with it.
@@ -80,14 +85,14 @@ add(gated, "light · names-off quiet ● gray-70 on the quiet fill layer-01", P.
 add(gated, "light · names-off ◇ purple-60 on the footprint layer-02 white", P.p60, P.white, "graphic");
 add(gated, "light · names-off footprint edge gray-70 on the mat layer-01", P.g70, P.g10, "graphic");
 add(gated, "light · kbd shortcut hint text-secondary gray-70 on field-01 #f4f4f4 (PR 3a: was text-helper gray-60, 4.36)", P.g70, P.g10, "text");
-add(gated, "light · text-on-color white on primary blue-60", P.white, P.b60, "text");
+add(gated, "light · text-on-color white on primary terracotta", P.white, BRAND.terracotta, "text");
 // Brand layer, PR 3a smoke (PHASE4BUILD §1.22): tertiary buttons (Filters · N, Clear, Ask Planner) sit on the
 // WHITE control row. Terracotta text on layer-01 #f4f4f4 is 4.14:1 — a tertiary must not land on layer-01.
 add(gated, "light · tertiary label terracotta on the white control row (was blue 60)", BRAND.terracotta, P.white, "text");
 add(gated, "light · tertiary 1px outline terracotta on white", BRAND.terracotta, P.white, "graphic");
 add(gated, "light · text-on-color white on tertiary hover #8F4521", P.white, "#8f4521", "text");
 add(notGated, "light · tertiary label terracotta on layer-01 #f4f4f4 (NOT a sanctioned surface for a tertiary — 4.14)", BRAND.terracotta, P.g10, "text");
-add(notGated, "light · AI border end blue-40 on white (gradient's low stop; the label carries meaning)", P.b40, P.white, "graphic");
+add(notGated, "light · AI border end brand on white (gradient's low stop; the label carries meaning)", BRAND.terracotta, P.white, "graphic");
 add(notGated, "light · left panel rule gray-30 vs layer-01 (divider)", P.g30, P.g10, "graphic");
 add(notGated, "light · quiet pill edge gray-30 on layer-01 (quiet is the intent)", P.g30, P.g10, "graphic");
 
@@ -98,26 +103,26 @@ for (const m of [{ name: "text-primary gray-10", hex: P.g10 }, { name: "text-sec
 for (const m of [{ name: "seat stroke gray-30", hex: P.g30 }, { name: "seat fill gray-10", hex: P.g10 }, { name: "radio ring gray-10", hex: P.g10 }]) marks(gated, "dark", m, "graphic", darkRows);
 marks(gated, "dark", { name: "draft mark purple-40 (was orange-40)", hex: P.p40 }, "graphic", [D.bg, D.fill2, D.hover2, D.hi]);
 marks(gated, "dark", { name: "search edge #E8A07A (dark link colour; terracotta on #393939 is 2.53 — never a dark edge)", hex: BRAND.darkLink }, "graphic", [D.hi, D.bg, D.fill2]);
-marks(gated, "dark", { name: "current bar blue-50", hex: P.b50 }, "graphic", [D.sel, D.bg]);
+marks(gated, "dark", { name: "current bar brand", hex: role(darkBrand, '--cds-border-interactive') }, "graphic", [D.sel, D.bg]);
 marks(gated, "dark", { name: "success mark green-40 (target edge, toggle on)", hex: P.gr40 }, "graphic", [D.bg, D.l1, D.hover, D.fill2]);
 marks(gated, "dark", { name: "error mark red-50 (invalid-target edge on error-subtle = layer-01)", hex: P.r50 }, "graphic", [D.bg, D.l1, D.hover]);
 add(gated, "dark · text-primary gray-10 on error-subtle / success-subtle #262626", P.g10, P.g90, "text");
 marks(gated, "dark", { name: "warning mark yellow-30", hex: P.y30 }, "graphic", [D.bg, D.l1, D.hover]);
-marks(gated, "dark", { name: "AI label text blue-40", hex: P.b40 }, "text", [D.bg, D.l1, D.hover]);
-add(gated, "dark · AI border start / menu-button open rule #E8A07A on field #262626 (O5; was measured as blue-50)", BRAND.darkLink, P.g90, "graphic");
+marks(gated, "dark", { name: "AI label text brand", hex: role(darkBrand, '--cds-link-primary') }, "text", [D.bg, D.l1, D.hover]);
+add(gated, "dark · AI border start / menu-button open rule #E8A07A on field #262626 (O5; previously measured as Carbon blue)", BRAND.darkLink, P.g90, "graphic");
 add(gated, "dark · kbd shortcut hint text-secondary gray-30 on field-01 #262626", P.g30, P.g90, "text");
 add(gated, "dark · names-off ● gray-10 on the footprint layer-02 #393939", P.g10, P.g80, "graphic");
 add(gated, "dark · names-off quiet ● gray-30 on the quiet fill layer-01 #262626", P.g30, P.g90, "graphic");
 add(gated, "dark · names-off ◇ purple-40 on the footprint layer-02 #393939", P.p40, P.g80, "graphic");
 add(gated, "dark · names-off footprint edge gray-30 on the mat layer-01 #262626", P.g30, P.g90, "graphic");
-add(gated, "dark · text-on-color white on primary blue-60", P.white, P.b60, "text");
-add(notGated, "dark · AI border end blue-40 on layer-01 #262626 (gradient's low stop)", P.b40, P.g90, "graphic");
+add(gated, "dark · text-on-color white on primary terracotta", P.white, BRAND.terracotta, "text");
+add(notGated, "dark · AI border end terracotta on layer-01 #262626 (gradient's low stop)", BRAND.terracotta, P.g90, "graphic");
 
 // ---- PR 4: pages (Management table + side panel, Settings, Reception) -----------
-add(gated, "light · seat link blue-60 on table row layer-01", P.b60, P.g10, "text");
-add(gated, "light · seat link hover blue-70 on layer-hover-01 (row hovered)", P.b70, P.hoverWhite, "text");
+add(gated, "light · seat link brand on table row layer-01", role(lightBrand, '--cds-link-primary'), P.g10, "text");
+add(gated, "light · seat link hover brand on layer-hover-01 (row hovered)", role(lightBrand, '--cds-link-primary-hover'), P.hoverWhite, "text");
 // Ruling A (Phase 5 PR 4, 2026-09-10): these two measured Carbon blue for a bar the brand layer had made terracotta.
-add(gated, "light · Reception row bar terracotta on layer-hover-01 #e8e8e8 (cursor row; was measured as blue-60)", BRAND.terracotta, P.hoverWhite, "graphic");
+add(gated, "light · Reception row bar terracotta on layer-hover-01 #e8e8e8 (cursor row; previously measured as Carbon blue)", BRAND.terracotta, P.hoverWhite, "graphic");
 add(gated, "light · tab bar terracotta on the tabs host (background white; --sp-tabs-bg)", BRAND.terracotta, P.white, "graphic");
 add(gated, "light · tab hover bar gray-50 on white", P.g50, P.white, "graphic");
 add(gated, "light · tab text gray-70 on the sticky strip (background white)", P.g70, P.white, "text");
@@ -130,9 +135,9 @@ add(gated, "light · Reception row bar terracotta on the locked hit tint #fbe8dc
 add(gated, "light · danger ghost text red-60 on layer-02 white (side panel)", P.r60, P.white, "text");
 add(gated, "light · danger ghost text red-60 on layer-01 (inspector)", P.r60, P.g10, "text");
 add(gated, "light · text-on-color white on danger red-60", P.white, P.r60, "text");
-add(gated, "dark · seat link blue-40 on table row layer-01 #262626", P.b40, P.g90, "text");
-add(gated, "dark · seat link hover blue-30 on layer-hover-01 #333333", P.b30, P.hoverG90, "text");
-add(gated, "dark · Reception row bar #E8A07A on the cursor row layer-hover-01 #333333 (O4 / R5; was measured as blue-50)", BRAND.darkLink, P.hoverG90, "graphic");
+add(gated, "dark · seat link brand on table row layer-01 #262626", role(darkBrand, '--cds-link-primary'), P.g90, "text");
+add(gated, "dark · seat link hover brand on layer-hover-01 #333333", role(darkBrand, '--cds-link-primary-hover'), P.hoverG90, "text");
+add(gated, "dark · Reception row bar #E8A07A on the cursor row layer-hover-01 #333333 (O4 / R5; previously measured as Carbon blue)", BRAND.darkLink, P.hoverG90, "graphic");
 add(gated, "dark · tab bar #E8A07A on the tabs host (background #161616; --sp-tabs-bg; O5 — terracotta measured 3.97)", BRAND.darkLink, P.g100, "graphic");
 add(gated, "dark · tab hover bar gray-60 on background #161616", P.g60, P.g100, "graphic");
 add(gated, "dark · tab text gray-30 on the sticky strip (background #161616)", P.g30, P.g100, "text");
@@ -153,6 +158,25 @@ add(notGated, "light · callout edge gray-50 on layer-01 (a decorative edge on a
 add(notGated, "dark · callout edge gray-60 on layer-01 #262626 (decorative, as above)", P.g60, P.g90, "graphic");
 add(notGated, "dark · asset danger ghost red-60 on layer-02 #393939 — the value PR 4 replaces (fails 4.5)", P.r60, P.g80, "text");
 add(notGated, "light · scrim overlay over the page (a dimming layer, not a mark)", P.g100, P.white, "graphic");
+
+// BR-2 / DS-1 / BR-5, owner amendments 2026-09-10: actual focus hosts,
+// including hovered/selected rows, fields, buttons, login chrome and notifications.
+marks(gated, 'light', {name: 'focus terracotta', hex: role(lightBrand, '--cds-focus')}, 'graphic', lightRows);
+marks(gated, 'dark (explicit and system)', {name: 'focus white', hex: role(darkBrand, '--cds-focus')}, 'graphic', [...darkRows, ['selected-02', P.g70]]);
+for (const state of [lightBrand, darkBrand]) {
+  for (const name of ['--cds-button-primary', '--cds-button-primary-hover', '--cds-button-primary-active']) {
+    add(gated, name + ' white label / inner focus', P.white, role(state, name), 'text');
+  }
+  for (const name of ['--cds-button-tertiary-hover', '--cds-button-tertiary-active']) {
+    add(gated, name + ' label on actual host', P.white, role(state, name), 'text');
+    if (state === darkBrand) add(gated, name + ' white focus on dark host', role(state, '--cds-focus'), role(state, name), 'graphic');
+  }
+  const bg = role(state, '--cds-support-info-subtle');
+  add(gated, (state === lightBrand ? 'light' : 'dark') + ' info icon and bar on notification', role(state, '--cds-support-info'), bg, 'graphic');
+  add(gated, (state === lightBrand ? 'light' : 'dark') + ' info text on notification', state === lightBrand ? P.g100 : P.g10, bg, 'text');
+}
+marks(gated, 'login constant-dark chrome', {name:'primary text',hex:P.g10}, 'text', [D.bg]);
+marks(gated, 'login constant-dark chrome', {name:'helper text',hex:P.g40}, 'text', [D.bg]);
 
 const dir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 fs.writeFileSync(path.join(dir, "product-pairs.json"), JSON.stringify(gated, null, 1) + "\n");

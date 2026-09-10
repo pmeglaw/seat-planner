@@ -49,11 +49,13 @@
      5.36 / 5.86, 7.02 on #262626 (rest / field), 8.39 on #161616 (tab bar),
      3.62 on #525252 (Reception's locked row). One value, every consumer
      follows — apricot for interactive EDGES and links on dark, terracotta
-     for filled primaries, the focus ring and --cds-interactive (a fill role,
+     for filled primaries and --cds-interactive (a fill role,
      untouched). DECISIONS §6 no. 16 amended; not a new deviation.
    O2–O4 are expressed by overriding the tier-B/tier-C --sp-* tokens directly:
    they alias Carbon STATUS roles (caution, info, highlight) that other kinds
-   of status still need, so the roles themselves stay Carbon's.
+   of status still need. BR-5 (owner 2026-09-10) now also overrides the info
+   roles centrally; warning/error and Draft purple stay unchanged. BR-2 makes
+   dark focus white, preserving the existing geometry.
    ========================================================================== */
 
 :root {
@@ -86,6 +88,9 @@
   --cds-link-primary: #8F4521;
   --cds-link-primary-hover: #7A3A1C;
   --cds-focus: #B85C2E;
+  /* BR-5, owner amendment 2026-09-10: informational feedback. */
+  --cds-support-info: #B85C2E;
+  --cds-support-info-subtle: #FBE8DC;
   --cds-background-brand: #B85C2E;
   --cds-ai-border-strong: #B85C2E;
   --cds-ai-border-start: rgba(184,92,46,0.64);
@@ -99,7 +104,7 @@
   --sp-pill-search-fill: #FBE8DC;
   --sp-pill-search-edge: #B85C2E;
   /* 2026-09-10 audit, BR-1 — the roster's hit row (sp-components.css .sp-roster-row[data-highlight]) paints the
-     STATUS pair, which aliases --cds-support-info (blue 70) and --cds-highlight; it carries the pill pair's values. */
+     STATUS pair, which formerly aliased unbranded --cds-support-info (blue 70) and --cds-highlight; it carries the pill pair's values. */
   --sp-status-search-surface: #FBE8DC;
   --sp-status-search-mark: #B85C2E;
   /* O3 — Draft family (light): purple 60. On white 5.00, layer-01 4.55, layer-hover-01 4.08,
@@ -124,7 +129,12 @@
     --cds-interactive: #B85C2E;
     --cds-link-primary: #E8A07A;
     --cds-link-primary-hover: #F5DDD1;
-    --cds-focus: #B85C2E;
+    /* BR-2: dark tertiary hover must remain a dark host for white focus/text. */
+    --cds-button-tertiary-hover: #333333;
+    --cds-button-tertiary-active: #393939;
+    --cds-focus: #FFFFFF; /* BR-2, owner amendment 2026-09-10 */
+    --cds-support-info: #E8A07A;
+    --cds-support-info-subtle: #262626;
     --cds-background-brand: #B85C2E;
     --cds-ai-border-strong: #B85C2E;
     --cds-ai-border-start: rgba(184,92,46,0.64);
@@ -135,7 +145,7 @@
     --sp-pill-search-fill: #393939;
     --sp-pill-search-edge: #E8A07A;
     /* 2026-09-10 audit, BR-1 — roster hit row (sp-components.css .sp-roster-row[data-highlight]): as the pill pair;
-       --cds-support-info is blue 50 and --cds-highlight blue 90 here. #E8A07A on #393939 5.36:1. */
+       before BR-5, --cds-support-info was blue 50; --cds-highlight remains unpainted blue 90. #E8A07A on #393939 5.36:1. */
     --sp-status-search-surface: #393939;
     --sp-status-search-mark: #E8A07A;
     /* O3 — Draft family (dark): purple 40. On #161616 7.70, #393939 4.91, #474747 3.95. */
@@ -159,7 +169,12 @@
   --cds-interactive: #B85C2E;
   --cds-link-primary: #E8A07A;
   --cds-link-primary-hover: #F5DDD1;
-  --cds-focus: #B85C2E;
+  /* BR-2: dark tertiary hover must remain a dark host for white focus/text. */
+  --cds-button-tertiary-hover: #333333;
+  --cds-button-tertiary-active: #393939;
+  --cds-focus: #FFFFFF; /* BR-2, owner amendment 2026-09-10 */
+  --cds-support-info: #E8A07A;
+  --cds-support-info-subtle: #262626;
   --cds-background-brand: #B85C2E;
   --cds-ai-border-strong: #B85C2E;
   --cds-ai-border-start: rgba(184,92,46,0.64);

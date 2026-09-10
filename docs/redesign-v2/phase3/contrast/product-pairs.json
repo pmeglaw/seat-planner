@@ -145,13 +145,13 @@
  },
  {
   "name": "shell · current bar terracotta on shell g100 (rest)",
-  "fg": "#b85c2e",
+  "fg": "#B85C2E",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
   "name": "shell · current bar terracotta on shell g100 (hovered current link — no hover fill)",
-  "fg": "#b85c2e",
+  "fg": "#B85C2E",
   "bg": "#161616",
   "kind": "graphic"
  },
@@ -252,38 +252,38 @@
   "kind": "text"
  },
  {
-  "name": "panel · ghost blue-40 on panel g100",
-  "fg": "#78a9ff",
+  "name": "panel · ghost brand on panel g100",
+  "fg": "#E8A07A",
   "bg": "#161616",
   "kind": "text"
  },
  {
-  "name": "panel · ghost blue-40 on panel layer g90",
-  "fg": "#78a9ff",
+  "name": "panel · ghost brand on panel layer g90",
+  "fg": "#E8A07A",
   "bg": "#262626",
   "kind": "text"
  },
  {
-  "name": "panel · ghost blue-40 on panel row hover #333333",
-  "fg": "#78a9ff",
+  "name": "panel · ghost brand on panel row hover #333333",
+  "fg": "#E8A07A",
   "bg": "#333333",
   "kind": "text"
  },
  {
-  "name": "panel · ghost blue-40 on panel pressed g80",
-  "fg": "#78a9ff",
+  "name": "panel · ghost brand on panel pressed g80",
+  "fg": "#E8A07A",
   "bg": "#393939",
   "kind": "text"
  },
  {
-  "name": "panel · ghost hover blue-30 on row hover #333333",
-  "fg": "#a6c8ff",
+  "name": "panel · ghost hover brand on row hover #333333",
+  "fg": "#F5DDD1",
   "bg": "#333333",
   "kind": "text"
  },
  {
-  "name": "panel · ghost pressed blue-30 on g80",
-  "fg": "#a6c8ff",
+  "name": "panel · ghost pressed brand on g80",
+  "fg": "#F5DDD1",
   "bg": "#393939",
   "kind": "text"
  },
@@ -410,7 +410,7 @@
  {
   "name": "light · text-primary gray-100 on hit fill #fbe8dc (O2, brand tint; was highlight #d0e2ff)",
   "fg": "#161616",
-  "bg": "#fbe8dc",
+  "bg": "#FBE8DC",
   "kind": "text"
  },
  {
@@ -440,7 +440,7 @@
  {
   "name": "light · text-secondary gray-70 on hit fill #fbe8dc (O2, brand tint; was highlight #d0e2ff)",
   "fg": "#525252",
-  "bg": "#fbe8dc",
+  "bg": "#FBE8DC",
   "kind": "text"
  },
  {
@@ -560,36 +560,36 @@
  {
   "name": "light · draft mark purple-60 (was orange-60) on hit fill #fbe8dc (O2, brand tint; was highlight #d0e2ff)",
   "fg": "#8a3ffc",
-  "bg": "#fbe8dc",
+  "bg": "#FBE8DC",
   "kind": "graphic"
  },
  {
-  "name": "light · search edge terracotta (was blue-70) on hit fill #fbe8dc (O2, brand tint; was highlight #d0e2ff)",
-  "fg": "#b85c2e",
-  "bg": "#fbe8dc",
+  "name": "light · search edge terracotta (owner brand amendment) on hit fill #fbe8dc (O2, brand tint; was highlight #d0e2ff)",
+  "fg": "#B85C2E",
+  "bg": "#FBE8DC",
   "kind": "graphic"
  },
  {
-  "name": "light · search edge terracotta (was blue-70) on white",
-  "fg": "#b85c2e",
+  "name": "light · search edge terracotta (owner brand amendment) on white",
+  "fg": "#B85C2E",
   "bg": "#ffffff",
   "kind": "graphic"
  },
  {
-  "name": "light · search edge terracotta (was blue-70) on layer-01 #f4f4f4",
-  "fg": "#b85c2e",
+  "name": "light · search edge terracotta (owner brand amendment) on layer-01 #f4f4f4",
+  "fg": "#B85C2E",
   "bg": "#f4f4f4",
   "kind": "graphic"
  },
  {
-  "name": "light · current bar blue-60 on layer-selected #e0e0e0",
-  "fg": "#0f62fe",
+  "name": "light · current bar brand on layer-selected #e0e0e0",
+  "fg": "#B85C2E",
   "bg": "#e0e0e0",
   "kind": "graphic"
  },
  {
-  "name": "light · current bar blue-60 on white",
-  "fg": "#0f62fe",
+  "name": "light · current bar brand on white",
+  "fg": "#B85C2E",
   "bg": "#ffffff",
   "kind": "graphic"
  },
@@ -672,26 +672,26 @@
   "kind": "graphic"
  },
  {
-  "name": "light · AI label text blue-60 on white",
-  "fg": "#0f62fe",
+  "name": "light · AI label text brand on white",
+  "fg": "#8F4521",
   "bg": "#ffffff",
   "kind": "text"
  },
  {
-  "name": "light · AI label text blue-60 on layer-01 #f4f4f4",
-  "fg": "#0f62fe",
+  "name": "light · AI label text brand on layer-01 #f4f4f4",
+  "fg": "#8F4521",
   "bg": "#f4f4f4",
   "kind": "text"
  },
  {
-  "name": "light · AI label hover text blue-70 on layer-hover-01",
-  "fg": "#0043ce",
+  "name": "light · AI label hover text brand on layer-hover-01",
+  "fg": "#7A3A1C",
   "bg": "#e8e8e8",
   "kind": "text"
  },
  {
-  "name": "light · AI border start blue-60 on field #f4f4f4",
-  "fg": "#0f62fe",
+  "name": "light · AI border start brand on field #f4f4f4",
+  "fg": "#B85C2E",
   "bg": "#f4f4f4",
   "kind": "graphic"
  },
@@ -738,20 +738,20 @@
   "kind": "text"
  },
  {
-  "name": "light · text-on-color white on primary blue-60",
+  "name": "light · text-on-color white on primary terracotta",
   "fg": "#ffffff",
-  "bg": "#0f62fe",
+  "bg": "#B85C2E",
   "kind": "text"
  },
  {
   "name": "light · tertiary label terracotta on the white control row (was blue 60)",
-  "fg": "#b85c2e",
+  "fg": "#B85C2E",
   "bg": "#ffffff",
   "kind": "text"
  },
  {
   "name": "light · tertiary 1px outline terracotta on white",
-  "fg": "#b85c2e",
+  "fg": "#B85C2E",
   "bg": "#ffffff",
   "kind": "graphic"
  },
@@ -949,31 +949,31 @@
  },
  {
   "name": "dark · search edge #E8A07A (dark link colour; terracotta on #393939 is 2.53 — never a dark edge) on hit fill = layer-02 #393939 (O2: neutral fill on dark, the edge carries the hue; was highlight #001d6c)",
-  "fg": "#e8a07a",
+  "fg": "#E8A07A",
   "bg": "#393939",
   "kind": "graphic"
  },
  {
   "name": "dark · search edge #E8A07A (dark link colour; terracotta on #393939 is 2.53 — never a dark edge) on background #161616",
-  "fg": "#e8a07a",
+  "fg": "#E8A07A",
   "bg": "#161616",
   "kind": "graphic"
  },
  {
   "name": "dark · search edge #E8A07A (dark link colour; terracotta on #393939 is 2.53 — never a dark edge) on layer-02 / pill fill #393939",
-  "fg": "#e8a07a",
+  "fg": "#E8A07A",
   "bg": "#393939",
   "kind": "graphic"
  },
  {
-  "name": "dark · current bar blue-50 on layer-selected #393939",
-  "fg": "#4589ff",
+  "name": "dark · current bar brand on layer-selected #393939",
+  "fg": "#E8A07A",
   "bg": "#393939",
   "kind": "graphic"
  },
  {
-  "name": "dark · current bar blue-50 on background #161616",
-  "fg": "#4589ff",
+  "name": "dark · current bar brand on background #161616",
+  "fg": "#E8A07A",
   "bg": "#161616",
   "kind": "graphic"
  },
@@ -1044,26 +1044,26 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · AI label text blue-40 on background #161616",
-  "fg": "#78a9ff",
+  "name": "dark · AI label text brand on background #161616",
+  "fg": "#E8A07A",
   "bg": "#161616",
   "kind": "text"
  },
  {
-  "name": "dark · AI label text blue-40 on layer-01 #262626",
-  "fg": "#78a9ff",
+  "name": "dark · AI label text brand on layer-01 #262626",
+  "fg": "#E8A07A",
   "bg": "#262626",
   "kind": "text"
  },
  {
-  "name": "dark · AI label text blue-40 on layer-hover-01 #333333",
-  "fg": "#78a9ff",
+  "name": "dark · AI label text brand on layer-hover-01 #333333",
+  "fg": "#E8A07A",
   "bg": "#333333",
   "kind": "text"
  },
  {
-  "name": "dark · AI border start / menu-button open rule #E8A07A on field #262626 (O5; was measured as blue-50)",
-  "fg": "#e8a07a",
+  "name": "dark · AI border start / menu-button open rule #E8A07A on field #262626 (O5; previously measured as Carbon blue)",
+  "fg": "#E8A07A",
   "bg": "#262626",
   "kind": "graphic"
  },
@@ -1098,32 +1098,32 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · text-on-color white on primary blue-60",
+  "name": "dark · text-on-color white on primary terracotta",
   "fg": "#ffffff",
-  "bg": "#0f62fe",
+  "bg": "#B85C2E",
   "kind": "text"
  },
  {
-  "name": "light · seat link blue-60 on table row layer-01",
-  "fg": "#0f62fe",
+  "name": "light · seat link brand on table row layer-01",
+  "fg": "#8F4521",
   "bg": "#f4f4f4",
   "kind": "text"
  },
  {
-  "name": "light · seat link hover blue-70 on layer-hover-01 (row hovered)",
-  "fg": "#0043ce",
+  "name": "light · seat link hover brand on layer-hover-01 (row hovered)",
+  "fg": "#7A3A1C",
   "bg": "#e8e8e8",
   "kind": "text"
  },
  {
-  "name": "light · Reception row bar terracotta on layer-hover-01 #e8e8e8 (cursor row; was measured as blue-60)",
-  "fg": "#b85c2e",
+  "name": "light · Reception row bar terracotta on layer-hover-01 #e8e8e8 (cursor row; previously measured as Carbon blue)",
+  "fg": "#B85C2E",
   "bg": "#e8e8e8",
   "kind": "graphic"
  },
  {
   "name": "light · tab bar terracotta on the tabs host (background white; --sp-tabs-bg)",
-  "fg": "#b85c2e",
+  "fg": "#B85C2E",
   "bg": "#ffffff",
   "kind": "graphic"
  },
@@ -1154,19 +1154,19 @@
  {
   "name": "light · Reception locked row text gray-100 on the hit tint #fbe8dc (O4)",
   "fg": "#161616",
-  "bg": "#fbe8dc",
+  "bg": "#FBE8DC",
   "kind": "text"
  },
  {
   "name": "light · Reception locked row meta gray-70 on the hit tint #fbe8dc (O4; was layer-selected)",
   "fg": "#525252",
-  "bg": "#fbe8dc",
+  "bg": "#FBE8DC",
   "kind": "text"
  },
  {
   "name": "light · Reception row bar terracotta on the locked hit tint #fbe8dc (O4)",
-  "fg": "#b85c2e",
-  "bg": "#fbe8dc",
+  "fg": "#B85C2E",
+  "bg": "#FBE8DC",
   "kind": "graphic"
  },
  {
@@ -1188,26 +1188,26 @@
   "kind": "text"
  },
  {
-  "name": "dark · seat link blue-40 on table row layer-01 #262626",
-  "fg": "#78a9ff",
+  "name": "dark · seat link brand on table row layer-01 #262626",
+  "fg": "#E8A07A",
   "bg": "#262626",
   "kind": "text"
  },
  {
-  "name": "dark · seat link hover blue-30 on layer-hover-01 #333333",
-  "fg": "#a6c8ff",
+  "name": "dark · seat link hover brand on layer-hover-01 #333333",
+  "fg": "#F5DDD1",
   "bg": "#333333",
   "kind": "text"
  },
  {
-  "name": "dark · Reception row bar #E8A07A on the cursor row layer-hover-01 #333333 (O4 / R5; was measured as blue-50)",
-  "fg": "#e8a07a",
+  "name": "dark · Reception row bar #E8A07A on the cursor row layer-hover-01 #333333 (O4 / R5; previously measured as Carbon blue)",
+  "fg": "#E8A07A",
   "bg": "#333333",
   "kind": "graphic"
  },
  {
   "name": "dark · tab bar #E8A07A on the tabs host (background #161616; --sp-tabs-bg; O5 — terracotta measured 3.97)",
-  "fg": "#e8a07a",
+  "fg": "#E8A07A",
   "bg": "#161616",
   "kind": "graphic"
  },
@@ -1249,19 +1249,19 @@
  },
  {
   "name": "dark · Reception row bar #E8A07A on the locked layer-selected-02 #525252 (O4 / R5)",
-  "fg": "#e8a07a",
+  "fg": "#E8A07A",
   "bg": "#525252",
   "kind": "graphic"
  },
  {
   "name": "dark · nav current / menu [aria-current] / palette-row bar #E8A07A on layer-selected #393939 (O5)",
-  "fg": "#e8a07a",
+  "fg": "#E8A07A",
   "bg": "#393939",
   "kind": "graphic"
  },
  {
   "name": "dark · AI border start #E8A07A on the hovered label layer-hover-01 #333333 (O5)",
-  "fg": "#e8a07a",
+  "fg": "#E8A07A",
   "bg": "#333333",
   "kind": "graphic"
  },
@@ -1281,6 +1281,174 @@
   "name": "dark · text-on-color white on danger red-60",
   "fg": "#ffffff",
   "bg": "#da1e28",
+  "kind": "text"
+ },
+ {
+  "name": "light · focus terracotta on white",
+  "fg": "#B85C2E",
+  "bg": "#ffffff",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · focus terracotta on layer-01 #f4f4f4",
+  "fg": "#B85C2E",
+  "bg": "#f4f4f4",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · focus terracotta on layer-hover-01 #e8e8e8",
+  "fg": "#B85C2E",
+  "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · focus terracotta on layer-selected #e0e0e0",
+  "fg": "#B85C2E",
+  "bg": "#e0e0e0",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark (explicit and system) · focus white on background #161616",
+  "fg": "#FFFFFF",
+  "bg": "#161616",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark (explicit and system) · focus white on layer-01 #262626",
+  "fg": "#FFFFFF",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark (explicit and system) · focus white on layer-hover-01 #333333",
+  "fg": "#FFFFFF",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark (explicit and system) · focus white on layer-selected #393939",
+  "fg": "#FFFFFF",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark (explicit and system) · focus white on layer-hover-02 #474747",
+  "fg": "#FFFFFF",
+  "bg": "#474747",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark (explicit and system) · focus white on selected-02",
+  "fg": "#FFFFFF",
+  "bg": "#525252",
+  "kind": "graphic"
+ },
+ {
+  "name": "--cds-button-primary white label / inner focus",
+  "fg": "#ffffff",
+  "bg": "#B85C2E",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-primary-hover white label / inner focus",
+  "fg": "#ffffff",
+  "bg": "#8F4521",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-primary-active white label / inner focus",
+  "fg": "#ffffff",
+  "bg": "#7A3A1C",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-tertiary-hover label on actual host",
+  "fg": "#ffffff",
+  "bg": "#8F4521",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-tertiary-active label on actual host",
+  "fg": "#ffffff",
+  "bg": "#7A3A1C",
+  "kind": "text"
+ },
+ {
+  "name": "light info icon and bar on notification",
+  "fg": "#B85C2E",
+  "bg": "#FBE8DC",
+  "kind": "graphic"
+ },
+ {
+  "name": "light info text on notification",
+  "fg": "#161616",
+  "bg": "#FBE8DC",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-primary white label / inner focus",
+  "fg": "#ffffff",
+  "bg": "#B85C2E",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-primary-hover white label / inner focus",
+  "fg": "#ffffff",
+  "bg": "#8F4521",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-primary-active white label / inner focus",
+  "fg": "#ffffff",
+  "bg": "#7A3A1C",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-tertiary-hover label on actual host",
+  "fg": "#ffffff",
+  "bg": "#333333",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-tertiary-hover white focus on dark host",
+  "fg": "#FFFFFF",
+  "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "--cds-button-tertiary-active label on actual host",
+  "fg": "#ffffff",
+  "bg": "#393939",
+  "kind": "text"
+ },
+ {
+  "name": "--cds-button-tertiary-active white focus on dark host",
+  "fg": "#FFFFFF",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark info icon and bar on notification",
+  "fg": "#E8A07A",
+  "bg": "#262626",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark info text on notification",
+  "fg": "#f4f4f4",
+  "bg": "#262626",
+  "kind": "text"
+ },
+ {
+  "name": "login constant-dark chrome · primary text on background #161616",
+  "fg": "#f4f4f4",
+  "bg": "#161616",
+  "kind": "text"
+ },
+ {
+  "name": "login constant-dark chrome · helper text on background #161616",
+  "fg": "#a8a8a8",
+  "bg": "#161616",
   "kind": "text"
  }
 ]
