@@ -7,7 +7,7 @@ import { nextMapHref } from "@/lib/mapUrlState";
 import { scopeResults, type SearchScope } from "@/lib/mapSearchScope";
 import { shortcutHint } from "@/lib/platformShortcut";
 import { findEmployeeByEmail, findSeatForEmployee } from "@/lib/mySeat";
-import { departmentKey } from "@/lib/departments";
+import { departmentKey, seatDepartmentValue } from "@/lib/departments";
 import { DEFAULT_FLOOR, floorOf, type FloorId } from "@/lib/floorIds";
 import {
   FLOORS,
@@ -126,10 +126,6 @@ const VIEWPORT_NATIVE_SCROLL_KEYS: ReadonlySet<string> = new Set([
 // getSeatZone is imported from lib/viewerFindPalette, where it is tested. It
 // used to be a private copy here; the palette's zone chips need the same
 // fallback chain, and two copies of it would drift the moment one changed.
-
-function getSeatDepartment(seat: SeatWithEmployee) {
-  return seat.employee?.department ?? seat.department ?? "No department";
-}
 
 function uniqueVisibleOptions(values: Array<string | null | undefined>) {
   const seen = new Map<string, string>();
@@ -391,8 +387,10 @@ export function ViewerSeatFinder({
   // department's absence or a zone/status choice.
   const seatPassesPersonFacets = useCallback((seat: SeatWithEmployee) => {
     // departmentKey on both sides (the same normalisation the facet options
-    // and the roster use), not a bare toLowerCase — sweep defect 5.
-    const departmentOk = department === "all" || departmentKey(getSeatDepartment(seat)) === departmentKey(department);
+    // and the roster use), not a bare toLowerCase — sweep defect 5. The seat's
+    // department is its occupant's (seatDepartmentValue, E1), the same fact
+    // the left-panel counts and the Find palette read.
+    const departmentOk = department === "all" || departmentKey(seatDepartmentValue(seat)) === departmentKey(department);
     return departmentOk && seatMatchesPosition(seat.employee?.position, position);
   }, [department, position]);
 
@@ -1102,7 +1100,6 @@ export function ViewerSeatFinder({
         positions,
         zones,
         seatZone: getSeatZone,
-        seatDepartment: getSeatDepartment,
         selected: { department, position, zone, status }
       }),
     [department, departments, floorSeats, position, positions, rosterPeople, status, surface, zone, zones]

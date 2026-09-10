@@ -5,7 +5,7 @@ import test from "node:test";
 // E1 regression coverage: the management Departments tab and Employees tab must
 // derive department counts from ONE case-insensitive source so "Accounting — 0
 // employees" while an Accounting employee exists is structurally impossible.
-const { buildDepartmentRoster, departmentKey, normalizeDepartmentName } = await importTsModule("lib/departments.ts");
+const { buildDepartmentRoster, departmentKey, normalizeDepartmentName, seatDepartmentValue } = await importTsModule("lib/departments.ts");
 
 function employee(overrides = {}) {
   return {
@@ -112,4 +112,19 @@ test("roster is sorted case-insensitively by display name", () => {
     [option("Intake")]
   );
   assert.deepEqual(roster.map(row => row.name), ["Accounting", "Intake", "records"]);
+});
+
+// Review 2026-09-10, COR-1: the one definition of "this seat's department" —
+// the occupant's, normalized, or null. seats.department is legacy zone data
+// (E1) and must never be read as a department by any filter, count or label.
+test("seatDepartmentValue is the occupant's department, normalized, and never the seat column", () => {
+  const seat = (overrides = {}) => ({ id: "s1", label: "N01", status: "assigned", zone: null, department: null, employee: null, ...overrides });
+
+  assert.equal(seatDepartmentValue(seat({ employee: employee({ department: "Litigation" }) })), "Litigation");
+  assert.equal(seatDepartmentValue(seat({ employee: employee({ department: "  Case   Management " }) })), "Case Management", "normalizeDepartmentName applies");
+  assert.equal(seatDepartmentValue(seat({ employee: employee({ department: "   " }) })), null, "a blank occupant department is no department");
+  assert.equal(seatDepartmentValue(seat({ employee: employee({ department: null }) })), null);
+  assert.equal(seatDepartmentValue(seat({ status: "available", employee: null })), null);
+  assert.equal(seatDepartmentValue(seat({ status: "available", department: "Litigation", employee: null })), null, "legacy seats.department is not a department");
+  assert.equal(seatDepartmentValue(seat({ department: "North Pod", employee: employee({ department: "Intake" }) })), "Intake", "the occupant wins even when the column is set");
 });

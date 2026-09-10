@@ -217,3 +217,25 @@ test("departmentChipCounts matches departments through departmentKey drift", () 
   const counts = departmentChipCounts(seats, criteria(), ["Intake"]);
   assert.deepEqual(counts, { Intake: 1 });
 });
+
+// Review 2026-09-10, COR-1: a seat's department is its OCCUPANT's and nothing
+// else. seats.department is legacy zone data (audit finding E1) — the Find
+// palette already ignored it, but the predicate and the left-panel counts
+// read it through two different expressions, so an empty seat carrying a
+// legacy value counted toward a chip that, once pinned, excluded it ("· 1" on
+// the chip, 0 on the map). Both now go through seatDepartmentValue.
+test("a legacy seats.department value never stands in for the occupant's department", () => {
+  const legacyEmpty = seat({ id: "s1", status: "available", zone: null, department: "Litigation", employee: null });
+  const occupied = seat({ id: "s2", employee: { full_name: "Bob Reyes", position: "Attorney", department: "Litigation", phone_extension: null } });
+  const drifted = seat({ id: "s3", employee: { full_name: "Cara Diaz", position: "Attorney", department: "  litigation ", phone_extension: null } });
+
+  assert.equal(seatMatchesFilters(legacyEmpty, criteria({ department: "Litigation" })), false, "no occupant → no department, whatever the seat column says");
+  assert.equal(seatMatchesFilters(occupied, criteria({ department: "Litigation" })), true);
+  assert.equal(seatMatchesFilters(drifted, criteria({ department: "Litigation" })), true, "departmentKey normalisation still applies to the occupant's value");
+
+  const counts = departmentChipCounts([legacyEmpty, occupied, drifted], criteria(), ["Litigation"]);
+  assert.deepEqual(counts, { Litigation: 2 }, "the chip count and the pinned result are the same set");
+
+  // The legacy column keeps its ONE remaining meaning: the zone fallback.
+  assert.equal(seatMatchesFilters(legacyEmpty, criteria({ zone: "Litigation" })), true);
+});

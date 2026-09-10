@@ -1,4 +1,4 @@
-import { departmentKey } from "@/lib/departments";
+import { departmentKey, seatDepartmentValue } from "@/lib/departments";
 import { positionKey } from "@/lib/positions";
 import { STATUS_LABELS, type Employee, type SeatStatus, type SeatWithEmployee } from "@/lib/types";
 import { zoneKey } from "@/lib/seatFilters";
@@ -29,16 +29,17 @@ export function buildViewerFilterGroups(input: {
   positions: readonly string[];
   zones: readonly string[];
   seatZone: (seat: SeatWithEmployee) => string;
-  seatDepartment: (seat: SeatWithEmployee) => string;
   selected: ViewerFilterSelection;
 }): FilterGroup[] {
-  const { surface, floorSeats, floorPeople, departments, positions, zones, seatZone, seatDepartment, selected } = input;
+  const { surface, floorSeats, floorPeople, departments, positions, zones, seatZone, selected } = input;
   const onRoster = surface === "roster";
 
   const departmentCount = (name: string) =>
     onRoster
       ? floorPeople.filter(person => departmentKey(person.department ?? "") === departmentKey(name)).length
-      : floorSeats.filter(seat => departmentKey(seatDepartment(seat)) === departmentKey(name)).length;
+      // A seat's department is its occupant's (seatDepartmentValue, E1) — the
+      // same definition the filter predicate uses, so a count and its pin agree.
+      : floorSeats.filter(seat => departmentKey(seatDepartmentValue(seat)) === departmentKey(name)).length;
   const positionCount = (name: string) =>
     onRoster
       ? floorPeople.filter(person => positionKey(person.position) === positionKey(name)).length

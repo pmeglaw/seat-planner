@@ -302,10 +302,13 @@ test("legend counts follow an active department filter", async () => {
   await renderViewer();
   await flushFrames();
 
-  // Corporate owns B-02 (Grace, assigned) and D-04 (open); the Litigation
-  // seats must drop out rather than the legend keep reporting the whole map.
-  assert.deepEqual(legendCounts(), { assigned: 1, open: 1, reserved: 0 });
-  assert.match(screen.getByRole("toolbar", { name: "Map controls" }).textContent, /2 of 4 seats match/);
+  // Corporate owns B-02 (Grace, assigned) only. D-04 is an open seat whose
+  // legacy seats.department column says "Corporate" — departments belong to
+  // people (E1; review 2026-09-10, COR-1), so it is not a Corporate seat and
+  // drops out with the Litigation seats rather than the legend keep reporting
+  // the whole map.
+  assert.deepEqual(legendCounts(), { assigned: 1, open: 0, reserved: 0 });
+  assert.match(screen.getByRole("toolbar", { name: "Map controls" }).textContent, /1 of 4 seats match/);
 });
 
 test("Escape clears a position-only filter, not just department, zone and status", async () => {

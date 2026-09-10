@@ -1,4 +1,4 @@
-import { departmentKey } from "@/lib/departments";
+import { departmentKey, seatDepartmentValue } from "@/lib/departments";
 import { seatMatchesPosition } from "@/lib/positions";
 import type { SeatStatus, SeatWithEmployee } from "@/lib/types";
 
@@ -91,10 +91,13 @@ export function seatMatchesFilters(seat: SeatWithEmployee, criteria: SeatFilterC
 
   const searchOk = !needle || seatSearchHaystack(seat).includes(needle);
   // Compared through departmentKey so casing and spacing drift between the
-  // stored value and the option list cannot silently hide a seat.
+  // stored value and the option list cannot silently hide a seat. The seat's
+  // side is seatDepartmentValue — the occupant's department, never the legacy
+  // seats.department column — the same fact the left-panel counts read, so a
+  // chip cannot count a seat this predicate then excludes (COR-1).
   const departmentOk =
     criteria.department === FILTER_ALL ||
-    departmentKey(seat.employee?.department ?? "") === departmentKey(criteria.department);
+    departmentKey(seatDepartmentValue(seat)) === departmentKey(criteria.department);
   const positionOk = seatMatchesPosition(seat.employee?.position, criteria.position);
   // Through zoneKey for the same reason department goes through departmentKey
   // — and because the zone wash matches on that key too, so the previewed box

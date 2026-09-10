@@ -1,4 +1,4 @@
-import type { DepartmentOption, Employee } from "@/lib/types";
+import type { DepartmentOption, Employee, SeatWithEmployee } from "@/lib/types";
 
 /**
  * Single source of truth for department name handling (audit finding E1).
@@ -19,6 +19,23 @@ export function normalizeDepartmentName(value: string | null | undefined): strin
 export function departmentKey(value: string | null | undefined): string | null {
   const name = normalizeDepartmentName(value);
   return name ? name.toLowerCase() : null;
+}
+
+/**
+ * The department a seat counts and filters under: its OCCUPANT's, normalized,
+ * or null for an empty seat.
+ *
+ * Never `seats.department`. That column is legacy zone data (pre-007 pod
+ * names, resurrected by snapshot restores — audit finding E1) and the zone
+ * fallback in lib/seatFilters.ts is the only place it still means anything.
+ * The filter predicate (seatMatchesFilters) and the left-panel counts
+ * (buildViewerFilterGroups) both read a seat's department from here, so a
+ * chip can never count a seat that its own pin then excludes; the Find
+ * palette (lib/viewerSeatSearch.ts) encodes the same rule (review 2026-09-10,
+ * COR-1).
+ */
+export function seatDepartmentValue(seat: SeatWithEmployee): string | null {
+  return normalizeDepartmentName(seat.employee?.department);
 }
 
 export type DepartmentRosterRow = {

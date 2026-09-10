@@ -175,3 +175,24 @@ test("desktop marker redesign stays clear of data auth publish and route boundar
     assert.doesNotMatch(source, /createServerSupabaseClient|requireAdmin|profiles\.role|\.rpc\("publish_seat_map"\)|\.from\("seats"\)\.insert|\.from\("seats"\)\.delete/);
   }
 });
+
+// Review 2026-09-10, COR-4: the admin overview must size the plan through
+// lib/mapViewport's fitMapWidth — the one place the marker-edge gutter
+// (charged against height only, never width) and the 2026-07-28 clip it
+// prevents are documented and unit-tested — not through an inline
+// re-derivation with its own inset. The viewer already calls it.
+test("admin overview fit goes through fitMapWidth, not an inline re-derivation", async () => {
+  const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
+  const viewerSource = await readSource("../components/seat-map/ViewerSeatFinder.tsx");
+
+  assert.match(seatMapSource, /import \{[^}]*\bfitMapWidth\b[^}]*\} from "@\/lib\/mapViewport"/);
+  assert.match(seatMapSource, /setOverviewMapWidth\(\s*fitMapWidth\(\{/);
+  assert.match(seatMapSource, /naturalWidth: MAP_IMAGE_WIDTH/);
+  assert.doesNotMatch(seatMapSource, /clientWidth - 16/);
+  assert.doesNotMatch(seatMapSource, /clientHeight - 16/);
+  assert.doesNotMatch(seatMapSource, /availableHeight \* \(MAP_IMAGE_WIDTH \/ MAP_IMAGE_HEIGHT\)/);
+  // Both surfaces pass the same 2px breathing margin into the same helper.
+  assert.match(seatMapSource, /clientWidth - 2\)/);
+  assert.match(viewerSource, /fitMapWidth as computeFitMapWidth/);
+  assert.match(viewerSource, /clientWidth - 2\)/);
+});

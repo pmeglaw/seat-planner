@@ -22,7 +22,6 @@ const base = {
   positions: ["Attorney", "Paralegal"],
   zones: ["North", "South"],
   seatZone: s => s.zone,
-  seatDepartment: s => s.employee?.department ?? s.department,
   selected: { department: "all", position: "all", zone: "all", status: "all" }
 };
 
@@ -30,7 +29,9 @@ test("plan surface: four groups in order, seat counts per option including zero,
   const groups = buildViewerFilterGroups(base);
   assert.deepEqual(groups.map(g => g.id), ["department", "zone", "status", "position"]);
   const byId = Object.fromEntries(groups.map(g => [g.id, g]));
-  assert.deepEqual(byId.department.items.map(i => [i.id, i.count]), [["Corporate", 2], ["Litigation", 2], ["Intake", 0]]);
+  // C3 and D4 carry a legacy seats.department but no occupant, so they count
+  // under no department (seatDepartmentValue, E1) — only Ada and Grace do.
+  assert.deepEqual(byId.department.items.map(i => [i.id, i.count]), [["Corporate", 1], ["Litigation", 1], ["Intake", 0]]);
   assert.deepEqual(byId.zone.items.map(i => [i.id, i.count]), [["North", 1], ["South", 3]]);
   assert.deepEqual(byId.status.items.map(i => [i.id, i.label, i.count]), [["assigned", "Assigned", 2], ["available", "Open", 1], ["reserved", "Reserved", 1], ["unavailable", "Unavailable", 0]]);
   assert.deepEqual(byId.position.items.map(i => [i.id, i.count]), [["Attorney", 1], ["Paralegal", 1]]);
@@ -56,4 +57,25 @@ test("roster surface: counts are people; zone and status hidden; position hidden
   assert.deepEqual(byId.position.items.map(i => [i.id, i.count]), [["Attorney", 1], ["Paralegal", 1]]);
   const noPositions = buildViewerFilterGroups({ ...base, surface: "roster", floorSeats: [], floorPeople: [person("y", "Intake", null)] });
   assert.equal(noPositions.find(g => g.id === "position").hidden, true, "no position data on this floor → Hidden tier");
+});
+
+// Review 2026-09-10, COR-1: the department count reads the seat's department
+// through the same helper the filter predicate uses (seatDepartmentValue —
+// the occupant's department, never the legacy seats.department column), so a
+// chip can no longer read "· 1" and pin to an empty map. No injection point:
+// there is one definition, and the builder owns it.
+test("department counts follow the occupant, never the legacy seats.department column", async () => {
+  const { seatMatchesFilters, FILTER_ALL } = await importTsModule("lib/seatFilters.ts");
+  const legacyEmpty = seat("E5", "available", "South", "Litigation");
+  const occupied = seat("F6", "assigned", "South", null, person("bo", "Litigation", null));
+  const drifted = seat("G7", "assigned", "South", null, person("cy", "  litigation ", null));
+  const floorSeats = [legacyEmpty, occupied, drifted];
+
+  const groups = buildViewerFilterGroups({ ...base, floorSeats, departments: ["Litigation"] });
+  const [litigation] = groups.find(g => g.id === "department").items;
+  assert.equal(litigation.count, 2, "the empty seat's legacy value does not count; the drifted spelling does");
+
+  const pinned = { search: "", department: "Litigation", position: FILTER_ALL, zone: FILTER_ALL, status: FILTER_ALL };
+  assert.equal(floorSeats.filter(s => seatMatchesFilters(s, pinned)).length, litigation.count, "the count IS the pinned result");
+  assert.equal(seatMatchesFilters(legacyEmpty, pinned), false);
 });
