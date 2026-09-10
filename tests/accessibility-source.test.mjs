@@ -424,6 +424,10 @@ test("publish workflow stays server-action gated and clears review history state
   assert.match(publishAction[0], /\.rpc\("publish_seat_map", \{/);
   assert.match(publishAction[0], /revalidatePath\("\/"\)/);
   assert.match(publishAction[0], /revalidatePath\("\/admin"\)/);
+  // /reception and /my-seat read the published layer too (PERF-5); without
+  // these the acting tab could show them up to staleTimes.dynamic stale.
+  assert.match(publishAction[0], /revalidatePath\("\/reception"\)/);
+  assert.match(publishAction[0], /revalidatePath\("\/my-seat"\)/);
   assert.doesNotMatch(publishAction[0], /\.from\("seats"\)|\.insert\(|\.update\(|\.delete\(|\.upsert\(/);
 });
 

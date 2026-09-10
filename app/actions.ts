@@ -28,6 +28,7 @@ import {
   MAX_SEAT_KEY_LENGTH,
   MAX_SEAT_LABEL_LENGTH,
   MAX_SEAT_NOTES_LENGTH,
+  parseCoordinate,
   parseEmployeeInput,
   parseFloorId,
   parseOptionalMultilineText,
@@ -37,6 +38,7 @@ import {
   parseUuid
 } from "@/lib/schemas";
 import { assertNonEmpty, normalizeSeatStatus, validateSeatCoordinates } from "@/lib/validators";
+import type { NormalizedPoint } from "@/lib/seatMath";
 import { SEAT_STATUSES, type AskPlannerRequest, type AskPlannerResponse, type DepartmentOption, type Employee, type SeatStatus, type SeatWithEmployee, type UpdateSeatResult, type ZoneOption } from "@/lib/types";
 
 type DraftSeatRestoreRecord = Omit<SeatWithEmployee, "employee">;
@@ -237,6 +239,15 @@ function boundedFloor(value: unknown) {
   return parsed.value;
 }
 
+// Coordinates came out of the database normalized, so a snapshot value that is
+// not a finite number in [0, 1] is corruption, not drift — the render-time clamp
+// must not repair it into a seat at the corner (COR-2). Throws like its siblings.
+function boundedCoordinate(value: unknown, field: string) {
+  const parsed = parseCoordinate(value, field);
+  if (!parsed.ok) throw new Error(parsed.message);
+  return parsed.value;
+}
+
 function isUniqueLabelViolation(error: SupabaseMutationError | null) {
   const message = error?.message ?? "";
   return error?.code === "23505" || /seats_unique_label_per_layer|duplicate key/i.test(message);
@@ -275,7 +286,8 @@ function normalizeRestoreSeat(seat: SeatWithEmployee): DraftSeatRestoreRecord {
   const id = assertNonEmpty(seat.id, "Seat id");
   const seatKey = boundedRequired(seat.seat_key, "Seat key", MAX_SEAT_KEY_LENGTH);
   const label = boundedRequired(seat.label, "Seat label", MAX_SEAT_LABEL_LENGTH);
-  const point = validateSeatCoordinates(Number(seat.x), Number(seat.y));
+  const x = boundedCoordinate(seat.x, "Seat x");
+  const y = boundedCoordinate(seat.y, "Seat y");
 
   if (!SEAT_STATUSES.includes(seat.status)) {
     throw new Error(`Invalid seat status '${seat.status}'.`);
@@ -285,8 +297,8 @@ function normalizeRestoreSeat(seat: SeatWithEmployee): DraftSeatRestoreRecord {
     id,
     seat_key: seatKey,
     label,
-    x: point.x,
-    y: point.y,
+    x,
+    y,
     status: normalizeSeatStatus(seat.status, Boolean(seat.employee_id)),
     layer: "draft",
     employee_id: seat.employee_id || null,
@@ -363,10 +375,25 @@ export async function createSeatAction(input: {
   if (!floorIsMapped(floor)) {
     return { ok: false, message: `${floorLabel(floor)} has no plan to place a seat on yet.` };
   }
-  const point = validateSeatCoordinates(input.x, input.y);
-  const visualPoint = input.visualX === undefined || input.visualY === undefined
-    ? savedPointToVisualPoint(point, { ...point, floor })
-    : validateSeatCoordinates(input.visualX, input.visualY);
+  // Coordinates are wire input (the parameter type is erased): the render-time
+  // clamp inside validateSeatCoordinates would turn NaN, a string or 7 into a
+  // real seat at (0,0) or an edge with ok: true (COR-2). Parse first, then hand
+  // only known-good numbers to the existing rounding / calibration path.
+  const xResult = parseCoordinate(input.x, "Seat x");
+  if (!xResult.ok) return { ok: false, message: xResult.message };
+  const yResult = parseCoordinate(input.y, "Seat y");
+  if (!yResult.ok) return { ok: false, message: yResult.message };
+  const point = validateSeatCoordinates(xResult.value, yResult.value);
+  let visualPoint: NormalizedPoint;
+  if (input.visualX === undefined || input.visualY === undefined) {
+    visualPoint = savedPointToVisualPoint(point, { ...point, floor });
+  } else {
+    const visualXResult = parseCoordinate(input.visualX, "Visual x");
+    if (!visualXResult.ok) return { ok: false, message: visualXResult.message };
+    const visualYResult = parseCoordinate(input.visualY, "Visual y");
+    if (!visualYResult.ok) return { ok: false, message: visualYResult.message };
+    visualPoint = validateSeatCoordinates(visualXResult.value, visualYResult.value);
+  }
   let draftSeats = await getDraftSeatZoneSources(supabase);
   const zoneResult = detectSeatZoneForPointResult(visualPoint, seatsToVisualSeats(draftSeats), floor);
 
@@ -1246,5 +1273,10 @@ export async function publishSeatMapAction(
   }
   revalidatePath("/");
   revalidatePath("/admin");
+  // /reception and /my-seat read the published layer this just replaced
+  // (PERF-5); without these the acting tab could show them up to
+  // staleTimes.dynamic (120s) stale.
+  revalidatePath("/reception");
+  revalidatePath("/my-seat");
   return { ok: true };
 }

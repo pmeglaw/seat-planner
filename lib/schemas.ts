@@ -175,6 +175,23 @@ export function parseFloorId(value: unknown): SchemaResult<FloorId> {
   return { ok: true, value: trimmed };
 }
 
+// seats.x / seats.y (COR-2). The columns are normalized to [0, 1] and
+// CHECK-constrained there, but the CHECK cannot catch what the render-time
+// clamp in lib/seatMath.ts silently repairs first: `clamp` maps NaN to 0 and an
+// out-of-range value to the nearest edge, so a wire-level NaN, "abc" or 7 used
+// to land as a real seat at the corner with ok: true. This is the boundary
+// check — a finite number already inside the range, never coerced — and the
+// clamp stays what it was meant to be: a guard against render-time drift.
+export function parseCoordinate(value: unknown, field: string): SchemaResult<number> {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return { ok: false, message: `${field} must be a number.` };
+  }
+  if (value < 0 || value > 1) {
+    return { ok: false, message: `${field} must be between 0 and 1.` };
+  }
+  return { ok: true, value };
+}
+
 export type SeatTextInput = {
   label: string;
   employeeName: string | null;
