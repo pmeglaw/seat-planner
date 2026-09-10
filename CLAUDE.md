@@ -101,11 +101,11 @@ Styling is a layered token system loaded in a fixed order from `app/layout.tsx` 
 
 **Logo orange #EB7C35 is the MARK ONLY** — 2.81:1 on white fails WCAG AA; never a button, text, link, border or focus colour (the token test fails the build if it appears outside the brand declaration). The shipped logo JPEG is a raster reference asset, not a UI mark; any in-app mark is a flat inline SVG in `--brand-charcoal` + `--brand-terracotta`.
 
-**Primary UI colour — terracotta #B85C2E**: hover **#8F4521**, active **#7A3A1C**; links light **#8F4521** / dark **#E8A07A**. It lives in `app/styles/brand/megeredchian-law-tokens.css`, which overrides Carbon's interactive roles; every `--sp-*` alias inherits it through the `--cds-*` roles — **do not** hand-write terracotta into components.
+**Primary UI colour — terracotta #B85C2E**: hover **#8F4521**, active **#7A3A1C**; links light **#8F4521** / dark **#E8A07A**. In dark, interactive *borders and bars* (`--cds-border-interactive`) are **#E8A07A** (O5, 2026-09-10); the focus ring and primary fills stay #B85C2E. It lives in `app/styles/brand/megeredchian-law-tokens.css`, which overrides Carbon's interactive roles; every `--sp-*` alias inherits it through the `--cds-*` roles — **do not** hand-write terracotta into components.
 
 **Rules for every future plan and PR:**
 1. IBM blue (#0f62fe and its scale) is never a primary, link, focus or interactive colour; no blue is in use anywhere. The search/filter hit surface is a terracotta tint (owner ruling O2, 2026-09-04).
-2. Primary actions, current-section bar, focus ring, interactive borders and the AI label use #B85C2E; hover #8F4521; active #7A3A1C.
+2. Primary actions, current-section bar, focus ring, interactive borders and the AI label use #B85C2E; hover #8F4521; active #7A3A1C. In dark, interactive *borders and bars* are #E8A07A (O5, 2026-09-10 — terracotta is 2.53:1 on the dark selected layer); focus ring and primary fills stay #B85C2E.
 3. New colours derive from the terracotta scale; never introduce a blue. The Draft family (◇ badge, Draft status mark, header Draft indicator) is Carbon **purple 60 light / purple 40 dark** (DECISIONS §6 no. 17) — Carbon's caution orange is one hue with the terracotta primary, and purple carries no other meaning in the app.
 
 Token names and where each lives, tint and search-hit values, the contrast tooling, the DECISIONS record, and the **per-PR verification checklist** are in the `brand-system` skill — invoke it before touching any colour, token file, or `app/styles/`.

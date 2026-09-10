@@ -1062,8 +1062,8 @@
   "kind": "text"
  },
  {
-  "name": "dark · AI border start blue-50 on field #262626",
-  "fg": "#4589ff",
+  "name": "dark · AI border start / menu-button open rule #E8A07A on field #262626 (O5; was measured as blue-50)",
+  "fg": "#e8a07a",
   "bg": "#262626",
   "kind": "graphic"
  },
@@ -1206,8 +1206,8 @@
   "kind": "graphic"
  },
  {
-  "name": "dark · tab bar terracotta on the tabs host (background #161616; --sp-tabs-bg)",
-  "fg": "#b85c2e",
+  "name": "dark · tab bar #E8A07A on the tabs host (background #161616; --sp-tabs-bg; O5 — terracotta measured 3.97)",
+  "fg": "#e8a07a",
   "bg": "#161616",
   "kind": "graphic"
  },
@@ -1251,6 +1251,18 @@
   "name": "dark · Reception row bar #E8A07A on the locked layer-selected-02 #525252 (O4 / R5)",
   "fg": "#e8a07a",
   "bg": "#525252",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · nav current / menu [aria-current] / palette-row bar #E8A07A on layer-selected #393939 (O5)",
+  "fg": "#e8a07a",
+  "bg": "#393939",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · AI border start #E8A07A on the hovered label layer-hover-01 #333333 (O5)",
+  "fg": "#e8a07a",
+  "bg": "#333333",
   "kind": "graphic"
  },
  {
