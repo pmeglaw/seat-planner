@@ -1100,7 +1100,14 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-recep-row:is([data-highlight], [aria-selected="true"]) .sp-recep-meta, .sp-recep-row:is([data-highlight], [aria-selected="true"]) .sp-recep-seat { color: var(--sp-text-helper-on-row); }
 .sp-recep-row .cds-tag { justify-self: start; }
 /* readout column — sticky, 32 padding */
-.sp-recep-readout { position: sticky; top: calc(var(--sp-shell-header-h) + var(--sp-space-05)); padding: var(--sp-space-07); background: var(--sp-background); box-shadow: inset 1px 0 0 var(--sp-border-subtle-00); display: flex; flex-direction: column; gap: var(--sp-space-05); min-height: 400px; }
+/* Phase 5 PR 4 amendment K (PHASE3DS §1.29 amendment; owner ruling R4, 2026-09-09; PHASE5 PR 2 "Carried"): the
+   column's gap between its groups — band, tail, recents — is 24 (--sp-space-06); the 16 INSIDE the band and inside
+   the tail (the rule below) stands. Tight inside a group, loose between (the rubric's spacing rule). Amendment I's
+   "carry its own 16 rhythm" clause is superseded for the gap between groups only; nothing inside either group moves,
+   and below the 1055 fold the column is display: contents, so nothing changes there. Both copies, byte-identical.
+   The locked row's surface is NOT a sheet change: it is the brand file's O4 override of --sp-recep-row-locked
+   (and the dark --sp-recep-row-bar) — the rule at [aria-selected="true"] and the token names are unchanged. */
+.sp-recep-readout { position: sticky; top: calc(var(--sp-shell-header-h) + var(--sp-space-05)); padding: var(--sp-space-07); background: var(--sp-background); box-shadow: inset 1px 0 0 var(--sp-border-subtle-00); display: flex; flex-direction: column; gap: var(--sp-space-06); min-height: 400px; }
 .sp-recep-readout h2 { font: var(--sp-type-heading-03); overflow-wrap: anywhere; }
 .sp-recep-readout .sp-recep-role { color: var(--sp-text-secondary); margin-top: var(--sp-space-02); }
 /* The readout's two groups (amendment I): the BAND — name, tile, seat line — and the TAIL — the
