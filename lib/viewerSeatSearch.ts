@@ -1,5 +1,6 @@
+import { departmentKey, normalizeDepartmentName, seatDepartmentValue } from "@/lib/departments";
 import { floorOf, type FloorId } from "@/lib/floorIds";
-import { FLOORS, floorOfPerson } from "@/lib/floors";
+import { FLOORS, NO_DEPARTMENT_LABEL, floorOfPerson } from "@/lib/floors";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee, ZoneOption } from "@/lib/types";
 
 // One placeholder for every seat-search input (admin chrome, admin canvas
@@ -123,16 +124,17 @@ function getSeatEmployee(seat: SeatWithEmployee, employeeById: Map<string, Emplo
   return null;
 }
 
-function getSeatDepartment(seat: SeatWithEmployee, employeeById: Map<string, Employee>) {
-  // Departments belong to people. seats.department is legacy zone data
-  // (pre-007 pod names resurrected by snapshot restores) and must never be
-  // displayed or aggregated as a department (audit finding E1).
+// The palette accepts seats whose employee join is unresolved (employee null,
+// employee_id set — pinned by tests/viewer-seat-search.test.mjs), so the
+// occupant is resolved through the directory first. The department rule
+// itself is NOT re-derived here: lib/departments' seatDepartmentValue (the
+// occupant's department, normalized, never seats.department — audit finding
+// E1) is the one definition the chip counts, the filter predicate and this
+// palette share, so a row and its chip agree to the character (review
+// 2026-09-10, C3).
+function withOccupant(seat: SeatWithEmployee, employeeById: Map<string, Employee>): SeatWithEmployee {
   const employee = getSeatEmployee(seat, employeeById);
-  return normalizeDisplayText(employee?.department) ?? "No department";
-}
-
-function getSeatPerson(seat: SeatWithEmployee, employeeById: Map<string, Employee>) {
-  return getSeatEmployee(seat, employeeById);
+  return employee === seat.employee ? seat : { ...seat, employee };
 }
 
 function uniqueValues(values: Array<string | null | undefined>) {
@@ -271,17 +273,17 @@ export function buildViewerSeatSearch({
   });
 
   seats.forEach(seat => {
-    const employee = getSeatPerson(seat, employeeById);
+    const occupied = withOccupant(seat, employeeById);
+    const employee = occupied.employee;
     const zone = getSeatZone(seat);
-    const department = employee?.department ?? null;
-    if (!matchesQuery(query, [seat.label, seat.status, zone, department, employee?.full_name, employee?.position, employee?.phone_extension])) return;
+    if (!matchesQuery(query, [seat.label, seat.status, zone, employee?.department, employee?.full_name, employee?.position, employee?.phone_extension])) return;
 
     results.push({
       id: `seat:${seat.id}`,
       kind: "seat",
       title: formatSeatCodeLocal(seat.label),
       subtitle: employee?.full_name ? formatDisplayNameLocal(employee.full_name) : "Open seat",
-      meta: `${STATUS_LABELS[seat.status]} · ${department ?? "No department"} · ${zone}`,
+      meta: `${STATUS_LABELS[seat.status]} · ${seatDepartmentValue(occupied) ?? NO_DEPARTMENT_LABEL} · ${zone}`,
       seatId: seat.id,
       seatIds: [seat.id],
       status: seat.status,
@@ -289,24 +291,30 @@ export function buildViewerSeatSearch({
     });
   });
 
+  // Department rows are named and compared through lib/departments — the
+  // names are pre-normalized (whitespace-collapsed) so uniqueValues' key is
+  // departmentKey, and every membership test below IS departmentKey — so a
+  // spelling that differs only by case or inner whitespace folds into the
+  // row its chip counts it under (review 2026-09-10, C3).
   const departmentNames = uniqueValues([
-    ...departmentOptions.filter(option => option.active).map(option => option.name),
-    ...activeEmployees.map(employee => employee.department)
+    ...departmentOptions.filter(option => option.active).map(option => normalizeDepartmentName(option.name)),
+    ...activeEmployees.map(employee => normalizeDepartmentName(employee.department))
   ]);
 
   departmentNames.forEach(name => {
     if (!matchesQuery(query, [name])) return;
-    const departmentKey = normalizeSearchText(name);
+    const key = departmentKey(name);
     const departmentPeopleById = new Map<string, Employee>();
     activeEmployees.forEach(employee => {
-      if (normalizeSearchText(employee.department) === departmentKey) departmentPeopleById.set(employee.id, employee);
+      if (departmentKey(employee.department) === key) departmentPeopleById.set(employee.id, employee);
     });
     const departmentSeats = seats.filter(seat => {
-      const employee = getSeatEmployee(seat, employeeById);
-      if (employee && employee.active !== false && normalizeSearchText(employee.department) === departmentKey) {
+      const occupied = withOccupant(seat, employeeById);
+      const employee = occupied.employee;
+      if (employee && employee.active !== false && departmentKey(employee.department) === key) {
         departmentPeopleById.set(employee.id, employee);
       }
-      return normalizeSearchText(getSeatDepartment(seat, employeeById)) === departmentKey;
+      return departmentKey(seatDepartmentValue(occupied)) === key;
     });
 
     if (departmentPeopleById.size === 0 && departmentSeats.length === 0) return;

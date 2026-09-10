@@ -154,6 +154,68 @@ test("viewer department search suppresses empty option-only aggregate rows", () 
   assert.equal(result.results.find(item => item.kind === "department"), undefined);
 });
 
+// Review 2026-09-10, C3: the palette reads a seat's department through
+// lib/departments (seatDepartmentValue / departmentKey) — the same rule as
+// the left-panel chip (buildViewerFilterGroups) and the filter predicate —
+// so spellings that differ only by case or inner whitespace fold into ONE
+// department row whose seat count IS the chip's count, and a seat row's meta
+// shows the normalized name. Before, the palette trimmed but kept inner
+// whitespace runs, so "Case  Management" was a second department here while
+// the chip counted it under "Case Management".
+test("viewer department rows fold case and whitespace variants and agree with the chip count", async () => {
+  const { buildViewerFilterGroups } = await importTsModule("lib/viewerFilterGroups.ts");
+  const canonical = employee({ id: "emp-cm-1", full_name: "Ana Lima", department: "Case Management" });
+  const doubleSpaced = employee({ id: "emp-cm-2", full_name: "Ben Ode", department: "Case  Management" });
+  const shouting = employee({ id: "emp-cm-3", full_name: "Cy Park", department: "  CASE MANAGEMENT " });
+  const caseSeats = [
+    seat({ id: "seat-cm-1", label: "C01", employee: canonical, zone: "Center" }),
+    seat({ id: "seat-cm-2", label: "C02", employee: doubleSpaced, zone: "Center" }),
+    seat({ id: "seat-cm-3", label: "C03", employee: shouting, zone: "Center" }),
+    seat({ id: "seat-cm-4", label: "C04", status: "available", zone: "Center" })
+  ];
+  const result = viewerSearch.buildViewerSeatSearch({
+    query: "case management",
+    seats: caseSeats,
+    employees: [canonical, doubleSpaced, shouting],
+    departmentOptions: [{ id: "dep-cm", name: "Case Management", active: true }],
+    zoneOptions: []
+  });
+
+  const departmentRows = result.results.filter(item => item.kind === "department");
+  assert.equal(departmentRows.length, 1, "one row, not one per spelling");
+  assert.equal(departmentRows[0].title, "Case Management", "the managed option's spelling wins");
+  assert.equal(departmentRows[0].meta, "3 people · 3 seats");
+  assert.deepEqual(departmentRows[0].seatIds, ["seat-cm-1", "seat-cm-2", "seat-cm-3"]);
+
+  const [chip] = buildViewerFilterGroups({
+    surface: "plan",
+    floorSeats: caseSeats,
+    floorPeople: [],
+    departments: ["Case Management"],
+    positions: [],
+    zones: [],
+    seatZone: item => item.zone ?? "",
+    selected: { department: "all", position: "all", zone: "all", status: "all" }
+  }).find(group => group.id === "department").items;
+  assert.equal(chip.count, departmentRows[0].seatIds.length, "the palette's seat count IS the chip's count");
+
+  // Seat-row meta shows the occupant's department through the same rule:
+  // trimmed and whitespace-collapsed, case kept (the rule folds case for
+  // comparison, not display — only the row title takes the option's spelling).
+  const seatRow = result.results.find(item => item.id === "seat:seat-cm-3");
+  assert.ok(seatRow, "the shouting spelling still matches the seat row");
+  assert.equal(seatRow.meta, "Assigned · CASE MANAGEMENT · Center", "leading/trailing whitespace trimmed");
+  const bySeatLabel = viewerSearch.buildViewerSeatSearch({
+    query: "c02",
+    seats: caseSeats,
+    employees: [canonical, doubleSpaced, shouting],
+    departmentOptions: [{ id: "dep-cm", name: "Case Management", active: true }],
+    zoneOptions: []
+  });
+  const doubleSpacedRow = bySeatLabel.results.find(item => item.id === "seat:seat-cm-2");
+  assert.equal(doubleSpacedRow.meta, "Assigned · Case Management · Center", "inner whitespace run collapsed");
+});
+
 test("viewer search formats a person's assigned seat label canonically in the subtitle", () => {
   const casey = employee({ id: "emp-casey", full_name: "Casey Park", department: "Litigation" });
   const caseySeat = seat({ id: "seat-cw01", label: "Cw01", employee: casey, zone: "Center West" });

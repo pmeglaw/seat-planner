@@ -28,11 +28,19 @@ export function departmentKey(value: string | null | undefined): string | null {
  * Never `seats.department`. That column is legacy zone data (pre-007 pod
  * names, resurrected by snapshot restores — audit finding E1) and the zone
  * fallback in lib/seatFilters.ts is the only place it still means anything.
- * The filter predicate (seatMatchesFilters) and the left-panel counts
- * (buildViewerFilterGroups) both read a seat's department from here, so a
- * chip can never count a seat that its own pin then excludes; the Find
- * palette (lib/viewerSeatSearch.ts) encodes the same rule (review 2026-09-10,
- * COR-1).
+ * Every surface that reads a seat's department reads it from HERE and
+ * compares through departmentKey: the filter predicate (seatMatchesFilters,
+ * lib/seatFilters.ts), the left-panel chip counts (buildViewerFilterGroups,
+ * lib/viewerFilterGroups.ts), the viewer's own predicate
+ * (components/seat-map/ViewerSeatFinder.tsx), the Find palette's seat rows
+ * and department rows (lib/viewerSeatSearch.ts — which resolves an unjoined
+ * occupant through its directory first, then calls this), and Ask Planner's
+ * read-only tools (lib/mapOperationsAgent.ts — seat payloads, search text,
+ * the department filter, the summary and breakdown rows). So a chip can
+ * never count a seat that its own pin, the palette, or the model then
+ * excludes (review 2026-09-10, COR-1 and C3). None of those modules is
+ * imported here — this file depends on lib/types only, so it can sit under
+ * all of them without a cycle.
  */
 export function seatDepartmentValue(seat: SeatWithEmployee): string | null {
   return normalizeDepartmentName(seat.employee?.department);
