@@ -10,8 +10,8 @@
 // (the name quoted, the next step named — lib/inlineRename). A server
 // failure lands in the same helper slot; the row stays in edit. A department
 // people carry that the list lacks shows the outline tag "Not in list" and a
-// tertiary Add to list. Empty state per list; the header primary is the next
-// step.
+// ghost Add to list (BR-3: a tertiary's text is under 4.5:1 on the layer-01
+// row). Empty state per list; the header primary is the next step.
 
 import { useEffect, useId, useRef, useState } from "react";
 import { resolveInlineRename, type OptionKind } from "@/lib/inlineRename";
@@ -75,6 +75,8 @@ export function OptionList({
   const canSave = resolution?.kind === "valid" && !pending;
 
   async function commitRename() {
+    // COR-3: Enter reaches here ungated by `disabled={pending}` — one op at a time, as canSave already says.
+    if (pending) return;
     if (editing === null || resolution?.kind !== "valid") {
       setTouched(true);
       return;
