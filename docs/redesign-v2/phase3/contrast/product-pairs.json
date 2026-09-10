@@ -1116,9 +1116,15 @@
   "kind": "text"
  },
  {
-  "name": "light · row bar / tab bar blue-60 on layer-hover-01 (Reception highlighted row)",
-  "fg": "#0f62fe",
+  "name": "light · Reception row bar terracotta on layer-hover-01 #e8e8e8 (cursor row; was measured as blue-60)",
+  "fg": "#b85c2e",
   "bg": "#e8e8e8",
+  "kind": "graphic"
+ },
+ {
+  "name": "light · tab bar terracotta on the tabs host (background white; --sp-tabs-bg)",
+  "fg": "#b85c2e",
+  "bg": "#ffffff",
   "kind": "graphic"
  },
  {
@@ -1146,10 +1152,22 @@
   "kind": "text"
  },
  {
-  "name": "light · Reception locked row meta gray-70 on layer-selected",
-  "fg": "#525252",
-  "bg": "#e0e0e0",
+  "name": "light · Reception locked row text gray-100 on the hit tint #fbe8dc (O4)",
+  "fg": "#161616",
+  "bg": "#fbe8dc",
   "kind": "text"
+ },
+ {
+  "name": "light · Reception locked row meta gray-70 on the hit tint #fbe8dc (O4; was layer-selected)",
+  "fg": "#525252",
+  "bg": "#fbe8dc",
+  "kind": "text"
+ },
+ {
+  "name": "light · Reception row bar terracotta on the locked hit tint #fbe8dc (O4)",
+  "fg": "#b85c2e",
+  "bg": "#fbe8dc",
+  "kind": "graphic"
  },
  {
   "name": "light · danger ghost text red-60 on layer-02 white (side panel)",
@@ -1182,9 +1200,15 @@
   "kind": "text"
  },
  {
-  "name": "dark · row bar / tab bar blue-50 on layer-hover-01 #333333",
-  "fg": "#4589ff",
+  "name": "dark · Reception row bar #E8A07A on the cursor row layer-hover-01 #333333 (O4 / R5; was measured as blue-50)",
+  "fg": "#e8a07a",
   "bg": "#333333",
+  "kind": "graphic"
+ },
+ {
+  "name": "dark · tab bar terracotta on the tabs host (background #161616; --sp-tabs-bg)",
+  "fg": "#b85c2e",
+  "bg": "#161616",
   "kind": "graphic"
  },
  {
@@ -1212,10 +1236,22 @@
   "kind": "text"
  },
  {
-  "name": "dark · Reception locked row meta gray-30 on layer-selected #393939",
-  "fg": "#c6c6c6",
-  "bg": "#393939",
+  "name": "dark · Reception locked row text gray-10 on layer-selected-02 #525252 (O4)",
+  "fg": "#f4f4f4",
+  "bg": "#525252",
   "kind": "text"
+ },
+ {
+  "name": "dark · Reception locked row meta gray-30 on layer-selected-02 #525252 (O4; was layer-selected #393939)",
+  "fg": "#c6c6c6",
+  "bg": "#525252",
+  "kind": "text"
+ },
+ {
+  "name": "dark · Reception row bar #E8A07A on the locked layer-selected-02 #525252 (O4 / R5)",
+  "fg": "#e8a07a",
+  "bg": "#525252",
+  "kind": "graphic"
  },
  {
   "name": "dark · danger ghost text red-40 on layer-02 #393939 (side panel)",

@@ -116,23 +116,35 @@ add(notGated, "dark · AI border end blue-40 on layer-01 #262626 (gradient's low
 // ---- PR 4: pages (Management table + side panel, Settings, Reception) -----------
 add(gated, "light · seat link blue-60 on table row layer-01", P.b60, P.g10, "text");
 add(gated, "light · seat link hover blue-70 on layer-hover-01 (row hovered)", P.b70, P.hoverWhite, "text");
-add(gated, "light · row bar / tab bar blue-60 on layer-hover-01 (Reception highlighted row)", P.b60, P.hoverWhite, "graphic");
+// Ruling A (Phase 5 PR 4, 2026-09-10): these two measured Carbon blue for a bar the brand layer had made terracotta.
+add(gated, "light · Reception row bar terracotta on layer-hover-01 #e8e8e8 (cursor row; was measured as blue-60)", BRAND.terracotta, P.hoverWhite, "graphic");
+add(gated, "light · tab bar terracotta on the tabs host (background white; --sp-tabs-bg)", BRAND.terracotta, P.white, "graphic");
 add(gated, "light · tab hover bar gray-50 on white", P.g50, P.white, "graphic");
 add(gated, "light · tab text gray-70 on the sticky strip (background white)", P.g70, P.white, "text");
 add(gated, "light · count card / readout numeral gray-100 on layer-01", P.g100, P.g10, "text");
 add(gated, "light · count card label / readout eyebrow gray-70 on layer-01", P.g70, P.g10, "text");
-add(gated, "light · Reception locked row meta gray-70 on layer-selected", P.g70, P.g20, "text");
+// O4 (Phase 5 PR 4, owner ruling 2026-09-09): the locked row moved from layer-selected to the hit surface.
+add(gated, "light · Reception locked row text gray-100 on the hit tint #fbe8dc (O4)", P.g100, BRAND.tint, "text");
+add(gated, "light · Reception locked row meta gray-70 on the hit tint #fbe8dc (O4; was layer-selected)", P.g70, BRAND.tint, "text");
+add(gated, "light · Reception row bar terracotta on the locked hit tint #fbe8dc (O4)", BRAND.terracotta, BRAND.tint, "graphic");
 add(gated, "light · danger ghost text red-60 on layer-02 white (side panel)", P.r60, P.white, "text");
 add(gated, "light · danger ghost text red-60 on layer-01 (inspector)", P.r60, P.g10, "text");
 add(gated, "light · text-on-color white on danger red-60", P.white, P.r60, "text");
 add(gated, "dark · seat link blue-40 on table row layer-01 #262626", P.b40, P.g90, "text");
 add(gated, "dark · seat link hover blue-30 on layer-hover-01 #333333", P.b30, P.hoverG90, "text");
-add(gated, "dark · row bar / tab bar blue-50 on layer-hover-01 #333333", P.b50, P.hoverG90, "graphic");
+add(gated, "dark · Reception row bar #E8A07A on the cursor row layer-hover-01 #333333 (O4 / R5; was measured as blue-50)", BRAND.darkLink, P.hoverG90, "graphic");
+add(gated, "dark · tab bar terracotta on the tabs host (background #161616; --sp-tabs-bg)", BRAND.terracotta, P.g100, "graphic");
 add(gated, "dark · tab hover bar gray-60 on background #161616", P.g60, P.g100, "graphic");
 add(gated, "dark · tab text gray-30 on the sticky strip (background #161616)", P.g30, P.g100, "text");
 add(gated, "dark · count card / readout numeral gray-10 on layer-01 #262626", P.g10, P.g90, "text");
 add(gated, "dark · count card label / readout eyebrow gray-30 on layer-01 #262626", P.g30, P.g90, "text");
-add(gated, "dark · Reception locked row meta gray-30 on layer-selected #393939", P.g30, P.g80, "text");
+add(gated, "dark · Reception locked row text gray-10 on layer-selected-02 #525252 (O4)", P.g10, P.g70, "text");
+add(gated, "dark · Reception locked row meta gray-30 on layer-selected-02 #525252 (O4; was layer-selected #393939)", P.g30, P.g70, "text");
+add(gated, "dark · Reception row bar #E8A07A on the locked layer-selected-02 #525252 (O4 / R5)", BRAND.darkLink, P.g70, "graphic");
+add(notGated, "dark · Reception row bar terracotta on layer-selected-02 #525252 — the value R5 replaces (fails 3:1)", BRAND.terracotta, P.g70, "graphic");
+// Ruling B: the other dark --cds-border-interactive consumers, measured and carried — not gated, not fixed here.
+add(notGated, "dark · nav current / menu [aria-current] / palette-row bar terracotta on layer-selected #393939 — carried — dark --cds-border-interactive consumers, owner ruling pending", BRAND.terracotta, P.g80, "graphic");
+add(notGated, "dark · AI border start terracotta on the hovered label layer-hover-01 #333333 — carried — dark --cds-border-interactive consumers, owner ruling pending", BRAND.terracotta, P.hoverG90, "graphic");
 add(gated, "dark · danger ghost text red-40 on layer-02 #393939 (side panel)", P.r40, P.g80, "text");
 add(gated, "dark · danger ghost text red-40 on layer-01 #262626 (inspector)", P.r40, P.g90, "text");
 add(gated, "dark · text-on-color white on danger red-60", P.white, P.r60, "text");
