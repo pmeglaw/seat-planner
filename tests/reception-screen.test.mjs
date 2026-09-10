@@ -188,6 +188,26 @@ test("the cursor clamps at both ends instead of wrapping", async () => {
   assert.equal(readoutName(), "Frank Fox");
 });
 
+test("Phase 5 PR 4: the lock stays on row 1 while the cursor moves to row 2 — two rows, two attributes, the states O4's surfaces tell apart", async () => {
+  await renderReception();
+  lockByTyping("Alice");
+  assert.equal(lockedRows().length, 1);
+  assert.match(lockedRows()[0].textContent, /Alice Adams/);
+  assert.equal(highlighted().length, 0, "no cursor at rest after the lock");
+
+  type("Litigation");
+  assert.equal(highlighted().length, 1);
+  assert.ok(highlighted()[0] === lockedRows()[0], "the cursor starts on row 1 — the locked row carries both attributes");
+
+  press("ArrowDown");
+  assert.equal(lockedRows().length, 1, "the lock survives the cursor moving");
+  assert.match(lockedRows()[0].textContent, /Alice Adams/);
+  assert.equal(highlighted().length, 1);
+  assert.match(highlighted()[0].textContent, /Bob Baker/);
+  assert.ok(highlighted()[0] !== lockedRows()[0], "cursor and lock are different rows");
+  assert.equal(highlighted()[0].getAttribute("aria-selected"), "false");
+});
+
 test("a fresh query resets the cursor to the top", async () => {
   await renderReception();
   type("Litigation");
