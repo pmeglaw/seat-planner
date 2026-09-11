@@ -1,8 +1,14 @@
 # AGENTS.md
 
-## Purpose
+## Purpose And Working Approach
 
-This repo is a private office seat-planning app. Authenticated viewers see the published seating map at `/`; admins edit a draft map at `/admin`, manage data at `/admin/management`, and publish draft changes when ready.
+This is the shared project guide for coding agents working on Seat Planner, a private office seat-planning app. Viewers read the published map at `/`; admins edit the shared draft at `/admin`, manage people at `/admin/management`, and use data utilities at `/admin/settings`. `/reception` is a read-only directory for signed-in users. Keep the product map-first and simple for non-technical staff.
+
+- Read the relevant code, explain the intended change briefly, and make the smallest change that satisfies the request. Preserve unrelated work.
+- This guide is the shared source of project rules and essential architecture; root `CLAUDE.md` points here. Use current source to establish behavior and approved owner decisions to establish intended behavior. Report mismatches; do not treat an existing bug as a new requirement.
+- Search narrowly, reuse findings, and load only the workflow guides needed for the task. Avoid broad scans of dependencies, generated output, and lockfiles. Targeted reads are appropriate for installed framework documentation, exact dependency versions, and build diagnostics.
+- Use Context7 for uncertain library APIs when available, matching the installed version. Prefer local framework docs or dedicated official documentation tools when they answer the question. Never send secrets or private office records in documentation queries.
+- Keep detailed procedures in skills and owner decisions in the design record. When changing a documented route, command, or architectural contract, update its guidance in the same change; avoid duplicating reference material.
 
 ## Commands
 
@@ -20,131 +26,109 @@ Use npm and the existing `package-lock.json`; match the Node version in `package
 | Authenticated flows | `npm run test:e2e:auth`; local Supabase and Chromium required; the harness seeds locally and builds with local database settings |
 | CI verification gate | `npm run gate` (lint, typecheck, coverage thresholds), then `npm run build`; browser tiers are separate |
 
-For focused changes, run the relevant test file or tier. `npm run coverage:check` already runs the Node suite; do not also run `npm test` on the same unchanged tree just to duplicate it.
+Choose checks using **Verification And Completion** below.
 
 ## Project Map And Workflow Guides
 
-- `app/`: routes, layouts, and server actions; `components/`: shared UI; `lib/`: shared business rules and service helpers.
-- `supabase/migrations/`: database history; `tests/`: behavior tests, with `tests/browser/`, `tests/e2e/`, and `tests/e2e-auth/` for browser tiers.
-- Read `CLAUDE.md` for cross-file architecture before non-trivial work; consult `README.md` for setup and operational details.
-- Test harness details: read `.claude/skills/test-tiers/SKILL.md` before writing or debugging framework-coupled tests.
-- Local UI workflow: read `.claude/skills/run-seat-planner/SKILL.md` when running or visually checking the app. These are explicit file paths even if the skills are not listed in the current tool session.
-- UI changes need a browser check of affected routes and relevant loading, empty, error, and role-specific states; report blocked coverage accurately.
+| Area | Start here |
+| --- | --- |
+| Viewer / admin / reception routes | `app/(shell)/page.tsx`, `app/(shell)/admin/`, `app/(shell)/reception/` |
+| Seat-map UI | `components/seat-map/SeatMap.tsx` and its siblings |
+| Mutations / publishing | `app/actions.ts`, `lib/publishGuard.ts`, `lib/publishSummary.ts`, `lib/publishHistory.ts` |
+| Authentication | `lib/serverAuth.ts`, `lib/adminPageGuard.ts`, `components/auth/LoginForm.tsx`, `app/auth/` |
+| Supabase clients / session refresh | `lib/supabase/`, root `proxy.ts` |
+| Business rules / database history | `lib/`, `supabase/migrations/` |
+| Tests | `tests/`, `tests/browser/`, `tests/e2e/`, `tests/e2e-auth/` |
+
+- Consult `README.md` for setup and operations.
+- Read `.claude/skills/test-tiers/SKILL.md` before writing or debugging framework-coupled tests.
+- Read `.claude/skills/run-seat-planner/SKILL.md` when running or visually checking the app.
+- Read `.claude/skills/web-app-performance/SKILL.md` for performance work; measure before optimizing.
+- Read `app/concepts/CLAUDE.md` when working in `app/concepts/`. Those prototypes are historical, gated, and excluded from search indexing; they are not design inputs for shipped surfaces.
+- These are explicit file references even when a skill is absent from the session's skill list. Preserve vendored skills and assets; do not hand-edit third-party skill contents.
+
+## Data And Mutation Contracts
+
+- **Seats have two layers.** Viewers read only `published`; admins edit only `draft`. Publishing atomically replaces the published map. Never write published seats directly from a UI mutation.
+- **Employees are snapshotted at publish.** `employees` is the live admin directory; viewers use `published_employees`. People edits become visible to viewers on the next publish. Existing viewer filter chips may read live department/zone option names; do not widen that exception to people data or other live tables.
+- **Published notes are private.** `published_seat_notes` stores the admin-only published note snapshot. Keep private notes out of viewer-readable published seat rows and viewer responses. Preserve the access and publish invariants exercised by `tests/private-seat-notes-execution.test.mjs`.
+- **The draft is shared across admins.** Preserve the stale-edit fence in `lib/draftConcurrency.ts`: exact per-row IDs and `updated_at` expectations, with timestamps returned verbatim rather than parsed through `Date`. SQLSTATE `MLS02` means the state changed; do not silently overwrite it. Preserve active-employee expectations for publishing too.
+- **Undo/restore does not delete people.** Restoring seats may upsert employees but must not delete an employee created during assignment. Directory removal happens through Management deactivation.
+- **Multi-row operations are atomic RPCs.** Keep seat swaps, imports, restores, publishing, and management transactions in database functions called from server actions. Update the action, a new migration, and relevant tests together when changing a transaction contract.
+- **Protected original seats cannot be deleted.** Only custom seats are removable; preserve agreement between `lib/seatProtection.ts` and database enforcement.
+- Current schema and migrations are authoritative when a change depends on their details. Use focused reads instead of treating this summary as an exhaustive schema inventory.
+
+## Authentication And Navigation
+
+- Mutations require server-side admin authorization via `requireAdmin()` and independent database enforcement through RLS/RPC checks. Client guards and page redirects are not the security boundary.
+- Reuse `lib/serverAuth.ts` and `lib/adminPageGuard.ts` for server authentication and page gating. Preserve the shared cached context rather than adding duplicate authentication probes.
+- `proxy.ts` and `lib/supabase/middleware.ts` refresh sessions. Preserve their route allowlist, bounded waits, and local claim-validation strategy; do not turn session refresh into an unbounded network dependency.
+- Preserve neutral login/reset responses, magic-link `shouldCreateUser: false`, and pre-hydration form safeguards. `/auth/confirm` is primary; `/auth/callback` retains compatibility. See the auth tests before changing these flows.
+- The `app/(shell)/` layout owns persistent navigation chrome. Pages own their content; do not mount duplicate rails or bars. Preserve SeatMap's unsaved-edit veto and shell registration lifecycle.
+- Use client-side navigation within the shell. Full-document navigation is limited to the established cases in `lib/fullNavigation.ts`. Preserve route-commit cancellation of the stalled-navigation watchdog.
+- Mutating actions must invalidate affected paths. Other tabs may temporarily display cached data; the stale-edit fence still protects writes. Do not confuse cache freshness with authorization or concurrency safety.
+- Ask Planner answers questions and highlights seats; it must remain read-only.
 
 ## Deployment
 
 Production is hosted on Vercel. Per the repository deployment documentation, changes to `main` deploy to production and the Supabase GitHub integration applies migrations. Keep deployment work explicit; use a branch and preview for risky or visual changes. Do not manually apply migrations to production.
 
-## Supabase And Env
+## Supabase And Environment
 
-- Copy `.env.local.example` to `.env.local`.
-- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-- Set `OPENAI_API_KEY` (server-only — never `NEXT_PUBLIC_`-prefixed) to enable Ask Planner; optional `OPENAI_MODEL` overrides `ASK_PLANNER_DEFAULT_MODEL` in `lib/mapOperationsAgent.ts`.
-- Never add service-role keys to browser-accessible env vars or client code.
-- Add new database changes as timestamped migrations in `supabase/migrations/`; preserve existing migration history. Use the local stack for routine testing.
-- After creating the first user, promote the admin in `public.profiles`.
-- For local auth, configure Supabase redirect URLs such as `http://localhost:3000/**` and `http://localhost:3000/auth/confirm`.
-- `/auth/confirm` is the primary magic-link route; `/auth/callback` stays supported for older links and PKCE callbacks.
+- Start from `.env.local.example`; use the local Docker database for routine mutation testing. Check the effective database target before writes instead of assuming local execution means local data. Never print credentials while checking configuration.
+- If connected to production, draft and directory edits still affect shared office data even before publishing. Do not modify production records unless explicitly authorized.
+- Preserve the fail-closed guard in `lib/publishGuard.ts`: publishing requires a recognized local database, the Vercel production signal, or an explicit `SEAT_PLANNER_ALLOW_PROD_PUBLISH=true` override. `NODE_ENV=production` alone proves nothing. Keep the refusal as `PUBLISH_BLOCKED`; never enable the override merely to make a test pass.
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are client-safe configuration. `OPENAI_API_KEY` and optional `OPENAI_MODEL` are server-only. Never expose service-role keys. Review any new `NEXT_PUBLIC_` variable for browser exposure.
+- Add database changes as timestamped migrations; preserve legacy numbering and existing migration history. Preserve RLS and role checks rather than bypassing them to resolve errors.
+- Local seeding must remain confined to the Docker container; do not replace it with a generic connection-string target.
+- Preserve `scripts/backup-prod.mjs` safeguards: explicit process-environment database URL, no implicit `.env.local` loading, and output outside the repository. Do not assume a hosted backup plan exists; verify operational status when needed.
+- Restart the dev server after environment changes. Follow `README.md` for local users, admin roles, and authentication redirects.
 
 ## Coding Conventions
 
-- Put shared business rules in `lib/` and cover risky logic with tests in `tests/`.
-- Keep mutations that touch Supabase in server actions and enforce admin access with `requireAdmin()`.
-- Treat Supabase RLS, `profiles.role`, and server-side checks as the security boundary.
-- Use strict TypeScript; avoid `any` unless the alternative is worse.
-- UI changes are governed by the design system — read **Design System** below before changing
-  visuals, layout, spacing, tokens or copy. Two enduring product principles stay: the app is
-  map-first/operational, and viewer flows stay simpler than admin flows.
+- Use strict TypeScript; avoid `any` unless the alternative is worse. Keep shared business rules in `lib/` with focused tests for risky logic.
+- Seat coordinates remain normalized in `[0,1]`; use `lib/seatMath.ts` and `lib/mapLayoutTransform.ts` for display calibration. Raster dimensions are not the saved coordinate space.
+- When changing the shipped map image, regenerate its cache-buster and blur preview in `lib/mapLayoutTransform.ts`.
+- Fonts are vendored and loaded with `next/font/local`; preserve reproducible builds instead of introducing build-time downloads through `next/font/google`.
+- Read **Design System** below before changing visuals, layout, spacing, tokens, or copy. Viewer flows stay simpler than admin flows.
 
 ## Design System (read before any UI change)
 
-The app has been through a governed Carbon redesign. The UI is **not** free-form: layout, tokens,
-components and copy are fixed by a written record, and a change that contradicts it is a defect
-even if it looks better. Cite a section for any design claim; never invent a requirement, and
-never resolve a conflict by editing the record.
-
-- **The rules**: the `ibm-design-language` skill, vendored at `.agents/skills/ibm-design-language/`
-  (IBM Design Language + Carbon — tokens, 2x grid, UI shell, patterns, taste rubric, contrast
-  script). Codex discovers it automatically; invoke it explicitly as `$ibm-design-language`. Its
-  `assets/*.css` are reference copies — the sheets the app loads are `app/styles/carbon-tokens.css`
-  and `app/styles/carbon-components.css`. Provenance: Claude plugin `megeredchian/design-system`
-  1.3.0, fingerprint `f997ee525800e755`, reproducible with the recipe in
-  `docs/redesign-v2/phase3/PHASE3DS.md` §0. A different value means this copy has drifted from the
-  text the record was written against — say so rather than working from it.
-- **The record**: `docs/redesign-v2/` — `PHASE1IA.md` (information architecture), `PHASE2UX.md`
-  (wireframes and flows), `phase3/PHASE3DS.md` (tokens, components, specimens),
-  `phase4/PHASE4BUILD.md` (build log), `DECISIONS.md` (owner rulings; §6 is the numbered list of
-  deliberate Carbon deviations). The record was complete at v2.0.0; every slice after it is a
-  dated amendment in `phase5/PHASE5.md`, never a reopening.
-
-### Brand colours (LOCKED — owner approval required to change)
-
-Carbon ships blue 60 `#0f62fe` as primary, link, focus and interactive. All four roles are
-overridden in `app/styles/brand/megeredchian-law-tokens.css`. **No blue is in use anywhere.**
-
-    Primary                #B85C2E   both themes (4.56:1 on white, 3.97:1 on gray 100)
-    Primary hover          #8F4521   ·  active #7A3A1C
-    Focus ring             #B85C2E light / #FFFFFF explicit and system dark (BR-2, 2026-09-10)
-    Tertiary / outlined    #B85C2E light / white dark; dark hover #333333, active #393939 (BR-2)
-    Link                   #8F4521 light  /  #E8A07A dark
-    Link hover             #7A3A1C light  /  #F5DDD1 dark
-    Interactive border     #B85C2E light  /  #E8A07A dark   (ruling O5, 2026-09-10)
-    Search / filter hit    fill #FBE8DC light, #393939 dark · edge #B85C2E light, #E8A07A dark
-    Reception locked row   #FBE8DC light  /  #525252 dark   (ruling O4)
-    Draft family           #8A3FFC light  /  #BE95FF dark   (Carbon purple 60 / 40, §6 no. 17)
-    Brand neutrals         charcoal #5D5C5B (#3F3E3D) · tints #F5DDD1 / #FBE8DC · paper #FFFBF7
-
-On dark, interactive *edges and links* carry apricot `#E8A07A` — terracotta measures 1.71–2.77:1
-on the dark layers it has to draw on, under the 3:1 graphic floor. Filled primaries and
-`--cds-interactive` stay terracotta; BR-2 makes dark focus white without changing geometry.
-BR-5 informational accents/fills are #B85C2E/#FBE8DC light and #E8A07A/#262626 dark,
-centrally in the brand layer. Owner amendments dated 2026-09-10 are in DECISIONS.md.
-
-**Logo orange `#EB7C35` is the logo mark only** — 2.81:1 on white, fails AA. Never a button, text,
-link, border or focus colour; the token test fails the build if it appears outside the brand
-declaration.
-
-Components consume `--sp-*` names only: no hex and no `--cds-*` outside the token files
-(`tests/phase4-token-layer-source.test.mjs`). Never hand-write terracotta into a component — it
-arrives through the role. New colours derive from the terracotta scale; the Draft purple is the
-one sanctioned exception. Token values, contrast tooling and the per-PR checklist are in the
-`brand-system` skill (`.claude/skills/brand-system/`) — read it before touching any colour or
-anything under `app/styles/`.
-
-### Working rules
-
-- **Target frame**: desktop, 1920×1080, Chrome maximized (dual 27" FHD monitors; nobody uses a
-  laptop). Narrower widths must still work — `DECISIONS.md` §2 binds every viewport from 320px —
-  but they do not carry design rulings. One named exception: `/reception` is operated at about a
-  third of the screen, so its narrow band is designed and verified 480→1055.
-- **Guardrails that are not style**: `accessibility-source` and
-  `bulk-destructive-action-safety-source`, plus the correctness anchors in
-  `seat-creation-ui-source` and `desktop-seat-marker-system-source`, assert against source text.
-  Tripping one means a real accessibility, safety or data-integrity line was crossed — fix the
-  crossing, never loosen the test.
-- `app/styles/sp-components.css` is kept **byte-identical** to
-  `docs/redesign-v2/phase3/components/sp-components.css`. A product change is a dated amendment in
-  both copies, never an edit to one.
-- Tests passing is **not** visual verification. Render the page at 1920×1080 in both themes and
-  look at it.
+- The governed design record controls layout, tokens, components, and copy. Cite the relevant section for design claims. Implement approved changes as dated amendments; never rewrite owner decisions merely to justify an implementation.
+- Read `.agents/skills/ibm-design-language/SKILL.md` for IBM/Carbon patterns. Before touching colours, tokens, or `app/styles/`, also read `.claude/skills/brand-system/SKILL.md` for exact values, approved exceptions, contrast tooling, and verification.
+- The record is `docs/redesign-v2/`: `PHASE1IA.md`, `PHASE2UX.md`, `phase3/PHASE3DS.md`, `phase4/PHASE4BUILD.md`, and `DECISIONS.md`. Later owner amendments are recorded in `phase5/PHASE5.md`. Historical prototypes and `docs/design-system/` are not current design authority.
+- **Brand changes require owner approval.** Preserve terracotta primary fills, the approved light/dark link and focus roles, apricot dark interactive edges, and the sanctioned Draft purple family. Logo orange is mark-only. Do not introduce blue into product interactive roles; the underlying vendored Carbon palette is not itself a violation.
+- Components use semantic `--sp-*` tokens. Preserve the explicit exceptions in `tests/phase4-token-layer-source.test.mjs`, including its hex ledger and font bridge allowances. Do not expand an exception or hard-code a new colour as a shortcut.
+- Preserve vendored Carbon assets and the IBM skill's provenance. Its fingerprint and verification recipe are recorded in `docs/redesign-v2/phase3/PHASE3DS.md`, section 0. Report drift before relying on a mismatched copy.
+- Keep `app/styles/sp-components.css` byte-identical to `docs/redesign-v2/phase3/components/sp-components.css`; approved component amendments update both copies.
+- **Visual target:** Chrome at 1920x1080 in light and dark themes. Maintain responsive behavior from 320px; `/reception` additionally needs its operational 480-1055px band checked. Preserve explicit and system-selected theme behavior.
+- Accessibility, destructive-action safety, draft isolation, protected-seat rules, and coordinate integrity remain mandatory. A source-test failure requires investigation: correct a real regression, or update the assertion when a legitimate refactor preserves the requirement and equivalent behavior is verified. Never weaken the requirement to obtain a passing test.
 
 ## Safe Change Rules
 
-- Only modify files needed for the task.
 - Ask before adding production dependencies.
-- Do not commit, push, or open PRs unless explicitly asked.
-- Do not print, expose, commit, or transmit secrets.
-- Do not bypass RLS/admin checks with client-only guards.
-- Keep draft and published seat behavior separate: admins edit draft, viewers read published.
-- Do not allow protected original seats to be deleted directly; only custom seats are removable.
+- Do not commit, push, open PRs, merge, or deploy unless explicitly authorized. Task completion does not grant these permissions.
+- Never expose or commit secrets. Access, export, or transmit private office records only within the authorized task and to its intended destination; exclude them from unrelated external tools, documentation queries, logs, and example fixtures.
+- Do not disable tests, weaken safety checks, or edit design decisions merely to make a change pass.
+- Do not delete branches or clean unrelated files to produce a clean working tree.
 
-## Done Means
+## Verification And Completion
 
-- The requested change is implemented and scoped to the relevant files.
-- Relevant checks were run. For broad app changes, run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`.
-- If a check cannot run, explain why and provide the exact command to run.
-- Documentation-only changes can skip tests, but say so explicitly.
-- Summarize changed files and remaining risks.
+For every TypeScript/TSX change, run `npm run typecheck` and focused ESLint checks on the changed files (for example, `npx eslint path/to/file.tsx`). A passing full gate satisfies both requirements. Start with the narrowest relevant behavior check; combine rows below when a change crosses boundaries:
+
+| Change | Required verification |
+| --- | --- |
+| Pure business logic | Relevant Node behavior tests |
+| Database schema, RLS, or RPC behavior | Relevant SQL execution tests and action/RPC wiring tests; use the local stack for integration behavior PGlite cannot establish |
+| Login, session handling, role gates, publish integration, or shell navigation | Relevant unit/component tests and affected authenticated e2e scenarios against local Supabase |
+| Components, interactions, or layout | Relevant component/browser tests and visual inspection of affected routes, roles, loading/empty/error states, and applicable theme/viewport targets |
+| Broad application changes | `npm run gate` and `npm run build`, plus applicable browser/authenticated checks above |
+| Documentation only | Review the diff and verify changed paths and commands; application tests may be skipped with an explicit note |
+
+- `npm run gate` includes lint, typecheck, and the Node suite with coverage checks. Do not repeat `npm test` on the same unchanged tree solely to duplicate it.
+- Automated checks do not replace visual inspection. PGlite and local-stack results do not establish live production behavior. Report fixtures, authenticated browser checks, and production verification accurately.
+- Report what changed, checks performed, and remaining limitations; distinguish implemented, verified, committed, and deployed. If a required check is blocked, explain why and provide the exact next command or user action.
+- Completion means the authorized scope is finished and its status is reported accurately. Preserve unrelated work; do not claim the entire repository is clean without checking it.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
