@@ -5,7 +5,7 @@ description: How the seat-planner test tiers are wired — the jsdom component-t
 
 # Test tier mechanics
 
-Reference for the three framework-coupled test tiers, plus the SQL-execution harness that runs inside `npm test`. The always-loaded rules (prefer extending a `lib/` helper; the `*-source.test.mjs` guardrail contract) live in `CLAUDE.md` — this file is only the wiring.
+Reference for the three framework-coupled test tiers, plus the SQL-execution harness that runs inside `npm test`. The always-loaded rules (prefer extending a `lib/` helper; the `*-source.test.mjs` guardrail contract) live in `AGENTS.md` — this file is only the wiring.
 
 ## Component tests (jsdom) — `npm run test:ct`
 
@@ -71,7 +71,7 @@ viewer query 403s locally and the map renders Next's generic server-error page.
 
 ## SQL-execution harness — `tests/rpc-execution.test.mjs`
 
-Unlike the three tiers above, this one runs inside `npm test`. `tests/helpers/pgHarness.mjs` stubs what PGlite doesn't have: Supabase's `auth` schema, `auth.uid()`, and the `anon`/`authenticated` roles. The RPCs' own `app_private.is_admin()` gate is then exercised by switching `app.current_user_id` between an admin and a viewer. What the tier covers and why it exists stays in `CLAUDE.md`.
+Unlike the three tiers above, this one runs inside `npm test`. `tests/helpers/pgHarness.mjs` stubs what PGlite doesn't have: Supabase's `auth` schema, `auth.uid()`, and the `anon`/`authenticated` roles. The RPCs' own `app_private.is_admin()` gate is then exercised by switching `app.current_user_id` between an admin and a viewer. What the tier covers and why it exists stays in `AGENTS.md`.
 
 ## Coverage wiring — `npm run coverage`
 

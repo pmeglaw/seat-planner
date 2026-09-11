@@ -5,7 +5,7 @@ description: Megeredchian Law brand token reference for seat-planner — exact t
 
 # Brand System (LOCKED — do not change without owner approval, 2026-09-03)
 
-The always-loaded rules (mark-only orange, terracotta primary, no blue, Draft purple) are in the root `CLAUDE.md`. This skill holds the values, locations, and verification mechanics behind them.
+The always-loaded rules (mark-only orange, terracotta primary, no blue, Draft purple) are in the root `AGENTS.md`. This skill holds the values, locations, and verification mechanics behind them.
 
 ## Logo
 
@@ -17,7 +17,7 @@ The always-loaded rules (mark-only orange, terracotta primary, no blue, Draft pu
 
 ## Where it lives
 
-`app/styles/brand/megeredchian-law-tokens.css` (+ `.json`) overrides Carbon's interactive roles — `--cds-button-primary/-hover/-active`, `--cds-border-interactive`, `--cds-interactive`, `--cds-link-primary/-hover`, `--cds-focus`, `--cds-background-brand`, `--cds-ai-*` — in all three theme states (`--cds-border-interactive` is #B85C2E light / #E8A07A dark — O5), plus `--cds-button-tertiary/-hover/-active` in the light state only (Carbon's light tertiary is blue 60; the dark tertiary is white — PHASE4BUILD §1.22) this app has (`html[data-carbon-theme]` = `white` | `g100` | absent = system via `prefers-color-scheme`; there is no `g10` state), plus the tier-C zone tokens that bypass those roles (`--sp-shell-current-bar`, `--sp-panel-dark-link`, `--sp-ai-border-end`), and the O2 / O3 / O4 direct `--sp-*` overrides (`--sp-pill-search-*`, `--sp-status-search-surface` / `--sp-status-search-mark` — the roster's hit row, audit BR-1 2026-09-10 — `--sp-status-draft-mark`, `--sp-pill-badge`, `--sp-recep-row-locked`). Every `--sp-*` alias inherits the brand through the `--cds-*` roles; **do not** hand-write terracotta into components. The original hand-off is kept under `docs/brand/`.
+`app/styles/brand/megeredchian-law-tokens.css` (+ `.json`) overrides Carbon's interactive roles — `--cds-button-primary/-hover/-active`, `--cds-border-interactive`, `--cds-interactive`, `--cds-link-primary/-hover`, `--cds-focus`, `--cds-background-brand`, `--cds-ai-*` — in all three theme states (`--cds-border-interactive` is #B85C2E light / #E8A07A dark — O5), across the theme states this app has (`html[data-carbon-theme]` = `white` | `g100` | absent = system via `prefers-color-scheme`; there is no `g10` state), plus the tier-C zone tokens that bypass those roles (`--sp-shell-current-bar`, `--sp-panel-dark-link`, `--sp-ai-border-end`), and the O2 / O3 / O4 direct `--sp-*` overrides (`--sp-pill-search-*`, `--sp-status-search-surface` / `--sp-status-search-mark` — the roster's hit row, audit BR-1 2026-09-10 — `--sp-status-draft-mark`, `--sp-pill-badge`, `--sp-recep-row-locked`). Tertiary overrides are theme-specific: light uses #B85C2E/#8F4521/#7A3A1C for base/hover/active; explicit and system dark retain Carbon's white base and override hover/active to #333333/#393939 (BR-2). Every `--sp-*` alias inherits the brand through the `--cds-*` roles; **do not** hand-write terracotta into components. The original hand-off is kept under `docs/brand/`.
 
 ## Rules in full
 
@@ -28,7 +28,7 @@ The always-loaded rules (mark-only orange, terracotta primary, no blue, Draft pu
 5. Contrast is verified with `docs/redesign-v2/phase3/contrast/generate-pairs.mjs` + the checker after any token change; white on #B85C2E is 4.56:1 — keep button labels ≥ 14px regular.
 6. Recorded as `DECISIONS.md` §6 deviation 16 from the Carbon rule "Blue 60 is the only primary" — the brand layer is the one place that deviation is expressed.
 
-## Verification checklist (every PR)
+## Verification checklist (brand and UI changes)
 
 - primary button computed background `rgb(184, 92, 46)`
 - hover `rgb(143, 69, 33)`
@@ -37,7 +37,7 @@ The always-loaded rules (mark-only orange, terracotta primary, no blue, Draft pu
 - links light #8F4521 / dark #E8A07A
 - interactive bars / edges (nav current, floor menu, palette row, tab, Reception row, AI label border start): light `rgb(184, 92, 46)` / dark `rgb(232, 160, 122)` (O5) — `phase5/audit/pr5-dark-edges.mjs` reads all of them
 - no #0f62fe outside `carbon-tokens.css`
-- build and `npm test` green
+- Build and Node-suite checks pass for relevant brand/UI changes. `npm run gate` or `npm run coverage:check` already runs the Node suite; do not repeat `npm test` on the same unchanged tree.
 
 ## Approved PR #531 amendments (owner, 2026-09-10)
 

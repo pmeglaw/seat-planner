@@ -33,11 +33,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<local anon key> npm run dev
 a supported path, not a workaround.
 
 > ⚠️ **Pointing `.env.local` at the live project makes local dev write to
-> PRODUCTION.** Draft-layer seat edits are still safe (viewers only ever read
-> published data), but **Publish updates the live map for real viewers** — treat
-> any local publish as a production deploy. Prefer the local stack above for all
-> routine work; use the live project only when you specifically need production
-> data in front of you.
+> PRODUCTION.** Verify the effective database target before writes. Use local
+> Supabase for routine work. Production draft and directory edits change shared
+> office data and require explicit authorization, even before viewers see them.
+> Publishing updates the live map and requires production-deployment authorization.
 >
 > Publish is also **guarded in code** (`lib/publishGuard.ts`), and the guard
 > fails closed: publish is refused unless the database is local, the server is
@@ -85,10 +84,7 @@ Run a single test file with `node --test tests/seat-swap.test.mjs`.
 
 ## Architecture
 
-Two documents carry the detailed guidance; read them before non-trivial work:
-
-- **`CLAUDE.md`** — the cross-file architecture: the draft/published two-layer model, the security boundary (two enforcing layers plus session refresh), RPC-based transaction safety, the coordinate calibration transform, the design-token system, and the migration numbering scheme.
-- **`AGENTS.md`** — folder map, coding conventions, and the "done means" checklist.
+Read **`AGENTS.md`** before non-trivial work. It is the shared guide to project architecture, the folder map, coding conventions, safety boundaries, design requirements, and verification. **`CLAUDE.md`** is Claude's entry point and directs it to that same guide.
 
 Key concepts in brief:
 

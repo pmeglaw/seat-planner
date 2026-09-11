@@ -11,25 +11,15 @@ that uses the project's own `@playwright/test` dependency (no extra install).
 Paths below are relative to the repo root. Commands are verified on **Windows**;
 the dev-server start/stop block is the only platform-specific part.
 
-> ## ⚠️ Local dev writes to PRODUCTION
->
-> `.env.local` points `NEXT_PUBLIC_SUPABASE_URL` at the **production** Supabase
-> project, and it is the only project that exists — there is no dev or staging
-> database. Verified 2026-07-22.
->
-> - **Draft-layer edits are safe.** Viewers never read `layer = 'draft'`, so
->   seat edits, moves and assignments stay invisible until published.
-> - **Publishing is not.** `publish_seat_map()` copies draft over published, and
->   the live map at `seats.megeredchianlaw.com` updates for 100+ viewers.
->   Treat any local publish as a production deploy: get the owner's explicit
->   go-ahead, record the target row's full baseline first, and restore it after.
->
-> Any doc or note claiming a local "draft → edit → publish cycle without
-> touching prod data" is false — there is no non-production database.
+## Database target and authorization
+
+Default to local Supabase for routine UI testing: start Docker, run `npm run db:start` and `npm run db:seed`, and configure the local URL and anon key using `README.md`. Verify the effective database target before any write; never print credentials.
+
+If connected to production, draft edits, assignments, directory changes, and role changes affect shared office data and require explicit authorization. Viewers not seeing a draft does not make those writes harmless. Publishing changes the live viewer map and requires production-deployment authorization. Preserve the publish guard; do not bypass it for testing.
 
 ## Prerequisites
 
-- Node ≥ 22. Deps installed (`npm ci` from clean).
+- Match Node to `package.json` engines. Install dependencies with `npm ci`.
 - Playwright's Chromium ships with the `@playwright/test` dev dependency
   (browsers under `%LOCALAPPDATA%\ms-playwright` on Windows,
   `~/Library/Caches/ms-playwright` on macOS). If missing:
@@ -117,20 +107,7 @@ Supabase project; its password lives in the gitignored `.env.local` as
 automatically (env vars win over `.env.local`). Missing creds don't fail the
 smoke — that step prints `SKIP`.
 
-The user is **viewer**-role by default, so `/admin*` renders "Admin access
-required" rather than the editor. Admin surfaces become drivable by flipping the
-role — a deliberate, owner-approved step, because an agent can then mutate the
-production draft layer:
-
-```sql
-update public.profiles set role = 'admin' where email = 'seat-planner-e2e@megeredchianlaw.com';
--- and afterwards, always:
-update public.profiles set role = 'viewer' where email = 'seat-planner-e2e@megeredchianlaw.com';
-```
-
-While elevated, stay read-only unless the task says otherwise: menus, toggles
-and screenshots are fine; undo/redo, publish and seat edits write to prod. The
-top bar's green **Published** pill staying put is good evidence nothing changed.
+For local admin checks, use the locally seeded admin account documented in `README.md`. For authorized production inspection, verify the account role first. Any temporary production role change needs explicit authorization, a recorded original role, and restoration afterward. Stay read-only unless the task authorizes the specific writes. A status pill is not evidence that no database mutation occurred.
 
 If the password is lost or the user is missing, re-seed: insert into
 `auth.users` (with `extensions.crypt(<new-password>, extensions.gen_salt('bf'))`,
@@ -199,5 +176,5 @@ need no auth at all.
   delete `.next`, restart, hard-refresh.
 
 Test tiers (`npm test`, `test:ct`, `test:browser`, `test:e2e`) are documented in
-`CLAUDE.md` and the `test-tiers` skill — deliberately not duplicated here, since
+`AGENTS.md` and the `test-tiers` skill — deliberately not duplicated here, since
 a hardcoded pass-count in this file went stale by more than 2x.

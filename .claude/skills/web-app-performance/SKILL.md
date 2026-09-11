@@ -117,11 +117,8 @@ Two notes that decide whether a result is trustworthy:
   is allowed through.
 
 Credentials come from `.env.local` (`SEAT_PLANNER_E2E_EMAIL` / `_PASSWORD`),
-same as the `run-seat-planner` driver. The seeded user is viewer-role, so
-`/admin` renders "Admin access required" rather than the editor — measuring the
-real admin map needs the deliberate, owner-approved role flip documented in the
-`run-seat-planner` skill. **While elevated, stay read-only**: local dev writes to
-the production database, and a publish is a production deploy.
+same as the `run-seat-planner` driver. Configure credentials for the role being measured.
+Use the local Supabase stack and its seeded admin account for routine admin measurements; see `README.md` and the `run-seat-planner` skill. Verify the effective target before measurement. On production, stay read-only unless specific writes are explicitly authorized; draft, directory, and role changes affect shared office data, and publishing is a production deployment. Label measurements with the environment and dataset used; local results do not establish production performance.
 
 ## Tier 3: interaction — what happens after load
 
