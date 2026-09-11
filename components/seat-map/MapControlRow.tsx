@@ -4,8 +4,9 @@
 // `.sp-control-row`; Phase 4 PR 3a). One row, both modes, above canvas and
 // slot so it never reflows when the slot opens. Left to right: floor menu ·
 // search · "Filters · N" + Clear (Hidden at 0) · result count (aria-live) ·
-// Find me · [divider · Undo · Redo · Add seat · Ask Planner · Publish N
-// changes (the row's ONE primary) · ⋯ Discard] · Names. Publish is present
+// Find me · [divider · Undo · Redo · Exit add seat (while active) · Ask Planner · Publish N
+// changes (the row's ONE primary) · ⋯ Add seat / Discard] · Names. Phase 5,
+// 2026-09-11: infrequent creation moves into More actions. Publish is present
 // and DISABLED when nothing is publishable, with the reason stated beside it
 // (aria-describedby) — never only a tooltip. Add seat and Names are Hidden
 // (absent, never disabled) on a roster floor.
@@ -19,7 +20,7 @@ import type { FloorId } from "@/lib/floorIds";
 import { FloorMenuButton } from "@/components/seat-map/FloorMenuButton";
 import { MapSearch, type MapSearchProps } from "@/components/seat-map/MapSearch";
 import { NamesVisibilityToggle } from "@/components/seat-map/NamesVisibilityToggle";
-import { CloseIcon, MoreIcon, PlusIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
+import { CloseIcon, MoreIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 
 export type MapControlRowDraft = {
   undo: { label: string; disabled: boolean; busy?: boolean; onClick: () => void };
@@ -79,7 +80,7 @@ export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters
           <span className="sp-control-divider" role="separator" aria-orientation="vertical" />
           <IconWithTooltip label={draft.undo.label} disabled={draft.undo.disabled} busy={draft.undo.busy} onClick={draft.undo.onClick}><UndoIcon /></IconWithTooltip>
           <IconWithTooltip label={draft.redo.label} disabled={draft.redo.disabled} busy={draft.redo.busy} onClick={draft.redo.onClick}><RedoIcon /></IconWithTooltip>
-          {!draft.addSeat.hidden && (
+          {!draft.addSeat.hidden && draft.addSeat.active && (
             <button
               type="button"
               className="cds-btn cds-btn--ghost cds-btn--md"
@@ -87,7 +88,6 @@ export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters
               data-state={draft.addSeat.active ? "pressed" : undefined}
               onClick={draft.addSeat.onToggle}
             >
-              {draft.addSeat.active ? null : <PlusIcon style={{ position: "static", width: 16, height: 16 }} />}
               {draft.addSeat.active ? "Exit add seat" : "Add seat"}
             </button>
           )}
@@ -114,7 +114,7 @@ export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters
             {draft.publish.count === 0 ? "Publish" : `Publish ${draft.publish.count} ${draft.publish.count === 1 ? "change" : "changes"}`}
           </button>
           {draft.publish.count === 0 && <span className="sp-control-reason" id={reasonId}>No changes to publish</span>}
-          <OverflowMenu disabled={draft.discard.disabled} onDiscard={draft.discard.onOpen} />
+          <OverflowMenu addSeat={draft.addSeat} disabled={draft.discard.disabled} onDiscard={draft.discard.onOpen} />
         </>
       ) : null}
       {names && !names.hidden ? <NamesVisibilityToggle pressed={names.pressed} onToggle={names.onToggle} /> : null}
@@ -144,10 +144,10 @@ function IconWithTooltip({ label, disabled, busy = false, onClick, children }: {
   );
 }
 
-// ⋯ holds Discard draft changes ONLY (D2-b): danger, disabled when nothing
-// is discardable. Reset zoom lives on the band's zoom control, Show names
+// Phase 5 amendment to D2-b: Add seat first; Discard below a divider, danger
+// and disabled when nothing is discardable. Reset zoom lives on the band's zoom control, Show names
 // is the row's toggle — neither belongs in a menu of document actions.
-function OverflowMenu({ disabled, onDiscard }: { disabled: boolean; onDiscard: () => void }) {
+function OverflowMenu({ addSeat, disabled, onDiscard }: { addSeat: MapControlRowDraft["addSeat"]; disabled: boolean; onDiscard: () => void }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLSpanElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -163,7 +163,8 @@ function OverflowMenu({ disabled, onDiscard }: { disabled: boolean; onDiscard: (
   }, [open]);
   useEffect(() => {
     if (!open) return;
-    window.requestAnimationFrame(() => rootRef.current?.querySelector<HTMLButtonElement>("[role='menuitem']")?.focus());
+    const frame = window.requestAnimationFrame(() => rootRef.current?.querySelector<HTMLButtonElement>("[role='menuitem']:not(:disabled)")?.focus());
+    return () => window.cancelAnimationFrame(frame);
   }, [open]);
   return (
     <span ref={rootRef} className="cds-overflow" data-open={open ? "" : undefined}>
@@ -181,6 +182,19 @@ function OverflowMenu({ disabled, onDiscard }: { disabled: boolean; onDiscard: (
           aria-expanded={open}
           aria-controls={open ? menuId : undefined}
           onClick={() => setOpen(value => !value)}
+          onKeyDown={event => {
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              event.stopPropagation();
+              setOpen(true);
+            }
+            if (open && event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              setOpen(false);
+            }
+            if (event.key === "Tab") setOpen(false);
+          }}
         >
           <MoreIcon />
         </button>
@@ -195,13 +209,42 @@ function OverflowMenu({ disabled, onDiscard }: { disabled: boolean; onDiscard: (
           aria-label="More actions"
           className="cds-overflow-menu"
           onKeyDown={event => {
+            const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("[role='menuitem']:not(:disabled)"));
+            const index = items.indexOf(document.activeElement as HTMLButtonElement);
+            if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+              event.preventDefault();
+              event.stopPropagation();
+              const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+              items[next]?.focus();
+            }
             if (event.key === "Escape") {
               event.stopPropagation();
+              setOpen(false);
+              triggerRef.current?.focus();
+              event.preventDefault();
+            }
+            if (event.key === "Tab") {
               setOpen(false);
               triggerRef.current?.focus();
             }
           }}
         >
+          {!addSeat.hidden && (
+            <>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  triggerRef.current?.focus();
+                  addSeat.onToggle();
+                }}
+              >
+                {addSeat.active ? "Exit add seat" : "Add seat"}
+              </button>
+              <div role="separator" className="sp-map-menu-separator" />
+            </>
+          )}
           <button
             type="button"
             role="menuitem"
@@ -209,6 +252,7 @@ function OverflowMenu({ disabled, onDiscard }: { disabled: boolean; onDiscard: (
             disabled={disabled}
             onClick={() => {
               setOpen(false);
+              triggerRef.current?.focus();
               onDiscard();
             }}
           >

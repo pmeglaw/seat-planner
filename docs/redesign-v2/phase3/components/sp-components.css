@@ -1266,3 +1266,6 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
   .sp-roster-email:empty { display: none; }
   .sp-roster-row > .sp-roster-copy { grid-column: 2; grid-row: 1 / span 3; align-self: start; overflow: visible; }
 }
+
+/* 2026-09-11 Add seat menu amendment: separate creation from destructive Discard. */
+.sp-map-menu-separator { height: 1px; background: var(--sp-border-subtle-00); }

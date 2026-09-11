@@ -1,11 +1,11 @@
 import test, { before, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { loadComponent, renderElement, React, fireEvent, cleanup, screen, within } from "./helpers/renderComponent.mjs";
+import { loadComponent, renderElement, React, fireEvent, cleanup, screen, within, flushFrames } from "./helpers/renderComponent.mjs";
 
 // MapControlRow — the 48px control row both map surfaces mount (PHASE2UX
 // §1M.3, D2-b, PHASE3DS §1.14). Published: floor · search · Filters · count ·
-// Find me · Names. Draft continues after a divider: Undo · Redo · Add seat ·
-// Ask Planner · Publish (the ONE primary) · ⋯ · Names.
+// Find me · Names. Draft continues after a divider: Undo · Redo ·
+// Ask Planner · Publish (the ONE primary) · ⋯ Add seat / Discard · Names.
 
 let MapControlRow;
 before(async () => {
@@ -71,7 +71,7 @@ test("Filters · N split control: Hidden at 0; at 3 the tertiary opens the left 
   assert.equal(split.querySelectorAll("button").length, 2, "two interactive elements, never a × nested inside the button");
 });
 
-test("draft row: divider, Undo/Redo with tooltips, Add seat, Ask Planner badge, the ONE primary, ⋯ Discard only", async () => {
+test("draft row: infrequent Add seat moves into More actions above separated Discard", async () => {
   await renderElement(row({ draft: draft() }));
   const toolbar = screen.getByRole("toolbar", { name: "Map controls" });
   assert.ok(toolbar.querySelector(".sp-control-divider[role='separator']"));
@@ -79,7 +79,7 @@ test("draft row: divider, Undo/Redo with tooltips, Add seat, Ask Planner badge, 
   assert.equal(undo.disabled, false);
   assert.equal(undo.parentElement.querySelector("[role='tooltip']").textContent, "Undo last map change · Ctrl Z");
   assert.equal(within(toolbar).getByRole("button", { name: "Redo · Ctrl Shift Z" }).disabled, true);
-  assert.equal(within(toolbar).getByRole("button", { name: "Add seat" }).getAttribute("aria-pressed"), "false");
+  assert.equal(within(toolbar).queryByRole("button", { name: "Add seat" }), null);
   const ask = within(toolbar).getByRole("button", { name: "Open Ask Planner AI, 3 seats highlighted" });
   assert.equal(ask.dataset.count, "3");
   assert.ok(ask.classList.contains("cds-btn--tertiary"));
@@ -90,9 +90,10 @@ test("draft row: divider, Undo/Redo with tooltips, Add seat, Ask Planner badge, 
   fireEvent.click(within(toolbar).getByRole("button", { name: "More actions" }));
   const menu = within(toolbar).getByRole("menu", { name: "More actions" });
   const items = within(menu).getAllByRole("menuitem");
-  assert.equal(items.length, 1);
-  assert.equal(items[0].textContent, "Discard draft changes");
-  assert.ok(items[0].classList.contains("cds-danger"));
+  assert.deepEqual(items.map(item => item.textContent), ["Add seat", "Discard draft changes"]);
+  assert.equal(items[0].classList.contains("cds-danger"), false);
+  assert.equal(items[0].nextElementSibling.getAttribute("role"), "separator");
+  assert.ok(items[1].classList.contains("cds-danger"));
 });
 
 test("draft, no changes: Publish present and DISABLED with the reason beside it (aria-describedby); Discard disabled; Ask Planner has no badge", async () => {
@@ -115,6 +116,49 @@ test("Add seat active reads 'Exit add seat' (aria-pressed); roster floor hides A
   assert.equal(screen.queryByRole("button", { name: /add seat/i }), null);
   assert.equal(screen.queryByRole("button", { name: "Show occupant names" }), null);
   assert.ok(screen.getByText("40 people"));
+  fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+  assert.equal(screen.queryByRole("menuitem", { name: /add seat/i }), null);
+  assert.equal(screen.getAllByRole("menuitem").length, 1);
+});
+
+test("More actions supports keyboard traversal, Escape, and guarded Add seat activation", async () => {
+  let added = 0, discarded = 0;
+  await renderElement(row({ draft: draft({ addSeat: { active: false, hidden: false, onToggle: () => added++ }, discard: { disabled: false, onOpen: () => discarded++ } }) }));
+  const trigger = screen.getByRole("button", { name: "More actions" });
+  fireEvent.keyDown(trigger, { key: "ArrowDown" });
+  await flushFrames();
+  const add = screen.getByRole("menuitem", { name: "Add seat" });
+  const discard = screen.getByRole("menuitem", { name: "Discard draft changes" });
+  assert.equal(document.activeElement, add);
+  fireEvent.keyDown(add, { key: "ArrowDown" });
+  assert.equal(document.activeElement, discard);
+  fireEvent.keyDown(discard, { key: "ArrowDown" });
+  assert.equal(document.activeElement, add);
+  fireEvent.keyDown(add, { key: "End" });
+  assert.equal(document.activeElement, discard);
+  fireEvent.keyDown(discard, { key: "Home" });
+  assert.equal(document.activeElement, add);
+  fireEvent.keyDown(add, { key: "Escape" });
+  assert.equal(screen.queryByRole("menu"), null);
+  assert.equal(document.activeElement, trigger);
+  fireEvent.click(trigger);
+  fireEvent.click(screen.getByRole("menuitem", { name: "Add seat" }));
+  assert.equal(added, 1);
+  assert.equal(discarded, 0);
+  assert.equal(screen.queryByRole("menu"), null);
+  assert.equal(document.activeElement, trigger);
+});
+
+test("More actions skips disabled Discard and closes when tabbing away", async () => {
+  await renderElement(row({ draft: draft({ discard: { disabled: true, onOpen: noop } }) }));
+  const trigger = screen.getByRole("button", { name: "More actions" });
+  fireEvent.click(trigger);
+  await flushFrames();
+  const add = screen.getByRole("menuitem", { name: "Add seat" });
+  fireEvent.keyDown(add, { key: "ArrowUp" });
+  assert.equal(document.activeElement, add);
+  fireEvent.keyDown(add, { key: "Tab" });
+  assert.equal(screen.queryByRole("menu"), null);
 });
 
 test("search field: clear × replaces the hint once a query exists; Escape peels palette then query; ArrowDown enters the palette", async () => {
