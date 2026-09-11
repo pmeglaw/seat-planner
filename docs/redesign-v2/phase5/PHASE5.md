@@ -730,3 +730,40 @@ component sheets verified byte-identical; `git diff --check` clean. This closes
 the narrow reflow findings from the UI review. Changes remain local/uncommitted;
 no production writes or deployment. Next step: review the combined changes for
 a PR and preview deployment.
+
+## 2026-09-11 — Add seat moves into More actions
+
+**Authorization:** the owner identified Add seat as the least-used feature
+(estimated 10% usage), approved moving it into More actions, and requested
+implementation. This dated amendment supersedes D2-b and PHASE2UX §1M.3 only
+for the entry point and overflow contents; the closed record is preserved.
+
+**Behavior:** the idle draft toolbar no longer has an Add seat button. More
+actions contains labeled Add seat first, then a divider and the existing danger
+Discard draft changes item. On an unmapped floor, Add seat and its divider are
+absent. The existing narrow-window editing restriction is unchanged. While Add
+seat mode is active, the toolbar displays Exit add seat and the menu offers the
+same exit; the mode card, instructions and Escape exit remain available.
+
+**Interaction:** ArrowDown opens the menu and focuses the first enabled item;
+Up/Down wrap between enabled items, Home/End go to the ends, and Escape closes
+only the menu and restores trigger focus. Tab closes the menu and proceeds to
+the next control. Choosing Add seat closes the menu and uses the existing
+startAddSeatMode / inspector-guard path. Unsaved edits still require resolution.
+Creation, protected-seat rules, draft/published separation and Discard's
+confirmation/disabled behavior are unchanged.
+
+**Verification:** focused component and safety/source tests 57/57; real-browser
+SeatMap tests 28/28, including menu activation, visible exit, Escape layering,
+unsaved-inspector guarding and roster-floor absence. Gate passed 1525/1525 with
+typecheck, coverage and zero lint errors (84 existing warnings); Next build
+passed. No production dependencies or token values changed. The separator uses
+an existing semantic border token; both component sheets are byte-identical.
+
+Styled local Chromium checks at 1920×1080, 1280 and 1056 in light and dark verified
+menu bounds, divider, keyboard traversal, Tab focus, active mode and visible exit.
+The 390px check confirmed editing actions remain absent under the existing
+restriction. Screenshots inspected after mode transitions finished. The fixture
+uses real components/CSS with mocked backend boundaries; this slice has not yet
+received a hosted preview or a fresh authenticated full-suite run. No hosted
+seat or directory writes. Work remains on codex/add-seat-menu, uncommitted.

@@ -421,11 +421,46 @@ test("the slot never covers the band: the inspector sits over the canvas column 
 const litigationSeat = seat({ id: "s-l01", seat_key: "l01", label: "L01", x: 0.4, y: 0.4, zone: "Litigation Pod", floor: "2" });
 const bob = { ...alice, id: "emp-2", full_name: "Bob Ito", department: "Litigation", phone_extension: "456" };
 
+test("More actions starts Add seat mode; menu Escape preserves the mode and visible Exit ends it", async ({ page }) => {
+  await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: true });
+  const trigger = page.getByRole("button", { name: "More actions", exact: true });
+  await trigger.press("ArrowDown");
+  const add = page.getByRole("menuitem", { name: "Add seat", exact: true });
+  await expect(add).toBeFocused();
+  await add.press("Enter");
+  await expect(page.getByRole("status", { name: "Add seat mode", exact: true })).toBeAttached();
+  await expect(page.getByRole("menu", { name: "More actions", exact: true })).toHaveCount(0);
+  const exit = page.getByRole("toolbar", { name: "Map controls" }).getByRole("button", { name: "Exit add seat", exact: true });
+  await expect(exit).toHaveAttribute("aria-pressed", "true");
+  await trigger.click();
+  await page.getByRole("menuitem", { name: "Exit add seat", exact: true }).press("Escape");
+  await expect(trigger).toBeFocused();
+  await expect(exit).toBeAttached();
+  await exit.click();
+  await expect(exit).toHaveCount(0);
+  await trigger.click();
+  await page.getByRole("menuitem", { name: "Add seat", exact: true }).click();
+  await trigger.press("Escape");
+  await expect(page.getByRole("status", { name: "Add seat mode", exact: true })).toHaveCount(0);
+});
+
+test("starting Add seat from More actions still guards unsaved inspector edits", async ({ page }) => {
+  await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
+  await dirtyInspectorNotes(page);
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Add seat", exact: true }).click();
+  await expect(page.locator("#inspector-unsaved-title")).toBeAttached();
+  await expect(page.getByRole("status", { name: "Add seat mode", exact: true })).toHaveCount(0);
+});
+
 test("an unmapped floor renders the roster from the live working set, with no Add seat and no viewport tab stop", async ({ page }) => {
   // Bob has no draft seat, so under the interim rule he works on Floor 2 —
   // the editor lists him from its live employees, never a published snapshot.
   await mountSeatMap(page, { seats: [n01, n02], employees: [alice, bob], canEdit: true });
-  await expect(page.getByRole("button", { name: "Add seat" })).toBeAttached();
+  await expect(page.getByRole("button", { name: "Add seat", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Add seat", exact: true })).toBeAttached();
+  await page.getByRole("menuitem", { name: "Add seat", exact: true }).press("Escape");
   await expect(page.locator('[aria-label^="Admin seat map viewport"]')).toHaveAttribute("tabindex", "0");
 
   await page.locator('button[aria-label^="Change floor"]').first().dispatchEvent("click");
@@ -436,6 +471,8 @@ test("an unmapped floor renders the roster from the live working set, with no Ad
   await expect(roster.getByText("Bob Ito")).toBeAttached();
   await expect(roster.getByText("Alice Smith")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Add seat" })).toHaveCount(0);
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: /add seat/i })).toHaveCount(0);
   await expect(page.locator('button[aria-label*="Open details"]')).toHaveCount(0);
   await expect(page.locator('[aria-label^="Admin seat map viewport"]')).toHaveCount(0);
   await expect(page.getByText("Showing Floor 2 · Litigation.")).toBeAttached();
