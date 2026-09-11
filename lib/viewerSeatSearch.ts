@@ -266,12 +266,14 @@ export function buildViewerSeatSearch({
 
   const assignedSeatByEmployeeId = mapAssignedSeats(seats);
 
+  const nameMatchedSeatIds = new Set<string>();
   activeEmployees.forEach(employee => {
     const assignedSeat = assignedSeatByEmployeeId.get(employee.id) ?? null;
     const zone = assignedSeat ? getSeatZone(assignedSeat) : null;
     if (!matchesQuery(query, [employee.full_name, employee.position, employee.department, normalizeDepartmentName(employee.department), employee.phone_extension, assignedSeat?.label, zone])) return;
 
     results.push(buildPersonRow(employee, assignedSeat, seats));
+    if (assignedSeat && matchesQuery(query, [employee.full_name])) nameMatchedSeatIds.add(assignedSeat.id);
   });
 
   seats.forEach(seat => {
@@ -279,6 +281,12 @@ export function buildViewerSeatSearch({
     const employee = occupied.employee;
     const zone = getSeatZone(seat);
     if (!matchesQuery(query, [seat.label, seat.status, zone, employee?.department, seatDepartmentValue(occupied), employee?.full_name, employee?.position, employee?.phone_extension])) return;
+
+    // Phase 5, 2026-09-11 (D1-d): a name hit already carries its assigned
+    // seat. Keep a separate seat row only when the seat itself also matches.
+    // Match by seat identity, never by display name; other assignments and
+    // distinct people with the same name must remain reachable.
+    if (nameMatchedSeatIds.has(seat.id) && !matchesQuery(query, [seat.label, seat.status, zone, employee?.department, seatDepartmentValue(occupied)])) return;
 
     results.push({
       id: `seat:${seat.id}`,
@@ -390,9 +398,9 @@ export function buildViewerSeatSearch({
 /**
  * The `?q=` landing's "unique match" (DECISIONS D1-d): the one result when the
  * palette holds exactly one — or the one PERSON when every other result is
- * that person's own seat (a seated person's name is also in their seat row's
- * meta, so a name query lists the person and the seat: one match, two rows —
- * found by the PR 5 smoke, step 11). Anything else stays a list.
+ * that person's own seat. Name-only duplicates are now collapsed before
+ * rendering; direct seat / shared-field queries can still return both rows.
+ * Anything else stays a list.
  */
 export function uniqueLandingResult(results: ViewerSearchResult[]): ViewerSearchResult | null {
   if (results.length === 1) return results[0];

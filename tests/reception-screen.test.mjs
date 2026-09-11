@@ -345,6 +345,10 @@ test("zero matches: the empty state in the list body with a ghost Clear search; 
   assert.match(empty.querySelector("h3").textContent, /No one matches “zzzz”/);
   assert.match(empty.querySelector("p").textContent, /Try a name, department, seat code or extension\./);
   assert.equal(readoutName(), "Bob Baker");
+  assert.equal(within(readout()).getByText("Last selected caller").closest("[aria-live]").getAttribute("aria-live"), "polite");
+  assert.equal(readout().querySelectorAll(".sp-recep-band button, .sp-recep-band a, .sp-recep-band [tabindex]").length, 0);
+  type("zzzzx");
+  assert.equal(within(readout()).getAllByText("Last selected caller").length, 1);
   assert.equal(highlighted().length, 0);
   const clear = within(empty).getByRole("button", { name: "Clear search" });
   assert.equal(fireEvent.mouseDown(clear), false);
@@ -352,6 +356,7 @@ test("zero matches: the empty state in the list body with a ghost Clear search; 
   assert.equal(searchInput().value, "");
   assert.equal(document.activeElement, searchInput());
   assert.equal(optionRows().length, PEOPLE.length);
+  assert.ok(!within(readout()).queryByText("Last selected caller"));
 });
 
 test("an empty directory: its own copy, '0 people', the search stays, the readout waits", async () => {

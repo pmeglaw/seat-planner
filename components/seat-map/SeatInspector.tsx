@@ -1083,7 +1083,7 @@ export function SeatInspector({
                           setEmployeeComboboxOpen(current => !current);
                           employeeInputRef.current?.focus();
                         }}
-                        className="cds-btn cds-btn--icon cds-btn--sm absolute right-1 top-1"
+                        className="cds-btn cds-btn--icon sp-combobox-trigger"
                       >
                         <ChevronDownIcon />
                       </button>

@@ -46,6 +46,30 @@ const seats = [
   seat({ id: "seat-n02", label: "N02", status: "available", zone: "North Pod" })
 ];
 const employees = [alex, jordan, maya];
+
+test("name search shows each person once with their seat, and counts the displayed answers", () => {
+  const twin = employee({ id: "emp-twin", full_name: "Alex Rivera" });
+  const twinSeat = seat({ id: "seat-twin", label: "N03", employee: twin });
+  const result = viewerSearch.buildViewerSeatSearch({ query: "Alex", seats: [...seats, twinSeat], employees: [...employees, twin] });
+  assert.deepEqual(result.results.map(row => row.id), ["person:emp-alex", "person:emp-twin"]);
+  assert.deepEqual(result.resultSeatIds, ["seat-w02", "seat-twin"]);
+  assert.deepEqual(result.kindCounts, { person: 2, seat: 0, department: 0, zone: 0 });
+  assert.equal(viewerSearch.uniqueLandingResult(result.results), null, "duplicate names remain separate choices");
+  const unique = viewerSearch.buildViewerSeatSearch({ query: "Alex", seats, employees });
+  assert.equal(viewerSearch.uniqueLandingResult(unique.results)?.id, "person:emp-alex");
+});
+
+test("name deduplication preserves direct seat hits, unresolved occupants and additional assignments", () => {
+  const unresolved = { ...seats[0], employee: null };
+  const extra = seat({ id: "seat-extra", label: "N04", employee: alex });
+  const result = viewerSearch.buildViewerSeatSearch({ query: "Alex", seats: [unresolved, extra], employees });
+  assert.deepEqual(result.results.map(row => row.id), ["person:emp-alex", "seat:seat-extra"]);
+  const direct = viewerSearch.buildViewerSeatSearch({ query: "W02", seats, employees });
+  assert.ok(direct.results.some(row => row.id === "seat:seat-w02"));
+  const namedSeat = { ...seats[0], label: "Alex" };
+  const collision = viewerSearch.buildViewerSeatSearch({ query: "Alex", seats: [namedSeat], employees });
+  assert.ok(collision.results.some(row => row.id === "seat:seat-w02"), "a name that is also a seat code retains the seat answer");
+});
 const departmentOptions = [{ id: "dep-lit", name: "Litigation", active: true }];
 const zoneOptions = [{ id: "zone-west", name: "West Pod", active: true }];
 
