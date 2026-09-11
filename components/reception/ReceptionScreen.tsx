@@ -386,6 +386,9 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
           {detail ? (
             <>
               <div className="sp-recep-who">
+                {locked && searching && !previewing && (
+                  <p className="sp-recep-role">Last selected caller</p>
+                )}
                 <h2>{detail.name}</h2>
                 <p className="sp-recep-role">{metaLine(detail)}</p>
               </div>

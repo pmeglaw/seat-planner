@@ -429,7 +429,7 @@ test("inline rename: Enter saves through the action, Esc cancels without a call,
     fireEvent.click(tab("Departments"));
   });
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Rename" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rename Intake" }));
   });
   const field = screen.getByLabelText("Department name");
   assert.equal(field.value, "Intake");
@@ -443,12 +443,12 @@ test("inline rename: Enter saves through the action, Esc cancels without a call,
     fireEvent.keyDown(field, { key: "Escape" });
   });
   assert.equal(renameCalls.length, 0);
-  assert.ok(screen.getByRole("button", { name: "Rename" }));
+  assert.equal(screen.getByRole("button", { name: "Rename Intake" }).textContent, "Rename");
   assert.match(document.body.textContent, /Intake/);
 
   // Enter saves.
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Rename" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rename Intake" }));
   });
   const field2 = screen.getByLabelText("Department name");
   await act(async () => {
@@ -475,7 +475,7 @@ test("inline rename: a duplicate name is invalid on blur — helper under the fi
     fireEvent.click(tab("Zones"));
   });
   await act(async () => {
-    fireEvent.click(screen.getAllByRole("button", { name: "Rename" })[1]);
+    fireEvent.click(screen.getByRole("button", { name: "Rename South Pod" }));
   });
   const field = screen.getByLabelText("Zone name");
   assert.equal(field.value, "South Pod");
@@ -789,7 +789,7 @@ test("Enter in an open rename field while another op is in flight starts nothing
   // Open the rename on the managed Intake row and type a valid new name.
   const intakeRow = screen.getByTitle("Intake").closest("li");
   await act(async () => {
-    fireEvent.click(within(intakeRow).getByRole("button", { name: "Rename" }));
+    fireEvent.click(within(intakeRow).getByRole("button", { name: "Rename Intake" }));
   });
   const field = screen.getByLabelText("Department name");
   await act(async () => {

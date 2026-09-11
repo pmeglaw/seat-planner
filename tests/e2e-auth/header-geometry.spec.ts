@@ -12,7 +12,9 @@ import { SEEDED_ADMIN_EMAIL, SEEDED_VIEWER_EMAIL, signIn } from "./auth-helpers"
 // page-midpoint rule, two laptops, and 1056 — the last width before the
 // asset folds the header nav into the left panel (below it the run is
 // name → utilities and the compact indicator has no links to meet).
-const WIDTHS = [1920, 1580, 1366, 1280, 1056];
+// Phase 5 narrow reflow: include both sides of the two-row boundary and
+// the 320px floor; the name and utilities must remain separate there too.
+const WIDTHS = [1920, 1580, 1366, 1280, 1056, 640, 639, 390, 320];
 
 type Box = { x: number; y: number; width: number; height: number };
 const intersects = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -23,6 +25,10 @@ async function assertIndicatorClear(page: Page, role: "admin" | "viewer") {
     await page.waitForTimeout(250);
     const indicator = await page.locator("#shell-header .sp-mode").boundingBox();
     expect(indicator, `${role} ${width}: indicator present`).not.toBeNull();
+    const name = await page.locator("#shell-header .cds-header-name").boundingBox();
+    expect(name).not.toBeNull();
+    expect(intersects(indicator!, name!), `${role} ${width}: status must not overlap the name`).toBe(false);
+    expect((await page.locator("#shell-header").boundingBox())!.height).toBe(width < 640 ? 96 : 48);
     const links = await page.locator("#shell-header nav.cds-header-nav a").evaluateAll(els =>
       els.map(el => {
         const r = el.getBoundingClientRect();

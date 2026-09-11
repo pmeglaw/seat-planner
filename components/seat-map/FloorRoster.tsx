@@ -191,19 +191,22 @@ export function FloorRoster({
                       data-roster-row={person.id}
                       data-highlight={highlighted ? "" : undefined}
                       aria-current={highlighted ? "true" : undefined}
-                      // 40px STATIC row: name · position · ext · email + the
+                      // 40px STATIC row at wide; details wrap below 768px
+                      // (Phase 5 narrow reflow): name · position · ext · email + the
                       // copy-link icon button (PHASE3DS §1.20). No hover on the
                       // row — it is not a control; hover lives on the button.
                       // The highlighted row (a ?q= landing) takes the search
                       // surface + the 3px mark through [data-highlight].
                       className="sp-roster-row"
                     >
-                      <span>{formatDisplayName(person.full_name)}</span>
-                      <span className="sp-roster-meta">
-                        {[person.position, person.phone_extension ? `ext. ${person.phone_extension}` : null].filter(Boolean).join(" · ") || "—"}
+                      <span className="sp-roster-name">{formatDisplayName(person.full_name)}</span>
+                      <span className="sp-roster-meta sp-roster-position">
+                        {person.position ? <span className="sp-roster-job" title={person.position}>{person.position}</span> : null}
+                        {person.phone_extension ? <span className="sp-roster-extension">{person.position ? " · " : ""}ext. {person.phone_extension}</span> : null}
+                        {!person.position && !person.phone_extension ? "—" : null}
                       </span>
-                      <span className="sp-roster-meta">{person.email ?? ""}</span>
-                      <span className="sp-has-tooltip">
+                      <span className="sp-roster-meta sp-roster-email">{person.email ?? ""}</span>
+                      <span className="sp-has-tooltip sp-roster-copy">
                         <button
                           type="button"
                           className="cds-btn cds-btn--icon cds-btn--sm"

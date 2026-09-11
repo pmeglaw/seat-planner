@@ -620,3 +620,113 @@ app/styles/sp-tokens.css app/styles/carbon-*.css` empty) · `git diff --stat mai
 `rgb(184, 92, 46)`, crops into `screenshots/phase5-pr5/`); the PR 4 rig once at 1920 × both themes (Reception's bar
 unchanged after the override is retired); the brand checklist in dark. Then PR → CI → a read-only preview walk in
 dark (nav, floor menu, palette, tabs, Reception locked row) → owner's "merge" → v2.5.0.
+
+## 2026-09-11 — UI review follow-through
+
+**Authorization:** after reviewing viewer, admin, reception and management, the owner
+requested an implementation plan and then approved starting it ("lets start"). This
+amendment covers the four planned improvements; the closed Phase 2–4 record stays intact.
+
+- **Admin picker — PHASE3DS §1.17, DECISIONS D2-a.** Keep the 400px inspector and
+  existing assignment flow. The employee dropdown trigger now has an explicit
+  `.sp-combobox-trigger` rule: absolute within the field, 40×40, top/right zero.
+  The later Carbon `.cds-btn` had overridden Tailwind's `absolute`, and the later
+  `.cds-btn--icon` height had overridden `--sm`, leaving a 32×48 button below the
+  input. Both product/specimen sheets carry the same dated rule; no vendor edits.
+- **Reception — PHASE2UX §1R.6, DECISIONS D3-f.** Retain the locked person's
+  extension during a failed new search, adding “Last selected caller” above the
+  name only in that state. It uses existing secondary text styling inside the
+  existing polite live band. It adds no focus stop or separate announcement region.
+  Preview, clear, unlock, fallback and map-link behavior remain as recorded.
+- **Viewer search — DECISIONS D1-d.** A name result already includes its assigned
+  seat, so omit that seat's redundant row unless the query also matches the seat
+  code, status, zone or department. Deduplicate by the represented seat ID before
+  sorting/capping and computing counts. Distinct people with identical names,
+  additional assignments, unassigned people and direct seat hits remain choices.
+  The shared search helper applies the same result rule to the admin palette.
+  Floor scope, keyboard opening and `?q=` landing retain their existing behavior.
+- **Management — PHASE2UX §1G.4, DECISIONS D5-c.** Keep visible “Rename” in each
+  department/zone row; its accessible name now includes the row name.
+
+**Verification:** Node 24.19.0; focused tests 107/107; `npm run gate` passed
+(1514/1514 tests, zero lint errors with 84 existing warnings; coverage 98.55%
+lines, 98.57% functions, 92.85% branches); `npm run build` passed. No token values
+changed. Product/specimen component sheets verified byte-identical.
+
+Real Chromium rendered the actual shell and affected components with fixture
+data, bundled production CSS in its declared order and local Plex fonts. At
+1920×1080 in both themes: inspected all four surfaces; measured the admin field
+368×40 and its aligned trigger 40×40, with the listbox immediately below; exercised
+typing, arrows, Enter, Escape and mouse selection. Reception retained-state label,
+extension hit tests, absence of focusable band elements and two-step Escape passed
+at 480, 640, 1055 and 1920 in both themes. Viewer counts, keyboard selection,
+unique URL landing, direct seat code and cross-floor unassigned navigation passed.
+Department/zone accessible names and inline rename keyboard entry/cancel passed.
+
+**Limits and follow-up:** the fixture harness replaces server actions and routing
+boundaries; it does not verify authenticated Next navigation, real save/publish,
+production data density, server loading/failure states or screen-reader speech.
+Docker's daemon was unavailable, so `npm run test:e2e:auth` remains unrun. When the
+local stack is available: `npm run db:start`, `npm run db:seed`, then
+`npm run test:e2e:auth`. The separate 390px viewer check still shows crowded header
+utilities without document overflow; long roster metadata remains an earlier
+review follow-up outside this slice. No deployment, commit or production write.
+
+**Authenticated follow-up, 2026-09-11:** Docker Desktop was started and the local
+Supabase stack recovered. The first setup hit stale fixture assignments
+(`one_draft_seat_per_employee`); the local database was backed up to the ignored
+`node_modules/.cache/ui-auth-before-reset.dump` before a local-only reset to the
+repository migrations. Auth and Kong were restarted, then the normal harness
+seed and build ran successfully. `npm run test:e2e:auth`: **63/63 passed (2.7m)**,
+including viewer sign-in, admin refusal for viewers, real draft publishing with
+database assertions, draft dialogs, persistent navigation, accessibility, layout
+and reception keyboard checks. No application-code changes were needed for this
+follow-up. The earlier Docker blocker is resolved; the 390px reflow and manual
+screen-reader follow-ups remain. Production was untouched.
+
+## 2026-09-11 — Narrow header and roster reflow
+
+**Authorization:** after the authenticated follow-up passed, the owner approved
+the recommended next step: resolve the 390px viewer header crowding and truncated
+roster details. This amends D0-d/e's narrow fallback and PHASE3DS §1.20; the desktop
+target and closed Phase 2–4 record remain intact.
+
+**Header:** below 640px, use two 48px rows: hamburger + the complete organization
+and product name, then mode status + Help / History / Account. DOM and keyboard
+order remain unchanged. Keep every control 48px tall and all functions present.
+The first boundary tried was 480px; browser measurements still found overlaps at
+480, so the fallback covers 320–639. The shared header-height variable becomes
+96px only on shell pages, keeping content, panels and sticky offsets aligned.
+At 640 and above the existing 48px header and its fluid centre remain unchanged.
+
+**Roster:** give job title and extension separate spans so the title cannot
+truncate the extension. Below 768px, stack name, position/extension and email,
+allowing long text to wrap; reserve a 40px column for Copy link. Rows remain static
+list items, without a new disclosure or control. At wider widths keep the existing
+four-column, 40px row geometry. All styling uses existing semantic tokens; the
+product/specimen component sheets carry the same amendment.
+
+**Browser evidence:** actual components, production CSS and local Plex fonts;
+320, 390, 479, 480, 640, 767, 768, 1055 and 1920 in both themes. Measured no header
+control collisions or document overflow; all narrow roster facts stayed in the
+viewport without clipping. Account panels start below the 96px header. Inspected
+390 and 320 narrow captures plus 1920 in both themes. Reception's retained-call
+state, numeral hit tests and Escape sequence also passed at 480, 640, 1055 and
+1920 in both themes with a long job title.
+
+**Regression coverage:** the authenticated header width ladder now spans the
+640px boundary and 320px floor and checks the organization name against the mode
+indicator. `roster-reflow.spec.ts` creates and cleans up one independent local
+published-snapshot fixture with long metadata, measures visibility and clipping
+in both themes, and exercises the real clipboard action. It rejects non-local
+database hosts before writing. Gate: 1514/1514 tests, zero lint errors (84 existing
+warnings), typecheck and coverage passed.
+
+**Authenticated result:** after resetting the disposable local test data to the
+required clean migration baseline, `npm run test:e2e:auth` passed **64/64 (2.9m)**,
+including the new long-roster/clipboard regression and expanded header widths.
+The runner rebuilt the app with local Supabase settings before testing. Both
+component sheets verified byte-identical; `git diff --check` clean. This closes
+the narrow reflow findings from the UI review. Changes remain local/uncommitted;
+no production writes or deployment. Next step: review the combined changes for
+a PR and preview deployment.

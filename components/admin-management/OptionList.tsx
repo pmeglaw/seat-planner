@@ -146,7 +146,7 @@ export function OptionList({
                       {pending && busyOp === `adopt-${kind}:${row.name}` ? "Adding…" : "Add to list"}
                     </button>
                   )}
-                  <button type="button" className="cds-btn cds-btn--ghost" onClick={() => beginRename(row.name)} disabled={pending}>Rename</button>
+                  <button type="button" className="cds-btn cds-btn--ghost" aria-label={`Rename ${row.name}`} onClick={() => beginRename(row.name)} disabled={pending}>Rename</button>
                 </span>
                 <RowOverflow name={row.name} disabled={pending} onDelete={() => onDelete(row.name)} />
               </>
