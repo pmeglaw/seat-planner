@@ -3038,6 +3038,7 @@ export function SeatMap({
                   width={plan.width}
                   height={plan.height}
                   preload
+                  fetchPriority="high"
                   unoptimized
                   placeholder="blur"
                   blurDataURL={plan.blurDataUrl}
