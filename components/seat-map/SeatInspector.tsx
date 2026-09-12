@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import type { ChangeEvent, FormEvent, KeyboardEvent, ReactNode } from "react";
+import type { ChangeEvent, SubmitEvent, KeyboardEvent, ReactNode } from "react";
 import { clientActionErrorMessage } from "@/lib/clientActionError";
 import type { DraftSnapshot } from "@/lib/draftHistory";
 import type { DepartmentOption, Employee, SeatStatus, SeatWithEmployee } from "@/lib/types";
@@ -715,7 +715,7 @@ export function SeatInspector({
     updateField("status", event.target.value as SeatStatus);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const employeeName = form.employeeName.trim();

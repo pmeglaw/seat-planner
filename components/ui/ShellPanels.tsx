@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
+import type { SubmitEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getPublishHistoryAction } from "@/app/actions";
 import { formatPublishChangeSummary, type PublishHistoryEvent } from "@/lib/publishHistory";
@@ -333,7 +333,7 @@ function AccountBody({ email, roleLabel, mySeat }: Pick<ShellPanelsProps, "email
     applyTheme(choice);
   }
 
-  function onSignOut(_event: FormEvent<HTMLFormElement>) {
+  function onSignOut(_event: SubmitEvent<HTMLFormElement>) {
     // Native POST — the browser leaves the page; the busy state only covers
     // the round-trip. A failed sign-out returns to the same page signed in,
     // which the next render shows plainly (no client-side failure channel

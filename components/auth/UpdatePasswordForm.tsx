@@ -45,7 +45,7 @@ export function UpdatePasswordForm() {
   const [messageType, setMessageType] = useState<"error" | "success">("success");
   const [busy, setBusy] = useState(false);
 
-  async function updatePassword(event: React.FormEvent<HTMLFormElement>) {
+  async function updatePassword(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
 

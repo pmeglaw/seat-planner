@@ -1400,8 +1400,7 @@ export function ViewerSeatFinder({
                     alt="Office floor plan"
                     width={plan.width}
                     height={plan.height}
-                    priority
-                    fetchPriority="high"
+                    preload
                     unoptimized
                     placeholder="blur"
                     blurDataURL={plan.blurDataUrl}
