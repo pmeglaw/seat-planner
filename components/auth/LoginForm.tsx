@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   MIN_PASSWORD_LENGTH,
@@ -303,7 +303,7 @@ export function LoginForm() {
   // the disabled state from being the silently dead button above — it says why.
   // With the password on this surface, the name-less inputs below are the
   // second layer of that guard: even a native GET serializes nothing.
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
     void signInWithPassword();

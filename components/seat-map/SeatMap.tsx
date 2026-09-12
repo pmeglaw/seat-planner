@@ -3037,7 +3037,7 @@ export function SeatMap({
                   alt="Office floor plan"
                   width={plan.width}
                   height={plan.height}
-                  priority
+                  preload
                   fetchPriority="high"
                   unoptimized
                   placeholder="blur"
