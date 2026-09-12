@@ -1195,13 +1195,14 @@ the personal brand skill, with the refreshed brand guidance also carried in
 `.claude/skills/brand-system/SKILL.md`. The historical §0 fingerprint and conformance
 verdicts above remain records of their original review, not current validation.
 Before this refresh, the installed 14-file skill had 193,908 LF-normalized bytes
-and fingerprint `292ccac7bb8cb11b`, differing from recorded `f997ee525800e755`.
-The origin of that pre-existing discrepancy was not established here.
+and fingerprint `f997ee525800e755`, matching the recorded baseline. The §0
+recipe uses case-sensitive byte ordering (`LC_ALL=C`); use that ordering when
+reproducing it on Windows rather than the platform-default path comparison.
 
 This refresh changes guidance only: dated v12 preview/migration sources,
 runtime versus Sass flag scope, preview component availability, spacing,
 accessible search labels, disabled-control semantics and brand precedence.
-The refreshed skill fingerprint is `ac195b250474b603` using the §0 listing recipe.
+The refreshed skill fingerprint is `5b1549d9819de4cd` using the §0 listing recipe.
 Both bundled CSS assets, the contrast script and evals remain byte-identical
 to the pre-refresh installed files. Product tokens and approved design
 decisions are unchanged. Historical §4 verdicts have not been re-certified

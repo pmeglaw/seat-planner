@@ -205,10 +205,10 @@ For CJK, Thai, Devanagari and Arabic, reduce size to 95% and keep the line heigh
 Run this before calling anything finished:
 
 - [ ] No raw hex or arbitrary px outside the token layer
-- [ ] Components come from `assets/carbon-components.css`; anything hand-built is named in the decision log
-- [ ] Every spacing value is a permitted mini-unit multiple; every control height is on the ladder
-- [ ] Radius is 0 everywhere except tags
-- [ ] Focus visible on every interactive element, 2px inset, not removed anywhere
+- [ ] Established products reuse their governed component layer; new standalone builds use the bundled assets where appropriate; custom components are documented
+- [ ] Grid structure follows the mini unit; detail spacing uses supported spacing tokens, including 2, 4 and 12px; control sizes match the selected component
+- [ ] Corner radii match the selected release, component and approved product decisions; v12 Menu and Tag shapes follow the migration guidance
+- [ ] Focus is visible on every interactive element using its approved token and geometry, including release-specific shapes and product exceptions
 - [ ] Every status carries two signals in the mark itself (shape or symbol, not the label); the set survives grayscale
 - [ ] Contrast checked with `scripts/check_contrast.py`, including status borders and chart marks — and the output names the script and surfaces
 - [ ] Both themes rendered and read — light and dark, not just one inverted
