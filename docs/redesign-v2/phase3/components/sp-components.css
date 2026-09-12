@@ -1269,3 +1269,28 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 
 /* 2026-09-11 Add seat menu amendment: separate creation from destructive Discard. */
 .sp-map-menu-separator { height: 1px; background: var(--sp-border-subtle-00); }
+
+/* 2026-09-11 owner refinement (PHASE5): retain the compact floor width and
+   Plex type; recover label space from the leading inset and chevron reserve. */
+.sp-control-row .sp-menu-button { gap: var(--sp-space-02); padding-inline: var(--sp-space-04) var(--sp-space-07); }
+.sp-control-row .sp-menu-button .sp-chevron { right: var(--sp-space-03); }
+.sp-control-row .sp-menu-button-label { white-space: nowrap; }
+
+/* Inspector only: the mode card and Ask Planner retain their own slot rhythm. */
+.sp-slot-host:has(> .sp-seat-inspector) { width: min(var(--sp-slot-w), 100%); z-index: 40; }
+.sp-seat-inspector { --sp-slot-pad: var(--sp-space-06); }
+.sp-seat-inspector .sp-slot-header { align-items: center; }
+.sp-seat-inspector .sp-slot-actions { align-self: center; }
+.sp-seat-inspector div.sp-person-role { margin-top: var(--sp-space-04); margin-bottom: var(--sp-space-03); }
+.sp-inspector-groups { margin-top: var(--sp-space-07); }
+.sp-inspector-groups > div + div { margin-top: var(--sp-space-07); }
+.sp-seat-inspector .sp-slot-section { height: auto; margin: 0 0 var(--sp-space-04); }
+.sp-seat-inspector .sp-contact-row { grid-template-columns: calc(var(--sp-size-2xl) + var(--sp-space-05)) minmax(0, 1fr); column-gap: var(--sp-space-05); }
+.sp-seat-inspector .sp-contact-row dt { font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); }
+.sp-seat-inspector .sp-contact-row > dd { min-width: 0; }
+.sp-seat-inspector #seat-inspector-activity .sp-contact-row { grid-template-columns: minmax(0, 1fr) auto; }
+.sp-seat-inspector .sp-contact-row:has(> .sp-ai-label) { grid-template-columns: var(--sp-size-2xl) minmax(0, 1fr) auto; column-gap: var(--sp-space-03); margin-top: var(--sp-space-06); }
+.sp-seat-inspector #seat-inspector-footer { flex-wrap: wrap; gap: var(--sp-space-02) var(--sp-space-03); margin-top: var(--sp-space-03); }
+@media (max-width: 639px) {
+  .sp-seat-inspector { --sp-slot-pad: var(--sp-space-05); }
+}

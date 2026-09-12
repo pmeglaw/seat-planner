@@ -180,7 +180,7 @@ function LinkGlyph() {
 // unmount; hairline dividers between sections carry the grouping.
 function InspectorSectionLabel({ id, title }: { id?: string; title: string }) {
   return (
-    <h3 id={id} className="sp-slot-section mt-2">{title}</h3>
+    <h3 id={id} className="sp-slot-section">{title}</h3>
   );
 }
 
@@ -939,7 +939,7 @@ export function SeatInspector({
       // presence and the slide; this aside is the slot itself — header ·
       // scrolling body · commit bar (64, bleeds). No z-index of its own: the
       // host stacks above the canvas, the shell's panels float above it.
-      className="sp-slot max-w-full"
+      className="sp-slot sp-seat-inspector max-w-full"
       data-draft-changed={draftChanged || undefined}
     >
       <div className="sp-slot-header">
@@ -1183,7 +1183,7 @@ export function SeatInspector({
                 </div>
               </section>
             ) : (
-              <div key={`seat-inspector-sections-${selectedSeat.id}`}>
+              <div key={`seat-inspector-sections-${selectedSeat.id}`} className="sp-inspector-groups">
                 {/* Contact metadata, not "Occupant": the header already carries
                     the identity (name, position · department) — this section
                     holds only the reach-them facts. Renders only when someone
@@ -1383,11 +1383,11 @@ export function SeatInspector({
         >
           <div key={`seat-inspector-sections-${selectedSeat.id}`}>
             <span className="sp-seat-legend"><SeatMark kind={legendKind} />{currentStatusLabel}</span>
+            {hasCurrentAssignment && <div className="sp-person-role mt-3">{occupantRoleLabel}</div>}
             {hasCurrentAssignment && (
-              <section aria-labelledby="published-contact-heading" className="mt-3">
-                <h3 id="published-contact-heading" className="sp-slot-section">CONTACT</h3>
+              <section aria-labelledby="published-contact-heading" className="sp-inspector-groups">
+                <InspectorSectionLabel id="published-contact-heading" title="Contact" />
                 <p className="sr-only">Published assignment</p>
-                <div className="sp-person-role">{occupantRoleLabel}</div>
                 <ContactFacts
                   canEdit={false}
                   personName={selectedSeatEmployeeName}

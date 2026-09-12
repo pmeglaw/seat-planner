@@ -767,3 +767,50 @@ restriction. Screenshots inspected after mode transitions finished. The fixture
 uses real components/CSS with mocked backend boundaries; this slice has not yet
 received a hosted preview or a fresh authenticated full-suite run. No hosted
 seat or directory writes. Work remains on codex/add-seat-menu, uncommitted.
+
+## 2026-09-11 — Compact floor label and inspector refinement
+
+**Authorization:** the owner approved implementation and local/demo verification
+of the selected images under `output/playwright/admin-mockup/`:
+`proposed-admin-light.png` establishes the inspector direction and
+`proposed-admin-full-floor.png` the final selector direction;
+`current-admin-light.png` is the baseline. Generated images establish hierarchy
+and spacing intent, not exact pixels, font metrics, colours or map geometry.
+This amends PHASE2UX §1M.3/§1M.5 and PHASE3DS §1.14/§1.17, preserving
+DECISIONS D2-a's 400px slot and §6 deviations 16/17 plus BR-2/BR-5.
+
+**Floor selector:** retain the 224px width and IBM Plex 14/18 type. Recover
+space with a 12px leading inset, 4px icon gap, 32px chevron reserve and 8px
+trailing chevron inset. Keep the full `Floor 3 · Pre-Litigation` label on one
+line. Styling is scoped to the map control row; search and other pages are
+outside this amendment. Menu semantics and keyboard behavior are unchanged.
+
+**Inspector:** retain the existing slot, header/body/commit-bar structure and
+progressive assignment editor. Use a 24px content inset (16px below 640px),
+32px section separation and 12px heading-to-content spacing; align contact
+values in a shared 96px label column with a 16px gap. Keep metadata labels at
+the productive 14/18 scale and the identity heading at 20/28. The viewer puts
+role/department under identity, then a sentence-case `Contact` section with
+read-only facts and existing copy/link actions. Assignment editing, seat
+actions, notes, activity, AI entry and commit controls remain admin-only.
+Footer facts may wrap at narrow widths. No new content or transaction is added.
+
+**Responsive correction:** QA exposed the inspector host retaining 400px at
+320px, clipping its left edge, and a selected marker painting over the panel.
+Constrain only the inspector host to the available width; layer it at the
+existing selected-marker level, later in DOM order. Desktop remains 400px;
+mode cards and Ask Planner retain their existing layout. Floor-plan assets,
+calibration, coordinates and pan/zoom behavior are unchanged.
+
+**Brand and release boundary:** consume existing semantic tokens in both
+themes, including system preference. No colour values, vendored Carbon assets,
+font files or dependencies change. No Carbon v12 migration is approved.
+The runtime and Phase 3 component sheets remain byte-identical. Pre-existing
+API and IBM documentation edits are preserved in the owner's working tree,
+outside this refinement's PR.
+
+**Verification evidence:** see the project-root `design-qa.md` for the final
+comparison, exact commands, browser states, results and fixture limitations.
+Initial approval covered implementation and verification only. The owner later
+authorized committing and opening a PR, followed by a smoke test. Merging and
+deployment remain outside the authorization.
