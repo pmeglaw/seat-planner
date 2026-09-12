@@ -477,8 +477,9 @@ test("inspector sections, validation, and actions retain accessible confidence c
   assert.doesNotMatch(inspectorSource, /VIEW DETAILS/);
   assert.doesNotMatch(inspectorSource, /Collapse inspector/);
   // Phase 4 PR 3b: the inspector IS the right slot (`.sp-slot` inside
-  // RightSlot's host) — no z-index of its own.
-  assert.match(inspectorSource, /className="sp-slot max-w-full"/);
+  // RightSlot's host) — no z-index of its own. The 2026-09-11 owner
+  // refinement adds a scoped styling class while retaining both slot classes.
+  assert.match(inspectorSource, /className="sp-slot sp-seat-inspector max-w-full"/);
   // (PR 5b: the move-conflict dialog is the asset modal on CarbonModal — the
   // overlay z-index is the sheet's; the z-[90] / sm:z-[70] look-pin retired.)
   assert.match(inspectorSource, /titleId="move-employee-confirm-title"/);
@@ -520,11 +521,10 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // An open seat has no occupant — the Contact section exists only when
   // someone is assigned (admin and viewer variants alike). Department stays
   // out of it: the header role line already carries it (dedup 2026-07-23).
-  // v12 slice 4: the <details>-based InspectorSection title prop retired
-  // with the flat eyebrow-heading sections — the CONTACT heading text is the
-  // new anchor for the same "only when assigned" guarantee.
+  // Flat sections retain the "only when assigned" guarantee. The 2026-09-11
+  // refinement uses the shared heading component for the viewer as well.
   assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,300}title="Contact metadata"/);
-  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,200}CONTACT/);
+  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,300}<InspectorSectionLabel id="published-contact-heading" title="Contact"/);
   assert.doesNotMatch(inspectorSource, /FactRow label="Department"/);
   // The occupied-seat CTA reads as an edit verb — it opens a form, it does
   // not act; "Change assignment" collided with Move/Swap/Vacate (2026-07-23).
