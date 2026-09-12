@@ -1187,3 +1187,24 @@ shipping it — the specimens stay the record of what the system looks like.
 | 3 | #509 (`docs/phase3-map`) | control row + floor menu + search/palette + Filters split control + toggle; `.sp-pill` (11 states) + ◇ + names-off; `.sp-slot` inspector / mode card / Ask Planner (Carbon for AI); wide tearsheet + group rows; roster; band; canvas states; specimen `02-map`; §1.14–1.21, §2, §3 (generated, 170/170), §4, §5, §6, §7; PHASE2UX §3 amendments (Filters control, two-primaries justification, Delete hidden for originals, roster hover on the button). Owner rulings folded in before merge: stroke rule, invalid target in the error family, seven error strings |
 | 2 | #508 (`docs/phase3-shell`) | `.sp-header` overrides, `.sp-header-slot`, `.sp-tooltip`, `.sp-panel` + zone-scoped variants, `.sp-switch`, `.sp-radio`, `.sp-left-panel`, `.sp-skeleton`; specimen `01-shell` (header ×3, hamburger ×7, utilities ×5, panels ×12, switch ×4, radio ×3, left panel ×7, narrow 1024); §1.7–1.13, §2, §3 (78/78), §4, §5; D0-f Phase 3 confirmation; PHASE2UX §3 ghost-on-dark row |
 | 1 | #507 (`docs/phase3-tokens`) | assets copied; `sp-tokens.css`; `.sp-mode`, seat marks; specimens 00 + 05 + index + compare; §1.1–1.6, §2 (partial), §3, §4, §5 (partial). Owner rulings folded in before merge: pressed gray 80 + outlined open, theme decided, assigned legend = mini pill |
+
+### Skill documentation refresh — 2026-09-11
+
+The owner requested a Context7-based refresh of the repository IBM skill and
+the personal brand skill, with the refreshed brand guidance also carried in
+`.claude/skills/brand-system/SKILL.md`. The historical §0 fingerprint and conformance
+verdicts above remain records of their original review, not current validation.
+Before this refresh, the installed 14-file skill had 193,908 LF-normalized bytes
+and fingerprint `f997ee525800e755`, matching the recorded baseline. The §0
+recipe uses case-sensitive byte ordering (`LC_ALL=C`); use that ordering when
+reproducing it on Windows rather than the platform-default path comparison.
+
+This refresh changes guidance only: dated v12 preview/migration sources,
+runtime versus Sass flag scope, preview component availability, spacing,
+accessible search labels, disabled-control semantics and brand precedence.
+The refreshed skill fingerprint is `5b1549d9819de4cd` using the §0 listing recipe.
+Both bundled CSS assets, the contrast script and evals remain byte-identical
+to the pre-refresh installed files. Product tokens and approved design
+decisions are unchanged. Historical §4 verdicts have not been re-certified
+against the updated guidance. See the skill's `references/carbon-next.md` for
+the source register and release-specific constraints.

@@ -5,6 +5,20 @@ description: "Design, build, and critique interfaces in the IBM Design Language 
 
 # IBM Design Language & Carbon
 
+## Documentation baseline (reviewed 2026-09-11)
+
+Use IBM Design Language for foundations, the installed Carbon release for APIs,
+and the project's approved design record for product decisions. Carbon Next is
+a v12 preview with concrete migration documentation; it is not the published
+v11 contract. Read [references/carbon-next.md](references/carbon-next.md) before
+using v12 flags, APIs, radius changes, or token-format guidance. That dated
+reference supersedes older v12 assumptions elsewhere in this skill.
+
+For Seat Planner, use `AGENTS.md`, `docs/redesign-v2/DECISIONS.md` and the brand
+skill before generic Carbon defaults. The app uses vendored CSS and semantic
+`--sp-*` tokens, not an installed `@carbon/react` component library. Preserve
+the vendored assets; a documentation refresh does not authorize a UI migration.
+
 ## The thesis
 
 IBM's stated purpose for design is **to guide** — to move someone from here to there with the least friction, and to leave them with time saved or time well spent. Carbon v12 sharpens that into a working rule: **complexity waits until it is useful.** Reveal depth in sequence; surface the right action at the right moment; let hierarchy, contrast and motion do that work together.
@@ -15,8 +29,8 @@ Almost every specific rule below is a consequence of one of those two sentences.
 
 1. **Read the request for what kind of work it is.** *Rules* work ("what token?", "modal or toast?") is answered from the tables here. *Design* work ("build me an index page", "design the create flow") starts from `references/senior-workflow.md` — data and states before visuals. *Critique* work ("what's off about this?") runs the rubric in `references/taste.md`, top-down.
 2. **Read the surface for productive versus expressive.** A tool that gets operated (dashboard, admin, planner, table) is *productive*: fixed type set, gray-dominant surfaces, dense spacing, motion in tens of milliseconds. A page that gets read (marketing, landing, editorial) is *expressive*: fluid type, larger scale, more air. Mixing the two is the most common way IBM work goes wrong. The most common concrete mix: the 48px Gray 100 UI shell header on a marketing or landing page. The shell is product chrome — it belongs to a tool someone is logged into. An expressive page gets a light masthead in the page's own type (wordmark, a few text links, one CTA), never `.cds-header`.
-3. **Set up a token layer before writing any component CSS.** `assets/carbon-tokens.css` is a drop-in for both themes; copy it in rather than retyping hexes.
-4. **Then copy in `assets/carbon-components.css` and compose from its `cds-*` classes** — header, page header, buttons, data table with batch bar, status, tags, pagination, skeleton rows, empty state, inline notification, forms, side panel, modal, overflow menu. It consumes only `--cds-*` tokens and already encodes the traps below (hover-safe status marks, ghost-button hover, no radius, 2px inset focus). Hand-build a component only when the asset has no equivalent, and say so in the decision log. Product CSS on top of both layers should be a few dozen lines: product tokens, column widths, states.
+3. **Reuse the existing token and component layers in an established product.** Do not replace governed assets with these starter files. For a new standalone build, set up a token layer before writing component CSS. `assets/carbon-tokens.css` is a drop-in for both themes; copy it in rather than retyping hexes.
+4. **For that new standalone build, copy in `assets/carbon-components.css` and compose from its `cds-*` classes** — header, page header, buttons, data table with batch bar, status, tags, pagination, skeleton rows, empty state, inline notification, forms, side panel, modal, overflow menu. It consumes only `--cds-*` tokens and already encodes the traps below (hover-safe status marks, ghost-button hover, no radius, 2px inset focus). Hand-build a component only when the asset has no equivalent, and say so in the decision log. Product CSS on top of both layers should be a few dozen lines: product tokens, column widths, states.
 5. **Build against the decision tables below.** Most design questions in this system have an answer already; look before inventing.
 6. **Check contrast once, as a batch, with `scripts/check_contrast.py --preset all`** — not colour by colour — and **say so in the output**: name the script, the surfaces checked (white, layer-01, layer-hover-01), and paste its summary line. A ratio asserted without the script named is unverified as far as the reader can tell. Several of Carbon's own status tokens fail as drawn marks in light themes, and the failures cluster on the *hover* surface, which is easy to miss when checking pairs one at a time. `references/tokens.md` lists the known traps so you can design around them before you write any CSS.
 7. **Run the review checklist at the end**, then the taste rubric as a separate pass.
@@ -31,7 +45,7 @@ Load a reference file when you're actually in that territory — they're detaile
 | `references/patterns.md` | Choosing between dialog/notification variants, forms, empty states, search, filtering, loading, disabled vs read-only |
 | `references/ui-shell.md` | Building a header, side nav, right panel, breadcrumb, or deciding product-vs-system scope |
 | `references/status-and-dataviz.md` | Designing status indicators, seat/node/device states, charts, or any categorical color |
-| `references/carbon-next.md` | Questions about v12, feature flags, DTCG token renaming, Carbon for AI, or future-proofing |
+| `references/carbon-next.md` | Questions about v12, feature flags, DTCG formats, package availability or migration |
 | `references/senior-workflow.md` | Designing a screen or flow from a brief; choosing a layout archetype; two principles conflict; writing a decision log; worked examples of an index page, a dashboard, and a create flow |
 | `references/composition.md` | Building a whole page; choosing modal vs side panel vs tearsheet vs full page; anything from `@carbon/ibm-products`; data tables at scale; dashboard layout |
 | `references/taste.md` | Critiquing a screen; making a correct build feel crafted; the amateur-tells table; the rubric and critique output format |
@@ -42,11 +56,11 @@ Load a reference file when you're actually in that territory — they're detaile
 
 These are the ones that get missed, and each one is visible at a glance to anyone who knows the system:
 
-- **8px mini unit.** Every dimension and gap is a multiple. Permitted spacing multiples: 1x, 2x, 3x, 4x, 6x, 8x, 10x, 12x. Element heights come from a fixed ladder — 24, 32, 40, 48, 64, 80px — never from padding math.
-- **Zero border radius.** Carbon UI is square. The only rounded thing is a tag (16px) and a badge dot.
+- **8px mini unit for grid structure.** Component spacing also uses 2, 4 and 12px tokens; not every gap is a multiple of eight. Use the spacing scale in `references/tokens.md` and the supported component sizes. Sources: [IBM 2x Grid](https://www.ibm.com/design/language/2x-grid/) and [Carbon spacing](https://carbondesignsystem.com/elements/spacing/overview/).
+- **Match the selected release and approved component.** The bundled v11-style assets are predominantly square with pill tags. The v12 migration specifies rounded Menu corners and size-based Tag radii; do not impose a universal zero-radius rule or retrofit preview shapes into an approved v11 product.
 - **IBM Plex**, flush left, sentence case. Never all-caps paragraphs. Never two emphasis devices on the same words ("belt and suspenders").
-- **Blue 60 `#0f62fe` is the only primary action color** across every IBM product. Other hues are used sparingly and for meaning, not decoration.
-- **Focus is 2px, `$focus`, inset** (`outline: 2px solid; outline-offset: -2px`). Never removed, never rounded, never a glow.
+- **IBM defaults and product branding are distinct.** IBM defaults use Blue 60 `#0f62fe` for primary actions. Carbon supports custom themes. Seat Planner uses its approved terracotta brand layer; never restore blue to its interactive roles. Other hues carry meaning, not decoration.
+- **Preserve visible keyboard focus using the component's focus token and geometry.** The bundled default is 2px inset; approved product exceptions and release-specific shapes take precedence. Seat Planner uses terracotta focus in light and white in explicit/system dark, including existing auth-field bottom rules.
 - **Status needs two signals minimum** — color plus shape or symbol, *in the mark itself*. The text label next to it does not count as the second signal; the test is whether the marks alone stay distinguishable in grayscale. Five states as five same-shaped dots in five colors fails, whatever the labels say.
 - **Touch targets 44px.** A 16px icon gets padding to reach it; the icon does not grow.
 - **Grays dominate.** If a screen reads as colorful, something has gone wrong.
@@ -96,11 +110,11 @@ Mark the minority: if most fields are required, mark only the optional ones, and
 
 ### Disabled, read-only, or hidden?
 
-This one is load-bearing because disabled components **are not read by screen readers and do not pass contrast**.
+Disabled is not the same as hidden. Native disabled controls normally leave the Tab sequence; they may still be encountered by screen-reader reading navigation. Some composite widgets retain focusable disabled items for discoverability. See [WAI keyboard guidance](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/#kbd_disabled_controls).
 
 | State | When | Consequence |
 |---|---|---|
-| Disabled | Temporarily unavailable pending a user action or unmet dependency | Not reachable by keyboard, not announced. Only safe when the content doesn't need reading. |
+| Disabled | Temporarily unavailable pending a user action or unmet dependency | Native disabled controls normally leave the Tab sequence; do not assume they are absent from assistive technology. Explain an unmet dependency when useful. |
 | Read-only | The content still needs to be read — a process, a lock, or permissions prevent editing | Stays keyboard-navigable but not operable. Text keeps its color and still passes 4.5:1. |
 | Hidden | The user lacks permission to know it exists | Absent entirely until permissions change. |
 
@@ -114,7 +128,7 @@ Never convert a disabled component to read-only just because the surrounding vie
 | Active | Small data set; filters in place as the user types; no results page. |
 | Focused | Actively searches the current scope, with an option to widen to everything. |
 
-Never label a search field. **Always publish the number of results, zero included** — silence is a dead end.
+Default Search has no visible label; Fluid Search does. Always provide an accessible name and name the clear control. **Publish the result count, zero included**, and expose outcomes accessibly. Sources: [Search usage](https://carbondesignsystem.com/components/search/usage/) and [accessibility](https://carbondesignsystem.com/components/search/accessibility/).
 
 ### Filtering
 
@@ -156,7 +170,7 @@ Product code should never reference a raw hex, and ideally never a Carbon token 
 --seat-assigned-bg: var(--cds-layer-selected-01);   /* product meaning → system token */
 ```
 
-Two reasons this earns its keep. It makes intent readable in review — `--seat-conflict-border` says what a hex can't. And Carbon v12 is migrating token naming to the DTCG spec; when names change, a semantic layer means one file changes instead of every component.
+Two reasons this earns its keep. It makes intent readable in review — `--seat-conflict-border` says what a hex can't. It also isolates future token migrations. DTCG token data already exists upstream, but its serialization does not itself rename a released CSS or Sass API. Check package-specific migration guidance before changing names.
 
 ## Type
 
@@ -179,8 +193,8 @@ For CJK, Thai, Devanagari and Arabic, reduce size to 95% and keep the line heigh
 ## Accessibility floor
 
 - 4.5:1 for text under 24px, 3:1 for large text and for graphical elements including status indicators and chart marks.
-- **Check a mark against the surface it lands on when hovered, not at rest.** Light-theme rows and tiles lighten on hover, so `layer-hover-01` (#e8e8e8) is the worst case, not white. Carbon's own green 50 passes on white and fails on a hovered row.
-- The palette is a uniform 12-grade ladder, so contrast becomes counting steps. Full table in `references/tokens.md`; roughly, a grade-60 color needs 4 steps of separation for 4.5:1.
+- **Check a mark against the surface it lands on when hovered, not at rest.** On the bundled light layer, hover uses `layer-hover-01` (#e8e8e8), which is darker than white and can reduce mark contrast. Check the actual rest, hover and selected hosts. Carbon's own green 50 passes on white and fails on a hovered row.
+- Palette grades help choose candidates, but grade separation is not proof of contrast. Verify the resolved foreground/background pair with the checker; see `references/tokens.md`.
 - Against a gradient, check text against the **lowest-contrast stop**, not the one it currently sits over — text moves when users resize or respace it.
 - Keyboard: a spatial grid (map, canvas, seating chart) uses **roving tabindex with arrow keys**, not one tab stop per cell. Escape clears. A "Skip to main content" link is the first focusable element on the page.
 - Landmark regions for every major area; unique labels when there's more than one `navigation`.
@@ -191,10 +205,10 @@ For CJK, Thai, Devanagari and Arabic, reduce size to 95% and keep the line heigh
 Run this before calling anything finished:
 
 - [ ] No raw hex or arbitrary px outside the token layer
-- [ ] Components come from `assets/carbon-components.css`; anything hand-built is named in the decision log
-- [ ] Every spacing value is a permitted mini-unit multiple; every control height is on the ladder
-- [ ] Radius is 0 everywhere except tags
-- [ ] Focus visible on every interactive element, 2px inset, not removed anywhere
+- [ ] Established products reuse their governed component layer; new standalone builds use the bundled assets where appropriate; custom components are documented
+- [ ] Grid structure follows the mini unit; detail spacing uses supported spacing tokens, including 2, 4 and 12px; control sizes match the selected component
+- [ ] Corner radii match the selected release, component and approved product decisions; v12 Menu and Tag shapes follow the migration guidance
+- [ ] Focus is visible on every interactive element using its approved token and geometry, including release-specific shapes and product exceptions
 - [ ] Every status carries two signals in the mark itself (shape or symbol, not the label); the set survives grayscale
 - [ ] Contrast checked with `scripts/check_contrast.py`, including status borders and chart marks — and the output names the script and surfaces
 - [ ] Both themes rendered and read — light and dark, not just one inverted
@@ -211,4 +225,4 @@ Run this before calling anything finished:
 
 ## A caution about v12
 
-Carbon v12 is published as a direction, not a shipped spec — no dates, no visual specimens. It arrives incrementally through `enable-v12-*` feature flags, all defaulting off, while v11 stays active. **Build v11 properly and opt into flags as they prove out.** Designing against an undated roadmap is how products end up half-migrated to something that never shipped. See `references/carbon-next.md` for what is actually shipping today.
+As reviewed on 2026-09-11, Carbon publishes v12 preview Storybooks, flag documentation and a concrete migration guide while the release page still lists v11. Check the installed package before adopting any preview API. See [references/carbon-next.md](references/carbon-next.md) for dated evidence, runtime/Sass flag scope and migration constraints.

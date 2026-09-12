@@ -1,76 +1,85 @@
-# Carbon Next (v12) — direction, and what's actually shipping
+# Carbon Next / v12: verified guidance
 
-## What IBM published
+Reviewed 2026-09-11. Context7 resolved `/carbon-design-system/carbon`; queries
+covered v12 adoption, custom theming and spacing. Its returned version list
+ended at v11.111.1, so that list is not proof of the latest npm release. It did
+not resolve a separate IBM Design Language library. Official IBM/Carbon pages
+supplement the indexed documentation. Recheck these live sources for migrations.
 
-v12 is presented as a statement of direction, not a spec. The argument: interfaces are splitting into two kinds — generated on demand and reshaping to context on one side, stable and predictable on the other — and the system has to serve both. The design goal is **progressive disclosure by default**: reveal depth in sequence, surface the right action at the right time, and let hierarchy, contrast and motion work together so people spend less time orienting.
+## Release and design direction
 
-The whole release is anchored to one word — **guide** — which is the same verb the IBM Design Language has used for its ethos since the Noyes era. The reframing is why it matters now: in a generative system, to guide is no longer to arrange pre-built paths but to shape and constrain what can happen at all. Secondary actions and necessary complexity still exist; they must never be mistaken for the signal.
+[Carbon Next](https://preview.carbondesignsystem.com/carbon-next), updated
+2026-08-12, describes v12 as upcoming: progressive disclosure, clearer hierarchy,
+motion connecting tasks, reusable layouts, AI tooling and more open theming.
+Use this as direction, not permission to invent token values or change an
+approved product design.
 
-Six declared shifts:
+The [release page](https://carbondesignsystem.com/all-about-carbon/releases/)
+still lists v11. Carbon packages have independent version numbers; Carbon v11
+does not mean `@carbon/react@11`. Preview Storybook headings are not evidence
+that a matching package is published. Inspect the project's manifest, lockfile
+and installed exports before suggesting imports or upgrades.
 
-| Shift | What it means |
-|---|---|
-| Visual expression | A new expression built on complexity waiting until it's useful |
-| Motion | Promoted from micro-interaction polish to a structural instrument — showing where you are and connecting it to what comes next |
-| Layouts | Ready-made modular blocks and compositions so teams and agents start with correct structure |
-| AI readiness | The system indexed and queryable by coding agents, with encoded instructions, agent skills and guardrails |
-| Tokens & theming | Industry-standard naming — in practice the DTCG spec and a `.tokens.json` format |
-| Product-centered components | Carbon for IBM Products (21 components, 24 complex patterns) opening to the community |
+## Preview flags and scope
 
-## Declared versus shipped
+The [v12 working guide](https://github.com/carbon-design-system/carbon/blob/main/docs/working-with-v12.md)
+documents development inside v11. `enable-v12-release` defaults to false and
+enables every `enable-v12-*` flag. React exposes `enableV12Release` on
+`FeatureFlags`; Sass uses the feature-flags module configuration. Configure
+the relevant runtime and compiled-style scopes together, once per Sass module.
+Use individual flags to isolate a migration behavior. Ordinary `enable-*` flags
+are not automatically included. The preview Storybooks are separate from the
+default visual regression coverage.
 
-The Carbon Next page carries no numbers, no dates and no visual specimens. **Nothing on it changes a value in this skill today.**
+Consult the [flag inventory](https://github.com/carbon-design-system/carbon/blob/main/docs/feature-flags.md)
+for exact package support and codemods; do not assume every flag exists in React,
+Sass and Web Components. It distinguishes committed `enable-v12-*` behavior from
+other opt-in features. Examples include dynamic floating styles, OverflowMenu,
+tile icons, StructuredList icons and Toggle spacing. Generic flags such as
+`enable-dialog-element`, `enable-presence`, `enable-enhanced-file-uploader` and
+`enable-treeview-controllable` have their own availability.
 
-| Thing | Status |
-|---|---|
-| v12 | Preview. Begin-active, maintenance and end-of-life all TBD. |
-| v11 | Active since 2022-03-31, no announced move to maintenance. |
-| Adoption | Incremental opt-in through the active release via `enable-v12-*` feature flags. |
-| Token rename | DTCG adoption in progress, explicitly committed to backward compatibility and zero consumer impact. |
-| Carbon for AI | **Already stable in v11** — AI label, AI token suite, AI chat, AI variants of 12 core components. |
-| Carbon MCP | Public preview. Serves docs, code examples, charts and Labs to coding agents. |
+Components marked Migrated in the v12 Storybook are not exported by published
+v11 `@carbon/react`; the release flag does not unlock them. Check the separate
+IBM Products package and its installed version when those patterns are needed.
+Do not add a dependency or run a writing codemod without the task's authorization.
 
-## The v12 flags that exist right now
+## Concrete migration differences
 
-All default to off. This is how v12 actually arrives — not as a migration weekend.
+The [consumer migration guide](https://github.com/carbon-design-system/carbon/blob/main/docs/migration/v12.md)
+now specifies actual changes. Review only the affected package sections:
 
-| Flag | Turns on |
-|---|---|
-| `enable-v12-release` | The v12 feature set as a whole |
-| `enable-v12-overflowmenu` | OverflowMenu rebuilt on Menu subcomponents |
-| `enable-v12-dynamic-floating-styles` | Dynamic placement for Popover, Tooltip and similar |
-| `enable-v12-tile-default-icons` | Default icons in Tile |
-| `enable-v12-tile-radio-icons` | Radio icons in RadioTile |
-| `enable-v12-structured-list-visible-icons` | Visible selection icons in StructuredList |
-| `enable-v12-toggle-reduced-label-spacing` | Tighter toggle/label gap |
-| `enable-tile-contrast` | Improved tile contrast |
-| `enable-dialog-element` | Native `<dialog>` under modal components |
-| `enable-presence` | Components unmounted while closed, mounted on open |
-| `enable-focus-wrap-without-sentinels` | Focus wrapping without sentinel nodes |
+- OverflowMenu uses MenuItem and separate MenuItemDivider children; labels and
+  danger styling props change. Recheck selectors and keyboard interaction.
+- Floating surfaces change positioning; inspect scrolling, clipping and
+  transformed ancestors. Fixed positioning alone does not add collision handling.
+- Selection indicators and reserved space change for Tile and StructuredList;
+  Toggle label spacing also changes.
+- Menu uses `border-radius-08`, menu items `border-radius-04`. Tags use
+  `border-radius-02` when small and `border-radius-04` when medium/large,
+  including matching close-button focus shapes. The old all-square/pill-tag
+  rule is not a v12 requirement.
+- Preview Pagination/PageSelector APIs are removed in favor of stable Pagination.
 
-Read them together: nearly every one adds a **visible affordance** where v11 relied on color or position alone. Progressive disclosure and accessibility arriving component by component, well ahead of any new expression.
+These are upstream preview contracts, not changes already implemented in Seat
+Planner. Its vendored CSS is not controlled by Carbon package feature flags.
 
-## Building v12-aware today
+## Tokens, branding and foundations
 
-Four things worth doing now rather than later:
+[DTCG theme data](https://github.com/carbon-design-system/carbon/blob/main/packages/themes/src/dtcg/white.json)
+exists upstream with typed values and aliases. A JSON serialization format is
+not a mandate to rename public CSS variables. Verify the released output and
+migration guide; never promise zero consumer impact for an entire major release.
 
-1. **Keep a semantic token layer.** Product meaning points at system tokens; product code never touches a Carbon token directly. When the DTCG rename lands, one file changes.
-2. **Don't hand-build what's about to be given away** — data grids, side panels, tearsheets, page headers are in the Carbon for IBM Products set.
-3. **Treat motion as structure.** A move between levels should read as one continuous transition that tells you where you went, not several independent fades.
-4. **If the product has an AI surface**, use Carbon for AI — the AI label, the explainability popover, and the AI token set — rather than a bespoke "magic" treatment.
+Carbon's [Sass theme documentation](https://github.com/carbon-design-system/carbon/blob/main/packages/styles/docs/sass.md)
+supports custom themes and component-token overrides. Keep product semantics
+separate from upstream names and cover every theme and interaction state.
+IBM's default blue does not override an approved custom brand. In Seat Planner,
+retain `--sp-*` aliases, brand overrides and the governed vendored stylesheets.
 
-## Carbon for AI (stable now)
-
-The framework for identifying AI-generated content and delivering explainability. Uses light as a metaphor — brightness, glow, gradients — to make AI-generated or AI-recommended content distinctive.
-
-- **Use the AI label wherever AI generates content.** It's both the marker and the entry point to explainability.
-- The explainability popover attached to the label is the first layer: a short, in-context explanation, with the option to go deeper.
-- AI tokens ship inside the main Carbon themes — no separate theme or package. Components have the AI styling available via a mixin; in Figma it's a variable mode.
-- Components with AI variants: checkbox, data table, date picker, dropdown, form, modal, number input, radio button, select, tag, text input, tile. When the AI label is on, the component takes the AI style but behaves normally.
-- If a user overrides AI-suggested content, the component reverts to the default variant — and should offer a way back to the AI version.
-- **Never use AI styling as decoration.** It exists to mark AI presence, and diluting it destroys the signal.
-- Light spread is deliberately limited so glows never compromise contrast.
-
-## The caution
-
-Build v11 properly and opt into flags as they prove out. Designing against an undated roadmap is how products end up half-migrated to something that never shipped.
+[IBM 2x Grid](https://www.ibm.com/design/language/2x-grid/) retains the 8px UI
+mini unit. [Carbon spacing](https://carbondesignsystem.com/elements/spacing/overview/)
+also includes 2, 4 and 12px increments for component details. Use the existing
+type, spacing and motion references for the baseline; validate version-sensitive
+rules against the selected component rather than treating this skill as a
+complete current package specification.

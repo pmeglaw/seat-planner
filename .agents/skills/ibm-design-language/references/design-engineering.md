@@ -71,7 +71,7 @@ Details that separate a crafted front end from a correct one:
 
 ## Tokens and component APIs
 
-Product code references a semantic layer; the semantic layer references Carbon tokens; nothing references a hex. `assets/carbon-tokens.css` is the drop-in. Beyond color: spacing, type, motion, and layer tokens all go through the same discipline, so a theme switch or the v12 token rename touches one file.
+Product code references a semantic layer; the semantic layer references Carbon tokens; nothing references a hex. `assets/carbon-tokens.css` is the drop-in. Beyond color: spacing, type, motion, and layer tokens all go through the same discipline, so theme changes and future token migrations stay localized. DTCG serialization alone does not imply a public token rename; see `carbon-next.md`.
 
 Component props should make the correct usage the obvious one — a `size` prop from the height ladder, a `kind` prop that maps to Carbon's button kinds, no free-form style overrides. If a component needs an escape hatch, the design probably needs a second look before the code does.
 
