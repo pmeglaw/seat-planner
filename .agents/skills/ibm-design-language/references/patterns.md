@@ -166,7 +166,7 @@ Batch when selections span categories or the data is slow to return. Instant whe
 | Active | Runs on each character, results in place, no results page. Small data sets, on-page catalogs, tables. |
 | Focused | Active results within the current scope plus an option to widen to everything. |
 
-- **Never label a search field.** The magnifier plus useful placeholder is the convention.
+- **Keep an accessible search name.** Default Search omits a visible label; Fluid Search includes one. Label the clear control too; see [Carbon Search accessibility](https://carbondesignsystem.com/components/search/accessibility/) and [usage](https://carbondesignsystem.com/components/search/usage/). A magnifier or placeholder alone is not the labeling contract.
 - **Always display the number of results, including zero** — and per scope if a scope filter exists.
 - No results is an empty state with a suggested next action, not silence.
 - Include a loading indicator if the search takes more than a moment; a progress bar for heavy searches.
@@ -194,11 +194,11 @@ Keyboard: Enter or Space opens; focus moves to the first item; arrows navigate m
 
 ## Disabled and read-only states
 
-The distinction matters because **disabled components are not read by screen readers and do not pass contrast**.
+Disabled controls are not hidden content. Native disabled form controls normally leave the Tab sequence, but screen-reader reading navigation can still encounter them. Composite-widget rules can retain disabled items in keyboard navigation for discoverability; see [WAI guidance](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/#kbd_disabled_controls).
 
 | State | Use when | Behavior |
 |---|---|---|
-| Disabled | Temporarily unavailable pending a user action or unmet dependency | Not interactive, not announced, not keyboard-reachable. Component stays visible. |
+| Disabled | Temporarily unavailable pending a user action or unmet dependency | Not operable; normally removed from Tab order for native controls. Still visible and potentially discoverable to assistive technology. |
 | Read-only | The content still needs reading — a running process, a lock, or view-only permissions | Keyboard-navigable but not operable. Text color unchanged, still passes 4.5:1. |
 | Hidden | The user lacks permission to know it exists | Absent entirely until permissions change. |
 

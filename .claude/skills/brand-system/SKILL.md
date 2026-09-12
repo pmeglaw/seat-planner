@@ -1,64 +1,108 @@
 ---
 name: brand-system
-description: Megeredchian Law brand token reference for seat-planner — exact terracotta/charcoal values, which --cds-* roles the brand file overrides and in which theme states, tint and search-hit tokens, the Draft purple family, the contrast tooling, the DECISIONS record, and the per-PR verification checklist. Use before touching any colour, token file, app/styles/, or when checking a PR's brand compliance.
+description: "Megeredchian Law brand guidance for Seat Planner: approved theme-specific tokens, terracotta interactions, Draft purple, semantic aliases, Carbon version boundaries and contrast verification. Use before changing colors, tokens or app/styles/, or reviewing brand compliance."
 ---
 
-# Brand System (LOCKED — do not change without owner approval, 2026-09-03)
+# Seat Planner brand system
 
-The always-loaded rules (mark-only orange, terracotta primary, no blue, Draft purple) are in the root `AGENTS.md`. This skill holds the values, locations, and verification mechanics behind them.
+Documentation refreshed 2026-09-11 using Context7 and official Carbon sources.
+Brand values remain governed by owner decisions, including O2-O5 and BR-2/BR-5
+(2026-09-10). This refresh does not approve a redesign or a Carbon upgrade.
 
-## Logo
+## Authority and locations
 
-`public/Logo-Megeredchian-Law.jpg` (lock-up, 1206×509 JPEG) — a RASTER render (3D bevels, glow), a reference asset only, not a UI mark (the mark-alone raster was removed in Phase 4 PR 3a, 2026-09-04: no consumer). Any in-app mark is a flat inline SVG in `--brand-charcoal` + `--brand-terracotta` from a vector source (not yet supplied). Logo orange **#EB7C35** (235,124,53) is the **MARK ONLY** — 2.81:1 on white **fails WCAG AA**. Charcoal #5D5C5B is the logo's secondary; `--brand-charcoal`.
+All repository paths below are relative to the repository root. Read the
+current checkout's `AGENTS.md`, `docs/redesign-v2/DECISIONS.md` section 6
+deviations 16/17 and Owner amendments — PR #531 — 2026-09-10, plus the relevant
+dated amendment in `docs/redesign-v2/phase5/PHASE5.md`. Keep personal copies
+aligned with this repository skill; current source and owner rulings take
+precedence over stale guidance. Historical verification is not evidence
+of today's browser state or PR status.
 
-## Primary UI colour — terracotta #B85C2E
+`app/styles/brand/megeredchian-law-tokens.css` and its `.json` record express
+the brand. Keep component consumers on semantic `--sp-*` aliases. Preserve
+vendored Carbon CSS and the matching runtime/Phase 3 `sp-components.css` copies.
+Original hand-off assets remain in `docs/brand/`.
 
-(184,92,46): 4.56:1 on white (AA text), 3.97:1 on #161616 (non-text ≥ 3:1). Hover **#8F4521**, active **#7A3A1C**, tints #F5DDD1 / #FBE8DC. Links: light theme **#8F4521**, dark theme **#E8A07A**. In dark, interactive *borders and bars* (`--cds-border-interactive`: nav / menu / palette / tab / Reception bars, the AI label's border start) are **#E8A07A** (O5, 2026-09-10 — terracotta measured 2.53 on #393939, 2.77 on #333333, 1.71 on #525252, under the 3:1 graphic floor; #E8A07A is 5.36 / 5.86 / 3.62); primary fills and `--cds-interactive` (a fill role) stay #B85C2E; dark focus is white (BR-2).
+## Approved roles
 
-## Where it lives
+The app has forced light (`data-carbon-theme="white"`), forced dark (`g100`)
+and system preference with no explicit attribute. It has no product `g10` theme.
+Both dark paths must resolve identically for these roles.
 
-`app/styles/brand/megeredchian-law-tokens.css` (+ `.json`) overrides Carbon's interactive roles — `--cds-button-primary/-hover/-active`, `--cds-border-interactive`, `--cds-interactive`, `--cds-link-primary/-hover`, `--cds-focus`, `--cds-background-brand`, `--cds-ai-*` — in all three theme states (`--cds-border-interactive` is #B85C2E light / #E8A07A dark — O5), across the theme states this app has (`html[data-carbon-theme]` = `white` | `g100` | absent = system via `prefers-color-scheme`; there is no `g10` state), plus the tier-C zone tokens that bypass those roles (`--sp-shell-current-bar`, `--sp-panel-dark-link`, `--sp-ai-border-end`), and the O2 / O3 / O4 direct `--sp-*` overrides (`--sp-pill-search-*`, `--sp-status-search-surface` / `--sp-status-search-mark` — the roster's hit row, audit BR-1 2026-09-10 — `--sp-status-draft-mark`, `--sp-pill-badge`, `--sp-recep-row-locked`). Tertiary overrides are theme-specific: light uses #B85C2E/#8F4521/#7A3A1C for base/hover/active; explicit and system dark retain Carbon's white base and override hover/active to #333333/#393939 (BR-2). Every `--sp-*` alias inherits the brand through the `--cds-*` roles; **do not** hand-write terracotta into components. The original hand-off is kept under `docs/brand/`.
+| Role | Light | Explicit and system dark |
+| --- | --- | --- |
+| Primary fill / hover / active | #B85C2E / #8F4521 / #7A3A1C | Same |
+| `--cds-interactive` fill role | #B85C2E | #B85C2E |
+| Link / hover | #8F4521 / #7A3A1C | #E8A07A / #F5DDD1 |
+| Interactive borders and bars | #B85C2E | #E8A07A (O5) |
+| Focus | #B85C2E | #FFFFFF (BR-2) |
+| Tertiary base / hover / active | #B85C2E / #8F4521 / #7A3A1C | Carbon white base / #333333 / #393939 |
+| Info accent / subtle background | #B85C2E / #FBE8DC | #E8A07A / #262626 (BR-5) |
+| Search hit fill / edge | #FBE8DC / #B85C2E | #393939 / #E8A07A |
+| Reception locked row | #FBE8DC | #525252; bar inherits apricot |
+| Draft mark / badge | Purple 60 #8A3FFC | Purple 40 #BE95FF |
 
-## Rules in full
+The constant-dark header Draft mark uses purple 40 in both page themes. The
+header's zone-specific current-section bar stays terracotta; distinguish it
+from theme-aware navigation/menu/Reception bars. Preserve existing focus
+geometry, including auth fields' 2px bottom rules. Dark tertiary hosts must
+remain neutral so white text and focus remain visible.
 
-1. IBM blue (#0f62fe, #0353e9, #0043ce, #4589ff, #78a9ff, #a6c8ff) is never a primary, link, focus or interactive colour. `grep -rn "0f62fe" app components lib` returns only the vendored `carbon-tokens.css` (whose blue roles are overridden). The search/filter hit surface is a terracotta tint (owner ruling O2, 2026-09-04, built in PR 3b): light fill #FBE8DC + edge #B85C2E via `--cds-highlight` and `--sp-pill-search-*` in the brand file; dark keeps the neutral layer-02 fill with the dark link colour #E8A07A as the edge (terracotta on #393939 is 2.53:1). Carbon's dark `--cds-highlight` (blue 90) is still declared but painted by nothing. No blue is painted after the approved BR-5 amendment — and `tests/brand-resolved-tokens.test.mjs` keeps it so by resolving, in all three theme states, every `--sp-*` alias sp-tokens.css declares plus every `--cds-*` role that `carbon-components.css` / `sp-components.css` consume directly via var() (nothing else: a role read only from an inline style or Tailwind utility is the phase4 token-layer test's), and failing on any IBM blue (audit BR-1, 2026-09-10: the roster hit row's `--sp-status-search-*` pair had reached `--cds-support-info` / dark `--cds-highlight` unseen by the text checks); its allowlist has two kinds of row — `unpainted` blue-resolving tokens (shrink-only) and `pending-ruling` live blues that must cite their audit finding (none remain after BR-5, approved 2026-09-10). Reception's locked row takes the same hit surface (owner ruling O4, 2026-09-09, Phase 5 PR 4, DECISIONS D3-g): `--sp-recep-row-locked` light #FBE8DC / dark #525252 (layer-selected-02); its dark bar is #E8A07A because terracotta is 1.71:1 on #525252 — since O5 (Phase 5 PR 5, 2026-09-10) inherited from the dark `--cds-border-interactive` itself, not a per-consumer override.
-2. #EB7C35 is never a UI colour (the token test fails the build if it appears outside the brand declaration).
-3. Primary fills and the current-section bar use #B85C2E; hover #8F4521; active #7A3A1C. Focus is terracotta in light and white in explicit/system dark (BR-2, owner 2026-09-10). Interactive borders remain terracotta light / #E8A07A dark. In dark, interactive *borders and bars* are #E8A07A (O5, 2026-09-10); primary fills stay #B85C2E; dark focus is white (BR-2).
-4. New colours derive from the terracotta scale; never introduce a blue. The Draft family (◇ badge, Draft status mark, header Draft indicator) is Carbon **purple 60 light / purple 40 dark** (`--sp-status-draft-mark`, `--sp-pill-badge`, `--sp-mode-draft-mark` in the brand file — DECISIONS §6 no. 17): Carbon's caution orange is one hue with the terracotta primary (ΔE2000 5.3, 1.10:1), and purple carries no other meaning in the app.
-5. Contrast is verified with `docs/redesign-v2/phase3/contrast/generate-pairs.mjs` + the checker after any token change; white on #B85C2E is 4.56:1 — keep button labels ≥ 14px regular.
-6. Recorded as `DECISIONS.md` §6 deviation 16 from the Carbon rule "Blue 60 is the only primary" — the brand layer is the one place that deviation is expressed.
+The brand file also overrides background-brand and AI roles and includes
+direct `--sp-*` overrides for search hits, Draft and Reception. Inspect actual
+aliases and painted consumers rather than assuming all product tokens inherit
+through the same Carbon role. Preserve warning/error semantics and Draft purple.
 
-## Verification checklist (brand and UI changes)
+## Logo and color constraints
 
-- primary button computed background `rgb(184, 92, 46)`
-- hover `rgb(143, 69, 33)`
-- focus terracotta light / white explicit and system dark; preserve each control’s existing geometry; measure rest, hover and selected host surfaces
-- header current-section bar #B85C2E
-- links light #8F4521 / dark #E8A07A
-- interactive bars / edges (nav current, floor menu, palette row, tab, Reception row, AI label border start): light `rgb(184, 92, 46)` / dark `rgb(232, 160, 122)` (O5) — `phase5/audit/pr5-dark-edges.mjs` reads all of them
-- no #0f62fe outside `carbon-tokens.css`
-- Build and Node-suite checks pass for relevant brand/UI changes. `npm run gate` or `npm run coverage:check` already runs the Node suite; do not repeat `npm test` on the same unchanged tree.
+Logo orange #EB7C35 is mark-only, never a UI interaction color. Charcoal #5D5C5B
+is `--brand-charcoal`. `public/Logo-Megeredchian-Law.jpg` is the 1206x509 raster
+reference, not a UI mark. Use an approved vector source for a flat in-app mark;
+do not invent a vector hand-off. Brand tints include #F5DDD1 and #FBE8DC.
 
-## Approved PR #531 amendments (owner, 2026-09-10)
+Do not introduce IBM blue into product interactive roles or paint an unused
+vendored blue token. Blue palette declarations in the unchanged Carbon asset
+are not themselves a violation. New brand colors need owner approval; do not
+reinterpret generic IBM defaults as permission to change the firm's colors.
 
-BR-2: white dark focus, terracotta light focus; primary fills and apricot dark
-borders retained. DS-1: constant-dark login chrome via semantic zone rules;
-form/password/loading remain theme-aware. UX-3: consequence-based Discard danger
-confirmation and reviewed Restore, no typing, optional export. UX-4: Restore
-tertiary entry and plain-primary confirmation (D6-c/D6-d).
-BR-5: override --cds-support-info and --cds-support-info-subtle in all three
-brand blocks: #B85C2E / #FBE8DC light; #E8A07A / #262626 dark. The JSON record
-mirrors these values; do not edit vendored Carbon. Information aliases now
-inherit the brand, so their obsolete blue allowances are removed.
+## Current Carbon documentation
 
-Additional verification checklist:
-- Resolve both direct Carbon consumers and semantic aliases, including system themes.
-- Inspect actual focused controls, hovered/selected rows and primary fills.
-- Inspect login, password update and loading in both themes; sheet copies byte-identical.
-- Inspect inspector, publish review and Ask Planner info; retain warning/error and Draft purple.
-- Record approval separately from implementation and browser evidence.
-- PR #531: authenticated preview roster hits, chip/Find/canvas parity and 1920×1080 overview;
-  final-commit checks and a fresh Codex review remain required before merge.
+Context7 library: `/carbon-design-system/carbon` (queried 2026-09-11).
+The [Sass theme guide](https://github.com/carbon-design-system/carbon/blob/main/packages/styles/docs/sass.md)
+supports custom themes and per-theme component tokens. Rebranding must cover
+base, hover, active, focus and surface contrast, not only the primary fill.
 
-BR-2 host constraint: dark tertiary hover/active fills are neutral #333333/#393939,
-so the white focus/text remain legible. Keep the outlined tertiary entry weight.
+[Carbon Next](https://preview.carbondesignsystem.com/carbon-next) is a v12
+preview direction. The [flag inventory](https://github.com/carbon-design-system/carbon/blob/main/docs/feature-flags.md)
+and [migration guide](https://github.com/carbon-design-system/carbon/blob/main/docs/migration/v12.md)
+describe package-specific adoption. Seat Planner currently uses vendored CSS,
+not `@carbon/react`; package flags do not update those assets. DTCG data does
+not itself require renaming `--cds-*` or `--sp-*`. Consult the repository IBM
+skill's `references/carbon-next.md` before a separately authorized migration.
+
+## Verification for brand changes
+
+- Inspect computed roles in forced light, forced dark, system-light and
+  system-dark; include rest, hover, active, selected and focused hosts.
+- Verify aliases AND the selectors consuming them. A declared tertiary-active
+  token has no effect unless the active selector uses it.
+- Generate and check product contrast pairs after token changes:
+
+```powershell
+node docs/redesign-v2/phase3/contrast/generate-pairs.mjs
+python -X utf8 .agents/skills/ibm-design-language/scripts/check_contrast.py --pairs docs/redesign-v2/phase3/contrast/product-pairs.json
+```
+
+- Use `tests/brand-resolved-tokens.test.mjs` and the relevant token-layer tests
+  to catch painted blue and undeclared exceptions. Text search alone cannot
+  establish resolved colors; `rg -ni "0f62fe" app components lib` is a triage aid.
+- Report the checker's actual summary and surfaces. White on terracotta was
+  measured at 4.56:1, but that does not establish contrast on other hosts.
+- Follow `AGENTS.md` for change-specific tests and visual checks at 1920x1080,
+  responsive sizes from 320px, and Reception's 480-1055px operational band when
+  affected. Preserve the runtime/Phase 3 stylesheet byte equality.
+- Reuse passing gate results on an unchanged tree. Documentation-only skill
+  edits need diff, reference and skill validation; they do not require an app
+  build or a fresh production browser check. Distinguish approval,
+  implementation, automated verification and authenticated browser evidence.
