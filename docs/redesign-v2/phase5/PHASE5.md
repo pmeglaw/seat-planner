@@ -878,3 +878,7 @@ unchanged. Regression fixtures cover both 1646px and 1920px desktop layouts.
 CW06 clarification: the owner explicitly requested Diana's live name chip
 move left. Apply a minimum 6px leftward presentation shift, still checking
 neighbour clearance and retaining the true anchor for selection/edit modes.
+
+## Management toolbar refinement — 2026-09-13
+
+Owner request: refine the Management search and Normal/Compact options. Based on PHASE3DS §1.23 and the 2026-09-12 density amendment, search gains a defined field surface, bottom edge, reserved clear-button space and focus return after clearing. The search landmark encloses only search. Density remains a native radio group, presented as one segmented control with row-spacing icons, a selected bottom bar and visible keyboard focus. Controls use existing semantic tokens, retain 48px targets and wrap within the toolbar. The saved preference, desktop-only Compact availability, table sizing and all four tabs retain their established behavior. No brand roles change.

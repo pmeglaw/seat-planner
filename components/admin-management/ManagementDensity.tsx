@@ -53,7 +53,14 @@ export function ManagementDensityControl() {
           <label key={value} className="sp-density-choice">
             <input type="radio" name={id} value={value} checked={density === value}
               disabled={value === "compact" && !compactAvailable} onChange={() => setDensity(value)} />
-            <span>{value === "normal" ? "Normal" : "Compact"}</span>
+            <span className="sp-density-content">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+                {value === "normal"
+                  ? <path d="M2 3.5h12v3H2zM2 9.5h12v3H2z" />
+                  : <path d="M2 3h12M2 6.5h12M2 10h12M2 13.5h12" />}
+              </svg>
+              {value === "normal" ? "Normal" : "Compact"}
+            </span>
           </label>
         ))}
       </div>
