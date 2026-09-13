@@ -1444,6 +1444,7 @@ export function ViewerSeatFinder({
                           showNames={showNames}
                           searchResult={filtersActive && inMatches}
                           nameNudge={nameLabelNudges.get(seat.id) ?? 0}
+                          mapWidth={mapRenderedWidth ?? 0}
                           swapMode={false}
                           moveEmployeeMode={false}
                           swapSource={false}

@@ -7,6 +7,8 @@ import { STATUS_LABELS } from "@/lib/types";
 import { pointToStyle } from "@/lib/seatMath";
 import { formatDisplayName } from "@/lib/formatName";
 import { PILL_NUDGE_PX } from "@/lib/seatCrowding";
+import { usesDeskwardChip } from "@/lib/seatChipPlacement";
+import { useDeskwardChip } from "@/components/seat-map/useDeskwardChip";
 import { SeatMark, seatMarkKindFor } from "@/components/seat-map/SeatMark";
 
 // The Phase 3 seat marker (PHASE3DS §1.16, specimen 02-map.html#pill; Phase 4
@@ -46,6 +48,7 @@ type SeatMarkerProps = {
   // translates the pill vertically by ±PILL_NUDGE_PX so two colliding pills
   // don't render on top of each other. The marker anchor never moves.
   nameNudge?: -1 | 0 | 1;
+  mapWidth?: number;
   swapMode: boolean;
   swapSource: boolean;
   swapTarget: boolean;
@@ -101,6 +104,7 @@ function SeatMarkerComponent({
   searchResult,
   draftChanged = false,
   nameNudge = 0,
+  mapWidth = 0,
   swapMode,
   swapSource,
   swapTarget,
@@ -173,6 +177,10 @@ function SeatMarkerComponent({
   const resolvedViewportEdge = markerUsesTrueCoordinate ? "none" : viewportEdge;
   const resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate ? 0 : Math.max(0, Math.round(viewportEdgeOffsetPx));
   const nudge = activeMarker ? 0 : nameNudge;
+  const { ref: deskwardRef, offset: deskwardOffset } = useDeskwardChip(
+    usesDeskwardChip(seat) && hasEmployee && showNames && !activeMarker && !markerUsesTrueCoordinate && resolvedViewportEdge === "none",
+    seat.x, seat.y, mapWidth, seat.label === "NE02" ? -1 : 1
+  );
   const translateX = resolvedViewportEdge === "left"
     ? `${resolvedViewportEdgeOffsetPx}px`
     : resolvedViewportEdge === "right"
@@ -180,7 +188,9 @@ function SeatMarkerComponent({
       : "-50%";
   const wrapperStyle: CSSProperties = {
     ...pointToStyle({ x: seat.x, y: seat.y }),
-    transform: `translate(${translateX}, calc(-50% + ${nudge * PILL_NUDGE_PX}px))`
+    transform: deskwardOffset
+      ? `translate(calc(-50% + ${deskwardOffset.x}px), calc(-50% + ${deskwardOffset.y}px))`
+      : `translate(${translateX}, calc(-50% + ${nudge * PILL_NUDGE_PX}px))`
   };
   // Stacking: hovered / focused markers rise above their neighbours, active
   // and prominent ones stay above resting pills.
@@ -197,7 +207,7 @@ function SeatMarkerComponent({
     : ["sp-seat-footprint cds-touch-target cursor-pointer", quiet ? "sp-seat-footprint--quiet" : ""].filter(Boolean).join(" ");
 
   return (
-    <span className={wrapperClassName} style={wrapperStyle}>
+    <span ref={deskwardRef} className={wrapperClassName} style={wrapperStyle}>
       <button
         type="button"
         tabIndex={tabIndex}

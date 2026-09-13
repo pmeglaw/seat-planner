@@ -823,3 +823,43 @@ Normal/Compact Management density. The complete amendment is recorded in
 [DECISIONS.md](../DECISIONS.md#owner-amendment--approved-refinement-plan--2026-09-12).
 It covers the shared palette, independent copy changes and Management density;
 implementation and verification status is reported with the change.
+
+## Owner amendment — targeted seat-chip calibration — 2026-09-13
+
+The owner identified W02, W05 and NE07 as misplaced/overlapping and asked to
+retain readable names with a slight shift toward the desk. Only those three
+Floor 3 name chips receive measured, bounded deskward placement. At tight
+widths a neighbouring row may be used; other chips retain their existing
+placement. Selected chips and editing modes retain the true anchor, and
+names-off markers retain their existing footprint. Existing type and theme
+tokens are unchanged.
+
+South Offices S01 and S02 receive a dedicated display calibration that places
+their chips farther inside their rooms instead of extrapolating the West Pod
+fit into the doorways. The floor-plan asset, saved coordinates, assignments,
+and existing pod calibration remain unchanged. Comparison against all 68
+current seats found only S01 and S02 changed calibrated anchors. Draft and
+published data remain separate; this change does not publish or mutate either.
+
+Verification includes geometry/collision tests across six map widths, a
+fractional DOM rounding regression, South Offices inverse-transform checks,
+and Chrome inspection of the actual viewer/admin components with synthetic
+directory fixtures. Browser checks cover desktop and narrower layouts, map
+zoom, light/dark appearance and selection. The local preview mocks database
+actions and does not verify production authentication or persistence.
+
+At 1280px viewport width, the synthetic W05 label cannot fit between adjacent
+rows within the bounded deskward distance and retains the existing nudge;
+zooming in supplies more room. At 1646px and the normal desktop viewport all
+five inspected chips clear their neighbours with the complete display labels
+visible. Coverage verification passes all 1,538 tests; typecheck passes and
+lint completes with existing warnings. The production build passes when run
+outside the filesystem sandbox (the sandboxed Turbopack compilation stalled).
+
+Follow-up: the owner also reported NE02 colliding with NE03 and appearing off
+its chair. NE02 now opts into the same bounded placement with a leftward
+direction toward its desk. NE03 and both chair anchors remain unchanged.
+Chrome verification at 1920px shows NE02 on the chair row, shifted about 20px
+left; at 1646px the complete label uses the adjacent row. Neither layout
+overlaps NE01 or NE03. Added collision and DOMRect geometry regressions;
+focused component/calibration tests, typecheck and scoped ESLint pass.
