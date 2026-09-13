@@ -1208,3 +1208,8 @@ to the pre-refresh installed files. Product tokens and approved design
 decisions are unchanged. Historical §4 verdicts have not been re-certified
 against the updated guidance. See the skill's `references/carbon-next.md` for
 the source register and release-specific constraints.
+
+
+## 2026-09-12 approved component amendment — palette and Management density
+
+See DECISIONS “Owner amendment — approved refinement plan — 2026-09-12”. Runtime/Phase 3 component and semantic-token copies remain paired. `--sp-palette-zone-min-w` defines the wrapping zone-column minimum; palette zones use body-compact-01 names and code-01 counts. The palette owns one scroll host and viewport-constrained search fallback. `.sp-management-density` selects 48px Normal or 32px Compact table rows via the existing size tokens, with a narrow/coarse-pointer Normal fallback; the choice also covers option lists and skeletons. Type size, table headers, side panels and primary-action rules remain governed by their earlier sections. The density selector is a native labeled radio group using semantic interaction/focus roles.

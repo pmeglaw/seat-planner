@@ -50,7 +50,6 @@ const SUB12_LEDGER = new Map(Object.entries({
   // were raised to the 12px floor. Phase 4 PR 3b moved the rows to the Phase 3
   // `.sp-palette-row` (code-02 code cell, label-01 sub line, no avatar), so the
   // one remaining EXEMPT mark is the zone chip's mono seat count.
-  "components/seat-map/ViewerFindPalette.tsx": 1,
   // SeatSheet (owner rulings 2026-08-24): info-pane CSS promoted to the 12px
   // floor at all widths; SVG plan text raised to fontSize 13 viewBox units and
   // hidden below 1133px viewports where it would render sub-12 (legible-or-

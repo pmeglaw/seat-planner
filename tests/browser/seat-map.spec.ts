@@ -523,3 +523,88 @@ test("the publish review groups diff rows under floor eyebrows in registry order
   expect(eyebrows.map(text => text.trim())).toEqual(["Floor 3 · Pre-Litigation · 1 change", "Floor 2 · Litigation · 1 change"]);
   await expect(dialog.getByText("2 seat changes", { exact: true })).toBeAttached();
 });
+
+
+for (const dirty of [false, true]) {
+  test(`palette Escape and zone activation preserve a ${dirty ? "dirty" : "clean"} inspector`, async ({ page }) => {
+    const { calls } = await mountSeatMap(page, { seats: [custom, n02], employees: [alice], canEdit: true });
+    if (dirty) await dirtyInspectorNotes(page);
+    else await clickMarker(page, "S01");
+    const search = page.locator('input[name="seat-search"]').first();
+    await search.dispatchEvent("click");
+    const zone = page.locator(".sp-palette-zone").first();
+    await expect(zone).toBeAttached();
+    await zone.focus();
+    await zone.press("Escape");
+    await expect(page.locator("#viewer-find-palette")).toHaveCount(0);
+    await expect(search).toBeFocused();
+    await expect(page.locator("#seat-inspector-panel")).toBeAttached();
+    await expect(page.locator("#inspector-unsaved-title")).toHaveCount(0);
+    await search.dispatchEvent("click");
+    await zone.dispatchEvent("click");
+    await expect(page.locator("#viewer-find-palette")).toHaveCount(0);
+    await expect(search).toBeFocused();
+    if (dirty) {
+      await expect(page.locator("#seat-inspector-notes textarea")).toHaveValue("unsaved note");
+      await search.fill("N02");
+      await page.locator('#viewer-find-palette button[aria-label^="Seat result."]').dispatchEvent("click");
+      await expect(page.locator("#inspector-unsaved-title")).toBeAttached();
+      await page.getByRole("button", { name: "Keep editing" }).dispatchEvent("click");
+      await expect(page.locator("#seat-inspector-notes textarea")).toHaveValue("unsaved note");
+    }
+    expect(calls.filter(call => /action:(updateSeat|undoDraft|restoreDraft)/.test(call.name))).toEqual([]);
+  });
+}
+
+
+for (const focusedControl of ["input", "close"] as const) {
+  test(`expanding the palette with ${focusedControl} focused preserves dirty Admin state`, async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.addInitScript(() => {
+      const viewport = new EventTarget();
+      Object.assign(viewport, { width: 1920, height: 1080, offsetTop: 0, offsetLeft: 0 });
+      Object.defineProperty(window, "visualViewport", { configurable: true, value: viewport });
+    });
+    const { calls } = await mountSeatMap(page, { seats: [custom, n02], employees: [alice], canEdit: true });
+    await dirtyInspectorNotes(page);
+    const original = page.locator('input[name="seat-search"]').first();
+    // This composition harness has no CSS. Supply only the measured anchor;
+    // the real palette, input events, inspector and Escape handlers run intact.
+    await original.evaluate(input => {
+      input.closest<HTMLElement>(".sp-search")!.getBoundingClientRect = () => new DOMRect(12, 300, 320, 40);
+    });
+    await original.fill("Example person");
+    const palette = await page.locator("#viewer-find-palette").elementHandle();
+    const historyControls = page.getByRole("toolbar", { name: "Map controls" }).getByRole("button", { name: /\b(?:undo|redo)\b/i });
+    await expect(historyControls).toHaveCount(2);
+    const historyBefore = await historyControls.evaluateAll(buttons => buttons.map(button => ({ label: button.getAttribute("aria-label"), disabled: (button as HTMLButtonElement).disabled })));
+    await page.evaluate(() => {
+      Object.assign(window.visualViewport!, { height: 200 });
+      window.visualViewport!.dispatchEvent(new Event("resize"));
+    });
+    const local = page.getByRole("searchbox", { name: "Search office seating in palette" });
+    await expect(local).toBeFocused();
+    await local.fill("Changed example person");
+    await local.evaluate((input: HTMLInputElement) => input.setSelectionRange(8, 15, "backward"));
+    if (focusedControl === "close") await page.getByRole("button", { name: "Close search" }).focus();
+    await page.evaluate(() => {
+      Object.assign(window.visualViewport!, { height: 1080 });
+      window.visualViewport!.dispatchEvent(new Event("resize"));
+    });
+    await expect(local).toHaveCount(0);
+    await expect(original).toBeFocused();
+    await expect(original).toHaveValue("Changed example person");
+    await expect.poll(() => original.evaluate((input: HTMLInputElement) => [input.selectionStart, input.selectionEnd, input.selectionDirection])).toEqual([8, 15, "backward"]);
+    expect(await palette!.evaluate(element => element.isConnected)).toBe(true);
+    await expect(page.locator("#seat-inspector-notes textarea")).toHaveValue("unsaved note");
+    await expect(page.locator("#seat-inspector-commit-bar")).toBeAttached();
+    await expect(page.locator("#inspector-unsaved-title")).toHaveCount(0);
+    expect(await historyControls.evaluateAll(buttons => buttons.map(button => ({ label: button.getAttribute("aria-label"), disabled: (button as HTMLButtonElement).disabled })))).toEqual(historyBefore);
+    expect(calls.filter(call => /action:(updateSeat|undoDraft|restoreDraft)/.test(call.name))).toEqual([]);
+    // The returned focus must not interfere with the normal dismiss path.
+    await original.press("Escape");
+    await expect(page.locator("#viewer-find-palette")).toHaveCount(0);
+    await expect(original).toBeFocused();
+    await expect(page.locator("#seat-inspector-notes textarea")).toHaveValue("unsaved note");
+  });
+}

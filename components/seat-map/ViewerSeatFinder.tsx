@@ -1594,6 +1594,16 @@ export function ViewerSeatFinder({
           // is display copy ("No results for X") and a mode switch, and both
           // want the casing that was typed.
           query={search.trim()}
+          searchValue={search}
+          onSearchChange={setSearch}
+          onDismiss={() => {
+            setPaletteOpen(false);
+            suppressPaletteReopenRef.current = true;
+            window.requestAnimationFrame(() => {
+              searchInputRef.current?.focus();
+              suppressPaletteReopenRef.current = false;
+            });
+          }}
           browse={paletteBrowse}
           results={scopedResults.shown}
           resultCountLabel={resultCountLabel}

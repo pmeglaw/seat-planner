@@ -51,7 +51,7 @@ test("viewer palette rows rove with arrow keys and teach their keys", async () =
   assert.match(palette, /onKeyDown=\{handleBrowseKeyDown\}/);
   // ArrowUp off the first row returns to the search field the rows came from —
   // in both handlers, which is why the palette takes the input ref as a prop.
-  assert.equal((palette.match(/searchInputRef\.current\?\.focus\(\)/g) ?? []).length, 2);
+  assert.equal((palette.match(/\(constrainedInputRef\.current \?\? searchInputRef\.current\)\?\.focus\(\{ preventScroll: true \}\)/g) ?? []).length, 2);
   // The footer legend, teaching the keys it actually honours. Esc now closes
   // the palette (contract #7 makes it the layer above the query), so the
   // legend says "closes" where the retired panel's said "clears" — and browse

@@ -932,6 +932,19 @@ export function SeatMap({
         return;
       }
 
+      // The focused palette owns Escape before inspector selection or map modes.
+      // Blocking confirmations above retain their own keyboard priority.
+      if (paletteOpen && event.target instanceof Node && paletteRef.current?.contains(event.target)) {
+        event.preventDefault();
+        setPaletteOpen(false);
+        suppressPaletteReopenRef.current = true;
+        window.requestAnimationFrame(() => {
+          searchInputRef.current?.focus();
+          suppressPaletteReopenRef.current = false;
+        });
+        return;
+      }
+
       if (askPlannerOpen) {
         closeAskPlannerDrawer();
         return;
@@ -3372,6 +3385,16 @@ export function SeatMap({
           containerRef={paletteRef}
           searchInputRef={searchInputRef}
           query={search.trim()}
+          searchValue={search}
+          onSearchChange={setSearch}
+          onDismiss={() => {
+            setPaletteOpen(false);
+            suppressPaletteReopenRef.current = true;
+            window.requestAnimationFrame(() => {
+              searchInputRef.current?.focus();
+              suppressPaletteReopenRef.current = false;
+            });
+          }}
           browse={paletteBrowse}
           results={scopedResults.shown}
           resultCountLabel={resultCountLabel}
@@ -3382,6 +3405,11 @@ export function SeatMap({
           onZonePin={nextZone => {
             setZone(nextZone);
             setPaletteOpen(false);
+            suppressPaletteReopenRef.current = true;
+            window.requestAnimationFrame(() => {
+              searchInputRef.current?.focus();
+              suppressPaletteReopenRef.current = false;
+            });
           }}
           onRowHoverChange={() => {}}
           onOpenRow={openResult}

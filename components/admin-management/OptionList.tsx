@@ -1,5 +1,7 @@
 "use client";
 
+import { ManagementDensityControl } from "@/components/admin-management/ManagementDensity";
+
 // Departments / Zones structured list (PHASE2UX §1G.4; PHASE3DS §1.25, block
 // 23; specimen 04-forms-and-tables.html line 148): 48px rows — name · count
 // (tabular, 96) · ghost Rename · ⋯ overflow holding Delete (danger). Two
@@ -92,16 +94,22 @@ export function OptionList({
 
   const nounFor = (count: number) => `${count.toLocaleString()} ${countNoun}${count === 1 ? "" : "s"}`;
 
+  const densityToolbar = <div className="cds-toolbar sp-toolbar"><ManagementDensityControl /></div>;
   if (rows.length === 0) {
     return (
+      <>
+        {densityToolbar}
       <div className="cds-empty">
         <h3>{emptyTitle}</h3>
         <p>{emptyBody}</p>
       </div>
+      </>
     );
   }
 
   return (
+    <>
+      {densityToolbar}
     <ul className="sp-list">
       {rows.map(row => {
         const isEditing = editing === row.name;
@@ -155,6 +163,7 @@ export function OptionList({
         );
       })}
     </ul>
+    </>
   );
 }
 

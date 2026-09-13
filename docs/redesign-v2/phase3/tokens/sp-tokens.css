@@ -530,3 +530,6 @@
   --sp-readout-hint:          var(--cds-text-helper);
   --sp-row-button-h:          var(--cds-size-md);         /* same-department fallback buttons */
 }
+
+/* 2026-09-12: minimum zone column before the grid wraps. */
+:root { --sp-palette-zone-min-w: 9rem; --sp-management-table-min-w: 64rem; }

@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, RefObject } from "react";
+import { CheckIcon, CloseIcon } from "@/components/ui/icons";
 import { cx } from "@/components/ui/design-system";
 import type { SearchScope } from "@/lib/mapSearchScope";
 import { DEFAULT_FLOOR, type FloorId } from "@/lib/floorIds";
@@ -73,7 +74,7 @@ function resultTrailing(result: ViewerSearchResult): string {
 // via weight + the muted helper token, not size.
 const eyebrowClassName = "text-xs font-semibold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]";
 
-type PaletteFrame = { left: number; top: number; width: number | null; maxHeight: number };
+type PaletteFrame = { left: number; top: number; width: number; maxHeight: number; constrained: boolean };
 
 /**
  * Where the palette sits, in viewport px. Measured rather than declared,
@@ -84,22 +85,22 @@ type PaletteFrame = { left: number; top: number; width: number | null; maxHeight
 function measurePaletteFrame(anchor: HTMLElement | null): PaletteFrame | null {
   if (!anchor) return null;
   const rect = anchor.getBoundingClientRect();
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const top = rect.bottom + PALETTE_ANCHOR_GAP_PX;
-  // Floored so a very short viewport still shows a usable slice rather than a
-  // sliver or a negative height.
-  const maxHeight = Math.max(160, viewportHeight - top - PALETTE_BOTTOM_INSET_PX);
-
-  if (viewportWidth < VIEWER_PANEL_BREAKPOINT_PX) {
-    // Full-width sheet under the bar: `width: null` lets the inset-x classes
-    // own the horizontal box, so it follows the viewport without re-measuring.
-    return { left: PALETTE_EDGE_INSET_PX, top, width: null, maxHeight };
-  }
-
-  const width = Math.min(PALETTE_WIDTH_PX, Math.max(240, viewportWidth - PALETTE_EDGE_INSET_PX * 2));
-  const left = Math.max(PALETTE_EDGE_INSET_PX, Math.min(rect.left, viewportWidth - width - PALETTE_EDGE_INSET_PX));
-  return { left, top, width, maxHeight };
+  const viewport = window.visualViewport;
+  const viewportWidth = viewport?.width ?? window.innerWidth;
+  const viewportHeight = viewport?.height ?? window.innerHeight;
+  const viewportLeft = viewport?.offsetLeft ?? 0;
+  const viewportTop = viewport?.offsetTop ?? 0;
+  const bottom = viewportTop + viewportHeight;
+  const anchoredTop = rect.bottom + PALETTE_ANCHOR_GAP_PX;
+  const available = bottom - anchoredTop - PALETTE_BOTTOM_INSET_PX;
+  const constrained = available < 128 || anchoredTop < viewportTop;
+  const top = constrained ? viewportTop + PALETTE_EDGE_INSET_PX : anchoredTop;
+  const maxHeight = Math.max(0, bottom - top - (constrained ? PALETTE_EDGE_INSET_PX : PALETTE_BOTTOM_INSET_PX));
+  const width = Math.min(viewportWidth < VIEWER_PANEL_BREAKPOINT_PX ? viewportWidth : PALETTE_WIDTH_PX,
+    Math.max(0, viewportWidth - PALETTE_EDGE_INSET_PX * 2));
+  const left = Math.max(viewportLeft + PALETTE_EDGE_INSET_PX,
+    Math.min(rect.left, viewportLeft + viewportWidth - width - PALETTE_EDGE_INSET_PX));
+  return { left, top, width, maxHeight, constrained };
 }
 
 export type ViewerFindPaletteProps = {
@@ -111,6 +112,9 @@ export type ViewerFindPaletteProps = {
   searchInputRef: RefObject<HTMLInputElement | null>;
   /** Trimmed query; empty selects browse mode. */
   query: string;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  onDismiss?: () => void;
   browse: ViewerPaletteBrowse;
   results: ViewerSearchResult[];
   /** "3 results" / "1 result" — composed by the caller, which also puts it in the legend. */
@@ -142,6 +146,9 @@ export function ViewerFindPalette({
   containerRef,
   searchInputRef,
   query,
+  searchValue = query,
+  onSearchChange,
+  onDismiss,
   browse,
   results,
   resultCountLabel,
@@ -160,6 +167,9 @@ export function ViewerFindPalette({
   onWiden
 }: ViewerFindPaletteProps) {
   const queryActive = Boolean(query);
+  const constrainedInputRef = useRef<HTMLInputElement | null>(null);
+  const constrainedControlsRef = useRef<HTMLDivElement | null>(null);
+  const searchReturnSelection = useRef<Pick<HTMLInputElement, "selectionStart" | "selectionEnd" | "selectionDirection"> | null>(null);
   const [frame, setFrame] = useState<PaletteFrame | null>(null);
 
   // Layout effect, not a plain effect: the palette is positioned from a
@@ -167,7 +177,21 @@ export function ViewerFindPalette({
   // then jump. It only ever mounts client-side (the parent renders it behind
   // `paletteOpen`, which starts false), so this never runs during SSR.
   useLayoutEffect(() => {
-    const measure = () => setFrame(measurePaletteFrame(anchorRef.current));
+    const measure = () => {
+      const nextFrame = measurePaletteFrame(anchorRef.current);
+      const input = constrainedInputRef.current;
+      // Capture before the resize render removes the controls. The latest
+      // selection survives moving focus from the input to Close search.
+      if (nextFrame && !nextFrame.constrained && input
+        && constrainedControlsRef.current?.contains(document.activeElement)) {
+        searchReturnSelection.current = {
+          selectionStart: input.selectionStart,
+          selectionEnd: input.selectionEnd,
+          selectionDirection: input.selectionDirection
+        };
+      }
+      setFrame(nextFrame);
+    };
     measure();
     // No scroll listener: the bar is sticky and the map owns its own scroll
     // container, so the field never moves vertically under the page. But a
@@ -183,15 +207,34 @@ export function ViewerFindPalette({
       rafId = requestAnimationFrame(measure);
     };
     window.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("scroll", onResize);
     const anchor = anchorRef.current;
     const observer = new ResizeObserver(measure);
     if (anchor) observer.observe(anchor);
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("scroll", onResize);
       observer.disconnect();
     };
   }, [anchorRef]);
+
+  useLayoutEffect(() => {
+    if (frame?.constrained && document.activeElement === searchInputRef.current) {
+      const original = searchInputRef.current;
+      constrainedInputRef.current?.focus({ preventScroll: true });
+      if (original) constrainedInputRef.current?.setSelectionRange(original.selectionStart, original.selectionEnd, original.selectionDirection ?? undefined);
+    }
+    if (!frame?.constrained && searchReturnSelection.current) {
+      const selection = searchReturnSelection.current;
+      searchReturnSelection.current = null;
+      const original = searchInputRef.current;
+      original?.focus({ preventScroll: true });
+      original?.setSelectionRange(selection.selectionStart, selection.selectionEnd, selection.selectionDirection ?? undefined);
+    }
+  }, [frame?.constrained, searchInputRef]);
 
   // Closing while a chip is hovered or focused unmounts it without ever firing
   // mouseleave/blur, which would strand the preview wash on the map. One
@@ -219,7 +262,7 @@ export function ViewerFindPalette({
     window: browseWindow,
     segments: browseSegments,
     focusRow: focusBrowseRow
-  } = useVirtualListWindow(browse.people.length, { defaultRowHeight: 44 });
+  } = useVirtualListWindow(queryActive ? 0 : browse.people.length, { defaultRowHeight: 48, contentSelector: "[data-virtual-content]" });
 
   // Arrow roving over query results — DOM-walking form, which is only safe
   // because query mode renders every row. ArrowUp from the first row returns
@@ -235,7 +278,7 @@ export function ViewerFindPalette({
       return;
     }
     if (activeIndex <= 0) {
-      searchInputRef.current?.focus();
+      (constrainedInputRef.current ?? searchInputRef.current)?.focus({ preventScroll: true });
       return;
     }
     items[activeIndex - 1]?.focus();
@@ -262,14 +305,14 @@ export function ViewerFindPalette({
       fallbackIndex: browseWindow.startIndex
     });
     if (target === null) {
-      if (direction === -1) searchInputRef.current?.focus();
+      if (direction === -1) (constrainedInputRef.current ?? searchInputRef.current)?.focus({ preventScroll: true });
       return;
     }
     focusBrowseRow(target);
   }
 
   const listClassName =
-    "min-h-0 flex-1 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]";
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--sp-focus)]";
 
   return (
     <div
@@ -280,7 +323,7 @@ export function ViewerFindPalette({
       style={{
         left: frame?.left ?? PALETTE_EDGE_INSET_PX,
         top: frame?.top ?? 42,
-        width: frame?.width ?? undefined,
+        width: frame?.width ?? "calc(100vw - 24px)",
         // The px cap is measured, the home-indicator allowance is not: env()
         // has no JS reading, so the two are combined here in CSS. Without it
         // the footer legend lands under the indicator on a phone (#198).
@@ -290,11 +333,28 @@ export function ViewerFindPalette({
         // Floats (contract #2): fixed, above the floating map cards, and it
         // reserves no stage width — the map behind it never reflows.
         "sp-palette fixed z-[70] flex flex-col overflow-hidden",
-        // Below the panel tier the measured width is null and these own the box.
-        frame?.width === null ? "right-3" : "",
+
         "motion-safe:animate-[sp-panel-in_150ms_ease-out]"
       )}
     >
+      {frame?.constrained && onSearchChange && (
+        <div ref={constrainedControlsRef} className="sp-palette-search">
+          <input ref={constrainedInputRef} type="search" aria-label="Search office seating in palette" placeholder="Find a person or seat"
+            value={searchValue} onChange={event => onSearchChange(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                if (queryActive) containerRef.current?.querySelector<HTMLButtonElement>('[role="listitem"] button')?.focus();
+                else if (browse.people.length) focusBrowseRow(0);
+              } else if (event.key === "Enter" && queryActive && results.length) {
+                event.preventDefault();
+                onOpenRow(results[0]);
+              }
+            }} />
+          <button type="button" className="cds-btn cds-btn--ghost cds-btn--icon" aria-label="Close search" onClick={onDismiss}><CloseIcon /></button>
+        </div>
+      )}
+      <div ref={setBrowseListElement} className="sp-palette-scroll" tabIndex={0} role="region" aria-label="Scrollable search content">
       {queryActive ? (
         <>
           {/* The header always carries BOTH scope counts, zero included — the
@@ -387,56 +447,22 @@ export function ViewerFindPalette({
         </div>
       ) : (
         <>
-          {/* Zone chips (contract #4): hover previews the wash on the map and
-              click pins the zone filter, both through the state the map
-              already washes from — the chips are a second door onto it, not a
-              second copy of it. Focus previews too, so the preview is never a
-              pointer-only affordance. */}
+          <div data-virtual-prefix>
           {browse.zones.length > 0 && (
-            <div
-              role="group"
-              aria-label="Zones"
-              onMouseLeave={() => onZoneHoverChange?.(null)}
-              className="border-b border-[var(--sp-border-subtle)] px-4 pb-2.5 pt-3"
-            >
-              {/* Copy is scoped per modality (P5, same ruling as the read-path
-                  F5): a coarse-pointer device has no hover and usually no
-                  Enter, so promising them is a false legend. Tap is the one
-                  input that always exists there, and it pins. */}
-              <span className={eyebrowClassName}>
-                Zones — <span className="[@media(pointer:coarse)]:hidden">hover to preview, Enter to filter</span>
-                <span className="hidden [@media(pointer:coarse)]:inline">tap to filter</span>
-              </span>
-              <div className="mt-2 flex flex-wrap gap-1.5">
+            <div role="group" aria-label="Zones" onMouseLeave={() => onZoneHoverChange?.(null)} className="sp-palette-zones">
+              <h2>Filter by zone</h2>
+              <p>Select a zone to filter the map.</p>
+              <div className="sp-palette-zone-grid">
                 {browse.zones.map(chip => {
                   const pinned = pinnedZone === chip.name;
                   return (
-                    <button
-                      key={chip.name}
-                      type="button"
-                      aria-pressed={pinned}
+                    <button key={chip.name} type="button" className="sp-palette-zone" aria-pressed={pinned}
                       onClick={() => onZonePin(pinned ? "all" : chip.name)}
-                      onMouseEnter={() => onZoneHoverChange?.(chip.name)}
-                      onMouseLeave={() => onZoneHoverChange?.(null)}
-                      onFocus={() => onZoneHoverChange?.(chip.name)}
-                      onBlur={() => onZoneHoverChange?.(null)}
-                      className={cx(
-                        "relative inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-xs font-semibold transition after:absolute after:-inset-x-[3px] after:-inset-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-focus)]",
-                        pinned
-                          ? "border-[var(--sp-interactive)] bg-[var(--sp-layer-hover)] text-[var(--sp-link-hover)]"
-                          : "border-[var(--sp-border-subtle)] bg-[var(--sp-background)] text-[var(--sp-text-secondary)] hover:border-[var(--sp-border-interactive)]"
-                      )}
-                    >
-                      {chip.name}
-                      {/* opacity-90, not the mock's .75. The count inherits the
-                          chip's own text color so it works in both the resting
-                          and pinned palettes, but at 10px it needs AA: .75
-                          measures 3.97:1 resting (#55504A over #F7F6F2) and
-                          3.98:1 pinned (#9E2F06 over primary-soft) — both fail,
-                          and the cliff is at 81% in both. .90 gives 5.71 and
-                          5.40. Same call the eyebrows made about the mock's
-                          #8E8276; caught by the e2e-auth viewer scan. */}
-                      <span className="font-mono text-[10px] font-semibold opacity-90">{chip.seatCount}</span>
+                      onMouseEnter={() => onZoneHoverChange?.(chip.name)} onMouseLeave={() => onZoneHoverChange?.(null)}
+                      onFocus={event => { onZoneHoverChange?.(chip.name); event.currentTarget.scrollIntoView?.({ block: "nearest" }); }}
+                      onBlur={() => onZoneHoverChange?.(null)}>
+                      <span className="sp-palette-zone-name">{pinned && <CheckIcon aria-hidden="true" />}{chip.name}</span>
+                      <span className="sp-palette-zone-count">{chip.seatCount}</span>
                     </button>
                   );
                 })}
@@ -456,9 +482,10 @@ export function ViewerFindPalette({
             <span className={eyebrowClassName}>People — seated first, A to Z</span>
           </div>
 
-          {/* Same scrollable-region-focusable contract as the results list. */}
+          </div>
+          {/* People share the scroll host with the zone prefix. */}
           <div
-            ref={setBrowseListElement}
+            data-virtual-content
             role="list"
             aria-label="People directory"
             tabIndex={0}
@@ -545,6 +572,7 @@ export function ViewerFindPalette({
           {queryActive ? "↑↓ to move · Enter opens · Esc closes" : "↑↓ to move · Esc closes"}
         </span>
         {queryActive ? null : <span className="min-w-0 truncate">{browse.summary}</span>}
+      </div>
       </div>
     </div>
   );

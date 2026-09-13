@@ -1,8 +1,10 @@
 "use client";
 
+import { ManagementDensityControl, useManagementDensity } from "@/components/admin-management/ManagementDensity";
+
 // Employees index (PHASE2UX §1G.3; PHASE3DS §1.23, block 21) on the asset
 // `.cds-table`: toolbar (search 320 with a clear ×, the live count — zero
-// included), 40 header with `.cds-sort` buttons + aria-sort, 32 rows:
+// included), 40 header with `.cds-sort` buttons + aria-sort, density-sized rows:
 // Name · Department · Position · Extension (right, tabular) · Seat (code-02
 // link to the map through withSeatParam, colour steps on the ROW's hover —
 // P3-7) · Status (SeatMark ● / ○ + label, never colour alone) · ONE row action:
@@ -17,7 +19,7 @@
 // window — a bubbling `scroll` never leaves the pane. PHASE4BUILD §1.37.
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Employee } from "@/lib/types";
 import { withSeatParam } from "@/lib/deepLink";
 import { computeVirtualSegments, computeVirtualWindow } from "@/lib/virtualizedList";
@@ -35,7 +37,7 @@ const employeeColumns: Array<{ key: EmployeeSortKey; label: string; className?: 
   { key: "position", label: "Position" },
   { key: "extension", label: "Extension", className: "sp-col-ext" },
   { key: "seat", label: "Seat", className: "sp-col-seat" },
-  { key: "status", label: "Status" }
+  { key: "status", label: "Seat status" }
 ];
 
 const EditIcon = () => (
@@ -70,6 +72,8 @@ export function EmployeesTable({
   selectedEmployeeId: string;
   onEdit: (employee: Employee) => void;
 }) {
+  const { density } = useManagementDensity();
+  const defaultRowHeight = density === "compact" ? 32 : 48;
   const searching = search.trim().length > 0;
   const countText = toolbarCount({ total: totalActive, assigned: assignedCount, matching: sortedEmployees.length, searching });
 
@@ -81,13 +85,14 @@ export function EmployeesTable({
     scrollOffset: 0,
     viewportHeight: 1080,
     columns: 1,
-    rowHeight: 32
+    rowHeight: defaultRowHeight
   });
   // Focused row kept mounted across window moves, pinned by EMPLOYEE ID (not
   // index) so a re-sort/reorder follows the person, not the position.
   const [pinnedEmployeeId, setPinnedEmployeeId] = useState<string | null>(null);
+  const previousRowHeight = useRef(defaultRowHeight);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let frame = 0;
     const measure = () => {
       frame = 0;
@@ -100,7 +105,27 @@ export function EmployeesTable({
       // Fall back to the row height before the first row renders — and on a
       // zero-height measurement (hidden table, no layout): dividing by it
       // would NaN the scroll offset and blank the whole window.
-      const rowHeight = firstRow && firstRow.offsetHeight > 0 ? firstRow.offsetHeight : 32;
+      const measuredHeight = firstRow?.getBoundingClientRect().height ?? 0;
+      // Collapsed table borders add half a pixel to the edge row. Interior
+      // rows give the repeated stride used by the virtual spacers.
+      const nextRow = firstRow?.nextElementSibling;
+      const interiorHeight = nextRow?.matches("[data-directory-row]:not([data-vpinned])")
+        ? nextRow.getBoundingClientRect().height : 0;
+      const rowHeight = interiorHeight || measuredHeight || defaultRowHeight;
+      if (previousRowHeight.current !== rowHeight) {
+        let host = grid.parentElement;
+        while (host && (!/(auto|scroll)/.test(window.getComputedStyle(host).overflowY)
+          || host.scrollHeight <= host.clientHeight)) host = host.parentElement;
+        const tabs = grid.closest(".sp-page")?.querySelector(".sp-tabs-host");
+        const viewportTop = Math.max(host?.getBoundingClientRect().top ?? 0, tabs?.getBoundingClientRect().bottom ?? 0);
+        const oldOffset = Math.max(0, viewportTop - grid.getBoundingClientRect().top);
+        // Preserve the fractional position within the visible row as well;
+        // retaining only its integer index can skip a row when shrinking.
+        const adjustment = oldOffset * (rowHeight / previousRowHeight.current - 1);
+        if (host) host.scrollTop += adjustment;
+        else window.scrollBy(0, adjustment);
+        previousRowHeight.current = rowHeight;
+      }
       // Quantize to row steps so scrolling only re-renders when the window moves.
       const rawOffset = Math.max(0, -grid.getBoundingClientRect().top);
       const scrollOffset = Math.floor(rawOffset / rowHeight) * rowHeight;
@@ -123,12 +148,16 @@ export function EmployeesTable({
     // is the shell's content pane, not the document.
     window.addEventListener("scroll", schedule, { passive: true, capture: true });
     window.addEventListener("resize", schedule);
+    const observer = new ResizeObserver(schedule);
+    const row = employeeGridRef.current?.querySelector("[data-directory-row]");
+    if (row) observer.observe(row);
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
       window.removeEventListener("scroll", schedule, { capture: true });
       window.removeEventListener("resize", schedule);
+      observer.disconnect();
     };
-  }, [sortedEmployees.length]);
+  }, [sortedEmployees.length, defaultRowHeight]);
 
   const employeeWindow = useMemo(() => computeVirtualWindow({
     itemCount: sortedEmployees.length,
@@ -211,6 +240,7 @@ export function EmployeesTable({
             )}
           </div>
           <span className="cds-toolbar-count" aria-live="polite">{countText}</span>
+          <ManagementDensityControl />
         </div>
 
         {sortedEmployees.length === 0 ? (
@@ -234,7 +264,7 @@ export function EmployeesTable({
             </div>
           )
         ) : (
-          <div className="sp-table-scroll">
+          <div className="sp-table-scroll" role="region" aria-label="Employees table" tabIndex={0}>
             <table className="cds-table">
               <thead>
                 <tr>
