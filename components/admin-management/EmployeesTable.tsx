@@ -73,6 +73,7 @@ export function EmployeesTable({
   onEdit: (employee: Employee) => void;
 }) {
   const { density } = useManagementDensity();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const defaultRowHeight = density === "compact" ? 32 : 48;
   const searching = search.trim().length > 0;
   const countText = toolbarCount({ total: totalActive, assigned: assignedCount, matching: sortedEmployees.length, searching });
@@ -221,20 +222,21 @@ export function EmployeesTable({
   return (
     <div className="sp-table">
       <div className="cds-table-container">
-        <div className="cds-toolbar sp-toolbar" role="search">
-          <div className="cds-toolbar-search">
+        <div className="cds-toolbar sp-toolbar">
+          <div className="cds-toolbar-search" role="search" aria-label="Employees">
             <SearchIcon />
             <input
               type="search"
               name="employee-search"
+              ref={searchInputRef}
               value={search}
               onChange={event => onSearchChange(event.target.value)}
               placeholder="Search employees…"
               aria-label="Search employees"
               autoComplete="off"
             />
-            {searching && (
-              <button type="button" className="sp-search-clear cds-btn cds-btn--icon" aria-label="Clear search" onClick={() => onSearchChange("")}>
+            {search.length > 0 && (
+              <button type="button" className="sp-search-clear cds-btn cds-btn--icon" aria-label="Clear search" onClick={() => { onSearchChange(""); searchInputRef.current?.focus(); }}>
                 <CloseIcon />
               </button>
             )}
