@@ -243,14 +243,14 @@ test("the Find palette (both surfaces) windows its directory through the shared 
 
   // Viewer People directory: segments render (spacers + absolute-indexed
   // rows), arrow keys navigate by absolute index via the unit-tested helper.
-  assert.match(viewerSource, /useVirtualListWindow\(browse\.people\.length/);
+  assert.match(viewerSource, /useVirtualListWindow\(queryActive \? 0 : browse\.people\.length/);
   assert.match(viewerSource, /browseSegments\.map\(/);
   assert.match(viewerSource, /data-vindex=\{segment\.index\}/);
   assert.match(viewerSource, /function handleBrowseKeyDown/);
   assert.match(viewerSource, /stepFocusIndex\(\{/);
   // ArrowUp with nothing above still exits to the search input — but only
   // through the absolute-index handler, never by walking the rendered slice.
-  assert.match(viewerSource, /if \(direction === -1\) searchInputRef\.current\?\.focus\(\)/);
+  assert.match(viewerSource, /if \(direction === -1\) \(constrainedInputRef\.current \?\? searchInputRef\.current\)\?\.focus\(\{ preventScroll: true \}\)/);
 
   // The admin map mounts the SAME palette since PR 3a (its results panel
   // retired), so the windowing covers both surfaces through one component.

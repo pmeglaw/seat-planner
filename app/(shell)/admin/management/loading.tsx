@@ -2,7 +2,7 @@
 // header and the tab strip are REAL (the frame does not jump when the data
 // lands), the table is six asset skeleton rows under real column headers.
 // The persistent shell keeps the header and panels mounted while this streams.
-const COLUMNS = ["Name", "Department", "Position", "Extension", "Seat", "Status"];
+const COLUMNS = ["Name", "Department", "Position", "Extension", "Seat", "Seat status"];
 
 export default function AdminManagementLoading() {
   return (
@@ -16,7 +16,7 @@ export default function AdminManagementLoading() {
         <div className="cds-page-header">
           <div>
             <h1 className="cds-page-title">Management</h1>
-            <p className="cds-page-subtitle">People, departments, zones and publish history.</p>
+            <p className="cds-page-subtitle">Manage people, departments, zones and publish history.</p>
           </div>
           <div className="sp-page-actions">
             <span className="cds-btn cds-btn--primary cds-btn--md" aria-hidden="true">Add employee</span>

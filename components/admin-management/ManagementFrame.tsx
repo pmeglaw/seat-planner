@@ -86,7 +86,7 @@ export function ManagementFrame({
       <div className="cds-page-header">
         <div>
           <h1 className="cds-page-title">Management</h1>
-          <p className="cds-page-subtitle">People, departments, zones and publish history.</p>
+          <p className="cds-page-subtitle">Manage people, departments, zones and publish history.</p>
         </div>
         {current.primary === null ? null : (
           <div className="sp-page-actions">

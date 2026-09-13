@@ -109,7 +109,7 @@ test.describe("Management frame", () => {
       // The first tab whose header action area is empty. Not a disabled
       // button — there is no action to enable (D5-a amendment, 2026-09-08).
       await expect(page.locator(".sp-page .cds-page-header .cds-btn--primary")).toHaveCount(0);
-      await expect(page.locator(".sp-page .cds-page-subtitle")).toHaveText("People, departments, zones and publish history.");
+      await expect(page.locator(".sp-page .cds-page-subtitle")).toHaveText("Manage people, departments, zones and publish history.");
 
       // The log is read on mount; wait for the fetch to settle before reading
       // anything else off the tab.

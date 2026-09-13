@@ -114,9 +114,9 @@ test("the palette copy is scoped per modality and per mode (P5)", async () => {
   const palette = await readSource("../components/seat-map/ViewerFindPalette.tsx");
 
   // Coarse pointers have no hover, arrows, Enter or Esc, so the keyboard copy
-  // hides there and the zones eyebrow swaps to the input that exists: tap.
+  // hides there; the approved zone instruction works for either input.
   // Same ruling as the read-path F5 — copy is scoped per modality.
-  assert.match(palette, /tap to filter/);
+  assert.match(palette, /Select a zone to filter the map\./);
   assert.match(palette, /\[@media\(pointer:coarse\)\]:hidden/);
   // And per mode: the field's Enter handler is gated on an active query, so
   // only the query-mode legend may claim "Enter opens".

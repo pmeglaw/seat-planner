@@ -9,8 +9,11 @@
 // than import.meta.url, because Playwright transpiles this module to CJS.
 
 import * as esbuild from "esbuild";
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import postcss from "postcss";
+import tailwindcss from "tailwindcss";
+import tailwindConfig from "../../tailwind.config";
 
 const ROOT = `${process.cwd()}/`;
 export const HARNESS_DIR = path.join(ROOT, "node_modules/.cache/ctb");
@@ -28,6 +31,7 @@ const ACTION_EXPORTS = [
   "getPublishLogAction",
   "getDraftStatusAction",
   "askPlannerAction",
+  "createDepartmentAction", "createZoneAction", "deleteDepartmentAction", "deleteZoneAction", "renameDepartmentAction", "renameZoneAction",
   "createEmployeeAction",
   "updateEmployeeAction",
   "deleteEmployeeAction"
@@ -100,7 +104,12 @@ const ENTRY = `
   import { createRoot } from "react-dom/client";
   import { AppShell } from "@/components/ui/AppShell";
   import { SeatMap } from "@/components/seat-map/SeatMap";
+  import { PaletteFixture, ManagementFixture } from "@/tests/browser/refinement-harness";
   let root;
+  window.__mountRefinement = (kind, props) => {
+    root = root ?? createRoot(document.getElementById("root"));
+    root.render(React.createElement(kind === "palette" ? PaletteFixture : ManagementFixture, props));
+  };
   // The shell lives in the persistent AppShell (app/(shell)/layout.tsx), so
   // the harness composes the same pair production does — the specs that
   // drive the shell (the guarded History mode switch) exercise the real
@@ -140,5 +149,10 @@ export async function buildHarness() {
     `<!doctype html><html lang="en"><head><meta charset="utf8"><title>SeatMap harness</title></head><body><div id="root"></div><script src="./bundle.js"></script></body></html>`,
     "utf8"
   );
+  // A separate styled entrypoint leaves existing composition tests unchanged.
+  const utilities = await postcss([tailwindcss(tailwindConfig)]).process("@tailwind base; @tailwind components; @tailwind utilities;", { from: undefined });
+  const layers = await Promise.all(["carbon-tokens.css", "sp-tokens.css", "brand/megeredchian-law-tokens.css", "carbon-components.css", "sp-components.css", "phase4-bridge.css"].map(file => readFile(path.join(ROOT, "app/styles", file), "utf8")));
+  await writeFile(path.join(HARNESS_DIR, "refinements.css"), utilities.css + "\n:root { --font-sans: Arial; --font-mono: monospace; }\n" + layers.join("\n"), "utf8");
+  await writeFile(path.join(HARNESS_DIR, "refinements.html"), `<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf8"><title>Refinement fixtures</title><link rel="stylesheet" href="refinements.css"></head><body><div id="root"></div><script src="./bundle.js"></script></body></html>`, "utf8");
   return HARNESS_HTML;
 }

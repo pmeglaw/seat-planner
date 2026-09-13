@@ -342,7 +342,7 @@ test("zero matches: the empty state in the list body with a ghost Clear search; 
   assert.equal(optionRows().length, 0);
   assert.ok(listbox(), "the listbox stays mounted (aria-controls must resolve)");
   const empty = document.querySelector(".sp-recep-list .cds-empty");
-  assert.match(empty.querySelector("h3").textContent, /No one matches “zzzz”/);
+  assert.match(empty.querySelector("h3").textContent, /No matches for ‘zzzz’/);
   assert.match(empty.querySelector("p").textContent, /Try a name, department, seat code or extension\./);
   assert.equal(readoutName(), "Bob Baker");
   assert.equal(within(readout()).getByText("Last selected caller").closest("[aria-live]").getAttribute("aria-live"), "polite");
@@ -664,6 +664,6 @@ test("landing on ?q= with no match shows the zero state with the query kept", as
   await renderReception({ initialQuery: "zzzz" });
   assert.equal(searchInput().value, "zzzz");
   assert.equal(count(), "0 matches");
-  assert.match(document.querySelector(".sp-recep-list .cds-empty h3").textContent, /No one matches “zzzz”/);
+  assert.match(document.querySelector(".sp-recep-list .cds-empty h3").textContent, /No matches for ‘zzzz’/);
   assert.equal(window.location.search, "?q=zzzz");
 });

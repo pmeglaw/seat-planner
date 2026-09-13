@@ -105,7 +105,7 @@ test.describe("Reception keyboard loop (viewer)", () => {
     // search, the readout keeps the person (the call may still be live).
     await field(page).fill("zzzz");
     await expect(page.locator(".sp-recep-count")).toHaveText("0 matches");
-    await expect(page.locator(".sp-recep-list .cds-empty h3")).toHaveText("No one matches “zzzz”");
+    await expect(page.locator(".sp-recep-list .cds-empty h3")).toHaveText("No matches for ‘zzzz’");
     await expect(readout(page).getByRole("heading", { level: 2 })).toHaveText("Alex Shabazian");
     await page.locator(".sp-recep-list .cds-empty").getByRole("button", { name: "Clear search" }).click();
     await expect(field(page)).toHaveValue("");

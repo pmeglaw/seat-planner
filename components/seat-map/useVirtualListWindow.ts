@@ -33,11 +33,13 @@ export function useVirtualListWindow(
   itemCount: number,
   {
     defaultRowHeight,
-    overscanRows = 4
+    overscanRows = 4,
+    contentSelector
   }: {
     // Used until the first row renders and can be measured.
     defaultRowHeight: number;
     overscanRows?: number;
+    contentSelector?: string;
   }
 ): {
   // Attach to the scrolling list element (callback ref, so a conditionally
@@ -72,15 +74,18 @@ export function useVirtualListWindow(
       // Pinned rows sit against a split spacer, not their real neighbors, so
       // an offsetTop stride across one would measure the spacer gap — only
       // consecutive window rows are safe to measure.
-      const rows = listElement.querySelectorAll<HTMLElement>('[role="listitem"]:not([data-vpinned])');
+      const content = contentSelector ? listElement.querySelector<HTMLElement>(contentSelector) : listElement;
+      if (!content) return;
+      const rows = content.querySelectorAll<HTMLElement>('[role="listitem"]:not([data-vpinned])');
       // Stride between consecutive rows captures inter-row gaps (space-y-*);
       // a single row falls back to its own height, none to the default.
       const rowHeight = rows.length >= 2
-        ? Math.max(1, rows[1].offsetTop - rows[0].offsetTop)
+        ? Math.max(defaultRowHeight, rows[1].offsetTop - rows[0].offsetTop)
         : rows[0]?.offsetHeight || defaultRowHeight;
       // Quantize to row steps so scrolling only re-renders when the window moves.
-      const scrollOffset = Math.floor(listElement.scrollTop / rowHeight) * rowHeight;
-      const viewportHeight = listElement.clientHeight;
+      const prefixHeight = content === listElement ? 0 : content.getBoundingClientRect().top - listElement.getBoundingClientRect().top + listElement.scrollTop - listElement.clientTop;
+      const scrollOffset = Math.floor(Math.max(0, listElement.scrollTop - prefixHeight) / rowHeight) * rowHeight;
+      const viewportHeight = Math.max(0, listElement.clientHeight - Math.max(0, prefixHeight - listElement.scrollTop));
       setGeometry(current => (
         current.scrollOffset === scrollOffset
           && current.viewportHeight === viewportHeight
@@ -97,12 +102,14 @@ export function useVirtualListWindow(
     listElement.addEventListener("scroll", schedule, { passive: true });
     const observer = new ResizeObserver(schedule);
     observer.observe(listElement);
+    const prefix = listElement.querySelector("[data-virtual-prefix]");
+    if (prefix) observer.observe(prefix);
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
       listElement.removeEventListener("scroll", schedule);
       observer.disconnect();
     };
-  }, [defaultRowHeight, itemCount, listElement]);
+  }, [defaultRowHeight, itemCount, listElement, contentSelector]);
 
   useEffect(() => {
     if (!listElement) return;

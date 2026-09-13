@@ -343,7 +343,7 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
               </>
             ) : (
               <>
-                <h3>No one matches &ldquo;{query.trim()}&rdquo;</h3>
+                <h3>No matches for &lsquo;{query.trim()}&rsquo;</h3>
                 <p>Try a name, department, seat code or extension.</p>
                 <div className="cds-empty-actions">
                   <button

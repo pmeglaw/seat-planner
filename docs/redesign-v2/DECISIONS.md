@@ -1744,3 +1744,21 @@ are recorded in [PR531-VERIFICATION.md](../audits/2026-09-10/PR531-VERIFICATION.
 SEC-1 is a separate security/release concern, not resolved by this UI pack.
 A complete fix must address already-published notes and future publishing.
 Do not merge or deploy as part of this work.
+
+
+## Owner amendment — approved refinement plan — 2026-09-12
+
+The owner approved Revision 3 of the refinement plan after reviewer changes, including user-selectable Management density. This supplements D1-d/D1-h, D2-a/D2-b and D5; historical decisions above remain intact.
+
+- Shared Viewer/Admin palette: 560px at 900px and above, visible viewport minus 12px side insets below that; no forced 160px height. Zones and 48px virtualized people rows share one scroll host. The zone prefix scrolls away, with its measured height included in virtualized offsets. If below-field space cannot fit a usable results slice, the surface moves inside the visual viewport and supplies search/dismiss controls above its scroll area. Keep query and focus through viewport changes.
+- Zone choices use 48px minimum height, growing for wrapped labels; names 14px, counts 12px. Content-driven three/two/one columns, reserved counts, a selected checkmark and aria-pressed. Copy is “Filter by zone” and “Select a zone to filter the map.” Existing brand roles, scope widening and unseated-person navigation remain.
+- With focus in the Admin palette and no blocking modal, Escape closes that palette before changing the inspector. Escape and zone activation return focus to search without reopening. Preserve dirty inspector fields, guarded result selection, data and undo history.
+- Reception copy: “Find an extension, then transfer the caller.” and “No matches for ‘{query}’”. Retain last-selected caller, failed-query recovery and keyboard behavior.
+- Management copy: “Seat status” in loaded and loading employee tables. The subtitle “Manage people, departments, zones and publish history.” is identical on all tabs and loading. Publish history still has no primary action.
+- Management density is a separate behavior slice: Normal (48px baseline/minimum) is the default; Compact retains 32px desktop rows. One preference applies to Employees, Departments, Zones and Publish history; it does not shrink type, forms or panel controls. Option-list edit rows may grow for their existing fields. Narrow/coarse-pointer layouts use Normal, preserve the desktop preference and explain why Compact is unavailable. The selector itself has 48px targets.
+- The device preference uses a non-sensitive, same-site cookie scoped to /admin/management. The route layout reads it once so streamed loading and loaded surfaces receive the same preference before hydration; CSS supplies the responsive Normal fallback. This is the approved device-local persistence goal, implemented without storing people records or introducing database writes.
+- Density changes recalibrate virtual row/spacer geometry and retain scroll position/focus. Search, sort, panels and unsaved edits remain. Test loading, long lists, unavailable storage, both directions of the 899/900 palette transition, 320–1920px, explicit/system themes, zoom and keyboard/screen-reader outcomes.
+
+Implementation and verification status is reported with the change; this amendment is approval, not evidence that browser or accessibility checks passed. Shared palette, optional copy and Management density remain separate concerns. No brand migration, production data mutation or deployment is authorized here.
+
+Implementation refinement: the narrow Management tab strip and employee table scroll horizontally inside their own surfaces. The employee table retains a 64rem minimum to keep column headings and row actions legible; the document stays within the viewport. This restores the existing contained-scroll contract at the new Normal touch density.

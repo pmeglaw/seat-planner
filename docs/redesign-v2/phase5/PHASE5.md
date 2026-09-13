@@ -814,3 +814,12 @@ comparison, exact commands, browser states, results and fixture limitations.
 Initial approval covered implementation and verification only. The owner later
 authorized committing and opening a PR, followed by a smoke test. Merging and
 deployment remain outside the authorization.
+
+
+## Owner amendment — approved refinement plan — 2026-09-12
+
+The owner approved Revision 3 after reviewer changes, including user-selectable
+Normal/Compact Management density. The complete amendment is recorded in
+[DECISIONS.md](../DECISIONS.md#owner-amendment--approved-refinement-plan--2026-09-12).
+It covers the shared palette, independent copy changes and Management density;
+implementation and verification status is reported with the change.

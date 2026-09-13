@@ -12,7 +12,7 @@ export function ReceptionFrame({ children }: { children: ReactNode }) {
         <div>
           <h1 className="cds-page-title">Reception</h1>
           <p className="cds-page-subtitle">
-            Front-desk directory — type what the caller gives you, read the extension, transfer.
+            Find an extension, then transfer the caller.
           </p>
         </div>
       </div>
