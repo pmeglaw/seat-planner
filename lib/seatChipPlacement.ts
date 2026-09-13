@@ -24,7 +24,8 @@ export function placeDeskwardChip(
   chip: Pick<ChipRect, "width" | "height">,
   canvas: ChipRect,
   obstacles: readonly ChipRect[],
-  direction: 1 | -1 = 1
+  direction: 1 | -1 = 1,
+  minimumShiftPx = 0
 ): ChipOffset | null {
   // NE02 faces the opposite desktop. Reflect the geometry so the same
   // bounded search clears NE03 by moving left, without changing its anchor.
@@ -32,7 +33,8 @@ export function placeDeskwardChip(
     const reflected = placeDeskwardChip(
       { x: -anchor.x, y: anchor.y }, chip,
       { left: -canvas.left - canvas.width, top: canvas.top, width: canvas.width, height: canvas.height },
-      obstacles.map(rect => ({ left: -rect.left - rect.width, top: rect.top, width: rect.width, height: rect.height }))
+      obstacles.map(rect => ({ left: -rect.left - rect.width, top: rect.top, width: rect.width, height: rect.height })),
+      1, minimumShiftPx
     );
     return reflected ? { x: -reflected.x, y: reflected.y } : null;
   }
@@ -52,7 +54,7 @@ export function placeDeskwardChip(
   for (const dy of [0, -chip.height - gap - 1, chip.height + gap + 1]) {
     const y = anchor.y + dy;
     if (y - halfHeight < canvas.top || y + halfHeight > canvas.top + canvas.height) continue;
-    let x = Math.max(anchor.x + (dy === 0 ? 0 : canvas.width * 0.01), canvas.left + halfWidth);
+    let x = Math.max(anchor.x + Math.max(minimumShiftPx, dy === 0 ? 0 : canvas.width * 0.01), canvas.left + halfWidth);
     for (const rect of sorted) {
       if (y + halfHeight + gap <= rect.top || y - halfHeight - gap >= rect.top + rect.height) continue;
       if (x + halfWidth + gap <= rect.left || x - halfWidth - gap >= rect.left + rect.width) continue;

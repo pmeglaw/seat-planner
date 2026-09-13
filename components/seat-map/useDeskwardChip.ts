@@ -6,7 +6,7 @@ import { placeDeskwardChip, type ChipOffset } from "@/lib/seatChipPlacement";
 // Measure the actual rendered type, including loaded fonts and browser zoom.
 // Only opted-in markers install observers. The parent is the shared
 // marker layer in both ViewerSeatFinder and SeatMap.
-export function useDeskwardChip(enabled: boolean, x: number, y: number, mapWidth: number, direction: 1 | -1 = 1) {
+export function useDeskwardChip(enabled: boolean, x: number, y: number, mapWidth: number, direction: 1 | -1 = 1, minimumShiftPx = 0) {
   const ref = useRef<HTMLSpanElement>(null);
   const [offset, setOffset] = useState<ChipOffset | null>(null);
 
@@ -25,7 +25,7 @@ export function useDeskwardChip(enabled: boolean, x: number, y: number, mapWidth
         .filter(other => other !== button)
         .map(other => other.getBoundingClientRect());
       const next = placeDeskwardChip(
-        { x: canvas.left + x * canvas.width, y: canvas.top + y * canvas.height }, chip, canvas, obstacles, direction
+        { x: canvas.left + x * canvas.width, y: canvas.top + y * canvas.height }, chip, canvas, obstacles, direction, minimumShiftPx
       );
       const scale = layer.clientWidth > 0 ? canvas.width / layer.clientWidth : 1;
       const resolved = next && scale > 0 ? { x: next.x / scale, y: next.y / scale } : null;
@@ -46,7 +46,7 @@ export function useDeskwardChip(enabled: boolean, x: number, y: number, mapWidth
       resize?.disconnect();
       changes.disconnect();
     };
-  }, [enabled, x, y, mapWidth, direction]);
+  }, [enabled, x, y, mapWidth, direction, minimumShiftPx]);
 
   return { ref, offset: enabled ? offset : null };
 }

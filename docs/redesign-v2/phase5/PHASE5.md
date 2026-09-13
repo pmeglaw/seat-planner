@@ -874,3 +874,7 @@ name-chip placement to these three exact Floor 3 seats and their zones. E03
 and SE02 previously received an upward nudge; CW06 receives a shift only when
 its rendered label needs room. Their saved and calibrated anchors remain
 unchanged. Regression fixtures cover both 1646px and 1920px desktop layouts.
+
+CW06 clarification: the owner explicitly requested Diana's live name chip
+move left. Apply a minimum 8px leftward presentation shift, still checking
+neighbour clearance and retaining the true anchor for selection/edit modes.
