@@ -3125,6 +3125,7 @@ export function SeatMap({
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
                         draftChanged={draftChangedSeatLabelSet.has(seat.label)}
                         nameNudge={nameLabelNudges.get(seat.id) ?? 0}
+                        mapWidth={mapPixelsPerNormalizedUnit}
                         swapMode={Boolean(swapSourceSeatId)}
                         moveEmployeeMode={Boolean(moveEmployeeSourceSeatId)}
                         swapSource={seat.id === swapSourceSeatId}

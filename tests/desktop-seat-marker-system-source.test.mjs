@@ -14,7 +14,7 @@ async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
 
-test("desktop marker system keeps true coordinates and calibration constants untouched", async () => {
+test("desktop marker system keeps true anchors and existing pod calibration with scoped deskward labels", async () => {
   const markerSource = await readSource("../components/seat-map/SeatMarker.tsx");
   const seatMapSource = await readSource("../components/seat-map/SeatMap.tsx");
   const transformSource = await readSource("../lib/mapLayoutTransform.ts");
@@ -26,7 +26,13 @@ test("desktop marker system keeps true coordinates and calibration constants unt
   assert.match(markerSource, /markerUsesTrueCoordinate = addSeatMode \|\| swapMode \|\| moveEmployeeMode/);
   assert.match(markerSource, /resolvedViewportEdgeOffsetPx = markerUsesTrueCoordinate \? 0 : Math\.max\(0, Math\.round\(viewportEdgeOffsetPx\)\)/);
   assert.match(markerSource, /const nudge = activeMarker \? 0 : nameNudge;/);
-  assert.match(markerSource, /transform: `translate\(\$\{translateX\}, calc\(-50% \+ \$\{nudge \* PILL_NUDGE_PX\}px\)\)`/);
+  // Owner-approved 2026-09-13: three resting name chips can use measured
+  // deskward offsets. Retain the existing nudge as the fallback and snap
+  // active/mode markers to the true anchor. Geometry is tested behaviorally
+  // in seat-chip-placement.test.mjs.
+  assert.match(markerSource, /: `translate\(\$\{translateX\}, calc\(-50% \+ \$\{nudge \* PILL_NUDGE_PX\}px\)\)`/);
+  assert.match(markerSource, /usesDeskwardChip\(seat\)/);
+  assert.match(markerSource, /!activeMarker/);
   assert.match(seatMapSource, /const visualSeat = visualSeatById\.get\(seat\.id\) \?\? seat/);
   assert.match(seatMapSource, /viewportEdgeOffsetPx=\{viewportPlacement\.offsetPx\}/);
 

@@ -34,6 +34,17 @@ const DEFAULT_PREVIEW_TRANSFORM: LinearTransform = {
 
 const CALIBRATION_AREAS: CalibrationArea[] = [
   {
+    // 2026-09-13: S01/S02 were extrapolating the West Pod fit, which put
+    // their markers in the doorways. Fit the South Offices to the room
+    // interiors. Saved coordinates and the existing pod fits stay intact.
+    id: "south-offices",
+    zones: ["south offices"],
+    labelPrefixes: ["S"],
+    savedBounds: { xMin: 0.08, xMax: 0.27, yMin: 0.85, yMax: 0.94 },
+    visualBounds: { xMin: 0.16, xMax: 0.43, yMin: 0.93, yMax: 1 },
+    transform: { xScale: 1.154806, xOffset: 0.068872, yScale: 1, yOffset: 0.08 }
+  },
+  {
     id: "north-pod",
     zones: ["north pod"],
     labelPrefixes: ["N"],
