@@ -863,3 +863,8 @@ Chrome verification at 1920px shows NE02 on the chair row, shifted about 20px
 left; at 1646px the complete label uses the adjacent row. Neither layout
 overlaps NE01 or NE03. Added collision and DOMRect geometry regressions;
 focused component/calibration tests, typecheck and scoped ESLint pass.
+
+Deployed PR review revealed that NE02 is currently empty, and NE03's real
+name label still overlaps that footprint at 1646px. Extend the same rightward
+placement to NE03 so the empty NE02 marker keeps its chair anchor. This is
+the same owner-reported NE02/NE03 collision, verified with a regression fixture.

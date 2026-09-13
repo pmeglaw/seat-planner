@@ -6,7 +6,7 @@ const { placeDeskwardChip, usesDeskwardChip } = await importTsModule("lib/seatCh
 const { savedPointToVisualPoint, visualPointToSavedPoint } = await importTsModule("lib/mapLayoutTransform.ts");
 
 test("deskward placement is confined to the approved floor-3 seats", () => {
-  for (const [label, zone] of [["W02", "West Pod"], ["W05", "West Pod"], ["NE02", "Northeast Pod"], ["NE07", "Northeast Pod"]]) {
+  for (const [label, zone] of [["W02", "West Pod"], ["W05", "West Pod"], ["NE02", "Northeast Pod"], ["NE03", "Northeast Pod"], ["NE07", "Northeast Pod"]]) {
     assert.equal(usesDeskwardChip({ label, zone, floor: "3" }), true);
     assert.equal(usesDeskwardChip({ label, zone, floor: "2" }), false);
     assert.equal(usesDeskwardChip({ label, zone: "Other", floor: "3" }), false);
@@ -34,6 +34,19 @@ test("leftward placement accepts DOMRect-style inherited geometry properties", (
   const obstacle = Object.create({ left: 1542, top: 60, width: 74, height: 28 });
   const offset = placeDeskwardChip({ x: 1523, y: 74 }, { width: 74, height: 28 }, canvas, [obstacle], -1);
   assert.deepEqual(offset, { x: -20, y: 0 });
+});
+
+test("NE03 clears an empty NE02 footprint at the narrower desktop width", () => {
+  const width = 1644;
+  const canvas = { left: 1, top: 180, width, height: width * 867 / 1911 };
+  const anchor = { x: 1 + .818401 * width, y: 180 + .079625 * canvas.height };
+  const obstacles = [[.789025, .080697, 28], [.8748, .080807, 72]]
+    .map(([x,y,w]) => ({left:1+x*width-w/2,top:180+y*canvas.height-14,width:w,height:28}));
+  const offset = placeDeskwardChip(anchor, {width:82,height:28}, canvas, obstacles);
+  assert.ok(offset && offset.x >= 0);
+  assert.equal(offset.y, 0);
+  const left = anchor.x + offset.x - 41;
+  for (const rect of obstacles) assert.ok(left >= rect.left + rect.width || left + 82 <= rect.left);
 });
 
 // Geometry and measured widths only: no office directory data in fixtures.

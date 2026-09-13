@@ -10,7 +10,7 @@ export function usesDeskwardChip(seat: Pick<SeatWithEmployee, "floor" | "label" 
   if (seat.floor !== "3") return false;
   const zone = seat.zone?.trim().toLowerCase();
   return (zone === "west pod" && (seat.label === "W02" || seat.label === "W05")) ||
-    (zone === "northeast pod" && (seat.label === "NE02" || seat.label === "NE07"));
+    (zone === "northeast pod" && (seat.label === "NE02" || seat.label === "NE03" || seat.label === "NE07"));
 }
 
 // All inputs are measured screen pixels. Search rightward on the chair row
