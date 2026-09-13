@@ -68,13 +68,13 @@ test("CW06, E03 and SE02 use readable deskward placement across desktop widths",
   }
 });
 
-test("CW06 nudges its short label 8px left while clearing CW05", () => {
+test("CW06 nudges its short label 6px left while clearing CW05", () => {
   for (const width of [1644, 1911]) {
     const canvas = {left:0,top:0,width,height:width*867/1911};
     const anchor = {x:.378033*width,y:.587127*canvas.height};
     const neighbour = {left:.339344*width-59.524/2,top:.588573*canvas.height-14,width:59.524,height:28};
-    const offset = placeDeskwardChip(anchor,{width:48.289,height:28},canvas,[neighbour],-1,8);
-    assert.deepEqual(offset,{x:-8,y:0});
+    const offset = placeDeskwardChip(anchor,{width:48.289,height:28},canvas,[neighbour],-1,6);
+    assert.deepEqual(offset,{x:-6,y:0});
     assert.ok(anchor.x+offset.x-48.289/2 > neighbour.left+neighbour.width);
   }
 });

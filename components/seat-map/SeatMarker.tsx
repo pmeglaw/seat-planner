@@ -180,7 +180,7 @@ function SeatMarkerComponent({
   const { ref: deskwardRef, offset: deskwardOffset } = useDeskwardChip(
     usesDeskwardChip(seat) && hasEmployee && showNames && !activeMarker && !markerUsesTrueCoordinate && resolvedViewportEdge === "none",
     seat.x, seat.y, mapWidth, seat.label === "NE02" || seat.label === "CW06" ? -1 : 1,
-    seat.label === "CW06" ? 8 : 0
+    seat.label === "CW06" ? 6 : 0
   );
   const translateX = resolvedViewportEdge === "left"
     ? `${resolvedViewportEdgeOffsetPx}px`
