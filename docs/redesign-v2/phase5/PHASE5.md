@@ -868,3 +868,9 @@ Deployed PR review revealed that NE02 is currently empty, and NE03's real
 name label still overlaps that footprint at 1646px. Extend the same rightward
 placement to NE03 so the empty NE02 marker keeps its chair anchor. This is
 the same owner-reported NE02/NE03 collision, verified with a regression fixture.
+
+The owner additionally requested CW06, E03 and SE02. Extend measured deskward
+name-chip placement to these three exact Floor 3 seats and their zones. E03
+and SE02 previously received an upward nudge; CW06 receives a shift only when
+its rendered label needs room. Their saved and calibrated anchors remain
+unchanged. Regression fixtures cover both 1646px and 1920px desktop layouts.

@@ -6,7 +6,7 @@ const { placeDeskwardChip, usesDeskwardChip } = await importTsModule("lib/seatCh
 const { savedPointToVisualPoint, visualPointToSavedPoint } = await importTsModule("lib/mapLayoutTransform.ts");
 
 test("deskward placement is confined to the approved floor-3 seats", () => {
-  for (const [label, zone] of [["W02", "West Pod"], ["W05", "West Pod"], ["NE02", "Northeast Pod"], ["NE03", "Northeast Pod"], ["NE07", "Northeast Pod"]]) {
+  for (const [label, zone] of [["W02", "West Pod"], ["W05", "West Pod"], ["NE02", "Northeast Pod"], ["NE03", "Northeast Pod"], ["NE07", "Northeast Pod"], ["CW06", "Center West"], ["E03", "East Pod"], ["SE02", "Southeast Office"]]) {
     assert.equal(usesDeskwardChip({ label, zone, floor: "3" }), true);
     assert.equal(usesDeskwardChip({ label, zone, floor: "2" }), false);
     assert.equal(usesDeskwardChip({ label, zone: "Other", floor: "3" }), false);
@@ -47,6 +47,25 @@ test("NE03 clears an empty NE02 footprint at the narrower desktop width", () => 
   assert.equal(offset.y, 0);
   const left = anchor.x + offset.x - 41;
   for (const rect of obstacles) assert.ok(left >= rect.left + rect.width || left + 82 <= rect.left);
+});
+
+test("CW06, E03 and SE02 use readable deskward placement across desktop widths", () => {
+  for (const width of [1644, 1911]) {
+    const canvas = {left:0,top:0,width,height:width*867/1911};
+    for (const [label,x,y,w,neighbours] of [
+      ["CW06",.378033,.587127,74,[[.339344,.588573,60]]],
+      ["E03",.689333,.414,55.164,[[.658222,.414,65.774],[.746,.414,64.704]]],
+      ["SE02",.869049,.592053,68.8125,[[.831527,.592053,71.86]]]
+    ]) {
+      const obstacles = neighbours.map(([nx,ny,nw])=>({left:nx*width-nw/2,top:ny*canvas.height-14,width:nw,height:28}));
+      const anchor = {x:x*width,y:y*canvas.height};
+      const offset = placeDeskwardChip(anchor,{width:w,height:28},canvas,obstacles);
+      assert.ok(offset, label);
+      assert.equal(offset.y,0,label);
+      const left=anchor.x+offset.x-w/2;
+      for (const rect of obstacles) assert.ok(left>=rect.left+rect.width || left+w<=rect.left,label);
+    }
+  }
 });
 
 // Geometry and measured widths only: no office directory data in fixtures.
