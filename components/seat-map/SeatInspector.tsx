@@ -1399,7 +1399,9 @@ export function SeatInspector({
                 </div>
               </div>
             )}
-            <span className="sp-seat-legend"><SeatMark kind={legendKind} />{currentStatusLabel}</span>
+            {/* Read-only facts use the saved snapshot; unsaved form state is
+                retained separately for resuming the editor after widening. */}
+            <span className="sp-seat-legend"><SeatMark kind={seatMarkKindFor(selectedSeat.status)} />{STATUS_LABELS[selectedSeat.status]}</span>
             {hasCurrentAssignment && <div className="sp-person-role mt-3">{occupantRoleLabel}</div>}
             {hasCurrentAssignment && (
               <section aria-labelledby="published-contact-heading" className="sp-inspector-groups">

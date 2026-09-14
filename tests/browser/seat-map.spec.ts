@@ -280,6 +280,33 @@ test("narrow resize retains dirty inspector edits and blocks saving until widene
   expect(calls.filter(call => call.name.startsWith("action:"))).toEqual([]);
 });
 
+for (const scenario of [
+  { seat: n01, nextName: "", savedStatus: "Assigned", savedName: alice.full_name },
+  { seat: n02, nextName: alice.full_name, savedStatus: "Open", savedName: null }
+]) {
+  test(`narrow inspector keeps saved ${scenario.savedStatus.toLowerCase()} status consistent with its contact snapshot`, async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const { calls } = await mountSeatMap(page, { seats: [scenario.seat], employees: [alice], canEdit: true });
+    await clickMarker(page, scenario.seat.label);
+    await page.locator('#seat-inspector-panel button[aria-label^="Edit assignment"], #seat-inspector-panel button[aria-label^="Assign an employee"]').dispatchEvent("click");
+    await page.getByRole("combobox", { name: "Employee name", exact: true }).fill(scenario.nextName);
+    await page.setViewportSize({ width: 390, height: 844 });
+    const details = page.getByRole("region", { name: "Draft seat details", exact: true });
+    await expect(details.locator(".sp-seat-legend")).toHaveText(scenario.savedStatus);
+    if (scenario.savedName) {
+      await expect(page.locator("#seat-inspector-title")).toContainText(scenario.savedName);
+      await expect(details).toContainText(alice.phone_extension);
+    } else {
+      await expect(page.locator("#seat-inspector-title")).not.toContainText(alice.full_name);
+      await expect(details).not.toContainText(alice.phone_extension);
+    }
+    await expect(details).toContainText("Your unsaved edits are kept");
+    await page.setViewportSize({ width: 1024, height: 844 });
+    await expect(page.getByRole("combobox", { name: "Employee name", exact: true })).toHaveValue(scenario.nextName);
+    expect(calls.filter(call => call.name.startsWith("action:"))).toEqual([]);
+  });
+}
+
 for (const mode of ["Add seat", "Move", "Swap"] as const) {
   test(`${mode} suspends canvas behavior when narrow and resumes only until a new seat is selected`, async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });

@@ -124,3 +124,30 @@ authorized committing the reviewed changes, pushing `fix/admin-responsive-toolba
 opening a PR and checking populated Publish history on its preview. Merge and
 production deployment are not included in that authorization. Production data
 is unchanged.
+
+## PR 547 preview and review follow-up
+
+The initial commit `23d72e5` was pushed and PR 547 opened. Its Vercel preview
+was inspected in Chrome after the owner signed in as an admin. Populated
+Publish history passed visual inspection at 1920x1080 and 390x844 in system
+dark and explicit light. The table fit the desktop width;
+at phone width the 311px scroll host contained 1216px of table content without
+document overflow. The hint was visible, the host had `tabindex="0"`, and
+three Right-arrow presses moved it 120px with focus retained and no page
+horizontal movement. The original System theme and viewport were restored.
+**Publish history verdict: Approve.** This closes its populated-data visual gap.
+No office records were edited or published during preview inspection.
+
+Automated review of that commit identified a second P2: after unsaved assignment
+changes, the narrow inspector's status used the unsaved form while its contact
+details used the saved seat. The read-only status text and mark now use
+`selectedSeat.status`, consistently with the saved occupant and notes. Two
+browser regressions reproduced the mismatch in both directions (clearing a
+saved assignment and assigning an open seat) and now pass; widening retains
+the unsaved form, and neither transition calls a server action.
+
+Follow-up checks: all 49 browser tests, typecheck, focused ESLint (zero errors,
+six existing warnings), and 54 inspector/accessibility tests passed. The initial
+commit's full CI passed. The follow-up commit receives a fresh CI run and preview;
+their current results are recorded on the PR. Earlier physical-device,
+screen-reader and zoom coverage limits remain.
