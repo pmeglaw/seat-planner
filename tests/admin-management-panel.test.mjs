@@ -606,6 +606,9 @@ test("a publish row reads date · person · count · sentence, with seat_count o
   ]);
 
   const [newest, initial, orphan] = logRows();
+  const historyRegion = screen.getByRole("region", { name: "Publish history table", exact: true });
+  assert.equal(historyRegion.tabIndex, 0, "keyboard users can reach the horizontally scrollable history");
+  assert.match(historyRegion.textContent, /Scroll horizontally to see changes\./);
 
   assert.equal(newest.querySelector(".sp-col-when").textContent, "Sep 8, 2026, 2:12 PM");
   assert.equal(newest.querySelector(".sp-col-who").textContent, "admin@example.com");

@@ -374,6 +374,10 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-left-nav a { display: flex; align-items: center; height: var(--sp-nav-item-h); padding: 0 var(--sp-space-05); color: var(--sp-text-primary); text-decoration: none; }
 .sp-left-nav a:is(:hover, [data-state="hover"]) { background: var(--sp-panel-left-hover); color: var(--sp-text-primary); text-decoration: none; }
 .sp-left-nav a[aria-current="page"] { background: var(--sp-nav-current-bg); box-shadow: inset 3px 0 0 var(--sp-nav-current-bar); font-weight: var(--sp-weight-semibold); }
+@media (max-width: 1055px), (pointer: coarse) {
+  .sp-left-nav a, .sp-filter-item, .sp-filter-group-row { min-height: var(--sp-size-lg); height: auto; }
+  .sp-filter-group-row .cds-btn, .sp-left-panel-header .cds-btn { min-width: var(--sp-size-lg); min-height: var(--sp-size-lg); }
+}
 .sp-left-divider { height: 1px; background: var(--sp-border-subtle-00); margin: var(--sp-space-03) 0; }
 
 /* -----------------------------------------------------------------------------
@@ -420,14 +424,20 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
    extra line. white-space stays nowrap — the ROW wraps between controls, the floor label and the ⌘K key
    never wrap inside their 40px boxes. The search keeps its token width, shrinks to 240px before the row
    wraps, never grows into the slack; its scope menu stacks above the Find palette (fixed, z-70). */
-.sp-control-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-control-gap); row-gap: var(--sp-control-gap);
-  height: auto; min-height: var(--sp-control-row-h); padding: var(--sp-space-02) var(--sp-space-03);
+.sp-control-row { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sp-space-05); row-gap: var(--sp-control-gap);
+  height: auto; min-height: var(--sp-control-row-h); padding: var(--sp-space-02) var(--sp-space-05);
   background: var(--sp-background); font: var(--sp-type-body-compact-01); letter-spacing: var(--sp-tracking-body); white-space: nowrap; }
+.sp-control-group { display: flex; align-items: center; gap: var(--sp-control-gap); min-width: 0; }
+.sp-control-find { flex-wrap: wrap; flex: 1 1 auto; }
+.sp-control-draft { flex-wrap: wrap; }
+.sp-control-publish { flex-wrap: wrap; }
+.sp-control-display { margin-left: auto; }
+.sp-control-publish .cds-btn--primary { min-width: calc(var(--sp-space-13) + var(--sp-space-05)); }
 .sp-control-row .sp-search { flex: 0 1 var(--sp-search-w); min-width: 240px; }
 .sp-control-row .sp-search .sp-menu { z-index: 80; }
 .sp-control-row .cds-btn { height: var(--sp-control-h); }
 .sp-control-row .cds-btn--icon { width: var(--sp-control-h); }
-.sp-control-divider { width: 1px; height: var(--sp-control-divider-h); background: var(--sp-control-divider); margin: 0 var(--sp-space-03); flex: none; }
+.sp-control-divider { width: 1px; height: var(--sp-control-divider-h); background: var(--sp-control-divider); margin-right: var(--sp-space-03); flex: none; }
 .sp-control-count { padding: 0 var(--sp-space-03); color: var(--sp-text-secondary); font-variant-numeric: tabular-nums; }
 .sp-control-reason { font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); color: var(--sp-text-helper); padding: 0 var(--sp-space-03); }   /* the reason beside a disabled Publish */
 .sp-control-row .cds-btn--ghost:is(:active, [data-state="pressed"]) { background: var(--sp-layer-active); }
@@ -437,6 +447,12 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
 .sp-control-row .cds-btn--tertiary[data-count]::after { content: attr(data-count); margin-left: var(--sp-space-03); min-width: var(--sp-space-05); height: var(--sp-space-05); padding: 0 var(--sp-space-02);
   display: inline-grid; place-items: center; background: var(--sp-button-primary); color: var(--sp-text-on-color); font: var(--sp-type-label-01); letter-spacing: var(--sp-tracking-label); font-variant-numeric: tabular-nums; }
 .sp-control-row .cds-btn--tertiary { padding: 0 var(--sp-space-05); min-width: 0; }
+@media (max-width: 599px) {
+  .sp-control-row { column-gap: var(--sp-control-gap); }
+  .sp-control-find { display: contents; }
+  .sp-control-row .sp-search { flex-basis: 100%; }
+  .sp-control-count { padding: 0; }
+}
 
 /* menu button (floor selector): field surface, place marker, chevron; opens the asset's overflow menu */
 .sp-menu-button { position: relative; display: inline-flex; align-items: center; gap: var(--sp-space-03); width: var(--sp-menu-w); height: var(--sp-control-h); padding: 0 var(--sp-space-09) 0 var(--sp-space-05);

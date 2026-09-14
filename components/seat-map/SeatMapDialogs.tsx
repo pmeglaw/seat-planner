@@ -239,6 +239,7 @@ export function InspectorGuardDialog({
   eyebrow,
   actionDescription,
   pending,
+  saveAllowed = true,
   onKeepEditing,
   onDiscard,
   onSave
@@ -248,6 +249,7 @@ export function InspectorGuardDialog({
   eyebrow: string;
   actionDescription: string;
   pending: boolean;
+  saveAllowed?: boolean;
   onKeepEditing: () => void;
   onDiscard: () => void;
   onSave: () => void;
@@ -267,12 +269,12 @@ export function InspectorGuardDialog({
       footer={
         <>
           <button type="button" className="cds-btn cds-btn--secondary" onClick={onKeepEditing} disabled={pending}>
-            Keep editing
+            {saveAllowed ? "Keep editing" : "Keep edits"}
           </button>
           <button type="button" className="cds-btn cds-btn--secondary" onClick={onDiscard} disabled={pending}>
             Discard
           </button>
-          <button type="button" className="cds-btn cds-btn--primary" onClick={onSave} disabled={pending}>
+          <button type="button" className="cds-btn cds-btn--primary" onClick={onSave} disabled={pending || !saveAllowed} aria-describedby={!saveAllowed ? "inspector-save-width-help" : undefined}>
             Save changes
           </button>
         </>
@@ -281,6 +283,7 @@ export function InspectorGuardDialog({
       <p id="inspector-unsaved-description">
         Save or discard changes to {seatLabel} before {actionDescription}
       </p>
+      {!saveAllowed && <p id="inspector-save-width-help">Widen the window to save. Keep edits retains your unsaved work in this tab.</p>}
     </CarbonModal>
   );
 }

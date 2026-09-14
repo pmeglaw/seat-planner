@@ -84,6 +84,21 @@ function renderInspector(seat, extra = {}) {
 const byLabelPrefix = prefix => document.querySelector(`[aria-label^="${prefix}"]`);
 const clickLabel = name => act(async () => fireEvent.click(document.querySelector(`[aria-label="${name}"]`)));
 
+test("responsive admin read-only details preserve draft context and private notes", async () => {
+  await renderInspector(assignedSeat({ notes: "Private draft note" }), { canEdit: true, editingEnabled: false });
+  assert.ok(document.querySelector('[aria-label="Draft seat details"]'));
+  assert.ok(!document.querySelector("#seat-inspector-form"));
+  assert.match(document.body.textContent, /Editing needs a wider window/);
+  assert.match(document.body.textContent, /Private draft note/);
+  assert.doesNotMatch(document.body.textContent, /Published assignment/);
+});
+
+test("read-only viewer never renders admin draft notes", async () => {
+  await renderInspector(assignedSeat({ notes: "Private draft note" }), { canEdit: false, editingEnabled: false });
+  assert.doesNotMatch(document.body.textContent, /Private draft note|Editing needs a wider window/);
+  assert.ok(document.querySelector('[aria-label="Published seat details"]'));
+});
+
 test("viewer mode shows the seat's read-only facts", async () => {
   await renderInspector(assignedSeat(), { canEdit: false });
   const text = document.body.textContent;

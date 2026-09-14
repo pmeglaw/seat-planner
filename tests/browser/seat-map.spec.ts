@@ -248,6 +248,129 @@ async function dirtyInspectorNotes(page: Page) {
   await expect(page.locator("#seat-inspector-commit-bar")).toBeAttached();
 }
 
+for (const width of [320, 390, 1023]) {
+  test(`admin draft inspector is read-only on fresh entry at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    const { calls } = await mountSeatMap(page, { seats: [{ ...custom, notes: "Draft-only note" }], employees: [], canEdit: true });
+    await clickMarker(page, "S01");
+    await expect(page.getByRole("region", { name: "Draft seat details", exact: true })).toBeAttached();
+    await expect(page.getByText("Editing needs a wider window.", { exact: true }).first()).toBeAttached();
+    await expect(page.getByText("Draft-only note", { exact: true })).toBeAttached();
+    await expect(page.locator("#seat-inspector-form")).toHaveCount(0);
+    await expect(page.locator('[aria-label^="Assign an employee to"], [aria-label^="Swap "], [aria-label^="Delete custom seat"]')).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Publish", exact: true })).toHaveCount(0);
+    expect(calls.filter(call => call.name.startsWith("action:"))).toEqual([]);
+  });
+}
+
+test("narrow resize retains dirty inspector edits and blocks saving until widened", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  const { calls } = await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
+  await dirtyInspectorNotes(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByText(/Your unsaved edits are kept/)).toBeAttached();
+  await expect(page.locator("#seat-inspector-form")).toHaveCount(0);
+  await page.getByRole("button", { name: "Close inspector", exact: true }).dispatchEvent("click");
+  await expect(page.getByRole("dialog", { name: "Unsaved seat edits" })).toBeAttached();
+  await expect(page.getByRole("button", { name: "Save changes", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Keep edits", exact: true }).dispatchEvent("click");
+  await page.setViewportSize({ width: 1024, height: 844 });
+  await expect(page.locator("#seat-inspector-notes textarea")).toHaveValue("unsaved note");
+  await expect(page.locator('#seat-inspector-commit-bar button[type="submit"]')).toBeEnabled();
+  expect(calls.filter(call => call.name.startsWith("action:"))).toEqual([]);
+});
+
+for (const scenario of [
+  { seat: n01, nextName: "", savedStatus: "Assigned", savedName: alice.full_name },
+  { seat: n02, nextName: alice.full_name, savedStatus: "Open", savedName: null }
+]) {
+  test(`narrow inspector keeps saved ${scenario.savedStatus.toLowerCase()} status consistent with its contact snapshot`, async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const { calls } = await mountSeatMap(page, { seats: [scenario.seat], employees: [alice], canEdit: true });
+    await clickMarker(page, scenario.seat.label);
+    await page.locator('#seat-inspector-panel button[aria-label^="Edit assignment"], #seat-inspector-panel button[aria-label^="Assign an employee"]').dispatchEvent("click");
+    await page.getByRole("combobox", { name: "Employee name", exact: true }).fill(scenario.nextName);
+    await page.setViewportSize({ width: 390, height: 844 });
+    const details = page.getByRole("region", { name: "Draft seat details", exact: true });
+    await expect(details.locator(".sp-seat-legend")).toHaveText(scenario.savedStatus);
+    if (scenario.savedName) {
+      await expect(page.locator("#seat-inspector-title")).toContainText(scenario.savedName);
+      await expect(details).toContainText(alice.phone_extension);
+    } else {
+      await expect(page.locator("#seat-inspector-title")).not.toContainText(alice.full_name);
+      await expect(details).not.toContainText(alice.phone_extension);
+    }
+    await expect(details).toContainText("Your unsaved edits are kept");
+    await page.setViewportSize({ width: 1024, height: 844 });
+    await expect(page.getByRole("combobox", { name: "Employee name", exact: true })).toHaveValue(scenario.nextName);
+    expect(calls.filter(call => call.name.startsWith("action:"))).toEqual([]);
+  });
+}
+
+for (const mode of ["Add seat", "Move", "Swap"] as const) {
+  test(`${mode} suspends canvas behavior when narrow and resumes only until a new seat is selected`, async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const { calls } = await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: true });
+    if (mode === "Add seat") {
+      await page.getByRole("button", { name: "More actions", exact: true }).press("ArrowDown");
+      await page.getByRole("menuitem", { name: mode, exact: true }).press("Enter");
+    } else {
+      await clickMarker(page, "N01");
+      await page.locator(`#seat-inspector-panel button[aria-label^="${mode} "]`).dispatchEvent("click");
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole("group", { name: "Draft actions", exact: true })).toHaveCount(0);
+    await expect(page.locator(".cursor-crosshair, .sp-pill--origin, .sp-pill--target, .sp-pill--invalid")).toHaveCount(0);
+    await expect(page.locator("[data-mode-card]")).toHaveCount(0);
+    await expect(marker(page, "N01")).not.toHaveAttribute("aria-label", /Swap source|Move source/);
+    await page.getByRole("button", { name: "Zoom in", exact: true }).dispatchEvent("click");
+    const viewport = page.locator('[aria-label^="Admin seat map viewport."]');
+    // Synthetic pointer events have no native pointer to capture. Record the
+    // capture request to prove the real pan handler accepts the gesture.
+    await viewport.evaluate(el => { el.setPointerCapture = id => el.setAttribute("data-pan-captured", String(id)); });
+    await viewport.dispatchEvent("pointerdown", { pointerId: 7, button: 0, clientX: 100, clientY: 100 });
+    await expect(viewport).toHaveAttribute("data-pan-captured", "7");
+    await expect(viewport).toHaveClass(/cursor-grabbing/);
+    await viewport.dispatchEvent("pointercancel", { pointerId: 7 });
+
+    await page.setViewportSize({ width: 1024, height: 844 });
+    await expect(page.getByRole("group", { name: "Draft actions", exact: true })).toBeAttached();
+    await expect(page.locator("[data-mode-card] button")).toBeAttached();
+    if (mode === "Add seat") await expect(page.locator(".cursor-crosshair")).toHaveCount(1);
+    else await expect(marker(page, "N01")).toHaveAttribute("aria-label", new RegExp(`${mode} source`));
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole("group", { name: "Draft actions", exact: true })).toHaveCount(0);
+    await clickMarker(page, "N02");
+    await expect(page.getByRole("region", { name: "Draft seat details", exact: true })).toBeAttached();
+    await expect(page.getByRole("alertdialog")).toHaveCount(0);
+    await page.setViewportSize({ width: 1024, height: 844 });
+    await expect(page.locator("#seat-inspector-form")).toBeAttached();
+    await expect(page.locator(".cursor-crosshair, .sp-pill--origin, .sp-pill--target")).toHaveCount(0);
+    expect(calls.filter(call => call.name.startsWith("action:"))).toEqual([]);
+  });
+}
+
+for (const mode of ["Move", "Swap"] as const) {
+  test(`${mode} confirmation and trail suspend together across the editing breakpoint`, async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const { calls } = await mountSeatMap(page, { seats: [n01, n02], employees: [alice], canEdit: true });
+    await clickMarker(page, "N01");
+    await page.locator(`#seat-inspector-panel button[aria-label^="${mode} "]`).dispatchEvent("click");
+    await clickMarker(page, "N02");
+    await expect(page.getByRole("alertdialog")).toHaveCount(1);
+    await expect(page.locator("[data-draft-trail]")).toHaveCount(1);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole("alertdialog")).toHaveCount(0);
+    await expect(page.locator("[data-draft-trail]")).toHaveCount(0);
+    await page.setViewportSize({ width: 1024, height: 844 });
+    await expect(page.getByRole("alertdialog")).toHaveCount(1);
+    await expect(page.locator("[data-draft-trail]")).toHaveCount(1);
+    expect(calls.filter(call => call.name.startsWith("action:"))).toEqual([]);
+  });
+}
+
 test("a dirty inspector intercepts the viewer link with the unsaved-edits dialog", async ({ page }) => {
   await mountSeatMap(page, { seats: [custom], employees: [], canEdit: true });
   await dirtyInspectorNotes(page);
