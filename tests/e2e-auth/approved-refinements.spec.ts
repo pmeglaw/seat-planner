@@ -7,17 +7,23 @@ test("Management remains compact across tabs and reloads without a density contr
   await page.setViewportSize({ width: 1920, height: 1080 });
   await signIn(page, SEEDED_ADMIN_EMAIL);
   await page.goto("/admin/management");
+  const management = page.getByRole("region", { name: "Management", exact: true });
+  await expect(management).toBeVisible();
   const densityControls = page.getByRole("radio", { name: /Normal|Compact/ });
   await expect(densityControls).toHaveCount(0);
   await expect(page.locator(".sp-management-density")).toHaveCSS("--sp-table-row-h", "32px");
-  await expect(page.getByText("Seat status", { exact: true })).toBeVisible();
+  await expect(management.getByRole("button", { name: "Seat status", exact: true })).toBeVisible();
   for (const tab of ["Departments", "Zones", "Publish history", "Employees"]) {
-    await page.getByRole("tab", { name: tab, exact: true }).click();
+    await retryUntilVisible(
+      () => management.getByRole("tab", { name: tab, exact: true }).click(),
+      management.getByRole("tabpanel", { name: tab, exact: true })
+    );
     await expect(densityControls).toHaveCount(0);
-    await expect(page.locator(".cds-page-subtitle")).toHaveText(subtitle);
-    if (tab === "Publish history") await expect(page.locator(".cds-page-header .cds-btn--primary")).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Management", exact: true }).locator(".cds-page-subtitle")).toHaveText(subtitle);
+    if (tab === "Publish history") await expect(management.locator(".cds-page-header .cds-btn--primary")).toHaveCount(0);
   }
   await page.reload();
+  await expect(management).toBeVisible();
   await expect(densityControls).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath("management-compact.png") });
   await page.evaluate(() => { document.documentElement.dataset.theme = "dark"; document.documentElement.dataset.carbonTheme = "g100"; });
@@ -48,7 +54,7 @@ test("shared palette and Reception copy render on authenticated surfaces", async
     await page.setViewportSize({ width: 1920, height: 1080 });
   }
   await page.goto("/reception");
-  await expect(page.getByText("Find an extension, then transfer the caller.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Reception directory", exact: true }).getByText("Find an extension, then transfer the caller.", { exact: true })).toBeVisible();
 });
 
 
@@ -64,7 +70,7 @@ test("Management palette roles follow explicit and system themes", async ({ page
     }, preference);
     await page.goto("/admin/management");
     await expect(page.getByRole("radio", { name: /Normal|Compact/ })).toHaveCount(0);
-    await expect(page.locator(".cds-page-subtitle")).toHaveCSS("color", dark ? "rgb(198, 198, 198)" : "rgb(82, 82, 82)");
+    await expect(page.getByRole("region", { name: "Management", exact: true }).locator(".cds-page-subtitle")).toHaveCSS("color", dark ? "rgb(198, 198, 198)" : "rgb(82, 82, 82)");
     await page.screenshot({ path: testInfo.outputPath(`management-${preference}.png`) });
     await page.goto("/admin");
     const palette = page.locator("#viewer-find-palette");
