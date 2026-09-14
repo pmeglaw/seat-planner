@@ -316,6 +316,15 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
     focusTrigger('[aria-controls="shell-left-panel"]');
   }, [focusTrigger]);
 
+  useEffect(() => {
+    if (!leftPanelOpen || openPanel) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) closeLeft();
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [closeLeft, leftPanelOpen, openPanel]);
+
   // History switch: the other mode's map, keeping the whole B3 URL set
   // (?floor= ?seat= ?q= ?names= and the four filters — lib/mapUrlState) and
   // running the same veto as a link click (PHASE2UX §1.4 row 1).
@@ -353,6 +362,7 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
           skipLink={skipLink}
           onLinkClick={onLinkClick}
           hasLeftContent={hasLeftContent}
+          leftPanelLabel={filters ? (belowNav ? "Navigation and filters" : "Filters") : "Navigation"}
           leftOpen={leftPanelOpen}
           onToggleLeft={() => setLeftOpen(current => !current)}
           modeStatus={modeStatus}
@@ -390,7 +400,7 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
           data-shell-content
           className={[
             "flex min-h-[100svh] flex-col pt-[var(--sp-shell-header-h)] lg:h-[100svh] lg:overflow-hidden",
-            leftPanelOpen ? "pl-[var(--sp-panel-left-w)]" : "",
+            leftPanelOpen ? "min-[1056px]:pl-[var(--sp-panel-left-w)]" : "",
             "motion-safe:transition-[padding] motion-safe:duration-[var(--sp-duration-fast-02)]"
           ].join(" ")}
         >

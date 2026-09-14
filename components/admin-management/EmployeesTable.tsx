@@ -263,6 +263,7 @@ export function EmployeesTable({
           )
         ) : (
           <div className="sp-table-scroll" role="region" aria-label="Employees table" tabIndex={0}>
+            <p className="sp-table-scroll-hint">Scroll horizontally for more columns and edit actions.</p>
             <table className="cds-table">
               <thead>
                 <tr>

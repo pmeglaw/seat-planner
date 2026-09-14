@@ -36,7 +36,10 @@ test("assigned custom-flagged seats are protected from deletion", () => {
   });
 
   assert.equal(canDeleteSeat(assignedSeat), false);
-  assert.equal(getSeatDeleteBlockReason(assignedSeat), "Assigned seats cannot be deleted. Vacate the seat before removing a custom draft seat.");
+  assert.equal(getSeatDeleteBlockReason(assignedSeat), "Original seats are protected. Only custom draft seats can be deleted.");
+  const assignedCustomSeat = seat({ label: "W13", employee_id: "employee-1", status: "assigned" });
+  assert.equal(canDeleteSeat(assignedCustomSeat), false);
+  assert.equal(getSeatDeleteBlockReason(assignedCustomSeat), "Assigned seats cannot be deleted. Vacate the seat before removing a custom draft seat.");
 });
 
 test("custom draft seats can be deleted", () => {

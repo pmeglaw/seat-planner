@@ -43,6 +43,21 @@ const type = (selector, value) => act(async () => fireEvent.change(document.quer
 const submitForm = () => act(async () => fireEvent.submit(document.querySelector("form")));
 const flush = () => act(async () => {});
 
+test("password visibility is independent and returning to login makes no auth mutation", async () => {
+  const { updates } = await mountForm();
+  await type('input[name="password"]', "local-example-password");
+  const toggle = screen.getByRole("button", { name: "Show new password" });
+  await act(async () => fireEvent.click(toggle));
+  assert.equal(document.querySelector('input[name="password"]').type, "text");
+  assert.equal(document.querySelector('input[name="confirmPassword"]').type, "password");
+  assert.equal(toggle.getAttribute("aria-pressed"), "true");
+  await act(async () => fireEvent.click(toggle));
+  assert.equal(document.querySelector('input[name="password"]').value, "local-example-password");
+  assert.equal(document.querySelector('input[name="password"]').type, "password");
+  assert.equal(screen.getByRole("link", { name: "Back to log in" }).getAttribute("href"), "/login");
+  assert.equal(updates.length, 0);
+});
+
 test("renders both password fields with names inside a form", async () => {
   await mountForm();
   assert.ok(document.querySelector("form"), "fields must live in a <form> so Enter submits");

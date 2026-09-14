@@ -7,8 +7,9 @@ import { useCallback, useEffect, useState } from "react";
 // The 256px left panel of the Phase 3 shell (PHASE2UX §1.3, PHASE3DS §1.12,
 // specimen 01-shell.html#left): the map surface's filter groups, and — below
 // the header-nav breakpoint — the section links above them. Slides in under
-// the header and PUSHES the content (AppShell pads the content pane); no
-// focus trap; Esc closes. The panel renders whatever the active surface
+// the header and pushes desktop content. Below 1056px it overlays the page
+// with a dismissible scrim (September 14 amendment). No focus trap; Esc
+// closes. The panel renders whatever the active surface
 // registers through useAppShellFilters (AppShell.tsx) — it owns no filter
 // state of its own, so the applied filters stay URL state per PHASE1IA B3
 // while open/closed is a per-user display preference (localStorage).
@@ -82,6 +83,8 @@ export function LeftPanel({ open, onClose, belowNav, links, onLinkClick, filters
   const empty = filters !== null && groups.length > 0 && groups.every(group => group.state === "ready" && group.items.length === 0);
 
   return (
+    <>
+    {open && hasContent && <button type="button" className="sp-left-panel-catch" aria-label="Close navigation panel" tabIndex={-1} onClick={onClose} />}
     <div id="shell-left-panel" className="sp-left-panel-host" data-open={shown ? "true" : undefined}>
       {open && hasContent ? (
         <aside className="sp-left-panel" aria-labelledby="shell-left-panel-title" onKeyDown={onKeyDown}>
@@ -149,6 +152,7 @@ export function LeftPanel({ open, onClose, belowNav, links, onLinkClick, filters
         </aside>
       ) : null}
     </div>
+    </>
   );
 }
 

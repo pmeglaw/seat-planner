@@ -523,7 +523,7 @@ test("inspector sections, validation, and actions retain accessible confidence c
   // out of it: the header role line already carries it (dedup 2026-07-23).
   // Flat sections retain the "only when assigned" guarantee. The 2026-09-11
   // refinement uses the shared heading component for the viewer as well.
-  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,300}title="Contact metadata"/);
+  assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,300}title="Contact"/);
   assert.match(inspectorSource, /\{hasCurrentAssignment && \([\s\S]{0,300}<InspectorSectionLabel id="published-contact-heading" title="Contact"/);
   assert.doesNotMatch(inspectorSource, /FactRow label="Department"/);
   // The occupied-seat CTA reads as an edit verb — it opens a form, it does
@@ -880,7 +880,7 @@ test("chrome copy is unified, the names toggle exposes state, and skip links rea
   // different search scope. The shared string is short enough for the
   // narrowest chrome input (longer copy ellipsized exactly the part it
   // advertised); the full field enumeration lives on each input's sr-label.
-  assert.match(searchLibSource, /export const SEAT_SEARCH_PLACEHOLDER = "Search people or seats…"/);
+  assert.match(searchLibSource, /export const SEAT_SEARCH_PLACEHOLDER = "Find people or seats…"/);
   // One field per surface since PR 3a (MapSearch); both hand it the shared string.
   assert.equal((seatMapSource.match(/placeholder: SEAT_SEARCH_PLACEHOLDER/g) ?? []).length, 1, "the admin search hands MapSearch the shared placeholder");
   assert.match(viewerSource, /placeholder: SEAT_SEARCH_PLACEHOLDER/);
@@ -1107,7 +1107,7 @@ test("form fields carry the hygiene attributes users and password managers rely 
   // triggers — and the shared placeholder ends with an ellipsis (#199). The
   // native webkit cancel button is suppressed so the app's own clear control
   // stays the single clear path (see the clear-controls test above).
-  assert.match(searchLibSource, /SEAT_SEARCH_PLACEHOLDER = "Search people or seats…"/);
+  assert.match(searchLibSource, /SEAT_SEARCH_PLACEHOLDER = "Find people or seats…"/);
   const searchFieldSource = await readSource("../components/seat-map/MapSearch.tsx");
   assert.match(searchFieldSource, /type="search"[\s\S]{0,240}name="seat-search"/, "the one search field (both surfaces) is a named type=search");
   assert.match(seatMapSource, /<MapControlRow/);

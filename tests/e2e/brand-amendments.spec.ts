@@ -34,7 +34,9 @@ for (const choice of ["light", "dark", "system-light", "system-dark"] as const) 
     await expect(page.locator("main")).toHaveCSS("background-color", dark ? "rgb(22, 22, 22)" : "rgb(255, 255, 255)");
     const password = page.locator('input[type="password"]').first();
     await password.focus();
-    await expect(password.locator("..")).toHaveCSS("border-bottom-color", focus);
-    await expect(password.locator("..")).toHaveCSS("border-bottom-width", "2px");
+    // The field shell contains both the text wrapper and visibility button.
+    const passwordField = password.locator("xpath=ancestor::div[1]");
+    await expect(passwordField).toHaveCSS("border-bottom-color", focus);
+    await expect(passwordField).toHaveCSS("border-bottom-width", "2px");
   });
 }

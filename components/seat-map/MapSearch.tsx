@@ -2,8 +2,8 @@
 
 // The control row's focused search field (DECISIONS D1-d; PHASE3DS §1.15
 // `.sp-search`; Phase 4 PR 3a). One field for both surfaces: leading
-// magnifier, an unlabelled input (the placeholder is the label — SKILL:
-// never label a search field), a `.sp-kbd` platform hint while empty, a
+// magnifier, an accessibly named input with a placeholder, a `.sp-kbd`
+// platform hint while empty and space allows, a
 // clear × once a query exists, and the trailing scope segment ("This floor"
 // / "Whole building"). Results open in the 560px palette the surface mounts
 // beside this field; this component owns the field only.

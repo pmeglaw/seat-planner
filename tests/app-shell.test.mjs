@@ -310,11 +310,17 @@ test("a route commit closes the left panel; unregistering the filters retires th
 test("below the header-nav breakpoint the hamburger exists everywhere and the panel carries the section links", async () => {
   setViewportWidth(1024);
   await renderElement(shellElement({ pathname: "/admin/settings" }));
-  const hamburger = await waitFor(() => screen.getByRole("button", { name: "Filters" }));
+  const hamburger = await waitFor(() => screen.getByRole("button", { name: "Navigation" }));
   await act(async () => fireEvent.click(hamburger));
   const nav = within(screen.getByRole("complementary", { name: "Sections" })).getByRole("navigation", { name: "Sections" });
   assert.equal(within(nav).getByRole("link", { name: "Settings" }).getAttribute("aria-current"), "page");
   await waitFor(() => screen.getByRole("button", { name: "Draft · 7" }), "the indicator compacts below the breakpoint");
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Close navigation panel" })));
+  assert.equal(hamburger.getAttribute("aria-expanded"), "false");
+  assert.equal(document.activeElement, hamburger);
+  await act(async () => fireEvent.click(hamburger));
+  await act(async () => fireEvent.keyDown(hamburger, { key: "Escape" }));
+  assert.equal(hamburger.getAttribute("aria-expanded"), "false");
 });
 
 test("useAppShellNavigation, useAppShellLeftPanel, useAppShellState and useAppShellFilters are safe no-ops without a shell ancestor", async () => {

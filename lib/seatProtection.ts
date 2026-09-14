@@ -49,8 +49,8 @@ export function canDeleteSeat(seat: SeatProtectionInput) {
 export function getSeatDeleteBlockReason(seat: SeatProtectionInput) {
   if (!seat) return "Select a custom seat first.";
   if (seat.layer !== "draft") return "Only draft seats can be deleted.";
-  if (seat.employee_id || seat.status === "assigned") return "Assigned seats cannot be deleted. Vacate the seat before removing a custom draft seat.";
   if (!isCustomSeat(seat) || isProtectedOriginalSeatLabel(seat.label)) return "Original seats are protected. Only custom draft seats can be deleted.";
+  if (seat.employee_id || seat.status === "assigned") return "Assigned seats cannot be deleted. Vacate the seat before removing a custom draft seat.";
   if (seat.status !== "available") return "Only available custom draft seats can be deleted.";
   return null;
 }

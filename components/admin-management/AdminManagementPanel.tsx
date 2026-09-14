@@ -654,7 +654,7 @@ export function AdminManagementPanel({
         {activeTab === "zones" && (
           <section aria-labelledby="management-zones-heading" className="pt-4">
             <h2 id="management-zones-heading" className="cds-visually-hidden">Zones</h2>
-            <p className="cds-helper mb-3">Zones are physical map areas used for filtering and custom-seat label prefixes.</p>
+            <p className="cds-helper mb-3">Zones group seats by area. Use them to filter the map and name new seats.</p>
             <OptionList
               kind="zone"
               rows={zoneRows}

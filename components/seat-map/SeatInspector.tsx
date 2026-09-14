@@ -1190,7 +1190,7 @@ export function SeatInspector({
                     is assigned. */}
                 {hasCurrentAssignment && (
                   <div>
-                    <InspectorSectionLabel id="seat-contact-heading" title="Contact metadata" />
+                    <InspectorSectionLabel id="seat-contact-heading" title="Contact" />
                     <div id="seat-inspector-contact">
                       <ContactFacts
                         canEdit

@@ -157,7 +157,7 @@ test("browse mode renders the zone chips and the A→Z people feed", async () =>
   await renderPalette();
 
   const zones = screen.getByRole("group", { name: "Zones" });
-  const chips = within(zones).getAllByRole("button");
+  const chips = within(zones).getAllByRole("button", { pressed: false });
   assert.deepEqual(chips.map(chip => chip.textContent), ["North Offices12", "South Offices7"]);
 
   const rows = within(browseList()).getAllByRole("listitem");
@@ -166,6 +166,18 @@ test("browse mode renders the zone chips and the A→Z people feed", async () =>
   assert.match(browseList().textContent, /Cass Nolan/);
   // The search-results list is the OTHER mode — never both in the same slot.
   assert.equal(screen.queryByRole("list", { name: "Viewer search results" }), null);
+});
+
+test("zone disclosure keeps people available and preserves zone choices on reopening", async () => {
+  await renderPalette();
+  const toggle = screen.getByRole("button", { name: "Filter by zone" });
+  fireEvent.click(toggle);
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  assert.equal(screen.queryByRole("button", { name: /^North Offices12$/ }), null);
+  assert.ok(within(browseList()).getAllByRole("listitem").length > 0);
+  fireEvent.click(toggle);
+  assert.equal(toggle.getAttribute("aria-expanded"), "true");
+  assert.ok(zoneChip("North Offices"));
 });
 
 test("browse mode carries the feed's own summary in the footer legend", async () => {
