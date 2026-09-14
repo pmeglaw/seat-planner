@@ -181,7 +181,8 @@ export function PublishLogTable() {
           </div>
         ) : (
           <>
-            <div className="sp-table-scroll">
+            <div className="sp-table-scroll" role="region" aria-label="Publish history table" tabIndex={0}>
+              <p className="sp-table-scroll-hint">Scroll horizontally to see changes.</p>
               <table className="cds-table">
                 <thead>
                   <tr>

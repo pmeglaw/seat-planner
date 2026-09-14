@@ -206,7 +206,7 @@ test("viewer rendering path stays isolated from admin-only draft and delete cont
   // control within the section's bounded span, replaces the old unbounded
   // `\{canEdit \? \([\s\S]*` matches — those could satisfy themselves across
   // unrelated code anywhere later in the file.
-  assert.match(inspectorSource, /\{canEdit \? \([\s\S]*?id="seat-inspector-actions"/);
+  assert.match(inspectorSource, /\{canEdit && editingEnabled \? \([\s\S]*?id="seat-inspector-actions"/);
   assert.match(inspectorSource, /id="seat-inspector-actions"[\s\S]{0,6000}Delete custom seat/);
   // The reseat verbs live in the inspector's Seat actions section now.
   // The section body is only mounted inside the canEdit-gated form branch;
@@ -706,7 +706,7 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);
   // 3b MODE CARD: modes own the panel slot (no canvas banner); move-mode copy
   // lives inside the inspector occupant.
-  assert.match(seatMapSource, /const modeCardOpen = canEdit && Boolean\(activeMode\) && \(!selectedSeat \|\| inspectorCollapsed\)/);
+  assert.match(seatMapSource, /const modeCardOpen = canEdit && editTier && Boolean\(activeMode\) && \(!selectedSeat \|\| inspectorCollapsed\)/);
   // PR 3b: the mode card owns the right slot until the mode ends (INV-4).
   assert.match(seatMapSource, /const slotOwner: RightSlotOwner = modeCardOpen \? "mode" : askPlannerOpen && canEdit \? "ask" : selectedSeat && !inspectorCollapsed \? "inspector" : null;/);
   assert.match(seatMapSource, /\{slotOwner === "mode" && activeMode && \(/);

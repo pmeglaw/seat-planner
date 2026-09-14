@@ -14,6 +14,8 @@
 // This replaces the provisional tenant row under the header (PR 2 seam,
 // PHASE4BUILD §1.8): the bar tenants SeatMap used to portal into it and the
 // viewer's search field now live here, in the page, 48px under the header.
+// September 14 admin-audit amendment: 16px outer/group spacing, 8px within
+// task groups. Keep Publish with its reason when content wraps.
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { FloorId } from "@/lib/floorIds";
@@ -53,33 +55,37 @@ export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters
   const reasonId = useId();
   return (
     <div className="sp-control-row shrink-0" role="toolbar" aria-label="Map controls">
-      <FloorMenuButton floor={floor} onChange={onFloorChange} meta={floorMeta} />
-      <MapSearch {...search} />
-      {filters && filters.appliedCount > 0 ? (
-        <span className="sp-filters">
-          <button
-            type="button"
-            className="cds-btn cds-btn--tertiary cds-btn--md"
-            aria-expanded={filters.panelOpen}
-            aria-controls="shell-left-panel"
-            onClick={filters.onOpen}
-          >
-            Filters · {filters.appliedCount}
-          </button>
-          <button type="button" className="cds-btn cds-btn--icon cds-btn--md" aria-label="Clear filters" onClick={filters.onClear}>
-            <CloseIcon />
-          </button>
-        </span>
-      ) : null}
-      {/* The live match summary — filter-feedback-source's guardrail: the
-          count follows every active constraint and announces politely. */}
-      <span className="sp-control-count" aria-live={count.live ? "polite" : undefined} aria-atomic="true">{count.text}</span>
-      <button type="button" className="cds-btn cds-btn--ghost cds-btn--md" onClick={onFindMe}>Find me</button>
+      <div className="sp-control-group sp-control-find" role="group" aria-label="Find and filter">
+        <FloorMenuButton floor={floor} onChange={onFloorChange} meta={floorMeta} />
+        <MapSearch {...search} />
+        {filters && filters.appliedCount > 0 ? (
+          <span className="sp-filters">
+            <button
+              type="button"
+              className="cds-btn cds-btn--tertiary cds-btn--md"
+              aria-expanded={filters.panelOpen}
+              aria-controls="shell-left-panel"
+              onClick={filters.onOpen}
+            >
+              Filters · {filters.appliedCount}
+            </button>
+            <button type="button" className="cds-btn cds-btn--icon cds-btn--md" aria-label="Clear filters" onClick={filters.onClear}>
+              <CloseIcon />
+            </button>
+          </span>
+        ) : null}
+        {/* The live match summary — filter-feedback-source's guardrail: the
+            count follows every active constraint and announces politely. */}
+        <span className="sp-control-count" aria-live={count.live ? "polite" : undefined} aria-atomic="true">{count.text}</span>
+        <button type="button" className="cds-btn cds-btn--ghost cds-btn--md" onClick={onFindMe}>Find me</button>
+      </div>
       {draft ? (
-        <>
+        <div className="sp-control-group sp-control-draft" role="group" aria-label="Draft actions">
           <span className="sp-control-divider" role="separator" aria-orientation="vertical" />
-          <IconWithTooltip label={draft.undo.label} disabled={draft.undo.disabled} busy={draft.undo.busy} onClick={draft.undo.onClick}><UndoIcon /></IconWithTooltip>
-          <IconWithTooltip label={draft.redo.label} disabled={draft.redo.disabled} busy={draft.redo.busy} onClick={draft.redo.onClick}><RedoIcon /></IconWithTooltip>
+          <span className="sp-control-group" role="group" aria-label="Draft history">
+            <IconWithTooltip label={draft.undo.label} disabled={draft.undo.disabled} busy={draft.undo.busy} onClick={draft.undo.onClick}><UndoIcon /></IconWithTooltip>
+            <IconWithTooltip label={draft.redo.label} disabled={draft.redo.disabled} busy={draft.redo.busy} onClick={draft.redo.onClick}><RedoIcon /></IconWithTooltip>
+          </span>
           {!draft.addSeat.hidden && draft.addSeat.active && (
             <button
               type="button"
@@ -103,21 +109,26 @@ export function MapControlRow({ floor, onFloorChange, floorMeta, search, filters
           >
             Ask Planner
           </button>
-          <button
-            type="button"
-            className="cds-btn cds-btn--primary cds-btn--md"
-            style={{ minWidth: 176 }}
-            disabled={draft.publish.count === 0}
-            aria-describedby={draft.publish.count === 0 ? reasonId : undefined}
-            onClick={draft.publish.onOpen}
-          >
-            {draft.publish.count === 0 ? "Publish" : `Publish ${draft.publish.count} ${draft.publish.count === 1 ? "change" : "changes"}`}
-          </button>
-          {draft.publish.count === 0 && <span className="sp-control-reason" id={reasonId}>No changes to publish</span>}
+          <div className="sp-control-group sp-control-publish">
+            <button
+              type="button"
+              className="cds-btn cds-btn--primary cds-btn--md"
+              disabled={draft.publish.count === 0}
+              aria-describedby={draft.publish.count === 0 ? reasonId : undefined}
+              onClick={draft.publish.onOpen}
+            >
+              {draft.publish.count === 0 ? "Publish" : `Publish ${draft.publish.count} ${draft.publish.count === 1 ? "change" : "changes"}`}
+            </button>
+            {draft.publish.count === 0 && <span className="sp-control-reason" id={reasonId}>No changes to publish</span>}
+          </div>
           <OverflowMenu addSeat={draft.addSeat} disabled={draft.discard.disabled} onDiscard={draft.discard.onOpen} />
-        </>
+        </div>
       ) : null}
-      {names && !names.hidden ? <NamesVisibilityToggle pressed={names.pressed} onToggle={names.onToggle} /> : null}
+      {names && !names.hidden ? (
+        <div className="sp-control-group sp-control-display" role="group" aria-label="Map display">
+          <NamesVisibilityToggle pressed={names.pressed} onToggle={names.onToggle} />
+        </div>
+      ) : null}
       {children}
     </div>
   );

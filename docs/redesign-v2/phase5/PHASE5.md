@@ -940,3 +940,44 @@ it does not change the brand palette or the fixed compact Management decision.
 
 Implementation and verification record:
 [DESIGN-REFINEMENTS-2026-09-14.md](DESIGN-REFINEMENTS-2026-09-14.md).
+
+## 2026-09-14 owner amendment — admin audit and canvas toolbar
+
+The owner authorized proceeding with the admin audit findings and explicitly
+requested correct IBM spacing for the canvas bar under the shell. This amends
+PHASE3DS §1.12 and §1.14; D2's narrow read-only policy remains mandatory.
+
+- The existing map editing breakpoint (1024px in the implementation) now
+  governs the inspector and other map mutation entry points as well as the
+  toolbar. Narrow admins see draft-specific read-only details and saved private
+  notes, with “Editing needs a wider window.” Viewer data remains published-only.
+- Resizing retains unsaved inspector form state in the tab. The narrow view
+  explains how to resume; its navigation guard permits keeping or discarding
+  local edits but cannot save until the window is widened. Pending operations
+  are allowed to finish; resizing does not trigger a new mutation.
+- Narrow/coarse-pointer left-panel navigation, filter rows and clear actions
+  use the existing 48px size token. Desktop fine-pointer rows stay 32px.
+- Publish history provides a keyboard-focusable table scroll region and a
+  narrow-screen hint, “Scroll horizontally to see changes.”
+- The shared map toolbar groups Find and filter, Draft actions and Map display
+  in DOM/visual order. Use 16px outer and inter-group spacing, 8px within groups,
+  40px controls and 4px vertical inset. Groups wrap with the available width;
+  Publish and its disabled explanation stay grouped. Desktop search remains
+  480px with the existing shrink behavior. The inspector does not change the
+  toolbar width. These are productive IBM spacing tokens, not new brand values.
+  Below 600px, the find group joins the toolbar's shared wrapping flow with
+  8px gaps, so the count, Find me and Names share a row; outer insets stay 16px.
+
+Implementation and verification: [ADMIN-AUDIT-2026-09-14.md](ADMIN-AUDIT-2026-09-14.md).
+
+### Admin audit follow-up — mode transitions
+
+The owner authorized resolving the review's active-mode resize finding.
+Below 1024px, Add/Move/Swap intent is retained but suspended at the shared
+state boundary: no mode cursor, source/target marker, trail, confirmation or
+mode-specific gesture/keyboard behavior remains active. Ordinary map panning
+and read-only seat selection work. Widening resumes retained intent; selecting
+a seat ends it through the existing selection path. Switching to an unmapped
+floor still cancels retained Add-seat intent. Inspector form state is unchanged.
+The previous collapsed-inspector state survives suspension so a restored mode
+also restores its visible Exit action.

@@ -23,6 +23,8 @@ type SeatInspectorProps = {
   employees: Employee[];
   departmentOptions: DepartmentOption[];
   canEdit: boolean;
+  /** Responsive editing policy; admin identity and unsaved form state remain intact. */
+  editingEnabled?: boolean;
   collapsed: boolean;
   searchMismatchNotice?: string | null;
   searchMismatchClearLabel?: string;
@@ -313,6 +315,7 @@ export function SeatInspector({
   employees,
   departmentOptions,
   canEdit,
+  editingEnabled = true,
   collapsed,
   searchMismatchNotice = null,
   searchMismatchClearLabel = "Clear search",
@@ -717,6 +720,10 @@ export function SeatInspector({
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canEdit || !editingEnabled) {
+      onSubmitBlocked?.();
+      return;
+    }
 
     const employeeName = form.employeeName.trim();
     const matchedEmployee = findEmployeeByName(employeeName);
@@ -969,7 +976,7 @@ export function SeatInspector({
         </div>
       </div>
 
-      {canEdit ? (
+      {canEdit && editingEnabled ? (
         <form id="seat-inspector-form" onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="sp-slot-body">
             {/* Save-state announcements: a stable sr-only live region at the
@@ -1369,25 +1376,35 @@ export function SeatInspector({
           )}
         </form>
       ) : (
-        // Viewer inspector: Contact only — no admin sections, seat-action
-        // verbs, AI row, or footer. The data is the published assignment
-        // snapshot. tabIndex: the region must stay keyboard-scrollable on its
+        // Read-only details: viewers use the published snapshot; narrow
+        // admins retain draft context and saved private notes. The form state
+        // stays mounted in this component so resizing never drops unsaved work.
+        // tabIndex: the region must stay keyboard-scrollable on its
         // own (axe scrollable-region-focusable) — this read-only branch has
         // no focusable descendant guaranteed (an open seat renders no body
         // content), so an overflowing panel would otherwise be unreachable.
         <div
           role="region"
-          aria-label="Published seat details"
+          aria-label={canEdit ? "Draft seat details" : "Published seat details"}
           tabIndex={0}
           className="sp-slot-body focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--sp-focus)]"
         >
           <div key={`seat-inspector-sections-${selectedSeat.id}`}>
+            {canEdit && (
+              <div className="cds-notification cds-notification--info mb-4" role="status">
+                <NotificationGlyph kind="info" />
+                <div className="cds-notification-text">
+                  <strong>Editing needs a wider window.</strong>
+                  {isDirty && <p>Your unsaved edits are kept in this tab. Widen the window to continue editing and save.</p>}
+                </div>
+              </div>
+            )}
             <span className="sp-seat-legend"><SeatMark kind={legendKind} />{currentStatusLabel}</span>
             {hasCurrentAssignment && <div className="sp-person-role mt-3">{occupantRoleLabel}</div>}
             {hasCurrentAssignment && (
               <section aria-labelledby="published-contact-heading" className="sp-inspector-groups">
                 <InspectorSectionLabel id="published-contact-heading" title="Contact" />
-                <p className="sr-only">Published assignment</p>
+                <p className="sr-only">{canEdit ? "Draft assignment" : "Published assignment"}</p>
                 <ContactFacts
                   canEdit={false}
                   personName={selectedSeatEmployeeName}
@@ -1396,6 +1413,12 @@ export function SeatInspector({
                     extension: selectedSeat.employee?.phone_extension
                   })}
                 />
+              </section>
+            )}
+            {canEdit && selectedSeat.notes && (
+              <section className="sp-inspector-groups" aria-labelledby="draft-notes-heading">
+                <InspectorSectionLabel id="draft-notes-heading" title="Workspace notes" />
+                <p className="whitespace-pre-wrap">{selectedSeat.notes}</p>
               </section>
             )}
           </div>
@@ -1407,7 +1430,7 @@ export function SeatInspector({
         bar raises it, and it confirms EVERY time rather than only on unsaved
         edits, because a transient surface earns less trust than this panel. */}
 
-    {moveConflict && (
+    {moveConflict && editingEnabled && (
       // Phase 4 PR 5b: the asset modal through the shared host (PHASE3DS
       // §1.17 amendment) — alertdialog, plain primary (R-2), no × (R-3). The
       // host owns focus + Esc-not-while-busy; the in-dialog error keeps the

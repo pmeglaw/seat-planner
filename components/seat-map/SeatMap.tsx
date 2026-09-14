@@ -303,7 +303,7 @@ export function SeatMap({
   // PR #99 preview). It must survive those resets.
   const [staleDraftNotice, setStaleDraftNotice] = useState<string | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
-  const [addSeatMode, setAddSeatMode] = useState(false);
+  const [retainedAddSeatMode, setAddSeatMode] = useState(false);
   const [askPlannerOpen, setAskPlannerOpen] = useState(false);
   const [askPlannerQueuedRequest, setAskPlannerQueuedRequest] = useState<AskPlannerQueuedRequest | null>(null);
   const [plannerHighlightedSeatIds, setPlannerHighlightedSeatIds] = useState<string[]>([]);
@@ -322,7 +322,8 @@ export function SeatMap({
   const suppressPaletteReopenRef = useRef(false);
   // Editing is lg-and-up (D2, deviation 4): below the hinge the draft map is
   // read-only — the row's editor cluster is Hidden and the band says why.
-  const [editTier, setEditTier] = useState(true);
+  const [editTier, setEditTier] = useState(false);
+  const addSeatMode = canEdit && editTier && retainedAddSeatMode;
   useEffect(() => {
     const query = window.matchMedia("(min-width: 1024px)");
     const update = () => setEditTier(query.matches);
@@ -383,10 +384,17 @@ export function SeatMap({
     () => ({ left: mapVisibleLeft, right: mapVisibleRight, viewportWidth: mapVisibleViewportWidth }),
     [mapVisibleLeft, mapVisibleRight, mapVisibleViewportWidth]
   );
-  const [swapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
-  const [swapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
-  const [moveEmployeeSourceSeatId, setMoveEmployeeSourceSeatId] = useState<string | null>(null);
-  const [moveEmployeeConfirm, setMoveEmployeeConfirm] = useState<MoveEmployeeConfirmState>(null);
+  const [retainedSwapSourceSeatId, setSwapSourceSeatId] = useState<string | null>(null);
+  const [retainedSwapConfirm, setSwapConfirm] = useState<SwapConfirmState>(null);
+  const [retainedMoveEmployeeSourceSeatId, setMoveEmployeeSourceSeatId] = useState<string | null>(null);
+  const [retainedMoveEmployeeConfirm, setMoveEmployeeConfirm] = useState<MoveEmployeeConfirmState>(null);
+  // Suspend modes at their shared read boundary: canvas gestures, marker
+  // presentation, Escape priority and trails must agree with the controls.
+  // Retain intent for widening; ordinary seat selection still ends the mode.
+  const swapSourceSeatId = canEdit && editTier ? retainedSwapSourceSeatId : null;
+  const swapConfirm = canEdit && editTier ? retainedSwapConfirm : null;
+  const moveEmployeeSourceSeatId = canEdit && editTier ? retainedMoveEmployeeSourceSeatId : null;
+  const moveEmployeeConfirm = canEdit && editTier ? retainedMoveEmployeeConfirm : null;
   // The reason the last refused destination gave (lib/seatTargets, O4) — shown
   // in the canvas status region only while the mode that refused it runs.
   const [invalidTargetNotice, setInvalidTargetNotice] = useState<string | null>(null);
@@ -763,7 +771,7 @@ export function SeatMap({
   // dialog, while a mutation is in flight or the inspector holds unsaved edits
   // — the same gate the row's buttons use.
   useEffect(() => {
-    if (!canEdit) return;
+    if (!canEdit || !editTier) return;
     const handleHistoryShortcut = (event: globalThis.KeyboardEvent) => {
       const action = historyShortcutFor(event, window.navigator.platform);
       if (!action) return;
@@ -777,7 +785,7 @@ export function SeatMap({
     };
     window.addEventListener("keydown", handleHistoryShortcut);
     return () => window.removeEventListener("keydown", handleHistoryShortcut);
-  }, [canEdit, historyOpInFlight, inspectorDirty, mutationInFlight, redoAvailable, redoDraftEdit, undoAvailable, undoDraftEdit]);
+  }, [canEdit, editTier, historyOpInFlight, inspectorDirty, mutationInFlight, redoAvailable, redoDraftEdit, undoAvailable, undoDraftEdit]);
 
   useEffect(() => {
     const viewport = mapViewportRef.current;
@@ -1417,7 +1425,7 @@ export function SeatMap({
   }
 
   function requestInspectorGuardSave() {
-    if (!inspectorGuardAction) return;
+    if (!editTier || !inspectorGuardAction) return;
     setPendingInspectorSaveAction(inspectorGuardAction);
     setInspectorGuardAction(null);
     window.requestAnimationFrame(() => {
@@ -1502,6 +1510,7 @@ export function SeatMap({
   // it always raises the confirm first, because it is a transient surface
   // (lib/seatDraftActions: vacateNeedsConfirmation).
   function requestVacateFromBar() {
+    if (!editTier) return;
     if (!selectedSeat || !canVacateSeat(selectedSeat)) return;
     setActionError(null);
     setActionNotice(null);
@@ -1513,6 +1522,7 @@ export function SeatMap({
   }
 
   function confirmVacateFromBar() {
+    if (!editTier) return;
     if (!vacateConfirm) return;
     // Re-resolve from live state: the dialog holds an id, not a seat, so a
     // refresh between opening and confirming cannot commit a stale row.
@@ -1707,7 +1717,7 @@ export function SeatMap({
     setRovingSeatId(null);
     setZoomFactor(1);
     if (mapViewMode !== "overview") changeMapViewMode("overview");
-    if (addSeatMode && !floorIsMapped(next)) setAddSeatMode(false);
+    if (retainedAddSeatMode && !floorIsMapped(next)) setAddSeatMode(false);
     if (options.announce === false) {
       setAnnouncedFloor(null);
     } else {
@@ -1834,6 +1844,7 @@ export function SeatMap({
   }, [centerSeatInMap]);
 
   function requestSwapTarget(targetSeatId: string) {
+    if (!editTier) return;
     if (!swapSourceSeatId) return false;
     const sourceSeat = localSeats.find(seat => seat.id === swapSourceSeatId) ?? null;
     const targetSeat = localSeats.find(seat => seat.id === targetSeatId) ?? null;
@@ -1860,6 +1871,7 @@ export function SeatMap({
   }
 
   function requestMoveEmployeeTarget(targetSeatId: string) {
+    if (!editTier) return;
     if (!moveEmployeeSourceSeatId) return false;
     if (targetSeatId === moveEmployeeSourceSeatId) {
       // Spec: clicking the person's own seat backs out of the move.
@@ -1882,7 +1894,7 @@ export function SeatMap({
   // running mode and its source seat, or null. The marker layer marks every
   // invalid destination from the same predicate the click consults below.
   const targetMode: { mode: TargetMode; source: SeatWithEmployee } | null = (() => {
-    if (!canEdit) return null;
+    if (!canEdit || !editTier) return null;
     if (moveEmployeeSourceSeatId) {
       const source = localSeats.find(seat => seat.id === moveEmployeeSourceSeatId);
       return source ? { mode: "move", source } : null;
@@ -1914,11 +1926,11 @@ export function SeatMap({
       return true;
     }
 
-    if (canEdit && moveEmployeeSourceSeatId) {
+    if (canEdit && editTier && moveEmployeeSourceSeatId) {
       return requestMoveEmployeeTarget(seatId);
     }
 
-    if (canEdit && swapSourceSeatId) {
+    if (canEdit && editTier && swapSourceSeatId) {
       if (seatId !== swapSourceSeatId) {
         return requestSwapTarget(seatId);
       }
@@ -1982,6 +1994,7 @@ export function SeatMap({
   }
 
   function startAddSeatMode() {
+    if (!editTier) return;
     if (selectedSeatId && inspectorDirty) {
       requestInspectorGuard({ kind: "start-add-seat" });
       return;
@@ -2025,6 +2038,7 @@ export function SeatMap({
   }
 
   function startSwapSeatMode(skipDirtyCheck = false) {
+    if (!editTier) return;
     if (!canEdit) return;
 
     if (!selectedSeat) {
@@ -2049,6 +2063,7 @@ export function SeatMap({
   }
 
   function startMoveEmployeeMode(skipDirtyCheck = false) {
+    if (!editTier) return;
     if (!canEdit) return;
     if (!selectedSeat || !canVacateSeat(selectedSeat)) {
       setActionError("Select an occupied seat first, then choose Move.");
@@ -2123,11 +2138,13 @@ export function SeatMap({
   }
 
   function confirmSwapSeats() {
+    if (!editTier) return;
     if (!swapConfirm) return;
     executeSwap(swapConfirm.sourceSeatId, swapConfirm.targetSeatId);
   }
 
   function confirmMoveEmployeeAsSwap() {
+    if (!editTier) return;
     if (!moveEmployeeConfirm?.offerSwap || !moveEmployeeSourceSeatId) return;
     const targetSeatId = moveEmployeeConfirm.targetSeatId;
     const sourceSeatId = moveEmployeeSourceSeatId;
@@ -2138,6 +2155,7 @@ export function SeatMap({
   }
 
   function confirmMoveEmployeeToOpenSeat() {
+    if (!editTier) return;
     if (!moveEmployeeConfirm || moveEmployeeConfirm.offerSwap) return;
     const sourceSeat = moveEmployeeSourceSeat;
     const targetSeat = localSeats.find(seat => seat.id === moveEmployeeConfirm.targetSeatId) ?? null;
@@ -2210,7 +2228,7 @@ export function SeatMap({
     const target = event.target as HTMLElement;
     const seatTarget = target.closest<HTMLElement>("[data-seat-id]");
 
-    if (canEdit && addSeatMode) {
+    if (canEdit && editTier && addSeatMode) {
       // Single-flight: a second canvas click while the create round-trip is
       // pending must not mint a second seat. The flag is set below in the
       // event handler (a discrete update React flushes before the next
@@ -2315,6 +2333,7 @@ export function SeatMap({
   }, []);
 
   function deleteSelectedSeat() {
+    if (!editTier) return;
     if (!selectedSeat) {
       setActionError(getSeatDeleteBlockReason(selectedSeat));
       return;
@@ -2338,6 +2357,7 @@ export function SeatMap({
   }
 
   function confirmDeleteSelectedSeat() {
+    if (!editTier) return;
     if (mutationInFlight) return;
     if (!deleteSeatConfirm) return;
 
@@ -2485,7 +2505,7 @@ export function SeatMap({
   // auto-collapsed to its pill. Tiers: bottom sheet ≤899, floating panel ≥900.
   // 3b MODE CARD: while a mode runs without an expanded inspector, the mode
   // owns the panel slot (its microcopy lives in the occupant, INV-4).
-  const modeCardOpen = canEdit && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
+  const modeCardOpen = canEdit && editTier && Boolean(activeMode) && (!selectedSeat || inspectorCollapsed);
   // The 400 right slot (C9, INV-4): a running mode owns it until it ends,
   // otherwise the inspector while a seat is selected and expanded. The canvas
   // column is PUSHED while it is open (D2); the band below never reflows.
@@ -2498,9 +2518,11 @@ export function SeatMap({
   // no rail left for the user to click.
   useEffect(() => {
     if (!inspectorCollapsed || !selectedSeatId) return;
-    if (searchActive || modeCardOpen || askPlannerOpen || swapSourceSeatId || moveEmployeeSourceSeatId) return;
+    // A suspended mode must keep its previous collapsed state so widening
+    // restores the mode card and its visible Exit action.
+    if (searchActive || modeCardOpen || askPlannerOpen || retainedSwapSourceSeatId || retainedMoveEmployeeSourceSeatId) return;
     setInspectorCollapsed(false);
-  }, [inspectorCollapsed, selectedSeatId, searchActive, modeCardOpen, askPlannerOpen, swapSourceSeatId, moveEmployeeSourceSeatId]);
+  }, [inspectorCollapsed, selectedSeatId, searchActive, modeCardOpen, askPlannerOpen, retainedSwapSourceSeatId, retainedMoveEmployeeSourceSeatId]);
   // No mode/zoom change on select or deselect: in the fit view the reserved
   // column resizes the viewport and the overview ResizeObserver re-fits the
   // frame width automatically; a zoomed (detail) view keeps its zoom.
@@ -2508,11 +2530,8 @@ export function SeatMap({
   const mobileMapInteractionSurfaceOpen = canEdit && (
     Boolean(selectedSeat && !inspectorCollapsed) ||
     askPlannerOpen ||
-    publishReviewOpen ||
-    Boolean(deleteSeatConfirm) ||
     Boolean(inspectorGuardAction) ||
-    Boolean(swapConfirm) ||
-    Boolean(moveEmployeeConfirm)
+    (editTier && (publishReviewOpen || Boolean(deleteSeatConfirm) || Boolean(swapConfirm) || Boolean(moveEmployeeConfirm)))
   );
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
   // Which surfaces own the bottom of the screen below the panel tier, where
@@ -2867,7 +2886,7 @@ export function SeatMap({
       id: "action-notice",
       kind: actionNoticeTone === "neutral" ? "info" : "success",
       text: actionNotice,
-      action: canEdit && undoAvailable && lastUndoLabel && !mutationInFlight && !inspectorDirty ? { label: `Undo ${lastUndoLabel}`, onClick: undoDraftEdit } : undefined
+      action: canEdit && editTier && undoAvailable && lastUndoLabel && !mutationInFlight && !inspectorDirty ? { label: `Undo ${lastUndoLabel}`, onClick: undoDraftEdit } : undefined
     });
   }
   const draftControls = canEdit && editTier
@@ -3120,7 +3139,7 @@ export function SeatMap({
                         seat={visualSeat}
                         selected={seat.id === selectedSeatId}
                         dimmed={dimmedSeatIdSet.has(seat.id)}
-                        canEdit={canEdit}
+                        canEdit={canEdit && editTier}
                         showNames={showNames}
                         searchResult={Boolean(search.trim()) && seatMatchesFilters}
                         draftChanged={draftChangedSeatLabelSet.has(seat.label)}
@@ -3211,6 +3230,7 @@ export function SeatMap({
                 employees={localEmployees}
                 departmentOptions={localDepartmentOptions}
                 canEdit={canEdit}
+                editingEnabled={editTier}
                 draftChanged={selectedSeat ? draftChangedSeatLabelSet.has(selectedSeat.label) : false}
                 collapsed={inspectorCollapsed}
                 searchMismatchNotice={selectedSeatMismatchNotice}
@@ -3320,7 +3340,7 @@ export function SeatMap({
       </div>
 
 
-      {vacateConfirm && (
+      {vacateConfirm && editTier && (
         <VacateConfirmDialog
           label={vacateConfirm.label}
           occupantName={vacateConfirm.occupantName}
@@ -3336,7 +3356,7 @@ export function SeatMap({
         />
       )}
 
-      {deleteSeatConfirm && (
+      {deleteSeatConfirm && editTier && (
         <DeleteSeatConfirmDialog
           label={deleteSeatConfirm.label}
           actionError={actionError}
@@ -3352,7 +3372,7 @@ export function SeatMap({
       {/* The publish review as the wide tearsheet (PHASE3DS §1.19, C10):
           Cancel is the exit; PUBLISH_BLOCKED closes it and lands in the canvas
           status region (usePublishReview). */}
-      {publishReviewOpen && (
+      {publishReviewOpen && editTier && (
         <PublishReviewSheet
           publishSummary={publishSummary}
           publishDiffRows={publishDiffRows}
@@ -3367,7 +3387,7 @@ export function SeatMap({
         />
       )}
 
-      {discardDraftConfirmOpen && (
+      {discardDraftConfirmOpen && editTier && (
         <DiscardDraftDialog
           totalChangeCount={publishSummary.totalChangeCount}
           actionError={actionError}
@@ -3430,13 +3450,14 @@ export function SeatMap({
           eyebrow={`Seat ${formatSeatCode(selectedSeat.label)} · ${selectedSeat.zone ?? selectedSeat.department ?? "Unzoned"}`}
           actionDescription={describeInspectorGuardAction(inspectorGuardAction)}
           pending={pending}
+          saveAllowed={editTier}
           onKeepEditing={keepEditingInspector}
           onDiscard={discardInspectorGuardEdits}
           onSave={requestInspectorGuardSave}
         />
       )}
 
-      {swapConfirm && swapSourceSeat && swapTargetSeat && (
+      {swapConfirm && editTier && swapSourceSeat && swapTargetSeat && (
         <SwapConfirmDialog
           swapSourceSeat={swapSourceSeat}
           swapTargetSeat={swapTargetSeat}
@@ -3450,7 +3471,7 @@ export function SeatMap({
         />
       )}
 
-      {moveEmployeeConfirm && moveEmployeeSourceSeat?.employee && moveEmployeeTargetSeat && (
+      {moveEmployeeConfirm && editTier && moveEmployeeSourceSeat?.employee && moveEmployeeTargetSeat && (
         <MoveEmployeeConfirmDialog
           offerSwap={moveEmployeeConfirm.offerSwap}
           moveEmployeeSourceSeat={moveEmployeeSourceSeat}
