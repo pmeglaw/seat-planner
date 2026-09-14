@@ -488,7 +488,8 @@ test("a result on the other floor switches the canvas, then selects; a person ro
   // floor, so the "This floor" scope publishes a zero with the building count;
   // widen, then the row carries its floor tag.
   await page.locator('input[name="seat-search"]').first().fill("L01");
-  await expect(page.getByRole("status").filter({ hasText: "0 on this floor · 1 in building" })).toBeAttached();
+  await expect(page.locator('.sp-palette-header [aria-live="polite"]')).toHaveText("Results · 0 on this floor · 1 in building");
+  await expect(page.getByRole("status").filter({ hasText: "No results for" })).toBeAttached();
   await page.getByRole("button", { name: "Search scope: This floor" }).dispatchEvent("click");
   await page.getByRole("menuitemradio", { name: "Whole building" }).dispatchEvent("click");
   const results = page.locator('[aria-label="Viewer search results"]');

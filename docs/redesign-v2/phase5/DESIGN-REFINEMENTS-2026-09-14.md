@@ -76,7 +76,28 @@ At the owner's request, the final working tree was checked again locally:
 - Logs: `output/precommit-smoke-2026-09-14.log` and
   `output/precommit-auth-smoke-2026-09-14.log`.
 
-### Captures and coverage boundaries
+### PR #546 browser-tier follow-up
+
+The first CI run exposed four failures in `npm run test:browser`, a separate
+tier from the previously passing smoke suite. Two palette cases measured hidden
+zone buttons; another looked for scope counts in the former empty-state body.
+The tests now open the disclosure before measuring and assert the exact counts
+in the live header, retaining the existing geometry and navigation checks.
+
+The remaining failure was a real resize regression: the narrow table hint moved
+the grid origin and shifted the visible employee. Scroll recalibration now uses
+the previous visible offset plus any intervening scroll movement. The unchanged
+visible-person assertion passes in both resize directions; an added check also
+keeps the heading visible after scrolling to the top immediately before resize.
+Desktop and phone harness captures were visually inspected.
+
+Local follow-up: all 38 real-browser component tests passed, as did typecheck,
+focused ESLint (one existing unused-fixture warning) and 27 Management component
+tests. The affected authenticated suite passed 7/7 with a fresh local build.
+Logs are `output/pr546-browser-fixed.log`, `output/pr546-management-tests.log`
+and `output/pr546-auth-fixed.log`. Final-head GitHub checks are tracked on the PR.
+
+### Original visual review scope
 
 Fresh Chrome evidence is in `output/playwright/design-refinements-2026-09-14/`,
 including a `report.html` before/after comparison. Before screenshots remain
