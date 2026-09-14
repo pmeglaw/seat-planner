@@ -402,7 +402,7 @@ test("inactive employees stay out of the palette's people list", async () => {
 test("the palette browses zones with their published seat counts", async () => {
   await renderViewer();
   openPalette();
-  const zones = within(screen.getByRole("group", { name: "Zones" })).getAllByRole("button");
+  const zones = within(screen.getByRole("group", { name: "Zones" })).getAllByRole("button", { pressed: false });
   // North Offices holds A-01 and C-03; South Offices holds B-02 and D-04.
   assert.deepEqual(zones.map(chip => chip.textContent), ["North Offices2", "South Offices2"]);
 });
@@ -410,7 +410,7 @@ test("the palette browses zones with their published seat counts", async () => {
 test("picking a zone chip pins the filter and closes the palette", async () => {
   await renderViewer();
   openPalette();
-  fireEvent.click(within(screen.getByRole("group", { name: "Zones" })).getAllByRole("button")[1]);
+  fireEvent.click(within(screen.getByRole("group", { name: "Zones" })).getByRole("button", { name: "South Offices2", exact: true }));
   await flushFrames();
 
   assert.equal(screen.queryByRole("list", { name: "People directory" }), null, "picking a zone ends the browse");
@@ -771,7 +771,8 @@ test("opening an unseated person from search switches to their floor, marks thei
   await flushFrames();
   // Linus is on Floor 2: the "This floor" scope publishes the zero with the
   // building count and offers Widen (D1-d).
-  assert.match(screen.getByRole("status").textContent, /0 on this floor · 1 in building/);
+  assert.match(document.querySelector(".sp-palette-header").textContent, /0 on this floor · 1 in building/);
+  assert.match(screen.getByRole("status").textContent, /No results for/);
   widenScope();
   await flushFrames();
   const results = screen.getByRole("list", { name: "Viewer search results" });
@@ -892,4 +893,3 @@ test("a found person stays marked on the roster even when a structured filter wo
   assert.match(marked.textContent, /Linus Torvalds/);
   assert.match(liveText(), /Linus Torvalds highlighted/);
 });
-

@@ -90,6 +90,8 @@ export function EmployeesTable({
   // index) so a re-sort/reorder follows the person, not the position.
   const [pinnedEmployeeId, setPinnedEmployeeId] = useState<string | null>(null);
   const previousRowHeight = useRef(defaultRowHeight);
+  const previousVisibleOffset = useRef(0);
+  const previousScrollTop = useRef(0);
 
   useLayoutEffect(() => {
     let frame = 0;
@@ -111,20 +113,25 @@ export function EmployeesTable({
       const interiorHeight = nextRow?.matches("[data-directory-row]:not([data-vpinned])")
         ? nextRow.getBoundingClientRect().height : 0;
       const rowHeight = interiorHeight || measuredHeight || defaultRowHeight;
+      let host = grid.parentElement;
+      while (host && (!/(auto|scroll)/.test(window.getComputedStyle(host).overflowY)
+        || host.scrollHeight <= host.clientHeight)) host = host.parentElement;
+      const tabs = grid.closest(".sp-page")?.querySelector(".sp-tabs-host");
+      const viewportTop = Math.max(host?.getBoundingClientRect().top ?? 0, tabs?.getBoundingClientRect().bottom ?? 0);
       if (previousRowHeight.current !== rowHeight) {
-        let host = grid.parentElement;
-        while (host && (!/(auto|scroll)/.test(window.getComputedStyle(host).overflowY)
-          || host.scrollHeight <= host.clientHeight)) host = host.parentElement;
-        const tabs = grid.closest(".sp-page")?.querySelector(".sp-tabs-host");
-        const viewportTop = Math.max(host?.getBoundingClientRect().top ?? 0, tabs?.getBoundingClientRect().bottom ?? 0);
-        const oldOffset = Math.max(0, viewportTop - grid.getBoundingClientRect().top);
+        const currentOffset = Math.max(0, viewportTop - grid.getBoundingClientRect().top);
+        const scrollDelta = (host?.scrollTop ?? window.scrollY) - previousScrollTop.current;
+        const oldOffset = Math.max(0, previousVisibleOffset.current + scrollDelta);
         // Preserve the fractional position within the visible row as well;
-        // retaining only its integer index can skip a row when shrinking.
-        const adjustment = oldOffset * (rowHeight / previousRowHeight.current - 1);
+        // use the pre-resize offset because responsive content above the table
+        // (such as its scroll hint) can also move the grid origin.
+        const adjustment = oldOffset * rowHeight / previousRowHeight.current - currentOffset;
         if (host) host.scrollTop += adjustment;
         else window.scrollBy(0, adjustment);
         previousRowHeight.current = rowHeight;
       }
+      previousVisibleOffset.current = Math.max(0, viewportTop - grid.getBoundingClientRect().top);
+      previousScrollTop.current = host?.scrollTop ?? window.scrollY;
       // Quantize to row steps so scrolling only re-renders when the window moves.
       const rawOffset = Math.max(0, -grid.getBoundingClientRect().top);
       const scrollOffset = Math.floor(rawOffset / rowHeight) * rowHeight;
@@ -263,6 +270,7 @@ export function EmployeesTable({
           )
         ) : (
           <div className="sp-table-scroll" role="region" aria-label="Employees table" tabIndex={0}>
+            <p className="sp-table-scroll-hint">Scroll horizontally for more columns and edit actions.</p>
             <table className="cds-table">
               <thead>
                 <tr>

@@ -12,6 +12,7 @@ import {
 } from "@/lib/authMessages";
 import { assignLocation } from "@/lib/fullNavigation";
 import { cx, focusRingClass } from "@/components/ui/design-system";
+import { PasswordVisibilityButton } from "@/components/auth/PasswordVisibilityButton";
 
 /**
  * Single-surface login — the design 1e reference layout verbatim
@@ -488,7 +489,7 @@ export function LoginForm() {
             )}
           </div>
           {emailError && (
-            <p id="login-email-error" className={fieldErrorClass}>
+            <p id="login-email-error" className={cx(fieldErrorClass, "mb-2")}>
               {emailError}
             </p>
           )}
@@ -513,7 +514,7 @@ export function LoginForm() {
                 autoComplete="current-password"
                 aria-invalid={passwordError ? true : undefined}
                 aria-describedby={passwordError ? "login-password-error" : undefined}
-                className={cx(fieldInputClass, !showPassword && "tracking-[2px]")}
+                className={cx(fieldInputClass, "placeholder:tracking-normal", !showPassword && "tracking-[2px]")}
               />
             </span>
             {passwordError && (
@@ -523,29 +524,7 @@ export function LoginForm() {
                 <circle cx="10" cy="14" r="1.1" className="fill-[var(--sp-text-on-color)]" />
               </svg>
             )}
-            <button
-              type="button"
-              onClick={() => setShowPassword(value => !value)}
-              aria-label="Show password"
-              aria-pressed={showPassword}
-              className={cx(
-                "relative grid h-8 w-8 flex-none place-items-center text-[var(--sp-text-secondary)] transition-colors after:absolute after:-inset-1.5 hover:bg-[var(--sp-field-hover)]",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--sp-focus)]"
-              )}
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                className="h-[15px] w-[15px]"
-              >
-                <path d="M2.5 10s3-5 7.5-5 7.5 5 7.5 5-3 5-7.5 5-7.5-5-7.5-5z" />
-                <circle cx="10" cy="10" r="2.2" />
-                {showPassword && <path d="m4.5 15.5 11-11" strokeLinecap="round" />}
-              </svg>
-            </button>
+            <PasswordVisibilityButton shown={showPassword} onToggle={() => setShowPassword(value => !value)} />
           </div>
           {passwordError && (
             <p id="login-password-error" className={fieldErrorClass}>
@@ -566,7 +545,7 @@ export function LoginForm() {
             type="button"
             onClick={sendPasswordReset}
             disabled={pending !== null}
-            className={cx(inlineLinkClass, "relative shrink-0 text-xs font-normal after:absolute after:-top-1 after:-bottom-2 after:inset-x-0")}
+            className={cx(inlineLinkClass, "inline-flex min-h-11 shrink-0 items-center text-xs font-normal")}
           >
             {pending === "reset" ? "Sending reset email…" : "Forgot password?"}
           </button>

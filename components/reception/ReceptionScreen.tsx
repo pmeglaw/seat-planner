@@ -266,7 +266,7 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
               aria-label="Search the directory"
               autoComplete="off"
               spellCheck={false}
-              placeholder="Name, department, seat, or extension…"
+              placeholder="Name or extension…"
               value={query}
               onChange={event => {
                 setQuery(event.target.value);
@@ -323,9 +323,8 @@ export function ReceptionScreen({ people, initialQuery = "", seatsUnavailable = 
                 onMouseDown={keepInputFocus}
                 onClick={() => lock(person)}
               >
-                <span>
+                <span className="sp-recep-person">
                   <span className="sp-recep-name" title={person.name}>{person.name}</span>
-                  <br />
                   <span className="sp-recep-meta" title={meta}>{meta}</span>
                 </span>
                 {seatCell(person)}

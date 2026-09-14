@@ -101,12 +101,12 @@ const PINS = {
   // PR 4: Management's controls are the asset's 40px buttons / 32px row
   // actions on `.cds-btn` (PHASE3DS §1.23) — no pseudo-expansion literals left.
   "components/auth/LoginForm.tsx": [
-    "after:absolute after:-inset-1.5",
     // remember-me label (checkbox is LABEL_CARRIED)
     "after:absolute after:-inset-y-2",
-    // forgot-password, capped by the password field above / remember row below
-    "after:absolute after:-top-1 after:-bottom-2"
+    // September 14: recovery now has a real 44px target, without hit expansion.
+    "inline-flex min-h-11 shrink-0 items-center"
   ],
+  "components/auth/PasswordVisibilityButton.tsx": ["h-11 w-11"],
   // PR 3b: the drawer's close is the asset's 40px icon button with the
   // touch-target pseudo; prompts and follow-ups are 40px ghosts in the
   // zero-gap `.sp-prompt-list` (PHASE3DS §1.18 — stacked, outward faces only).

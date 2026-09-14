@@ -353,9 +353,10 @@ export function DataUtilitiesPanel({ seats, employees }: DataUtilitiesPanelProps
         {busy && busyOp === "csv-parse" ? (
           <p className="sp-progress-line"><span className="sp-skeleton" aria-hidden="true" />Reading the file…</p>
         ) : (
-          <p className="sp-file-line">
-            Columns: <code translate="no">{CSV_COLUMNS}</code> — e.g. <code translate="no">{CSV_EXAMPLE}</code>
-          </p>
+          <div className="sp-file-line sp-csv-reference">
+            <p>Columns: <code translate="no">{CSV_COLUMNS}</code></p>
+            <p>Example: <code translate="no">{CSV_EXAMPLE}</code></p>
+          </div>
         )}
         {csvError && (
           <div role="alert" className="cds-notification cds-notification--error">

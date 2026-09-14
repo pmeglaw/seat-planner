@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { PasswordVisibilityButton } from "@/components/auth/PasswordVisibilityButton";
 import { cx, focusRingClass } from "@/components/ui/design-system";
 import { friendlyAuthMessage, MIN_PASSWORD_LENGTH } from "@/lib/authMessages";
 import { assignLocation } from "@/lib/fullNavigation";
@@ -18,8 +20,8 @@ import { createClient } from "@/lib/supabase/client";
 // errors keep announcing through the message block, so the field shells never
 // take an invalid state.
 
-// Copied from LoginForm's fieldShellClass, minus the invalid/trailing arms
-// this form does not use. The `color:` hint inside border-b-[...] is
+// LoginForm's field-shell treatment with its shared visibility button.
+// The `color:` hint inside border-b-[...] is
 // load-bearing — see the LoginForm comment on Tailwind v3's var() type
 // ambiguity. Rest rules split by position (LoginForm's 1.4.11 note): the
 // first field's subtle rule is the divider between two flush fills, the
@@ -27,7 +29,7 @@ import { createClient } from "@/lib/supabase/client";
 // boundary.
 const fieldShellClass = (restRule: "subtle" | "strong") =>
   cx(
-    "relative flex h-14 flex-col justify-center bg-[var(--sp-field)] px-4 transition-[background-color] hover:bg-[var(--sp-field-hover)]",
+    "relative flex h-14 items-center gap-2 bg-[var(--sp-field)] pl-4 pr-2 transition-[background-color] hover:bg-[var(--sp-field-hover)]",
     restRule === "subtle"
       ? "border-b border-b-[color:var(--sp-border-subtle)]"
       : "border-b border-b-[color:var(--sp-border-strong)]",
@@ -36,11 +38,13 @@ const fieldShellClass = (restRule: "subtle" | "strong") =>
 const fieldLabelClass = "block text-xs font-normal leading-[1.3] text-[var(--sp-text-secondary)]";
 // outline-none is safe only because the shell above draws the focus rule.
 const fieldInputClass =
-  "mt-1 w-full border-0 bg-transparent p-0 text-[13.5px] font-normal leading-[1.4] tracking-[2px] text-[var(--sp-text-primary)] caret-[var(--sp-button-primary)] outline-none placeholder:text-[var(--sp-text-placeholder)]";
+  "mt-1 w-full border-0 bg-transparent p-0 text-[13.5px] font-normal leading-[1.4] text-[var(--sp-text-primary)] caret-[var(--sp-button-primary)] outline-none placeholder:text-[var(--sp-text-placeholder)]";
 
 export function UpdatePasswordForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"error" | "success">("success");
   const [busy, setBusy] = useState(false);
@@ -89,32 +93,38 @@ export function UpdatePasswordForm() {
       <form onSubmit={updatePassword} noValidate>
         <div className="mt-6">
           <div className={fieldShellClass("subtle")}>
+            <span className="min-w-0 flex-1">
             <label htmlFor="update-password-new" className={fieldLabelClass}>
               New password
             </label>
             <input
               id="update-password-new"
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               value={password}
               onChange={event => setPassword(event.target.value)}
               autoComplete="new-password"
-              className={fieldInputClass}
+              className={cx(fieldInputClass, !showPassword && "tracking-[2px]")}
             />
+            </span>
+            <PasswordVisibilityButton shown={showPassword} onToggle={() => setShowPassword(value => !value)} label="Show new password" />
           </div>
           <div className={fieldShellClass("strong")}>
+            <span className="min-w-0 flex-1">
             <label htmlFor="update-password-confirm" className={fieldLabelClass}>
               Confirm password
             </label>
             <input
               id="update-password-confirm"
-              type="password"
+              type={showConfirmation ? "text" : "password"}
               name="confirmPassword"
               value={confirmPassword}
               onChange={event => setConfirmPassword(event.target.value)}
               autoComplete="new-password"
-              className={fieldInputClass}
+              className={cx(fieldInputClass, !showConfirmation && "tracking-[2px]")}
             />
+            </span>
+            <PasswordVisibilityButton shown={showConfirmation} onToggle={() => setShowConfirmation(value => !value)} label="Show password confirmation" />
           </div>
         </div>
 
@@ -160,6 +170,10 @@ export function UpdatePasswordForm() {
           )}
         </button>
       </form>
+
+      <Link href="/login" className={cx("mt-4 inline-flex min-h-11 items-center self-start text-sm text-[var(--sp-link)] hover:underline", focusRingClass)}>
+        Back to log in
+      </Link>
 
       {message && (
         <p

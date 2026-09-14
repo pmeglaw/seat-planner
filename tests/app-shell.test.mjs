@@ -32,8 +32,10 @@ let useAppShellLeftPanel;
 let useAppShellState;
 let useAppShellFilters;
 let useAppShellPanels;
+let CarbonModal;
 before(async () => {
   ({ AppShell, useAppShellNavigation, useAppShellLeftPanel, useAppShellState, useAppShellFilters, useAppShellPanels } = await loadComponent("@/components/ui/AppShell"));
+  ({ CarbonModal } = await loadComponent("@/components/ui/CarbonModal"));
 });
 
 let pushed;
@@ -310,12 +312,53 @@ test("a route commit closes the left panel; unregistering the filters retires th
 test("below the header-nav breakpoint the hamburger exists everywhere and the panel carries the section links", async () => {
   setViewportWidth(1024);
   await renderElement(shellElement({ pathname: "/admin/settings" }));
-  const hamburger = await waitFor(() => screen.getByRole("button", { name: "Filters" }));
+  const hamburger = await waitFor(() => screen.getByRole("button", { name: "Navigation" }));
   await act(async () => fireEvent.click(hamburger));
   const nav = within(screen.getByRole("complementary", { name: "Sections" })).getByRole("navigation", { name: "Sections" });
   assert.equal(within(nav).getByRole("link", { name: "Settings" }).getAttribute("aria-current"), "page");
   await waitFor(() => screen.getByRole("button", { name: "Draft · 7" }), "the indicator compacts below the breakpoint");
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Close navigation panel" })));
+  assert.equal(hamburger.getAttribute("aria-expanded"), "false");
+  assert.equal(document.activeElement, hamburger);
+  await act(async () => fireEvent.click(hamburger));
+  await act(async () => fireEvent.keyDown(hamburger, { key: "Escape" }));
+  assert.equal(hamburger.getAttribute("aria-expanded"), "false");
 });
+
+for (const role of ["dialog", "alertdialog"]) {
+  test(`a busy ${role} retains Escape priority over the open Filters panel`, async () => {
+    function Surface() {
+      useAppShellFilters(FILTERS);
+      const [open, setOpen] = React.useState(false);
+      const [busy, setBusy] = React.useState(true);
+      return React.createElement(React.Fragment, null,
+        React.createElement("button", { onClick: () => setOpen(true) }, "Open review"),
+        open && React.createElement(CarbonModal, {
+          role, titleId: "pending-review-title", title: "Pending review", busy,
+          onEscape: () => setOpen(false),
+          footer: React.createElement("button", { disabled: busy }, "Save")
+        }, React.createElement("button", { onClick: () => setBusy(false) }, "Finish simulated action")));
+    }
+    await renderElement(shellElement({ children: React.createElement(Surface) }));
+    const filters = await waitFor(() => screen.getByRole("button", { name: "Filters", exact: true }));
+    await act(async () => fireEvent.click(filters));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Open review" })));
+    const dialog = screen.getByRole(role, { name: "Pending review" });
+    const inside = within(dialog).getByRole("button", { name: "Finish simulated action" });
+    await act(async () => inside.focus());
+    await act(async () => fireEvent.keyDown(inside, { key: "Escape" }));
+    assert.equal(filters.getAttribute("aria-expanded"), "true");
+    assert.ok(dialog.contains(document.activeElement), "busy dialog keeps keyboard focus");
+    assert.ok(dialog.isConnected, "busy dialog stays open");
+    await act(async () => fireEvent.click(inside));
+    await act(async () => fireEvent.keyDown(dialog, { key: "Escape" }));
+    assert.ok(!dialog.isConnected, "dialog can dismiss after the pending action ends");
+    assert.equal(filters.getAttribute("aria-expanded"), "true", "dialog dismissal does not close the underlying panel");
+    await act(async () => fireEvent.keyDown(filters, { key: "Escape" }));
+    assert.equal(filters.getAttribute("aria-expanded"), "false");
+    assert.equal(document.activeElement, filters);
+  });
+}
 
 test("useAppShellNavigation, useAppShellLeftPanel, useAppShellState and useAppShellFilters are safe no-ops without a shell ancestor", async () => {
   function Standalone() {

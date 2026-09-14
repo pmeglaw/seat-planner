@@ -167,7 +167,7 @@ export function PublishLogTable() {
   return (
     <div className="sp-table sp-log">
       <div className="cds-table-container">
-        <div className="cds-toolbar sp-toolbar">
+        <div className={load.events.length === 0 ? "sr-only" : "cds-toolbar sp-toolbar"}>
           <span className="cds-toolbar-count" aria-live="polite">{countText}</span>
         </div>
 

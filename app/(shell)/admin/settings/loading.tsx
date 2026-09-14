@@ -14,7 +14,7 @@ export default function AdminSettingsLoading() {
         <div className="cds-page-header">
           <div>
             <h1 className="cds-page-title">Settings</h1>
-            <p className="cds-page-subtitle">Import, export and recovery. Everything here changes the draft only.</p>
+            <p className="cds-page-subtitle">Import, export and recovery. Imports and restores affect only the draft.</p>
           </div>
         </div>
         <div className="sp-settings">

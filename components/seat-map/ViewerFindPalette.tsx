@@ -74,7 +74,7 @@ function resultTrailing(result: ViewerSearchResult): string {
 // via weight + the muted helper token, not size.
 const eyebrowClassName = "text-xs font-semibold uppercase tracking-[0.12em] text-[var(--sp-text-helper)]";
 
-type PaletteFrame = { left: number; top: number; width: number; maxHeight: number; constrained: boolean };
+type PaletteFrame = { left: number; top: number; width: number; maxHeight: number; constrained: boolean; compact: boolean };
 
 /**
  * Where the palette sits, in viewport px. Measured rather than declared,
@@ -100,7 +100,7 @@ function measurePaletteFrame(anchor: HTMLElement | null): PaletteFrame | null {
     Math.max(0, viewportWidth - PALETTE_EDGE_INSET_PX * 2));
   const left = Math.max(viewportLeft + PALETTE_EDGE_INSET_PX,
     Math.min(rect.left, viewportLeft + viewportWidth - width - PALETTE_EDGE_INSET_PX));
-  return { left, top, width, maxHeight, constrained };
+  return { left, top, width, maxHeight, constrained, compact: viewportWidth < 600 };
 }
 
 export type ViewerFindPaletteProps = {
@@ -171,6 +171,8 @@ export function ViewerFindPalette({
   const constrainedControlsRef = useRef<HTMLDivElement | null>(null);
   const searchReturnSelection = useRef<Pick<HTMLInputElement, "selectionStart" | "selectionEnd" | "selectionDirection"> | null>(null);
   const [frame, setFrame] = useState<PaletteFrame | null>(null);
+  const [zonesExpanded, setZonesExpanded] = useState<boolean | null>(null);
+  const showZones = zonesExpanded ?? !frame?.compact;
 
   // Layout effect, not a plain effect: the palette is positioned from a
   // measurement, so a post-paint read would show it at 0,0 for one frame and
@@ -403,7 +405,9 @@ export function ViewerFindPalette({
                     >
                       <span className="min-w-0">
                         <span className="sp-palette-title block">{result.title}</span>
-                        <span className="sp-palette-sub block">{result.subtitle} · {result.meta}</span>
+                        <span className="sp-palette-sub block">{result.kind === "person" && result.seatId && (!result.floor || result.floor === currentFloor)
+                          ? [result.subtitle.split(" · ").slice(1).join(" · "), result.meta].filter(Boolean).join(" · ")
+                          : [result.subtitle, result.meta].filter(Boolean).join(" · ")}</span>
                       </span>
                       <span className="cds-tag cds-tag--outline">{KIND_LABELS[result.kind]}</span>
                       {result.floor && result.floor !== currentFloor ? (
@@ -421,7 +425,7 @@ export function ViewerFindPalette({
               {/* Zero is published, with both counts; Widen when the other
                   scope has hits, Clear search otherwise (D1-d). */}
               <strong>No results for “{query}”{scope === "floor" ? " on this floor" : ""}</strong>
-              {scopeCounts ? <span>{scopeCounts.onFloor} on this floor · {scopeCounts.inBuilding} in building</span> : <span>No matching people, seats, departments, or zones.</span>}
+              <span>Try a name, seat, department, or zone.</span>
               <div className="mt-3 flex gap-2">
                 {scope === "floor" && scopeCounts && scopeCounts.inBuilding > 0 && onWiden ? (
                   <button type="button" className="cds-btn cds-btn--tertiary cds-btn--sm" onClick={() => onWiden()}>Widen to the whole building</button>
@@ -450,7 +454,10 @@ export function ViewerFindPalette({
           <div data-virtual-prefix>
           {browse.zones.length > 0 && (
             <div role="group" aria-label="Zones" onMouseLeave={() => onZoneHoverChange?.(null)} className="sp-palette-zones">
-              <h2>Filter by zone</h2>
+              <h2><button type="button" className="sp-palette-zone-toggle" aria-expanded={showZones} aria-controls="palette-zone-choices" onClick={() => setZonesExpanded(!showZones)}>
+                Filter by zone <span aria-hidden="true">{showZones ? "−" : "+"}</span>
+              </button></h2>
+              <div id="palette-zone-choices" hidden={!showZones}>
               <p>Select a zone to filter the map.</p>
               <div className="sp-palette-zone-grid">
                 {browse.zones.map(chip => {
@@ -466,6 +473,7 @@ export function ViewerFindPalette({
                     </button>
                   );
                 })}
+              </div>
               </div>
             </div>
           )}
@@ -536,7 +544,7 @@ export function ViewerFindPalette({
                   >
                     <span className="min-w-0">
                       <span className="sp-palette-title block">{row.title}</span>
-                      <span className="sp-palette-sub block">{row.subtitle}</span>
+                      <span className="sp-palette-sub block">{row.seatId && (!row.floor || row.floor === currentFloor) ? row.subtitle.split(" · ").slice(1).join(" · ") : row.subtitle}</span>
                     </span>
                     {row.seatId ? (
                       row.floor && row.floor !== currentFloor ? (

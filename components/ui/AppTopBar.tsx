@@ -32,6 +32,7 @@ export type AppTopBarProps = {
    *  lg+ shows the reserved slot on sub-pages until PR 3 registers admin
    *  filters). */
   hasLeftContent: boolean;
+  leftPanelLabel?: string;
   leftOpen: boolean;
   onToggleLeft: () => void;
   modeStatus: ShellModeStatus;
@@ -54,6 +55,7 @@ export function AppTopBar({
   skipLink,
   onLinkClick,
   hasLeftContent,
+  leftPanelLabel = "Filters",
   leftOpen,
   onToggleLeft,
   modeStatus,
@@ -72,7 +74,7 @@ export function AppTopBar({
         <button
           type="button"
           className="sp-header-slot"
-          aria-label="Filters"
+          aria-label={leftPanelLabel}
           aria-expanded={leftOpen}
           aria-controls="shell-left-panel"
           onClick={onToggleLeft}

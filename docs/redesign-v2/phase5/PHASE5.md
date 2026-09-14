@@ -890,3 +890,53 @@ compact desktop rows automatically, including loading geometry. Retain the
 existing 48px narrow/coarse-pointer targets as responsive accessibility sizing,
 with no user-selectable mode. Type, headers, forms and edit rows retain their
 existing sizes. Virtualized rows continue to recalibrate on viewport changes.
+
+## 2026-09-14 owner amendment — page review refinements
+
+The owner requested implementation of the September 14 page-by-page review
+("address the findings"). This amendment authorizes the refinements below;
+it does not change the brand palette or the fixed compact Management decision.
+
+- Below 1056px, the left navigation/filter panel overlays the content with a
+  dismissible scrim instead of compressing the page. Desktop still pushes the
+  content. Escape and dismissal restore trigger focus. Name the trigger
+  Navigation, Filters, or Navigation and filters according to its contents.
+  This amends PHASE3DS §1.12 for narrow widths only.
+- Management search has a definite 48px field height even when its toolbar
+  wraps. The employee panel and scrim use the responsive shell height, retaining
+  the 480px desktop panel and full-width narrow form (PHASE3DS §1.23–1.24).
+- Reception rows below 600px stack location beneath the person, with the
+  extension anchored alongside. Name/role truncation is contained. Preserve
+  48px minimum targets and the existing operational readout band (§1.29).
+- Departments and Zones use a bounded inner list, with names, counts and
+  actions reflowing below 600px, including inline rename. Desktop rows remain
+  32px, narrow targets at least 48px. Selected Management tabs reveal themselves
+  on direct entry and resize. The employee table retains contained horizontal
+  scrolling, now explained by a narrow-screen hint (§1.22–1.25).
+- Map search grows to 480px at desktop widths; its shared prompt is "Find
+  people or seats…". Narrow/coarse-pointer search fields omit the desktop key
+  hint. Reception uses "Name or extension…". Search height remains
+  contextual: 40px map, 48px Reception. Palette width stays 560px at >=900px
+  and viewport minus 12px side insets below that (§1.14–1.15).
+- Zone browsing becomes an explicit disclosure, initially collapsed below
+  600px so people are visible, expanded above. User toggles persist while the
+  palette is mounted. Its measured prefix remains inside the shared virtual
+  scroll host; zone buttons retain 48px targets. Seat codes are spoken in full
+  but appear visually only once per result. Empty results keep scope counts
+  in their live header and useful recovery text in the body.
+- The inspector section is "Contact". Protected original-seat explanations
+  take precedence over assignment restrictions; deletion eligibility does not
+  change. Zones copy becomes "Zones group seats by area. Use them to filter
+  the map and name new seats." (§1.17 and §1.25).
+- Publish history keeps its live count but hides the redundant empty toolbar.
+  Settings separates CSV columns/example and stacks narrow actions; subtitle:
+  "Import, export and recovery. Imports and restores affect only the draft."
+  The 776px column, backup caveat and absence of a page primary remain (§1.27).
+- Login gets normal password-placeholder tracking, clear spacing after email
+  validation, and actual 44px password-reveal/recovery targets. Password update
+  shares the reveal control and adds a Back to log in link. Existing auth field
+  focus rules, validation, session behavior and neutral responses remain.
+- My seat keeps the approved deviation 12 design unchanged.
+
+Implementation and verification record:
+[DESIGN-REFINEMENTS-2026-09-14.md](DESIGN-REFINEMENTS-2026-09-14.md).

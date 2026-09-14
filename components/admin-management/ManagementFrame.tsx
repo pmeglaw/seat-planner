@@ -31,7 +31,7 @@
 // only (a custom property scoped to the host — nothing inside reads it).
 // Below lg the document scrolls and the sheet's 48 applies. PHASE4BUILD §1.37.
 
-import type { KeyboardEvent, ReactNode } from "react";
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 
 export type ManagementTab = "employees" | "departments" | "zones" | "publishHistory";
 
@@ -66,6 +66,24 @@ export function ManagementFrame({
   children: ReactNode;
 }) {
   const current = MANAGEMENT_TABS.find(tab => tab.id === activeTab) ?? MANAGEMENT_TABS[0];
+  const tabsRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const host = tabsRef.current;
+    if (!host) return;
+    const revealSelected = () => {
+      const selected = host.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (!selected) return;
+      const bounds = host.getBoundingClientRect();
+      const tab = selected.getBoundingClientRect();
+      if (tab.left < bounds.left) host.scrollLeft -= bounds.left - tab.left;
+      else if (tab.right > bounds.right) host.scrollLeft += tab.right - bounds.right;
+    };
+    revealSelected();
+    const observer = new ResizeObserver(revealSelected);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [activeTab]);
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const last = MANAGEMENT_TABS.length - 1;
@@ -97,7 +115,7 @@ export function ManagementFrame({
         )}
       </div>
 
-      <nav aria-label="Management sections" className="sp-tabs-host lg:[--sp-shell-header-h:0px]">
+      <nav ref={tabsRef} aria-label="Management sections" className="sp-tabs-host lg:[--sp-shell-header-h:0px]">
         <ul className="sp-tabs" role="tablist" aria-label="Management sections">
           {MANAGEMENT_TABS.map((tab, index) => {
             const selected = tab.id === activeTab;

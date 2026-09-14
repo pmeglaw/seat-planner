@@ -23,7 +23,10 @@ for (const theme of ["white", "g100"] as const) {
       const box = (await palette.boundingBox())!;
       expect(box.x).toBeGreaterThanOrEqual(12);
       expect(box.x + box.width).toBeLessThanOrEqual(width - 12);
+      const zoneDisclosure = page.getByRole("button", { name: "Filter by zone" });
+      if (await zoneDisclosure.getAttribute("aria-expanded") === "false") await zoneDisclosure.click();
       const zones = page.locator(".sp-palette-zone");
+      await expect(zones.first()).toBeVisible();
       const geometry = await zones.evaluateAll(elements => elements.map(element => {
         const box = element.getBoundingClientRect();
         const count = element.querySelector(".sp-palette-zone-count")!;
@@ -68,6 +71,8 @@ test("short visual viewport keeps search, all zones and final result above the k
   await expect(page.getByRole("searchbox", { name: "Search office seating in palette" })).toBeVisible();
   const box = (await palette.boundingBox())!;
   expect(box.y).toBeGreaterThanOrEqual(80); expect(box.y + box.height).toBeLessThanOrEqual(340);
+  await page.getByRole("button", { name: "Filter by zone" }).click();
+  await expect(page.locator(".sp-palette-zone").first()).toBeVisible();
   await page.locator(".sp-palette-zone").last().focus();
   await page.locator(".sp-palette-scroll").evaluate(element => { element.scrollTop = element.scrollHeight; });
   const last = page.locator('[data-vindex="219"] button');
@@ -110,6 +115,7 @@ test("Management density preserves the visible person in a virtualized long tabl
   await expect(page.locator('[data-employee-id="example-219"]')).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("heading", { name: "Management", exact: true })).toBeInViewport();
   await expect(page.getByRole("radio", { name: /Normal|Compact/ })).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => ({ width: document.documentElement.scrollWidth, viewport: innerWidth }))).toEqual({ width: 390, viewport: 390 });
   await page.screenshot({ path: path.join(HARNESS_DIR, "density-phone.png") });
