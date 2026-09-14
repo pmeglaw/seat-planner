@@ -1213,3 +1213,15 @@ the source register and release-specific constraints.
 ## 2026-09-12 approved component amendment — palette and Management density
 
 See DECISIONS “Owner amendment — approved refinement plan — 2026-09-12”. Runtime/Phase 3 component and semantic-token copies remain paired. `--sp-palette-zone-min-w` defines the wrapping zone-column minimum; palette zones use body-compact-01 names and code-01 counts. The palette owns one scroll host and viewport-constrained search fallback. `.sp-management-density` selects 48px Normal or 32px Compact table rows via the existing size tokens, with a narrow/coarse-pointer Normal fallback; the choice also covers option lists and skeletons. Type size, table headers, side panels and primary-action rules remain governed by their earlier sections. The density selector is a native labeled radio group using semantic interaction/focus roles.
+
+
+## 2026-09-14 owner amendment — fixed compact Management
+
+The owner requested removal of Normal/Compact mode and permanent compact layout
+at `/admin/management`. This supersedes the September 12 user-selectable density
+contract: remove the selector, explanatory helper and stored cookie preference
+across Employees, Departments, Zones and Publish history. Use the existing 32px
+compact desktop rows automatically, including loading geometry. Retain the
+existing 48px narrow/coarse-pointer targets as responsive accessibility sizing,
+with no user-selectable mode. Type, headers, forms and edit rows retain their
+existing sizes. Virtualized rows continue to recalibrate on viewport changes.

@@ -1,6 +1,6 @@
 "use client";
 
-import { ManagementDensityControl, useManagementDensity } from "@/components/admin-management/ManagementDensity";
+import { useManagementRowHeight } from "@/components/admin-management/ManagementDensity";
 
 // Employees index (PHASE2UX §1G.3; PHASE3DS §1.23, block 21) on the asset
 // `.cds-table`: toolbar (search 320 with a clear ×, the live count — zero
@@ -72,8 +72,7 @@ export function EmployeesTable({
   selectedEmployeeId: string;
   onEdit: (employee: Employee) => void;
 }) {
-  const { density } = useManagementDensity();
-  const defaultRowHeight = density === "compact" ? 32 : 48;
+  const defaultRowHeight = useManagementRowHeight();
   const searching = search.trim().length > 0;
   const countText = toolbarCount({ total: totalActive, assigned: assignedCount, matching: sortedEmployees.length, searching });
 
@@ -240,7 +239,6 @@ export function EmployeesTable({
             )}
           </div>
           <span className="cds-toolbar-count" aria-live="polite">{countText}</span>
-          <ManagementDensityControl />
         </div>
 
         {sortedEmployees.length === 0 ? (
