@@ -97,7 +97,25 @@ tests. The affected authenticated suite passed 7/7 with a fresh local build.
 Logs are `output/pr546-browser-fixed.log`, `output/pr546-management-tests.log`
 and `output/pr546-auth-fixed.log`. Final-head GitHub checks are tracked on the PR.
 
-### Original visual review scope
+### PR review follow-up — busy-dialog Escape priority
+
+Review of `7b9214c` reproduced a focus regression: with Filters open, Escape
+inside a busy modal reached the shell listener and moved focus outside the
+still-open dialog. The shell now leaves Escape originating within a dialog,
+alertdialog or native dialog to that dialog's handler.
+
+New tests with the real CarbonModal fail before the fix and pass afterward for
+both ARIA dialog roles. They retain focus and the open Filters state while busy,
+verify dismissal after the pending action ends, and verify normal panel Escape
+behavior afterward. All 41 shell/dialog tests and 38 real-browser component tests
+pass, as do typecheck and focused ESLint (one existing shell effect warning).
+The affected authenticated shell/design checks passed 5/5 with a fresh build
+against local Supabase. The original review probe also confirms focus remains
+inside the busy dialog and Filters remains open after Escape.
+Logs: `output/pr546-escape-tests.log`, `output/pr546-escape-browser.log` and
+`output/pr546-escape-auth.log`. The fix changes keyboard event priority only.
+
+### Original visual review evidence
 
 Fresh Chrome evidence is in `output/playwright/design-refinements-2026-09-14/`,
 including a `report.html` before/after comparison. Before screenshots remain

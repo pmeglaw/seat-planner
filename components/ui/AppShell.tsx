@@ -319,7 +319,11 @@ export function AppShell({ email, userId = "anonymous", isAdmin, initialShell = 
   useEffect(() => {
     if (!leftPanelOpen || openPanel) return;
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !event.defaultPrevented) closeLeft();
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      // Busy dialogs deliberately ignore Escape. They still own the event:
+      // closing the underlying panel would pull focus outside their trap.
+      if (event.target instanceof Element && event.target.closest('[role="dialog"], [role="alertdialog"], dialog')) return;
+      closeLeft();
     };
     window.addEventListener("keydown", onEscape);
     return () => window.removeEventListener("keydown", onEscape);
