@@ -1,7 +1,5 @@
 "use client";
 
-import { ManagementDensityControl } from "@/components/admin-management/ManagementDensity";
-
 // Management → Publish history: the RECORD of every publish (Phase 5 PR 1;
 // the dated D0-a / D5 amendments, 2026-09-08). D0-a gave "publish events" one
 // home and bundled two jobs into it. Orientation — which mode am I in, what is
@@ -106,7 +104,6 @@ export function PublishLogTable() {
             <span className="cds-toolbar-count" aria-live="polite">
               {load.state === "loading" ? "Loading publish history…" : "Publish history unavailable"}
             </span>
-            <ManagementDensityControl />
           </div>
 
           {load.state === "error" ? (
@@ -172,7 +169,6 @@ export function PublishLogTable() {
       <div className="cds-table-container">
         <div className="cds-toolbar sp-toolbar">
           <span className="cds-toolbar-count" aria-live="polite">{countText}</span>
-          <ManagementDensityControl />
         </div>
 
         {load.events.length === 0 ? (

@@ -91,28 +91,37 @@ test("short visual viewport keeps search, all zones and final result above the k
 test("Management density preserves the visible person in a virtualized long table", async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await mount(page, "management");
-  const normal = page.getByRole("radio", { name: "Normal", exact: true });
-  const compact = page.getByRole("radio", { name: "Compact", exact: true });
-  await expect(normal).toBeChecked();
-  await expect.poll(async () => (await page.locator("[data-directory-row]").nth(1).boundingBox())!.height).toBe(49);
+  await expect(page.getByRole("radio", { name: /Normal|Compact/ })).toHaveCount(0);
+  await expect.poll(async () => (await page.locator("[data-directory-row]").nth(1).boundingBox())!.height).toBe(32);
+  await page.screenshot({ path: path.join(HARNESS_DIR, "management-compact-light.png") });
+  await page.evaluate(() => { document.documentElement.dataset.theme = "dark"; document.documentElement.dataset.carbonTheme = "g100"; });
+  await page.screenshot({ path: path.join(HARNESS_DIR, "management-compact-dark.png") });
   await page.evaluate(() => window.scrollTo(0, 1825));
   const firstVisible = () => page.locator("[data-directory-row]").evaluateAll(rows => rows.find(row => row.getBoundingClientRect().bottom > Math.max(0, document.querySelector(".sp-tabs-host")?.getBoundingClientRect().bottom ?? 0))?.getAttribute("data-employee-id"));
   await expect.poll(firstVisible).toBeTruthy();
   const person = await firstVisible();
-  // Change the preference without Playwright first scrolling the toolbar into view.
-  await compact.evaluate(element => (element as HTMLInputElement).click());
-  await expect(compact).toBeChecked();
+  await page.setViewportSize({ width: 1055, height: 1080 });
+  await expect.poll(firstVisible).toBe(person);
+  await expect.poll(async () => (await page.locator("[data-directory-row]").nth(1).boundingBox())!.height).toBe(49);
+  await page.setViewportSize({ width: 1920, height: 1080 });
   await expect.poll(firstVisible).toBe(person);
   await expect.poll(async () => (await page.locator("[data-directory-row]").nth(1).boundingBox())!.height).toBe(32);
-  await normal.evaluate(element => (element as HTMLInputElement).click());
-  await expect.poll(firstVisible).toBe(person);
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(page.locator('[data-employee-id="example-219"]')).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(compact).toBeDisabled(); await expect(normal).toBeChecked();
+  await expect(page.getByRole("radio", { name: /Normal|Compact/ })).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => ({ width: document.documentElement.scrollWidth, viewport: innerWidth }))).toEqual({ width: 390, viewport: 390 });
-  await page.screenshot({ path: path.join(HARNESS_DIR, "density-phone.png"), fullPage: true });
+  await page.screenshot({ path: path.join(HARNESS_DIR, "density-phone.png") });
+  await page.setViewportSize({ width: 320, height: 700 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  for (const tab of ["Departments", "Zones", "Publish history"]) {
+    await page.getByRole("tab", { name: tab, exact: true }).click();
+    await expect(page.getByRole("radio", { name: /Normal|Compact/ })).toHaveCount(0);
+    await expect(page.locator(".sp-management-density")).toHaveCSS("--sp-table-row-h", "32px");
+    await page.screenshot({ path: path.join(HARNESS_DIR, `management-${tab.replaceAll(" ", "-")}.png`) });
+  }
 });
 
 

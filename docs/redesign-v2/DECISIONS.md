@@ -1762,3 +1762,15 @@ The owner approved Revision 3 of the refinement plan after reviewer changes, inc
 Implementation and verification status is reported with the change; this amendment is approval, not evidence that browser or accessibility checks passed. Shared palette, optional copy and Management density remain separate concerns. No brand migration, production data mutation or deployment is authorized here.
 
 Implementation refinement: the narrow Management tab strip and employee table scroll horizontally inside their own surfaces. The employee table retains a 64rem minimum to keep column headings and row actions legible; the document stays within the viewport. This restores the existing contained-scroll contract at the new Normal touch density.
+
+
+## 2026-09-14 owner amendment — fixed compact Management
+
+The owner requested removal of Normal/Compact mode and permanent compact layout
+at `/admin/management`. This supersedes the September 12 user-selectable density
+contract: remove the selector, explanatory helper and stored cookie preference
+across Employees, Departments, Zones and Publish history. Use the existing 32px
+compact desktop rows automatically, including loading geometry. Retain the
+existing 48px narrow/coarse-pointer targets as responsive accessibility sizing,
+with no user-selectable mode. Type, headers, forms and edit rows retain their
+existing sizes. Virtualized rows continue to recalibrate on viewport changes.
