@@ -114,6 +114,10 @@ against local Supabase. The original review probe also confirms focus remains
 inside the busy dialog and Filters remains open after Escape.
 Logs: `output/pr546-escape-tests.log`, `output/pr546-escape-browser.log` and
 `output/pr546-escape-auth.log`. The fix changes keyboard event priority only.
+CI's dialog source audit initially mistook quoted role selectors for JSX dialog
+attributes. Equivalent unquoted CSS selectors avoid that false positive without
+changing behavior or weakening the audit. The combined shell, focus and dialog
+audit suite passed 58/58 afterward (`output/pr546-escape-final-tests.log`).
 
 ### Original visual review evidence
 
