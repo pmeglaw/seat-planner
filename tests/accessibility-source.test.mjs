@@ -703,7 +703,13 @@ test("admin search and filter confidence controls stay accessible and admin-scop
   assert.match(seatMapSource, /aria-labelledby="admin-planning-canvas-title" className="order-1 min-w-0 overflow-hidden/);
   assert.match(seatMapSource, /const mobileMapInteractionSurfaceOpen = canEdit && \(/);
   assert.match(seatMapSource, /const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;/);
+  assert.match(seatMapSource, /const mobileZoomControlsHidden = mobileMapInteractionSurfaceOpen \|\| paletteOpen;/);
   assert.match(seatMapSource, /mobileMapControlsHidden \? "hidden sm:block" : ""/);
+  assert.match(seatMapSource, /"fixed right-3 z-30 bottom-\[calc\(0\.75rem\+env\(safe-area-inset-bottom\)\)\]"/);
+  assert.match(seatMapSource, /mobileZoomControlsHidden \? "hidden sm:block" : ""/);
+  // The palette owns its notice while open; the standalone map notice yields.
+  assert.match(seatMapSource, /canEdit && !editTier && !selectedSeat && !paletteOpen && surface === "plan"/);
+  assert.match(seatMapSource, /mobileStatus=\{canEdit && !editTier && surface === "plan" \? "Editing needs a wider window\." : undefined\}/);
   // 3b MODE CARD: modes own the panel slot (no canvas banner); move-mode copy
   // lives inside the inspector occupant.
   assert.match(seatMapSource, /const modeCardOpen = canEdit && editTier && Boolean\(activeMode\) && \(!selectedSeat \|\| inspectorCollapsed\)/);

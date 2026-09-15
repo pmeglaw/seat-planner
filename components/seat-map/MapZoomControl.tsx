@@ -31,6 +31,8 @@ export function MapZoomControl({
   orientation = "vertical"
 }: MapZoomControlProps) {
   const horizontal = orientation === "horizontal";
+  const iconButtonClassName = ["cds-btn", "cds-btn--icon", horizontal ? "cds-btn--sm" : ""].filter(Boolean).join(" ");
+  const fitButtonClassName = ["cds-btn", "cds-btn--ghost", horizontal ? "cds-btn--sm" : "cds-btn--icon"].join(" ");
   return (
     <div
       role="group"
@@ -42,13 +44,13 @@ export function MapZoomControl({
       {/* The zoom level is announced, not shown — the band has no room for a
           readout and Fit is the reset (owner: reset zoom stays on the canvas). */}
       <span aria-live="polite" className="sr-only">{label}</span>
-      <button type="button" onClick={onZoomOut} disabled={zoomOutDisabled} aria-label="Zoom out" className="cds-btn cds-btn--icon cds-btn--sm">
+      <button type="button" onClick={onZoomOut} disabled={zoomOutDisabled} aria-label="Zoom out" className={iconButtonClassName}>
         <MinusIcon />
       </button>
-      <button type="button" onClick={onFit} aria-label="Fit map to view" className="cds-btn cds-btn--ghost cds-btn--sm">
+      <button type="button" onClick={onFit} aria-label="Fit map to view" className={fitButtonClassName}>
         {horizontal ? "Fit" : <FitIcon />}
       </button>
-      <button type="button" onClick={onZoomIn} disabled={zoomInDisabled} aria-label="Zoom in" className="cds-btn cds-btn--icon cds-btn--sm">
+      <button type="button" onClick={onZoomIn} disabled={zoomInDisabled} aria-label="Zoom in" className={iconButtonClassName}>
         <PlusIcon />
       </button>
     </div>

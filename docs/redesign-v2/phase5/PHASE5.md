@@ -981,3 +981,33 @@ a seat ends it through the existing selection path. Switching to an unmapped
 floor still cancels retained Add-seat intent. Inspector form state is unchanged.
 The previous collapsed-inspector state survives suspension so a restored mode
 also restores its visible Exit action.
+
+## 2026-09-15 owner amendment — mobile admin audit follow-up
+
+The owner authorized fixing the mobile audit findings and the follow-up review's
+constrained-search overlap. Phone zoom controls use the existing 48px Carbon
+icon-button size with 16px glyphs; the compact horizontal band is unchanged.
+The phone stack is viewport-pinned with the safe-area inset and yields to search
+and the existing mobile interaction surfaces.
+
+Before seat selection, narrow admins see “Editing needs a wider window.” on the
+map. While search is open, the palette owns that notice as a non-shrinking row
+outside its result scroll area, inside its measured visual-viewport bounds.
+This also applies to constrained search, which reserves only 12px outside the
+palette rather than the normal 60px. Closing search restores the map notice;
+selected-seat details retain their existing explanation. The notice uses the
+semantic label, spacing, layer, text and border tokens in both component sheets.
+No editing permissions, data operations or publishing behavior change.
+
+Regression coverage: `tests/browser/mobile-admin-notice.spec.ts` uses the real
+SeatMap and shell with styled, backend-free fixtures in both themes. It checks
+390×844, 390×350, and a simulated 260px visual viewport with an 80px offset;
+notice/result separation, last-result reachability, zoom sizing, dismissal focus,
+horizontal containment and absence of mutation calls. This fixture evidence does
+not establish authenticated local or deployed `/admin` behavior.
+
+Authenticated follow-up: constrained search places its input and Close search
+control above the fixed shell header (8100 above 8000), below modal overlays
+(8500). Normal anchored search retains its existing stacking order. Regression
+coverage checks hit testing and pointer reachability of both controls in the
+short and simulated-keyboard viewports, in both themes.

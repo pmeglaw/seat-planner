@@ -115,6 +115,8 @@ export type ViewerFindPaletteProps = {
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   onDismiss?: () => void;
+  /** Phone-only context, kept inside the same visual-viewport bounds as search. */
+  mobileStatus?: string;
   browse: ViewerPaletteBrowse;
   results: ViewerSearchResult[];
   /** "3 results" / "1 result" — composed by the caller, which also puts it in the legend. */
@@ -149,6 +151,7 @@ export function ViewerFindPalette({
   searchValue = query,
   onSearchChange,
   onDismiss,
+  mobileStatus,
   browse,
   results,
   resultCountLabel,
@@ -334,7 +337,10 @@ export function ViewerFindPalette({
       className={cx(
         // Floats (contract #2): fixed, above the floating map cards, and it
         // reserves no stage width — the map behind it never reflows.
-        "sp-palette fixed z-[70] flex flex-col overflow-hidden",
+        "sp-palette fixed flex flex-col overflow-hidden",
+        // Constrained search owns its input and dismiss control, so it must
+        // clear the fixed shell header (8000), but stay below modals (8500).
+        frame?.constrained ? "z-[8100]" : "z-[70]",
 
         "motion-safe:animate-[sp-panel-in_150ms_ease-out]"
       )}
@@ -582,6 +588,7 @@ export function ViewerFindPalette({
         {queryActive ? null : <span className="min-w-0 truncate">{browse.summary}</span>}
       </div>
       </div>
+      {mobileStatus && <div role="status" className="sp-mobile-map-note flex items-center sm:hidden">{mobileStatus}</div>}
     </div>
   );
 }

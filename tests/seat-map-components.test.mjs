@@ -322,6 +322,28 @@ test("MapZoomControl disables the zoom buttons at their limits", async () => {
   assert.equal(document.querySelector('[aria-label="Zoom out"]').disabled, false);
 });
 
+test("MapZoomControl keeps phone controls at 48px while the horizontal band stays compact", async () => {
+  const props = {
+    label: "100%",
+    onZoomIn() {},
+    onZoomOut() {},
+    onFit() {}
+  };
+
+  const { unmount } = await renderElement(React.createElement(MapZoomControl, props));
+  const phoneButtons = [...document.querySelectorAll('[aria-label="Map zoom"] button')];
+  assert.equal(phoneButtons.length, 3);
+  assert.ok(phoneButtons.every(button => button.classList.contains("cds-btn--icon")));
+  assert.ok(phoneButtons.every(button => !button.classList.contains("cds-btn--sm")));
+
+  unmount();
+  await renderElement(React.createElement(MapZoomControl, { ...props, orientation: "horizontal" }));
+  const bandButtons = [...document.querySelectorAll('[aria-label="Map zoom"] button')];
+  assert.equal(bandButtons.length, 3);
+  assert.ok(bandButtons.every(button => button.classList.contains("cds-btn--sm")));
+  assert.ok(!document.querySelector('[aria-label="Fit map to view"]').classList.contains("cds-btn--icon"));
+});
+
 // --- FloorMenuButton ---------------------------------------------------------
 // PR 3a: the control row's floor selector (.sp-menu-button / .sp-menu) — the
 // APG menu-button contract accessibility-source pins, one look for both

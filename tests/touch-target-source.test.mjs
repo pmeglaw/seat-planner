@@ -54,10 +54,9 @@ import test from "node:test";
 //   - Management sort-header buttons: expanded only within the header row's
 //     box (after:-inset-y-2, reach ≈33) — never into data row 1.
 //   - Login inline text buttons: capped by the field above / row below.
-//   - MapZoomControl: the stacks are zero-gap, so expansion is outward faces
-//     only — 44 on the cross axis, 28–38 along the stack. The size and the
-//     expansion live in different template chunks, so the sweep cannot join
-//     them; the pins below hold the per-face classes.
+//   - MapZoomControl: the phone-only vertical stack uses Carbon's native 48px
+//     icon buttons. The horizontal status-band variant remains Carbon small;
+//     it is not the coarse-pointer phone control audited by this sweep.
 
 const LEDGER = [];
 
