@@ -2534,6 +2534,7 @@ export function SeatMap({
     (editTier && (publishReviewOpen || Boolean(deleteSeatConfirm) || Boolean(swapConfirm) || Boolean(moveEmployeeConfirm)))
   );
   const mobileMapControlsHidden = mobileMapInteractionSurfaceOpen;
+  const mobileZoomControlsHidden = mobileMapInteractionSurfaceOpen || paletteOpen;
   // Which surfaces own the bottom of the screen below the panel tier, where
   // they are full-width sheets rather than side docks. Wider than
   // mobileMapInteractionSurfaceOpen on purpose: that one is canEdit-gated
@@ -3021,6 +3022,16 @@ export function SeatMap({
                   down — and the outcome notice with its inline Undo. */}
               <CanvasStatus notices={canvasNotices} />
             </div>
+            {/* Search owns the notice inside its measured viewport while open;
+                otherwise the map or selected inspector carries it. */}
+            {canEdit && !editTier && !selectedSeat && !paletteOpen && surface === "plan" && (
+              <div
+                role="status"
+                className="sp-mobile-map-note pointer-events-none fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 z-30 flex max-w-[calc(100vw-72px)] items-center sm:hidden"
+              >
+                Editing needs a wider window.
+              </div>
+            )}
             <div
               ref={mapViewportRef}
               className={mapViewportClassName}
@@ -3165,10 +3176,11 @@ export function SeatMap({
               )}
             </div>
             {/* Phones only (the band >=640 owns zoom there — owner call
-                2026-08-17): the shipped floating stack, still hidden while a
-                mobile edit surface owns the screen. */}
+                2026-08-17): pin the 48px stack to the viewport so all three
+                controls remain reachable without scrolling. It yields while
+                a mobile edit surface or the Find palette owns the screen. */}
             {surface === "plan" && !bandTier && (
-              <div className={["absolute bottom-3 right-3 z-30", mobileMapControlsHidden ? "hidden sm:block" : ""].filter(Boolean).join(" ")}>
+              <div className={["fixed right-3 z-30 bottom-[calc(0.75rem+env(safe-area-inset-bottom))]", mobileZoomControlsHidden ? "hidden sm:block" : ""].filter(Boolean).join(" ")}>
                 <MapZoomControl
                   label={mapZoomLabel}
                   onZoomIn={() => applyMapZoom(mapViewMode === "detail" ? zoomFactor + MAP_ZOOM_STEP : 1)}
@@ -3403,6 +3415,7 @@ export function SeatMap({
       {paletteOpen && (
         <ViewerFindPalette
           anchorRef={searchFieldRef}
+          mobileStatus={canEdit && !editTier && surface === "plan" ? "Editing needs a wider window." : undefined}
           containerRef={paletteRef}
           searchInputRef={searchInputRef}
           query={search.trim()}

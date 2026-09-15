@@ -1397,3 +1397,6 @@ a.sp-panel-row svg { width: var(--sp-icon-01); height: var(--sp-icon-01); margin
   .sp-search .sp-kbd, .sp-search-lg .sp-kbd { display: none; }
   .sp-search-lg .cds-text-input { padding-right: var(--sp-space-09); }
 }
+
+/* Mobile admin context shares the palette layout while search is open. */
+.sp-mobile-map-note { flex-shrink: 0; min-height: var(--sp-size-lg); padding: var(--sp-space-03) var(--sp-space-05); background: var(--sp-layer-01); color: var(--sp-text-secondary); font: var(--sp-type-label-01); font-weight: var(--sp-weight-semibold); box-shadow: inset 0 0 0 1px var(--sp-border-subtle); }
